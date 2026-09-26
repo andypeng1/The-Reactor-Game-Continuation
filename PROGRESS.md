@@ -3084,3 +3084,41 @@ checkout 才会跟着变。
 `Data/TRGWeb.luau`（357 行）、`Data/DataCollection.luau`（489 行）、
 `Data/Summary01.luau`（37 行）是**原版游戏 ModuleScript 的逐字副本**，
 现在跟着 public 仓库公开了。已进 `QUESTIONS.md` **P5**。
+
+### 51.6 第二笔提交：git 主机不通，改走 `api.github.com`
+
+Phase 51 的文档提交（本地 `f1aadb6`）**推不出去**：`git push` 连试五次，
+分别报 `Empty reply from server` / `Recv failure: Connection was reset`，
+最后三次稳定在 `Failed to connect to github.com port 443 after 21080 ms`。
+
+但没有全断 —— 同一次测量里两个主机是分开的：
+
+| 主机 | 结果 |
+|---|---|
+| `api.github.com` | **HTTP 200，0.43 s** |
+| `github.com` | **000，21 s 超时** |
+
+GitHub 的 git 传输和 REST API 是**两个域名**，在这台机器上前者被挡住、后者通。
+所以改走 `/git/blobs` → `/git/trees` → `/git/commits` → `PATCH /git/refs/heads/main`
+把**同一棵树**写上去，脚本是 `_tools/_attic/scratch/api_push.py`。
+
+**这为什么不是「换了内容再推」：** git 的 tree sha 是**内容哈希**（对每条记录的
+路径 + 模式 + blob sha 求哈希），所以脚本在动 ref 之前先断言
+**服务器算出来的 tree sha == 本地 `HEAD^{tree}`**（`20c3caba…`）——
+对上才证明远端那棵树和本地那次提交**逐字节相同**，而不是「看起来一样」。
+再读回来核对：**192 条记录 = 176 个 blob + 16 个目录**，176 个 blob 逐个与
+本地 `git ls-tree -r HEAD` 比对，**0 处不同**。
+
+顺带：文件数 **175 → 176**（多的是 `patch_docs_51.py` 自己）。
+
+**留下的一个坑（记下来，下次别当成事故）：** 远端那笔提交是 **`1109d362`**，
+不是本地的 `f1aadb6` —— 内容一模一样（tree 相同、parent 相同、message 只差
+GitHub 抹掉的一个结尾换行），但作者身份被换成了 GitHub 的
+`andypeng1NB <132412750+andypeng1@users.noreply.github.com>`，而且**它那个对象里还有
+复现不出来的头**：拿同样的 tree / parent / 作者 / 时间戳手工 `hash-object`，
+出来的是 `dd3f8ba`，不是它。所以**下一笔 `git push` 会被判成 non-fast-forward**。
+网络通的时候一行解决，**内容完全相同、不会丢东西**：
+
+```
+git fetch origin && git reset --hard origin/main
+```

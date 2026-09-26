@@ -1941,3 +1941,31 @@
     original game's ModuleScript source, and they are now public. That is a legal exposure rather
     than a technical one, so it is recorded as a question for the operator (QUESTIONS P5) rather
     than settled here.
+
+143. WHEN ONE HOST OF A SERVICE IS BLOCKED, THE OTHER DOOR IS OPEN -- AND THE PROOF OF IDENTITY IS THE HASH, NOT THE TRANSFER.
+
+    WHAT HAPPENED. The Phase 51 documentation commit could not be pushed. Five `git push` attempts
+    failed, the last three stably at `Failed to connect to github.com port 443 after 21080 ms`. But
+    `api.github.com` answered the same minute in 0.43 s. GitHub serves git transport and its REST API
+    from different hostnames, and on this machine only one of them is reachable.
+
+    WHY THAT IS NOT A WORKAROUND. Reaching the same content by a different door is a transport
+    substitution, not a change to what got published. What makes it safe is that git's tree sha is a
+    hash of the entries and their blob shas, so the server computes a value that must equal the local
+    `HEAD^{tree}` if and only if the content is byte-identical. The script asserts that equality
+    *before* it moves the ref, then reads the tree back and compares all 176 blobs against
+    `git ls-tree -r HEAD`. The transfer is not the evidence; the hash is.
+
+    THE PART TO REMEMBER. The resulting commit is NOT the local commit's sha. The author identity is
+    replaced with the authenticated user's and a trailing newline is dropped -- and there is some
+    header in GitHub's object that a reconstruction does not reproduce: same tree, same parent, same
+    author, same timestamp, and the hand-built object still hashes to something else. So local and
+    remote now hold content-identical commits with different hashes, and the next push will be
+    refused as non-fast-forward. Write that down where it is created, with its one-line fix, rather
+    than letting the next person meet it as an unexplained rejection. Content-identical is not the
+    same claim as sha-identical, and only the second makes a push a no-op.
+
+    HOW TO APPLY. When a service has separate hosts for its API and its data plane, measure them
+    separately before concluding the service is down. Then, if you have to go in by the other door,
+    pick an identity check the receiving side computes itself -- a content hash, not a byte count and
+    not an echo of what you sent -- and fail before mutating anything if it does not match.

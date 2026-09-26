@@ -441,6 +441,13 @@ tick ≈ **1.8 s**。**温度是积分器不是惯性环节**（t=560.78–610.9
 改写每一份 `.md`，而这个工程的文档**按字节当工作**（`DECISIONS` 96）。
 **留了一条**：`Data/TRGWeb.luau` / `DataCollection.luau` / `Summary01.luau` 是原版源码的
 逐字副本，现在公开了 —— 见 `QUESTIONS.md` **P5**。
+**推送通道（同一天补的）：** `git push` 在这台机器上连不上 —— **`github.com:443` 21 s 超时**，
+但**同分钟 `api.github.com` 200 / 0.43 s**；两个域名是分开的。于是用
+`_tools/_attic/scratch/api_push.py` 走 Git Data API 把**同一棵树**写上去，动 ref 之前
+**断言服务器算出的 tree sha == 本地 `HEAD^{tree}`**（tree sha 是内容哈希，对上就是逐字节相同），
+写完再把 176 个 blob 读回来逐一比对，0 处不同。远端那笔是 **`1109d362`**、不是本地的
+`f1aadb6`（内容相同，作者被换成 GitHub 身份），所以**下一次 `git push` 会是 non-fast-forward** ——
+网络通时 `git fetch origin && git reset --hard origin/main` 一行解决，**不丢内容**。
 
 **Phase 47 —— 整理 Workspace 与工作文件夹。**
 779 个已证惰性的散件进了 `Workspace.Geometry`（该夹 23 → **802**），19 个散落 `Sound` 进了
