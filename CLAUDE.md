@@ -455,7 +455,10 @@ tick ≈ **1.8 s**。**温度是积分器不是惯性环节**（t=560.78–610.9
 **断言服务器算出的 tree sha == 本地 `HEAD^{tree}`**（tree sha 是内容哈希，对上就是逐字节相同），
 写完再把 176 个 blob 读回来逐一比对，0 处不同。远端那笔是 **`1109d362`**、不是本地的
 `f1aadb6`（内容相同，作者被换成 GitHub 身份），所以**下一次 `git push` 会是 non-fast-forward** ——
-网络通时 `git fetch origin && git reset --hard origin/main` 一行解决，**不丢内容**。
+网络通时**先比 `^{tree}` 再 `git rebase origin/main`**：
+`reset --hard` 只在手上没有新提交时成立，**有本地提交时它会把你那笔吃掉**。
+（`github.com` 那个封锁是**间歇**的 —— 2026-09-27 它又能连了，推上去只是
+non-fast-forward 被拒。见 `PROGRESS.md` 51.7。）
 
 **Phase 47 —— 整理 Workspace 与工作文件夹。**
 779 个已证惰性的散件进了 `Workspace.Geometry`（该夹 23 → **802**），19 个散落 `Sound` 进了

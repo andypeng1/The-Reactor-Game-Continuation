@@ -3217,9 +3217,33 @@ git fetch origin && git reset --hard origin/main
 ```
 
 同一个脚本随后又推了一笔（本地 `09a93c8` → 远端 `46439ebd`）。**所以这不是一次性事故，
-而是这条通道的常态：走 API 出去的每一笔，远端 sha 都和本地不同。** 上面那一行
-`git fetch origin && git reset --hard origin/main` 对每一笔都管用，且每次都不丢内容
-—— 它是收口，不是一个需要每笔都写一遍的新事实。
+而是这条通道的常态：走 API 出去的每一笔，远端 sha 都和本地不同。**
+
+### 51.7 收口那一行要改一个字：`reset --hard` 会吃掉你手上的新提交
+
+**（2026-09-27，网络恢复后第一次 `git push` 就撞上了。）**
+
+那天 `github.com:443` 又能连了 —— 所以**那个封锁是间歇的，不是「不通」**。
+推 `41a7de0` 得到的是正经的 `! [rejected] non-fast-forward`（以前是 21 s 超时），
+和 51.6 预告的一模一样。收口这次用的是：
+
+```
+git fetch origin                      # efe5775，树 = 229b6eee
+git rev-parse origin/main^{tree}      # 229b6eee2d5574e68d3aed6d3a1f551ed4a043e9
+git rev-parse HEAD~1^{tree}           # 229b6eee2d5574e68d3aed6d3a1f551ed4a043e9  <- 相同
+git rebase origin/main                # 提示 skipped previously applied commit 09a93c8 / 24fb5ca
+git push origin main                  # efe5775..205f627
+```
+
+**先比 `^{tree}` 再 rebase** —— 树相同才证明 `origin/main` 和自己那个 parent
+是同一份内容，rebase 才是无损的；不然就是把别人的提交盖掉。
+`git rebase` 还会自己认出 `09a93c8` / `24fb5ca` **「previously applied」** ——
+因为它们的**内容**早就在远端了，只是 sha 不同。这条提示本身就是 51.6 那个坑的旁证。
+
+**注意 `reset --hard` 和 `rebase` 不是一回事：** 51.6 写的
+`git fetch origin && git reset --hard origin/main` 只在**手上没有新提交**时成立 ——
+它把 `main` 直接指到远端，本地那笔就没了。**有本地新提交时用 `git rebase origin/main`。**
+51.6 保留原文不改（它是当时那条命令的记录），口径以本节为准。
 
 **顺带一个坑（脚本自己踩的）：** 这台机器的控制台编码是 **GBK**，Python 里
 `subprocess.run(..., text=True)` 会用它去解 `gh api` 的 UTF-8 输出。
