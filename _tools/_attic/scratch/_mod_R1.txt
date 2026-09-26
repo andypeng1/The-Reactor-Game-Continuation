@@ -1,0 +1,229 @@
+## 1. 项目概述
+
+### 1.1 基本信息
+| 项 | 值 |
+|---|---|
+| 游戏名 | 反应堆游戏（The Reactor Game 的复刻 / 重构） |
+| placeId | 114398686378058 |
+| 类型 | 科幻反应堆设施维护模拟 |
+| 平台 | Roblox / Roblox Studio |
+| 工作目录 | `C:\Users\andypeng1NB\BloxBot` |
+| 用户语言 | 中文（技术术语夹英文） |
+
+### 1.2 核心玩法
+玩家扮演反应堆设施的操作员，在一个**没有控制棒**的反应堆上工作。
+（这一点经过 Wiki 反复确认：The Reactor Game 里**不存在控制棒**，
+玩家只能通过三个间接手段控制反应堆。）
+
+**三大控制手段：**
+1. **环境压力** — AVB（大气排放阀）/ E-VENT（紧急排气）
+2. **CBL 强度** — 化学泵浦激光，PW1..PW5 五档
+3. **Isotope E 冷却回路** — 3 台冷却泵，每台 0..3 档
+
+**核心循环：**
+维持堆芯温度与压力在安全窗口内 → 产生电力 → 完成班次配额 → 应对随机事件 → 撑到交班。
+
+### 1.3 目标受众
+- 喜欢**硬核系统管理 / 灾难模拟**的玩家（类似《The Reactor Game》《Barotrauma》受众）
+- 享受「读懂仪表 → 判断 → 操作 → 承担后果」的玩家
+- 不是休闲玩家：有真实的停堆、熔毁、超压失败状态
+
+### 1.4 绝对约束（用户明确下达，不可违反）
+1. **永远不要改现有玩法机制**（NEVER CHANGE EXISTING GAMEPLAY MECHANICS）
+2. **不要在没有替代品的情况下删除功能**
+3. 每完成一个阶段，更新 `PROGRESS` / `DECISIONS` / `README`
+4. 不要停下来假装完成（"不要停在那里谎称做完了"）
+5. 改完要做**真实验证**（模拟点击、检查位置与颜色）
+
+---
+
+## 2. 已完成的系统
+
+### 2.1 架构总览
+```
+ServerScriptService/
+  GameCore/                      ← 主程序集
+    GameCore            [Script]       入口，注册 25 个系统
+    Core/
+      Config            [ModuleScript] 全部可调参数
+      GameState         [ModuleScript] 唯一真相源（single source of truth）
+      SystemManager     [ModuleScript] Entries/Systems/Get/Initialize/Register/Update
+      Network           [ModuleScript] 运行时 RemoteEvent
+    ReactorSystem/
+      ReactorState      [ModuleScript] TRGWeb 温度/压力模型
+      CBLSystem         [ModuleScript] 3 台激光
+      CoolantSystem     [ModuleScript] 3 泵 + 3 储液罐 + 传感器
+      PowerSystem       [ModuleScript] PowerOutput 唯一写入者
+      PEASystem         [ModuleScript] 电力抽取
+    FacilitySystem/
+      ConsoleService    [ModuleScript] 全部点击动作
+      ControlTrigger    [ModuleScript] 【唯一】点击实现 + CollectionService 标签 + 命令栏总线
+      ConsoleBinder     [ModuleScript] 只留点号表，转发给 ControlTrigger.Bind
+      ControlVisuals    [ModuleScript] 拉杆动画 + 灯色
+      MonitorService    [ModuleScript] 5 台控制室监视器
+      QPUSystem / GatewaySystem / GravLiftSystem
+      BackupPowerSystem [ModuleScript] 导出 HDEFIntegrity
+    PROGRESS / DECISIONS / README / CLAUDE  [ModuleScript] 文档
+
+Workspace/
+  GameCoreTests/
+    GameCoreSelfTest    [Script]  自检（跑一次自动禁用）
+    GameCoreControlTest [Script]  控件测试 13 项
+  Consoles/             ← 6 张桌子，68 个控件
+  Monitors/             ← Main / Thermal / Power / Quota / Alerts 监视器
+
+StarterPlayer/StarterPlayerScripts/
+  ReactorMonitorClient  [LocalScript] MESUI 布局绑定
+```
+
+**设计模式：**
+- 事件驱动 + 固定 10Hz 时间步
+- `SystemManager` 按 priority 分发，系统用 **点号调用** `system.Update(dt)`
+- `Config` 持有全部可调参数；`GameState` 是唯一真相源，**系统不得缓存副本**
+- 系统优先级范围 10–140
+- **点击只有一套实现**：`ControlTrigger.Fire()`；物理点击与命令栏调用是同一条代码路径
+
+### 2.2 系统清单（25 个）
+ReactorState / CBLSystem / CoolantSystem / PowerSystem / PEASystem /
+MonitorService / ControlVisuals / ConsoleBinder / ConsoleService /
+QPUSystem / GatewaySystem / GravLiftSystem / BackupPowerSystem /
+ShiftSystem / EventController / DataCollection / … （共 25）
+
+### 2.3 已实现的机制（全部按 Wiki / TRGWeb 校准）
+
+**时间基准**
+```lua
+Config.Sim.TRGWebTick = 2.5   -- 所有 TRGWeb 常量都是「每 2.5 秒一跳」
+                              -- 换算方式: dt / TRGWebTick
+Config.Reactor.TempUpdateInterval = 1.0  -- 温度改为 1 秒结算一次（用户要求）
+```
+
+**压力（PSI 量纲）**
+| 参数 | 值 |
+|---|---|
+| MaxPressure | 16000 |
+| 点火 | 5000 PSI / 9420 F |
+| 失速 stallout | < 2250 PSI |
+| 超压 overpressure | > 13500 PSI |
+| AVB | −3300 PSI，26s CD，压力 > 5500 PSI 时无效 |
+| E-VENT | −4000 F，每班次单次使用 |
+
+**堆芯温度状态**（`Config.Reactor.CoreStateThresholds`）
+```
+6000 / 17500 / 29500 / 39000 F
+State 3 自加热: +700 F / tick（>29500 F）
+```
+
+**发电档位**（TRGWeb 公式）
+```
+t < 某阈值 → 档位 1: t/250 + 50
+          → 档位 2: t/160 + 100
+          → 档位 3: t/120 + 250
+          → 档位 4: t/45  + 400
+```
+
+**CBL（化学泵浦激光）**
+- 3 台激光，档位 1..5
+- 加热 = `power_level × 65` / tick（**MINIMUM 档也会点火**）
+- **堆芯体温度锁定 925 K**（用户明确确认 "925k"）
+- 激光被摧毁时显示 `ERR`
+- 过载 = 暂时断电 + 自动重启；**只有 Shift 3+ 才永久损失 integrity**
+
+**冷却（Isotope E）**
+- 3 台泵，档位 0..3
+- 移除热量 = `120` / 档位 / tick
+- 3 个储液罐
+- **传感器可靠性系统（Phase 18，我做的）**：
+  - 每泵独立 `CoolantPumpStability` (0–100)
+  - 漂移 `SensorDegradePerSecond 0.30` + 每级堆芯状态 `SensorStateBonus 0.22`，运行时 ×1.5
+  - < 60 → 监视器显示琥珀色 `SENSOR n%`，读数不可信
+  - < 25 → 输出被压低至 `SensorOutputPenalty 0.45`
+  - 手动校准：点热控台 `CoolantControl{i}.BigLever` → 恢复到 100，30s 冷却
+
+**班次配额**
+```
+Shift 1: 512 GW   Shift 2: 1024 GW   Shift 3: 3072 GW（峰值输出）
+```
+
+**Equinox 事件**
+```
+Shift 3，班次秒 600（= 12:00 PM），3× 能量持续 40 秒，冷却泵会爆炸
+```
+
+### 2.4 控制系统（68 个控件 / 6 张桌子）
+```
+[ConsoleBinder] desks=6 controls=68 reused=2 created=66 missing=0
+[ConsoleBinder] rebuild desks=6 controls=66 missing=0
+control bus ready: tagged=73 reindexed=73
+```
+- 用 **ClickDetector**（不是 ProximityPrompt，用户要求的）
+- 每次按下都会打印 `[Console] <player> pressed: <label> (<console>)`
+- `Workspace.Consoles` 下 6 张台，**authored ClickDetector = 0**，66 个由绑定器创建
+- 点击逻辑全部在 `FacilitySystem.ControlTrigger`；`ConsoleBinder` 只剩点号表
+- 每个控件带 `GameCoreControl` 标签 + 6 个属性（Action/Arg/Arg2/Label/Console/Panel）；
+  `ControlTrigger.Reindex()` 从标签重建，手工在 Studio 打标签的部件下次开服就能用
+- 命令栏用 `ServerStorage.GameCore.ControlBus:Invoke(...)` —— **不要 require**（见 §0.2）。
+  `ControlBus` 返回字符串；`ControlQuery` 是同一套接口返回表，给脚本用
+- **ClickDetector 不一定挂在 `ClickPart` 上**：拉杆的板块被 `Collar`/`Grip` 埋住，
+  鼠标射线到不了它，所以挂到最近的「只拥有这一块板」的祖先 Model 上。
+  面板那种拥有很多板的祖先**不能**挂，否则整块面板变成一个巨大 hitbox（见 `DECISIONS` 75）
+- 装机前的原版读数是 `desks=7 controls=68 reused=61 created=7 missing=0`。
+  `desks 7→6` 是因为重复的 `CBLaserConsole` 已停用；`reused 61→2` / `created 7→66`
+  是因为 Mk2 台子不自带 ClickDetector。逐项对账见 `DECISIONS` 43，
+  装机过程见 `PROGRESS` 的 `INSTALLED` 段。
+
+**桌子清单：**
+`MainReactorConsole` / `ThermalConsole` / `CBLaserConsole` /
+`ElectricGridConsole` / `HDEFGenerator` / `ALTReactorConsole` / …
+
+### 2.5 拉杆与灯（ControlVisuals）
+```
+18 个拉杆，41 盏灯
+```
+（原记 31 盏：Mk2 台子给更多控件配了独立指示灯，见 `DECISIONS` 43。）
+- **拉杆只允许 `LeverUnion` 这一个部件移动**（用户强烈纠正过）
+- 转轴 = 拉杆**底部**，不是 `LeverOrginPart`
+- 档位：CBL 5 / PEA 4 / 冷却泵 4 / 风扇·E-VENT·启停 2
+- 灯：稳态白/红/暗 + 按下时 0.6s 绿色 `Pulse` 闪烁
+
+### 2.6 监视器（MonitorService）
+| 监视器 | 内容 |
+|---|---|
+| **Main** | 温度 / 压力 / 辐射 / 输出 / HDEF / PEA 应力 / 波动 / 抽取率 |
+| **Thermal** | 风扇 ON/OFF，泵 `ON L<n>` / `OFF` / `FAULT`（红）+ 传感器 % |
+| **Power** | CBL 功率 % / 应力 % / 状态 / `925 K` 或 `ERR`，Wiki 配色（过载红 / 完整性紫 / 反应蓝 / 高输出黄） |
+| **Quota** | 游戏内时钟 6AM→6PM，配额目标 + 百分比，Equinox 边框 |
+| **Alerts** | 27 盏灯，由实时状态驱动 |
+| **Log** | 滚动 5 行、按严重度配色的事件日志（青 / 琥珀 / 红），监视 11 个信号，变化触发 |
+| **Forecast** | 能量强度时间轴，每 5 秒一根柱，宽度 = PowerOutput / 当前班次配额，外加一行优先级公告 |
+
+**监视器一共 7 台，不是 5 台。** Wiki 原文：「five consoles, three main monitors, and four
+minor monitors」= 3 + 4 = 7，`Workspace.Monitors` 也确实是 7 台。本文档与 `README` 早期版本
+写的 5 台是**记录错误，不是代码缺陷** —— 脚本一行都不用改，七台本来就在。
+七台现在**全部有写入者**：Log 与 Forecast 是最后接上的两台，都写成**纯观察者**
+（只读 `GameState`，从不写），single-writer 规则不变，仿真行为零改动（`DECISIONS` 54 / 60）。
+
+**重建监视器的绑定契约（零脚本改动）：**
+
+```
+Workspace.Monitors.<Name>ControlRoomMonitor    Model
+  .Screen                                      BasePart，Neon，Transparency 0
+    .MonitorUI                                 SurfaceGui
+      .MainMonitorFrame                        Frame
+        <具名子节点>                            上表列出的标签
+```
+
+三条必须带过去：
+① **`LightInfluence`：标签是 1，屏幕是 0**。新建 `SurfaceGui` 默认是 0，而 0 = 「永远全亮」，
+无视场景光照**和**曝光补偿。控制台文字板必须是 **1**（Mk2 装台那次漏了 121 块，
+就是「装好的台子发白」的根因，`DECISIONS` 45）；但**监视器是反的** ——
+七台 `MonitorUI` 实测一律 0，且 0 才对：屏幕是自发光像素，不该被房间曝光调色。
+`DECISIONS` 57 纠正了「全部用 1」这条旧概括，重建时**不要**把 1 带过去。
+② `AlertsFrame.AlertFrame<N>` 是按**固定 27 个**索引的，Thermal 泵框上的
+`GameCoreLevelLabel` 缺失时会被自动创建 —— 两者都不能在重建里丢掉。
+③ Forecast 的 `ScrollingFrame` 只有 **292px** 真正空着：底部 60px 压在公告浮层
+（ZIndex 5）下面，所以柱数上限是 `ForecastSlices = 11` 而不是 14（`DECISIONS` 62）。
+
+**刷新率：** `Config.Monitor.UpdateInterval = 0` → **每个 tick 都刷新**
+（真实游戏有约 1 秒延迟，用户要即时。）
+

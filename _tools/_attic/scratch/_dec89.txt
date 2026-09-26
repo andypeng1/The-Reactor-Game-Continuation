@@ -1,0 +1,48 @@
+89. THE DOC MIRROR DRIFTED A SECOND TIME, AND THIS TIME THE CAUSE IS NAMED.
+
+    THE MEASUREMENT. Six thousand nine hundred and forty-nine bytes separated the CLAUDE
+    ModuleScript from its disk mirror. Measured, not estimated: call A took the source from 49378
+    to 49448 (+70), calls B and C from 49448 to 54734 (+5286), one more insert from 54734 to
+    56327 (+1593). Total +6949, and 56310 - 49361 = 6949 exactly. After the last insert the body
+    hashed to 559f6b8e, byte-identical to the disk.
+
+    THE CAUSE, AND IT IS NOT A MYSTERY. The drifting content is precisely what rounds 5 through 8
+    wrote into the disk .md - the 2.8 material-table warning block, the 2.9 ClickDetector row, the
+    2.10 ambient rewrite, three 3.1 items, the 3.4 screenshot item, two rows in 6. Round 9's own
+    edits WERE in the module. So those four rounds wrote the disk and not the ModuleScript: CLAUDE
+    0.0 asks for a two-way write and they did half of it. This is a process failure with a name,
+    not a sync mystery.
+
+    DECISIONS 82 ALREADY PREDICTED THIS. That entry recorded that the four docs are byte-mirrors
+    now and that every earlier parity check had passed WITHOUT them being one - the checks compared
+    disk to disk and could never have caught a module that had stopped being written. This
+    recurrence is the consequence of exactly that blind spot, so it confirms 82 rather than
+    contradicting it.
+
+    HOW IT WAS LOCALIZED: CUMULATIVE PREFIX HASHES, A DIFF THAT MOVES NO TEXT. Reading 6949 bytes
+    of prose to find a difference is both expensive and unreliable - this drift is grammatical and
+    correct, only stale, so nothing looks wrong while reading it. Instead the rolling hash was
+    taken over the PREFIX before each heading, on both sides, and compared. Nine anchors from the
+    1 heading through 3.1 matched; everything from 3.2 onward differed. That confined 100 percent
+    of the drift to one section. The same trick one level down, over the item lines inside 3.1,
+    put the first divergence between the monitor-screen item and the shell item. A 1828-byte window
+    dump of the disk then showed it by eye: an entire COMPLETED item, the control-room shell entry,
+    that the plan for 3.1 had never accounted for - it recognized the remaining shell item and not
+    the finished one directly above it. The block measured exactly 1593 bytes, which is the whole
+    remaining shortfall. Total moved: about a kilobyte of hex digits, and not one byte of prose.
+
+    THE READING RULE FOR PREFIX HASHES. A match at anchor k means everything BEFORE k is identical,
+    so the section that differs is the one immediately PRECEDING the first mismatch - not the one
+    the mismatch is printed on. I nearly read that backwards, which would have sent me into 3.2.
+
+    THE FIVE-EDITS-APPLIED ANOMALY IS CLOSED. Call A sent four edits and the tool reported five.
+    The final body hash now equals the disk, and a spurious fifth edit would necessarily have
+    changed the text. Byte equality is the strongest available form of that conclusion, so the
+    discrepancy was in the count report and never in the state. It is recorded here because an
+    unexplained count is a real observation, and only its resolution is allowed to be reassuring.
+
+    WHAT WOULD HAVE PREVENTED IT. A round's closing check must compare the MODULE's hash against
+    the disk's, which requires reading the module. Re-hashing the disk against its own recorded
+    value cannot detect a module that was never written - and that is the check that was run in
+    between. Writing the disk .md without writing the ModuleScript in the same step is the failure
+    mode, and it is invisible from the disk side by construction.

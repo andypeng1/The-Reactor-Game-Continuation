@@ -1,0 +1,88 @@
+==================== WARN_BLOCK  (623 bytes)
+> **⚠️ 这三个数是「现在」实测，不是不变量。** 三种材质**全部带 variant、未打标 = 0**。
+> 旧值 `49,758 / 5,906 / 44,456` 是首次遍扫当时的快照；之后控制台 / 监视器重建、
+> 激光重做、LED 条都改过总数，**别拿旧数对账**（`DECISIONS` 84、`PROGRESS` Phase 29）。
+>
+> 那次遍扫**按材质名过滤（只处理 `Metal`）**，所以**本来就写成 `DiamondPlate` 的
+> 3,194 个部件根本没进循环**，渲染成库存菱形板，紧挨着 5,907 个带
+> `FacilityFloorPlate` 的同类件 —— **同一材质名、两种外观，而且永远不会报错**。
+> 已补齐 3,545 件（只匹配 `BaseMaterial`，避免赋值顺带改写 `Material` 本身），失败 0。
+>
+> `MaterialService` 另有 3 个**空壳 variant**（`MaterialVariant` / `MaterialVariant1`
+> base Plastic、`CoolantRepeatingTexture` base Concrete），**无 `Texture` 子节点、
+> 0 引用**，形态同 §5.3 的 `generate_material` 空产物。**故意不删**（§1.4 / §6）。
+
+
+
+==================== SEC_2_10  (595 bytes)
+**问题不是「没特效」；但上面那句「只在事件触发时才喷」只能说对了一半。**
+实测（`DECISIONS` 83、`PROGRESS` Phase 28）：
+
+- `Workspace.Core` 确实全事件驱动 —— 97 个发射器**一个都没开**（`on=0 off=97`）。
+- 但**整个设施早就有常态层**：全场景 **278 个发射器 `Enabled` 且 `Rate > 0`**，
+  关着的 1,368 个才是事件触发那批。扣掉 `CullFolder` 里不渲染的 20 个，
+  **258 个是真正在跑的常态氛围**，主力是 `Smoke` ×105 —— 就是「蒸汽 / 热气」本身。
+  分布：`Geometry` 93 / `Facility` 56 / `Mainframe` 38 / `MovingParts` 21 /
+  `GravitationShafts` 18 / `CoolantReserviors` 10 / `GravatronUnit` 10 / `METU` 7。
+- 所以该做的**不是「造一层常态氛围」，而是让已有这层真的显示出来**：
+  278 个里 **277 个的贴图是自定义资产 id**（只有 1 个用内置 `rbxasset://`），权限一断
+  就等于「在喷但看不见」—— 不会报错，也不会有人发现。
+
+
+
+==================== SHELL_ITEM  (968 bytes)
+- [ ] 设施外壳 / 房间内部 —— **控制室已完成；反应堆舱已实测，无需改动**
+      （`PROGRESS` Phase 31 / `DECISIONS` 86）。**剩下的不是「修正」而是「装饰 + 英雄资产」。**
+      实测结论：舱壁那 230 件 `200,205`（全场最亮大面族，378,704 studs²）**不是离群值**
+      —— 该子树的**完整**非 Neon 色调阶梯是 **0 → 255 连续分布，众数就在 192–207（1,040/4,079）**，
+      上方还有 229 件在 240–255。**那次误判的根因是只统计大面（face ≥ 300）**
+      —— 大面统计 ≠ 房间色调：舱里 1,138 件 190–223 的非 Neon 件有 980 件**就是墙本身**，
+      过滤掉小件等于把墙留在一个被抽空的分布里看。**口径决定结论。**
+      三条独立复核：>223 的 269 件总面积仅 2,044 studs²（占墙族 0.5%），
+      **face ≥ 300 的 0 件**；墙子树里的 267 件 `FacilityFloorPlate` + 12 件亮 `Concrete`
+      **全是竖直薄条**（thin 0.1–0.2），是装饰嵌条；`Mainframe` 那 2,405 件亮件是
+      `Line` 1,421 + `TextPart` 776 + 白风扇，共 7,719 studs²。
+      **判据本身也记一笔**：按「色调距离」找离群是错的仪器 —— 它把 `CullFolder` 里
+      「舱壁 vs 控制室新壳」报成 55 件离群；真正管用的是**材料角色错配**，而第七轮那个
+      「地板材质+variant 装在天花板」的全场复测**无复发**。
+      **本轮零场景写入**，也**故意没写 kit**（一个 scan 报「无需修正」的 kit 是负债）。
+      `MonitorsFacility` / `RoomLights` / `Alarms` / `Lights` 仍是原版（实测为灯具/监视器装置，非建筑外壳）。
+
+==================== AMBIENT_ITEM  (312 bytes)
+- [x] **常态氛围 VFX —— 本来就有，不是缺失项**（`DECISIONS` 83、`PROGRESS` Phase 28）。
+      实测 **278 个发射器 `Enabled` 且 `Rate > 0`**（`CullFolder` 外 **258 个**），主力 `Smoke` ×105。
+      本轮真正修的是**两个永远画不出来的**：`Texture` 写成裸 id `6422188442'`（缺前缀 + 多一个撇号），
+      已规范成 `rbxassetid://6422188442`，`MALFORMED` 归零。
+      **剩下的不是造层，是贴图权限 + 观感。**
+
+==================== MATERIAL_ITEM  (626 bytes)
+- [~] 材质分区的细化 —— **一致性已补齐，启发式本身仍待细化**（`DECISIONS` 84、
+      `PROGRESS` Phase 29）。已做：把遍扫漏掉的 3,545 件补齐，三种材质现在
+      **未打标 = 0**（`FacilitySteelPanel` 48,983 / `FacilityFloorPlate` 9,103 /
+      `ReactorWallPlate` 46,951）。**未做：按几何角色重新分区。**
+      顺手量了可行性 —— 对 `Facility`/`Geometry`/`CullFolder`/`Mainframe`/
+      `MovingParts`/`ChamberWalls` 共 70,871 件按形状分类，结果是
+      **FLOOR 9,797 / WALL 430 / CHUNK 60,644**：房间绝大部分是「块状」几何，
+      **纯形状启发式没有多少可分配的空间**。真要细分得按「容器意图 + 形状」
+      混合判定，而不是只看形状 —— 另外 `MovingParts`（9,206 件 `ReactorWallPlate`）
+      与 `Mainframe`（14,016 件 `FacilitySteelPanel`）同属机械却拿了两种皮，
+      这是按容器名分配的遗留不一致，**留待下一轮**。
+
+==================== SEC_3_4_TAIL  (308 bytes)
+- [ ] 项目根 `opencode.json` 已写好，重启 opencode 生效
+- [ ] **Studio 截图送不到 vision sidecar**：`capture_screenshot` 只把图片**内联**返回，
+      不落盘、也不进剪贴板，而 `describe_image` 只认「路径 / URL / data URL」，两边接不上。
+      想让我「看」渲染结果，得先把图存成文件（或让 MCP 写进 `.ai/inbox`）。
+      `PreloadAsync` 的逐资源回调在命令栏 VM 里**根本不触发**（70 个全 `NO-CALLBACK`），也别指望它。
+
+==================== CP_ROW  (50 bytes)
+| `ClickPart` | ClickDetector 宿主 | 941（旧记 1,023） |
+
+==================== MON_ROW  (37 bytes)
+| `*ControlRoomMonitor` | 监视器屏幕 | 7 |
+
+==================== MON_SVC_ROW  (48 bytes)
+      MonitorService    [ModuleScript] 7 台控制室监视器
+
+==================== MON_DIR_ROW  (86 bytes)
+  Monitors/             ← Main / Thermal / Power / Quota / Alerts / Log / Forecast 监视器

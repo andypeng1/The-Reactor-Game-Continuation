@@ -1,0 +1,996 @@
+# The Reactor Game -- original-game change recorder v1.0
+# constraint: only changed values are written; no heartbeat
+# session 260926-151207 placeId=17596243941 jobId=b59cabcd-0d10-4715-8aaf-04fc48256666 player=andypeng1NB transport=http8765
+# keys r=reactor m=monitor x=unreadable c=control s=stats z=lamp
+EVT1 START reactorFrame=true thermal=true cbl=true power=true stats=true logs=true hooks=1001
+EVT2 LAMPMAP CBL1Systems CBLaserConsole.CBL1Systems.PressureButton.NeonPart
+EVT3 LAMPMAP CFLever2 ThermalConsole.CFLever2.OfflineLight.NeonPart
+EVT4 LAMPMAP CFLever1 ThermalConsole.CFLever1.OfflineLight.NeonPart
+EVT5 LAMPMAP CFLever6 ThermalConsole.CFLever6.OfflineLight.NeonPart
+EVT6 LAMPMAP SAMKeyboard MainReactorConsole.SAMKeyboard.Light1.NeonPart|MainReactorConsole.SAMKeyboard.Light2.NeonPart
+EVT7 LAMPMAP ControlRoomSystems ALTReactorConsole.ControlRoomSystems.AlarmMuteButton.NeonPart|ALTReactorConsole.ControlRoomSystems.ShuttersLever.OfflineLight.NeonPart
+EVT8 LAMPMAP CFLever4 ThermalConsole.CFLever4.OfflineLight.NeonPart
+EVT9 LAMPMAP OverloadButton ElectricGridConsole.OverloadButton.NeonPart
+EVT10 LAMPMAP CBL2Systems CBLaserConsole.CBL2Systems.PressureButton.NeonPart
+EVT11 LAMPMAP CoolantControl2 ThermalConsole.CoolantControl2.Light1.NeonPart|ThermalConsole.CoolantControl2.Light2.NeonPart|ThermalConsole.CoolantControl2.Light3.NeonPart
+EVT12 LAMPMAP CoolantControl1 ThermalConsole.CoolantControl1.Light1.NeonPart|ThermalConsole.CoolantControl1.Light2.NeonPart|ThermalConsole.CoolantControl1.Light3.NeonPart
+EVT13 LAMPMAP CFLever3 ThermalConsole.CFLever3.OfflineLight.NeonPart
+EVT14 LAMPMAP E_VENTLever2 MainReactorConsole.E_VENTLever2.OfflineLight.NeonPart
+EVT15 LAMPMAP CoolantControl3 ThermalConsole.CoolantControl3.Light1.NeonPart|ThermalConsole.CoolantControl3.Light2.NeonPart|ThermalConsole.CoolantControl3.Light3.NeonPart
+EVT16 LAMPMAP E_VENTLever3 MainReactorConsole.E_VENTLever3.OfflineLight.NeonPart
+EVT17 LAMPMAP CBL3Systems CBLaserConsole.CBL3Systems.PressureButton.NeonPart
+EVT18 LAMPMAP Model MainReactorConsole.Model.OfflineLight.NeonPart
+EVT19 LAMPMAP E_VENTLever1 MainReactorConsole.E_VENTLever1.OfflineLight.NeonPart
+EVT20 LAMPMAP CFLever5 ThermalConsole.CFLever5.OfflineLight.NeonPart
+EVT21 LAMPMAP AtmosphereVentButton MainReactorConsole.AtmosphereVentButton.NeonPart
+EVT22 TEXT x.temp ERR F
+EVT23 TEXT x.press ERR PSI
+EVT24 TEXT x.fluct ERR F
+EVT25 STATADD CBL1.TempVal
+EVT26 STATADD Fans.Fan1
+EVT27 STATADD ChamberGravity
+EVT28 STATADD GravatronActive
+EVT29 STATADD ISEBreach
+EVT30 STATADD CBL3.TempVal
+EVT31 STATADD MainframeMeltdown
+EVT32 STATADD ActiveQPUs
+EVT33 STATADD Fans.Fan4
+EVT34 STATADD NextShift
+EVT35 STATADD ReportsDone
+EVT36 STATADD GameActive
+EVT37 STATADD CBL1.Active
+EVT38 STATADD Core.BreachVal
+EVT39 STATADD Core.RadiationVal
+EVT40 STATADD AutoMed
+EVT41 STATADD Core.TemperatureVal
+EVT42 STATADD HDEF.IntegrityVal
+EVT43 STATADD Fans
+EVT44 STATADD ResetShift
+EVT45 STATADD Core.HDEFVal
+EVT46 STATADD CBL2.TempVal
+EVT47 STATADD HDEF
+EVT48 STATADD Fans.Fan6
+EVT49 STATADD Fans.Fan5
+EVT50 STATADD Fans.Fan3
+EVT51 STATADD CBL2
+EVT52 STATADD Core.OutputVal
+EVT53 STATADD CBL3.Active
+EVT54 STATADD Fans.Fan2
+EVT55 STATADD Core
+EVT56 STATADD Core.PressureVal
+EVT57 STATADD CBL2.Active
+EVT58 STATADD CBL3
+EVT59 STATADD DecayFields
+EVT60 STATADD GameFail
+EVT61 STATADD CBL1
+EVT62 STATADD GameStart
+EVT63 LAMPPAL a=137,255,147
+EVT64 LAMPPAL b=17,17,17
+EVT65 LAMPPAL c=255,170,0
+EVT66 LAMPPAL d=255,0,0
+EVT67 LAMPPAL e=240,240,240
+EVT68 LAMPPAL f=255,255,0
+B 1 t=0.88 c.fan1=0 c.fan2=0 c.fan3=0 c.fan4=0 c.fan5=0 c.fan6=0 c.fanCount=0 c.cbl1Pct=100 c.cbl1On=0 c.cbl1Lvl=0 c.cbl2Pct=100 c.cbl2On=0 c.cbl2Lvl=0 c.cbl3Pct=100 c.cbl3On=0 c.cbl3Lvl=0 c.cool1=0 c.cool2=0 c.cool3=0 c.coolSum=0 s.Core.TemperatureVal=0 s.Core.OutputVal=0 s.Core.RadiationVal=0 s.Core.PressureVal=20 s.Core.HDEFVal=0 s.Core.BreachVal=false s.CBL1.TempVal=140 s.CBL1.Active=false s.CBL2.TempVal=140 s.CBL2.Active=false s.CBL3.TempVal=140 s.CBL3.Active=false s.HDEF.IntegrityVal=12 s.GameActive=false s.ISEBreach=false s.GameStart=true s.ActiveQPUs=6 s.MainframeMeltdown=false s.GravatronActive=true s.ChamberGravity=false s.DecayFields=true s.AutoMed=true s.GameFail=false s.Fans.Fan1=true s.Fans.Fan2=true s.Fans.Fan3=true s.Fans.Fan4=true s.Fans.Fan5=true s.Fans.Fan6=true s.NextShift=false s.ResetShift=false s.ReportsDone=0 z.systems=20 z.parts=28
+EVT69 CLICK path=Workspace.Consoles.ALTReactorConsole.ControlRoomSystems.ShuttersLever.ClickPart
+EVT70 LAMPPAL g=0,0,0
+EVT71 CLICK path=Workspace.Consoles.ALTReactorConsole.ControlRoomSystems.RoomLightButton.ClickPart
+EVT72 CLICK path=Workspace.Consoles.ALTReactorConsole.ControlRoomSystems.MonitorPowerButton.ClickPart
+EVT73 CLICK path=Workspace.Consoles.MainReactorConsole.MonitorBootButton.ClickPart
+EVT74 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT75 CLICK StartUpLever
+S 119 t=34.88 dt=271 c.cool1=1 c.cool2=1 c.cool3=1 c.coolSum=3
+S 126 t=36.78 dt=263 s.Core.RadiationVal=6
+S 127 t=37.07 dt=282 s.Core.RadiationVal=34
+S 128 t=37.33 dt=265 s.Core.RadiationVal=69
+S 129 t=37.60 dt=269 s.Core.RadiationVal=100
+S 130 t=37.88 dt=284 s.Core.RadiationVal=130
+S 131 t=38.20 dt=315 s.Core.RadiationVal=165
+S 132 t=38.46 dt=257 s.Core.RadiationVal=192
+S 133 t=38.76 dt=308 s.Core.RadiationVal=220
+S 134 t=39.10 dt=338 s.Core.RadiationVal=249
+S 135 t=39.35 dt=252 c.fan1=1 c.fanCount=1 s.Core.RadiationVal=262
+S 136 t=39.67 dt=312 s.Core.RadiationVal=290
+S 137 t=39.94 dt=274 c.fan2=1 c.fanCount=2 s.Core.RadiationVal=306
+S 138 t=40.28 dt=342 c.fan3=1 c.fanCount=3 s.Core.RadiationVal=326
+S 139 t=40.56 dt=274 s.Core.RadiationVal=339
+S 140 t=40.82 dt=266 c.fan4=1 c.fanCount=4 s.Core.RadiationVal=346
+S 141 t=41.10 dt=275 s.Core.RadiationVal=354
+S 142 t=41.36 dt=263 c.fan5=1 c.fanCount=5 s.Core.RadiationVal=358
+S 143 t=41.63 dt=270 s.Core.RadiationVal=360
+S 144 t=41.89 dt=260 c.fan6=1 c.fanCount=6
+S 223 t=63.11 dt=310 c.cbl1On=1 c.cbl1Lvl=4 c.cbl2On=1 c.cbl2Lvl=4 c.cbl3On=1 c.cbl3Lvl=4 s.CBL1.TempVal=258 s.CBL1.Active=true s.CBL2.TempVal=258 s.CBL2.Active=true s.CBL3.TempVal=258 s.CBL3.Active=true
+S 224 t=63.37 dt=266 s.CBL1.TempVal=355 s.CBL2.TempVal=355 s.CBL3.TempVal=355
+S 225 t=63.66 dt=285 s.CBL1.TempVal=462 s.CBL2.TempVal=462 s.CBL3.TempVal=462
+S 226 t=63.96 dt=296 s.CBL1.TempVal=581 s.CBL2.TempVal=581 s.CBL3.TempVal=581
+S 227 t=64.24 dt=287 s.CBL1.TempVal=666 s.CBL2.TempVal=666 s.CBL3.TempVal=666
+S 228 t=64.50 dt=255 s.CBL1.TempVal=745 s.CBL2.TempVal=745 s.CBL3.TempVal=745
+S 229 t=64.77 dt=270 s.CBL1.TempVal=801 s.CBL2.TempVal=801 s.CBL3.TempVal=801
+S 230 t=65.04 dt=277 s.CBL1.TempVal=861 s.CBL2.TempVal=861 s.CBL3.TempVal=861
+S 231 t=65.32 dt=278 s.CBL1.TempVal=899 s.CBL2.TempVal=899 s.CBL3.TempVal=899
+S 232 t=65.58 dt=253 s.CBL1.TempVal=919 s.CBL2.TempVal=919 s.CBL3.TempVal=919
+S 233 t=65.83 dt=254 s.CBL1.TempVal=924 s.CBL2.TempVal=924 s.CBL3.TempVal=924
+S 234 t=66.14 dt=308 s.CBL1.TempVal=925 s.CBL2.TempVal=925 s.CBL3.TempVal=925
+S 301 t=84.62 dt=275 s.ChamberGravity=true
+S 315 t=88.47 dt=276 c.cbl1Pct=50 c.cbl1Lvl=2 c.cbl2Pct=50 c.cbl2Lvl=2 c.cbl3Pct=50 c.cbl3Lvl=2
+S 316 t=88.74 dt=263 s.HDEF.IntegrityVal=25
+S 317 t=89.01 dt=273 s.HDEF.IntegrityVal=36
+S 318 t=89.27 dt=264 s.HDEF.IntegrityVal=48
+S 319 t=89.55 dt=278 s.HDEF.IntegrityVal=59
+S 320 t=89.84 dt=292 s.HDEF.IntegrityVal=70
+S 321 t=90.14 dt=300 s.HDEF.IntegrityVal=80
+S 322 t=90.43 dt=286 s.HDEF.IntegrityVal=86
+S 323 t=90.69 dt=261 s.HDEF.IntegrityVal=92
+S 324 t=90.98 dt=284 s.HDEF.IntegrityVal=96
+S 325 t=91.26 dt=282 s.HDEF.IntegrityVal=99
+S 327 t=91.79 dt=273 s.Core.TemperatureVal=326 s.Core.OutputVal=5 s.Core.RadiationVal=369 s.Core.PressureVal=272
+S 328 t=92.06 dt=270 s.Core.TemperatureVal=840 s.Core.OutputVal=13 s.Core.RadiationVal=384 s.Core.PressureVal=671
+S 329 t=92.38 dt=324 s.Core.TemperatureVal=1409 s.Core.OutputVal=22 s.Core.RadiationVal=400 s.Core.PressureVal=1112
+S 330 t=92.64 dt=254 s.Core.TemperatureVal=1790 s.Core.OutputVal=27 s.Core.RadiationVal=411 s.Core.PressureVal=1407
+S 331 t=92.91 dt=273 s.Core.TemperatureVal=2229 s.Core.OutputVal=34 s.Core.RadiationVal=423 s.Core.PressureVal=1748
+S 332 t=93.17 dt=261 s.Core.TemperatureVal=2613 s.Core.OutputVal=40 s.Core.RadiationVal=434 s.Core.PressureVal=2045
+EVT76 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 333 t=93.43 dt=256 s.Core.TemperatureVal=2995 s.Core.OutputVal=46 s.Core.RadiationVal=445 s.Core.PressureVal=2341
+S 334 t=93.68 dt=255 s.Core.TemperatureVal=3399 s.Core.OutputVal=52 s.Core.RadiationVal=457 s.Core.PressureVal=2654
+S 335 t=93.95 dt=269 s.Core.TemperatureVal=3822 s.Core.OutputVal=58 s.Core.RadiationVal=469 s.Core.PressureVal=2982
+S 336 t=94.21 dt=257 s.Core.TemperatureVal=4224 s.Core.OutputVal=65 s.Core.RadiationVal=480 s.Core.PressureVal=3293
+S 337 t=94.55 dt=344 s.Core.TemperatureVal=4720 s.Core.OutputVal=72 s.Core.RadiationVal=494 s.Core.PressureVal=3678
+S 338 t=94.80 dt=253 s.Core.TemperatureVal=5083 s.Core.OutputVal=78 s.Core.RadiationVal=505 s.Core.PressureVal=3959
+S 339 t=95.06 dt=259 s.Core.TemperatureVal=5435 s.Core.OutputVal=83 s.Core.RadiationVal=515 s.Core.PressureVal=4232
+S 340 t=95.32 dt=259 s.Core.TemperatureVal=5746 s.Core.OutputVal=88 s.Core.RadiationVal=523 s.Core.PressureVal=4473
+S 341 t=95.61 dt=284 s.Core.TemperatureVal=6139 s.Core.OutputVal=94 s.Core.RadiationVal=535 s.Core.PressureVal=4777
+S 342 t=95.91 dt=305 s.Core.TemperatureVal=6503 s.Core.OutputVal=99 s.Core.RadiationVal=545 s.Core.PressureVal=5060
+S 343 t=96.18 dt=270 s.Core.TemperatureVal=6818 s.Core.OutputVal=104 s.Core.RadiationVal=554 s.Core.PressureVal=5304
+S 344 t=96.44 dt=257 s.Core.TemperatureVal=7071 s.Core.OutputVal=108 s.Core.RadiationVal=561 s.Core.PressureVal=5499
+S 345 t=96.76 dt=324 s.Core.TemperatureVal=7454 s.Core.OutputVal=114 s.Core.RadiationVal=572 s.Core.PressureVal=5796
+S 346 t=97.03 dt=267 s.Core.TemperatureVal=7700 s.Core.OutputVal=118 s.Core.RadiationVal=579 s.Core.PressureVal=5987
+S 347 t=97.31 dt=279 s.Core.TemperatureVal=7928 s.Core.OutputVal=121 s.Core.RadiationVal=586 s.Core.PressureVal=6164
+S 348 t=97.57 dt=263 s.Core.TemperatureVal=8170 s.Core.OutputVal=125 s.Core.RadiationVal=592 s.Core.PressureVal=6351
+S 349 t=97.84 dt=267 s.Core.TemperatureVal=8392 s.Core.OutputVal=128 s.Core.RadiationVal=599 s.Core.PressureVal=6523
+S 350 t=98.13 dt=292 s.Core.TemperatureVal=8605 s.Core.OutputVal=132 s.Core.RadiationVal=605 s.Core.PressureVal=6688
+S 351 t=98.40 dt=269 s.Core.TemperatureVal=8757 s.Core.OutputVal=134 s.Core.RadiationVal=609 s.Core.PressureVal=6806
+S 352 t=98.67 dt=271 s.Core.TemperatureVal=8924 s.Core.OutputVal=136 s.Core.RadiationVal=614 s.Core.PressureVal=6935
+S 353 t=98.96 dt=288 s.Core.TemperatureVal=9035 s.Core.OutputVal=138 s.Core.RadiationVal=617 s.Core.PressureVal=7022
+S 354 t=99.23 dt=270 s.Core.TemperatureVal=9155 s.Core.OutputVal=140 s.Core.RadiationVal=620 s.Core.PressureVal=7115
+S 355 t=99.53 dt=299 s.Core.TemperatureVal=9267 s.Core.OutputVal=142 s.Core.RadiationVal=624 s.Core.PressureVal=7201
+S 356 t=99.79 dt=267 s.Core.TemperatureVal=9324 s.Core.OutputVal=143 s.Core.RadiationVal=625 s.Core.PressureVal=7246
+S 357 t=100.05 dt=257 s.Core.TemperatureVal=9374 s.Core.RadiationVal=627 s.Core.PressureVal=7284
+S 358 t=100.31 dt=257 s.Core.TemperatureVal=9412 s.Core.OutputVal=144 s.Core.RadiationVal=628 s.Core.PressureVal=7314
+S 359 t=100.56 dt=259 s.Core.TemperatureVal=9420 s.Core.PressureVal=7320
+S 363 t=101.68 dt=272 s.GameActive=true
+EVT77 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+EVT78 CLICK AVB
+S 370 t=103.56 dt=278 m.temp=9558 m.press=7156 m.fluct=138 s.Core.RadiationVal=673
+EVT79 LAMPPAL h=255,141,42
+S 371 t=103.86 dt=293 s.Core.PressureVal=7042
+S 372 t=104.15 dt=296 s.Core.PressureVal=6863
+PHASE1 RUN t=104.15 armed
+S 373 t=104.46 dt=307 s.Core.PressureVal=6691
+S 374 t=104.71 dt=257 s.Core.PressureVal=6555
+S 375 t=104.98 dt=261 s.Core.PressureVal=6410
+S 376 t=105.25 dt=276 m.temp=9583 m.press=3656 m.fluct=25 s.Core.RadiationVal=683 s.Core.PressureVal=6252
+S 377 t=105.52 dt=272 s.Core.PressureVal=6122
+EVT80 CLICK Coolant3-OFF
+S 378 t=105.80 dt=281 c.cool3=0 c.coolSum=2 s.Core.PressureVal=5967
+S 379 t=106.08 dt=272 s.Core.PressureVal=5837
+S 380 t=106.35 dt=272 s.Core.PressureVal=5693
+EVT81 CLICK Coolant2-OFF
+S 381 t=106.63 dt=283 c.cool2=0 c.coolSum=1 s.Core.PressureVal=5564
+S 382 t=106.90 dt=266 m.temp=9843 m.fluct=260 s.Core.RadiationVal=685 s.Core.PressureVal=5421
+EVT82 CLICK Coolant1-OFF
+S 383 t=107.17 dt=275 s.Core.PressureVal=5300
+S 384 t=107.43 dt=254 c.cool1=0 c.coolSum=0 s.Core.PressureVal=5189
+S 385 t=107.80 dt=370 s.Core.PressureVal=5033
+S 386 t=108.08 dt=288 s.Core.PressureVal=4883
+S 387 t=108.34 dt=254 s.Core.PressureVal=4795
+S 388 t=108.61 dt=276 m.temp=10287 m.fluct=444 s.Core.RadiationVal=703 s.Core.PressureVal=4676
+S 389 t=108.87 dt=252 s.Core.PressureVal=4572
+S 390 t=109.15 dt=284 s.Core.PressureVal=4471
+S 391 t=109.41 dt=262 s.Core.PressureVal=4388
+S 392 t=109.68 dt=268 s.Core.PressureVal=4308
+S 393 t=109.96 dt=284 s.Core.PressureVal=4208
+EVT83 CLICK CBL3-PW5
+S 394 t=110.24 dt=273 c.cbl3Pct=125 c.cbl3Lvl=5 s.Core.PressureVal=4130
+EVT84 CLICK CBL3-PW5
+S 395 t=110.49 dt=255 m.temp=10638 m.fluct=351 s.Core.RadiationVal=735 s.Core.PressureVal=4074
+S 396 t=110.76 dt=273 s.Core.PressureVal=4009
+S 397 t=111.02 dt=257 s.Core.PressureVal=3937
+EVT85 CLICK CBL2-PW5
+S 398 t=111.28 dt=262 c.cbl2Pct=125 c.cbl2Lvl=5 s.Core.PressureVal=3884
+EVT86 CLICK CBL2-PW5
+S 399 t=111.55 dt=272 s.Core.PressureVal=3835
+S 400 t=111.81 dt=256 s.Core.PressureVal=3795
+S 401 t=112.11 dt=299 m.temp=11225 m.fluct=587 s.Core.RadiationVal=760 s.Core.PressureVal=3751
+EVT87 CLICK CBL1-PW5
+S 402 t=112.40 dt=292 s.Core.PressureVal=3720
+EVT88 CLICK CBL1-PW5
+S 403 t=112.70 dt=294 c.cbl1Pct=125 c.cbl1Lvl=5 s.Core.PressureVal=3692
+S 404 t=113.00 dt=307 s.Core.PressureVal=3672
+S 405 t=113.26 dt=259 s.Core.PressureVal=3662
+S 406 t=113.54 dt=275 s.Core.PressureVal=3656
+EVT89 LAMPPAL i=255,78,78
+S 408 t=114.13 dt=310 m.temp=12085 m.fluct=860 s.Core.RadiationVal=802
+S 414 t=115.75 dt=272 m.temp=13033 m.fluct=948 s.Core.RadiationVal=863
+S 420 t=117.42 dt=264 m.temp=13956 m.fluct=923 s.Core.RadiationVal=931
+S 427 t=119.45 dt=292 m.temp=14821 m.press=3540 m.fluct=865 s.Core.RadiationVal=997
+S 432 t=120.89 dt=268 m.temp=15726 m.press=3430 m.fluct=905 s.Core.RadiationVal=1059
+S 439 t=122.78 dt=297 m.temp=16648 m.press=3328 m.fluct=922 s.Core.RadiationVal=1123
+S 445 t=124.44 dt=312 m.temp=17523 m.press=3232 m.fluct=875 s.Core.RadiationVal=1189
+EVT90 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 452 t=126.43 dt=286 m.temp=18535 m.press=3144 m.fluct=1012 s.Core.RadiationVal=1252
+S 458 t=128.15 dt=261 m.temp=19492 m.press=3264 m.fluct=957 s.Core.RadiationVal=1824
+S 464 t=129.88 dt=252 m.temp=20431 m.press=3390 m.fluct=939 s.Core.RadiationVal=1892
+S 470 t=131.57 dt=303 m.temp=21327 m.press=3522 m.fluct=896 s.Core.RadiationVal=1959
+S 477 t=133.49 dt=291 m.temp=22222 m.press=3660 m.fluct=895 s.Core.RadiationVal=2023
+EVT91 CLICK CBL1-PW1
+S 482 t=134.85 dt=294 c.cbl1Pct=25 c.cbl1Lvl=1
+S 483 t=135.10 dt=256 m.temp=22657 m.press=3802 m.fluct=435 s.Core.RadiationVal=2087
+EVT92 CLICK CBL2-PW1
+S 488 t=136.48 dt=275 c.cbl2Pct=25 c.cbl2Lvl=1
+S 490 t=137.01 dt=266 m.temp=22893 m.press=3944 m.fluct=236 s.Core.RadiationVal=2118
+EVT93 CLICK CBL3-PW1
+S 494 t=138.14 dt=302 c.cbl3Pct=25 c.cbl3Lvl=1
+S 496 t=138.68 dt=276 m.temp=23092 m.press=4088 m.fluct=199 s.Core.RadiationVal=2135
+S 502 t=140.33 dt=309 m.temp=23331 m.press=4234 m.fluct=239 s.Core.RadiationVal=2149
+S 509 t=142.22 dt=265 m.temp=23517 m.press=4380 m.fluct=186 s.Core.RadiationVal=2167
+S 515 t=143.90 dt=289 m.temp=23791 m.press=4528 m.fluct=274 s.Core.RadiationVal=2180
+S 521 t=145.72 dt=274 m.temp=24027 m.press=4678 m.fluct=236 s.Core.RadiationVal=2199
+EVT94 CLICK AVB
+S 523 t=146.26 dt=261 s.Core.PressureVal=4667
+S 524 t=146.53 dt=271 s.Core.PressureVal=4529
+S 525 t=146.84 dt=308 s.Core.PressureVal=4356
+S 526 t=147.11 dt=279 s.Core.PressureVal=4212
+S 527 t=147.37 dt=255 s.Core.PressureVal=4075
+S 528 t=147.66 dt=286 m.temp=23508 m.press=1378 m.fluct=-519 c.cbl1Pct=10 c.cbl2Pct=10 c.cbl3Pct=10 s.Core.RadiationVal=2216 s.Core.PressureVal=3899
+EVT95 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 529 t=147.93 dt=277 s.Core.PressureVal=3775
+S 530 t=148.19 dt=260 s.Core.PressureVal=3621
+S 531 t=148.46 dt=269 s.Core.PressureVal=3516
+S 532 t=148.74 dt=275 s.Core.PressureVal=3352
+S 533 t=149.05 dt=310 s.Core.PressureVal=3176
+S 534 t=149.33 dt=280 m.temp=23170 m.press=1728 m.fluct=-338 s.Core.RadiationVal=2179 s.Core.PressureVal=3061
+S 535 t=149.58 dt=254 s.Core.PressureVal=2924
+S 536 t=149.84 dt=262 s.Core.PressureVal=2801
+S 537 t=150.13 dt=284 s.Core.PressureVal=2660
+S 538 t=150.39 dt=258 s.Core.PressureVal=2547
+S 539 t=150.66 dt=270 s.Core.PressureVal=2440
+S 540 t=150.91 dt=256 m.temp=22815 m.press=2078 m.fluct=-355 s.Core.RadiationVal=2155 s.Core.PressureVal=2340
+S 541 t=151.22 dt=313 s.Core.PressureVal=2227
+S 542 t=151.53 dt=302 s.Core.PressureVal=2099
+S 543 t=151.81 dt=279 s.Core.PressureVal=1998
+S 544 t=152.07 dt=269 s.Core.PressureVal=1907
+S 545 t=152.34 dt=263 s.Core.PressureVal=1823
+S 546 t=152.62 dt=285 s.Core.PressureVal=1736
+S 547 t=152.92 dt=302 m.temp=23184 m.press=2428 m.fluct=369 c.cbl1Pct=25 c.cbl2Pct=25 c.cbl3Pct=25 s.Core.RadiationVal=2130 s.Core.PressureVal=1633
+S 548 t=153.23 dt=311 s.Core.PressureVal=1571
+S 549 t=153.53 dt=295 s.Core.PressureVal=1484
+S 550 t=153.79 dt=260 s.Core.PressureVal=1447
+S 551 t=154.07 dt=277 s.Core.PressureVal=1381
+S 552 t=154.33 dt=267 s.Core.PressureVal=1337
+EVT96 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 553 t=154.60 dt=271 m.temp=23536 m.press=2778 m.fluct=352 s.Core.RadiationVal=2156 s.Core.PressureVal=1295
+S 554 t=154.86 dt=253 s.Core.PressureVal=1262
+S 555 t=155.13 dt=268 s.Core.PressureVal=1233
+S 556 t=155.43 dt=301 s.Core.PressureVal=1208
+S 557 t=155.69 dt=260 s.Core.PressureVal=1192
+S 558 t=155.95 dt=259 s.Core.PressureVal=1183
+EVT97 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 559 t=156.20 dt=256 m.temp=23797 m.press=2978 m.fluct=261 s.Core.RadiationVal=2181 s.Core.PressureVal=1178
+S 565 t=158.01 dt=294 m.temp=24096 m.press=3178 m.fluct=299 s.Core.RadiationVal=2200
+S 572 t=159.96 dt=303 m.temp=24393 m.press=3378 m.fluct=297 s.Core.RadiationVal=2221
+S 578 t=161.59 dt=270 m.temp=24597 m.press=3532 m.fluct=204 s.Core.RadiationVal=2242
+S 585 t=163.53 dt=274 m.temp=24756 m.press=3686 m.fluct=159 s.Core.RadiationVal=2257
+S 591 t=165.22 dt=274 m.temp=25016 m.press=3842 m.fluct=260 s.Core.RadiationVal=2268
+S 597 t=166.87 dt=256 m.temp=25270 m.press=4000 m.fluct=254 s.Core.RadiationVal=2287
+S 603 t=168.66 dt=344 m.temp=25487 m.press=4160 m.fluct=217 s.Core.RadiationVal=2305
+S 610 t=170.55 dt=291 m.temp=25742 m.press=4320 m.fluct=255 s.Core.RadiationVal=2321
+EVT98 CLICK AVB
+S 616 t=172.24 dt=270 m.temp=25154 m.press=1020 m.fluct=-588 c.cbl1Pct=10 c.cbl2Pct=10 c.cbl3Pct=10 s.Core.RadiationVal=2339 s.Core.PressureVal=4287
+S 617 t=172.50 dt=260 s.Core.PressureVal=4089
+S 618 t=172.77 dt=264 s.Core.PressureVal=3981
+S 619 t=173.10 dt=332 s.Core.PressureVal=3768
+S 620 t=173.37 dt=272 s.Core.PressureVal=3619
+EVT99 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 621 t=173.65 dt=275 s.Core.PressureVal=3474
+S 622 t=173.94 dt=289 s.Core.PressureVal=3344
+S 623 t=174.20 dt=262 m.temp=24807 m.press=1370 m.fluct=-347 s.Core.RadiationVal=2297 s.Core.PressureVal=3191
+S 624 t=174.47 dt=272 s.Core.PressureVal=3079
+S 625 t=174.74 dt=269 s.Core.PressureVal=2921
+EVT100 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 626 t=175.03 dt=293 s.Core.PressureVal=2765
+S 627 t=175.33 dt=300 s.Core.PressureVal=2626
+S 628 t=175.60 dt=268 s.Core.PressureVal=2499
+S 629 t=175.85 dt=252 m.temp=24400 m.press=1720 m.fluct=-407 s.Core.RadiationVal=2272 s.Core.PressureVal=2391
+S 630 t=176.12 dt=268 s.Core.PressureVal=2257
+S 631 t=176.40 dt=278 s.Core.PressureVal=2123
+S 632 t=176.66 dt=260 s.Core.PressureVal=2023
+S 633 t=176.91 dt=253 s.Core.PressureVal=1910
+S 634 t=177.17 dt=259 s.Core.PressureVal=1833
+S 635 t=177.52 dt=353 m.temp=24031 m.press=2070 m.fluct=-369 s.Core.RadiationVal=2243 s.Core.PressureVal=1693
+S 636 t=177.79 dt=269 s.Core.PressureVal=1580
+S 637 t=178.09 dt=301 s.Core.PressureVal=1483
+S 638 t=178.37 dt=275 s.Core.PressureVal=1400
+S 639 t=178.63 dt=259 s.Core.PressureVal=1332
+S 640 t=178.92 dt=290 s.Core.PressureVal=1249
+S 641 t=179.22 dt=303 s.Core.PressureVal=1181
+S 642 t=179.53 dt=308 m.temp=24443 m.press=2420 m.fluct=412 c.cbl1Pct=25 c.cbl2Pct=25 c.cbl3Pct=25 s.Core.RadiationVal=2217 s.Core.PressureVal=1104
+S 643 t=179.81 dt=280 s.Core.PressureVal=1045
+S 644 t=180.07 dt=256 s.Core.PressureVal=992
+EVT101 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 645 t=180.36 dt=292 s.Core.PressureVal=945
+S 646 t=180.65 dt=290 s.Core.PressureVal=907
+S 647 t=180.92 dt=269 s.Core.PressureVal=878
+S 648 t=181.20 dt=285 m.temp=24589 m.press=2620 m.fluct=146 s.Core.RadiationVal=2246 s.Core.PressureVal=857
+S 649 t=181.59 dt=392 s.Core.PressureVal=832
+S 650 t=181.89 dt=299 s.Core.PressureVal=822
+S 651 t=182.15 dt=256 s.Core.PressureVal=820
+S 654 t=182.96 dt=254 m.temp=24750 m.press=2820 m.fluct=161 s.Core.RadiationVal=2256
+S 660 t=184.64 dt=294 m.temp=24972 m.press=3020 m.fluct=222 s.Core.RadiationVal=2268
+S 666 t=186.35 dt=291 m.temp=25121 m.press=3220 m.fluct=149 s.Core.RadiationVal=2284
+S 673 t=188.29 dt=265 m.temp=25267 m.press=3378 m.fluct=146 s.Core.RadiationVal=2294
+S 678 t=189.80 dt=328 m.temp=25473 m.press=3538 m.fluct=206 s.Core.RadiationVal=2305
+S 685 t=191.75 dt=280 m.temp=25653 m.press=3698 m.fluct=180 s.Core.RadiationVal=2320
+EVT102 CLICK AVB
+S 690 t=193.44 dt=290 m.temp=25847 m.press=3860 m.fluct=194 s.Core.RadiationVal=2332
+EVT103 CLICK AVB
+EVT104 CLICK AVB
+EVT105 CLICK AVB
+EVT106 CLICK AVB
+EVT107 CLICK AVB
+EVT108 CLICK AVB
+EVT109 CLICK AVB
+EVT110 CLICK AVB
+EVT111 CLICK AVB
+EVT112 CLICK AVB
+EVT113 CLICK AVB
+EVT114 CLICK AVB
+S 697 t=195.32 dt=297 m.temp=26062 m.press=4022 m.fluct=215 s.Core.RadiationVal=2346
+EVT115 CLICK AVB
+EVT116 CLICK AVB
+EVT117 CLICK AVB
+EVT118 CLICK AVB
+EVT119 CLICK AVB
+EVT120 CLICK AVB
+EVT121 CLICK AVB
+EVT122 CLICK AVB
+EVT123 CLICK AVB
+S 703 t=197.01 dt=265 m.temp=26268 m.press=4186 m.fluct=206 s.Core.RadiationVal=2362
+EVT124 CLICK AVB
+EVT125 CLICK AVB
+EVT126 CLICK AVB
+S 708 t=198.38 dt=261 s.Core.PressureVal=4100
+S 709 t=198.65 dt=267 c.cbl1Pct=10 c.cbl2Pct=10 c.cbl3Pct=10 s.Core.RadiationVal=2376 s.Core.PressureVal=3984
+S 710 t=198.94 dt=290 m.temp=25665 m.press=886 m.fluct=-603 s.Core.PressureVal=3788
+S 711 t=199.20 dt=266 s.Core.PressureVal=3655
+S 712 t=199.49 dt=288 s.Core.PressureVal=3480
+S 713 t=199.76 dt=269 s.Core.PressureVal=3358
+S 714 t=200.04 dt=283 s.Core.PressureVal=3214
+EVT127 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 715 t=200.32 dt=274 s.Core.PressureVal=3063
+S 716 t=200.57 dt=252 m.temp=25282 m.press=1236 m.fluct=-383 s.Core.RadiationVal=2333 s.Core.PressureVal=2935
+S 717 t=200.85 dt=283 s.Core.PressureVal=2784
+S 718 t=201.14 dt=287 s.Core.PressureVal=2635
+S 719 t=201.42 dt=275 s.Core.PressureVal=2509
+S 720 t=201.74 dt=322 s.Core.PressureVal=2347
+S 721 t=201.99 dt=254 s.Core.PressureVal=2252
+S 722 t=202.33 dt=337 m.temp=24941 m.press=1586 m.fluct=-341 s.Core.RadiationVal=2306 s.Core.PressureVal=2087
+S 723 t=202.61 dt=285 s.Core.PressureVal=1945
+S 724 t=202.90 dt=289 s.Core.PressureVal=1836
+S 725 t=203.18 dt=273 s.Core.PressureVal=1752
+S 726 t=203.48 dt=305 s.Core.PressureVal=1621
+S 727 t=203.82 dt=337 s.Core.PressureVal=1491
+S 728 t=204.09 dt=274 m.temp=24504 m.press=1936 m.fluct=-437 s.Core.RadiationVal=2282 s.Core.PressureVal=1391
+S 729 t=204.39 dt=296 s.Core.PressureVal=1300
+S 730 t=204.67 dt=280 s.Core.PressureVal=1215
+S 731 t=204.95 dt=281 s.Core.PressureVal=1138
+S 732 t=205.25 dt=300 s.Core.PressureVal=1070
+S 733 t=205.54 dt=293 s.Core.PressureVal=990
+S 734 t=205.85 dt=310 m.temp=24065 m.press=2286 m.fluct=-439 s.Core.RadiationVal=2250 s.Core.PressureVal=924
+S 735 t=206.13 dt=280 s.Core.PressureVal=870
+S 736 t=206.43 dt=293 s.Core.PressureVal=821
+S 737 t=206.69 dt=259 s.Core.PressureVal=792
+S 738 t=206.98 dt=298 s.Core.PressureVal=753
+S 739 t=207.27 dt=286 s.Core.PressureVal=723
+S 740 t=207.53 dt=261 m.temp=24502 m.press=2636 m.fluct=437 c.cbl1Pct=25 c.cbl2Pct=25 c.cbl3Pct=25 s.Core.RadiationVal=2219 s.Core.PressureVal=708
+S 741 t=207.84 dt=306 s.Core.PressureVal=694
+EVT128 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 742 t=208.19 dt=351 s.Core.PressureVal=686
+S 746 t=209.27 dt=294 m.temp=24756 m.press=2836 m.fluct=254 s.Core.RadiationVal=2250
+EVT129 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 752 t=211.01 dt=285 m.temp=24906 m.press=3036 m.fluct=150 s.Core.RadiationVal=2268
+S 759 t=212.95 dt=260 m.temp=25085 m.press=3236 m.fluct=179 s.Core.RadiationVal=2279
+S 765 t=214.61 dt=301 m.temp=25326 m.press=3394 m.fluct=241 s.Core.RadiationVal=2292
+S 771 t=216.31 dt=274 m.temp=25554 m.press=3554 m.fluct=228 s.Core.RadiationVal=2309
+S 778 t=218.33 dt=278 m.temp=25755 m.press=3714 m.fluct=201 s.Core.RadiationVal=2325
+S 784 t=219.95 dt=277 m.temp=25930 m.press=3876 m.fluct=175 s.Core.RadiationVal=2340
+S 790 t=221.68 dt=279 m.temp=26187 m.press=4040 m.fluct=257 s.Core.RadiationVal=2352
+EVT130 CLICK AVB
+S 797 t=223.58 dt=271 m.temp=26478 m.press=4206 m.fluct=291 s.Core.RadiationVal=2371
+EVT131 CLICK AVB
+EVT132 CLICK AVB
+S 798 t=223.87 dt=292 s.Core.PressureVal=4111
+EVT133 CLICK AVB
+EVT134 CLICK AVB
+S 799 t=224.15 dt=273 s.Core.PressureVal=3965
+S 800 t=224.42 dt=277 s.Core.PressureVal=3782
+S 801 t=224.73 dt=306 s.Core.PressureVal=3602
+S 802 t=224.98 dt=253 s.Core.PressureVal=3470
+S 803 t=225.25 dt=270 m.temp=25937 m.press=906 m.fluct=-541 c.cbl1Pct=10 c.cbl2Pct=10 c.cbl3Pct=10 s.Core.RadiationVal=2391 s.Core.PressureVal=3334
+EVT135 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 804 t=225.74 dt=491 s.Core.PressureVal=3064
+S 805 t=226.02 dt=282 s.Core.PressureVal=2917
+S 806 t=226.31 dt=284 s.Core.PressureVal=2801
+S 807 t=226.59 dt=282 s.Core.PressureVal=2650
+S 808 t=226.85 dt=264 s.Core.PressureVal=2532
+S 809 t=227.14 dt=287 m.temp=25573 m.press=1256 m.fluct=-364 s.Core.RadiationVal=2353 s.Core.PressureVal=2394
+EVT136 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 810 t=227.42 dt=282 s.Core.PressureVal=2236
+S 811 t=227.75 dt=324 s.Core.PressureVal=2093
+S 812 t=228.02 dt=270 s.Core.PressureVal=1988
+S 813 t=228.32 dt=306 s.Core.PressureVal=1860
+S 814 t=228.65 dt=326 m.temp=25242 m.press=1606 m.fluct=-331 s.Core.RadiationVal=2327 s.Core.PressureVal=1727
+S 815 t=228.94 dt=295 s.Core.PressureVal=1627
+S 816 t=229.24 dt=292 s.Core.PressureVal=1534
+S 817 t=229.49 dt=253 s.Core.PressureVal=1422
+S 818 t=229.85 dt=359 s.Core.PressureVal=1306
+S 819 t=230.11 dt=258 s.Core.PressureVal=1230
+S 820 t=230.38 dt=271 s.Core.PressureVal=1155
+S 821 t=230.68 dt=300 m.temp=24942 m.press=1956 m.fluct=-300 s.Core.RadiationVal=2303 s.Core.PressureVal=1077
+S 822 t=230.95 dt=273 s.Core.PressureVal=1025
+S 823 t=231.21 dt=261 s.Core.PressureVal=962
+S 824 t=231.51 dt=301 s.Core.PressureVal=905
+S 825 t=231.86 dt=346 s.Core.PressureVal=840
+S 826 t=232.13 dt=277 s.Core.PressureVal=802
+S 827 t=232.42 dt=288 m.temp=24484 m.press=2306 m.fluct=-458 s.Core.RadiationVal=2282 s.Core.PressureVal=768
+S 828 t=232.67 dt=253 s.Core.PressureVal=747
+S 829 t=232.93 dt=254 s.Core.PressureVal=735
+S 830 t=233.19 dt=263 s.Core.PressureVal=718
+S 831 t=233.46 dt=273 s.Core.PressureVal=707
+S 832 t=233.75 dt=286 s.Core.PressureVal=706
+S 833 t=234.12 dt=373 m.temp=24827 m.press=2656 m.fluct=343 c.cbl1Pct=25 c.cbl2Pct=25 c.cbl3Pct=25 s.Core.RadiationVal=2249
+EVT137 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+EVT138 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 839 t=235.82 dt=274 m.temp=25058 m.press=2856 m.fluct=231 s.Core.RadiationVal=2273
+S 845 t=237.54 dt=273 m.temp=25312 m.press=3056 m.fluct=254 s.Core.RadiationVal=2290
+S 852 t=239.50 dt=271 m.temp=25608 m.press=3216 m.fluct=296 s.Core.RadiationVal=2308
+S 858 t=241.11 dt=262 m.temp=25868 m.press=3378 m.fluct=260 s.Core.RadiationVal=2329
+EVT139 CLICK Coolant1-ON
+S 859 t=241.37 dt=263 c.cool1=1 c.coolSum=1
+EVT140 CLICK Coolant2-ON
+S 862 t=242.20 dt=300 c.cool2=1 c.coolSum=2
+EVT141 CLICK path=Workspace.Consoles.ThermalConsole.CoolantControl2.PW1ClickPart
+S 864 t=242.78 dt=304 m.temp=25843 m.press=3540 m.fluct=-25 s.Core.RadiationVal=2348
+EVT142 CLICK path=Workspace.Consoles.ThermalConsole.CoolantControl1.PW1ClickPart
+S 871 t=244.72 dt=300 m.temp=25866 m.press=3702 m.fluct=23 s.Core.RadiationVal=2346
+S 877 t=246.43 dt=279 m.temp=25780 m.press=3864 m.fluct=-86 s.Core.RadiationVal=2348
+EVT143 CLICK CBL3-PW5
+S 881 t=247.55 dt=266 c.cbl3Pct=125 c.cbl3Lvl=5
+S 883 t=248.09 dt=277 m.temp=25770 m.press=4026 m.fluct=-10 s.Core.RadiationVal=2341
+EVT144 CLICK CBL2-PW5
+S 885 t=248.68 dt=313 c.cbl2Pct=125 c.cbl2Lvl=5
+S 889 t=249.99 dt=300 m.temp=25931 m.press=4188 m.fluct=161
+EVT145 CLICK AVB
+S 895 t=251.77 dt=396 m.temp=25326 m.press=888 m.fluct=-605 c.cbl1Pct=10 c.cbl2Pct=10 c.cbl2Lvl=1 c.cbl3Pct=10 c.cbl3Lvl=1 s.Core.RadiationVal=2352 s.Core.PressureVal=4052
+S 896 t=252.06 dt=291 s.Core.PressureVal=3892
+S 897 t=252.33 dt=271 s.Core.PressureVal=3783
+S 898 t=252.61 dt=280 s.Core.PressureVal=3627
+S 899 t=252.87 dt=266 s.Core.PressureVal=3460
+EVT146 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 900 t=253.14 dt=262 s.Core.PressureVal=3317
+S 901 t=253.42 dt=280 m.temp=24873 m.press=1238 m.fluct=-453 s.Core.RadiationVal=2309 s.Core.PressureVal=3191
+S 902 t=253.78 dt=365 s.Core.PressureVal=2976
+S 903 t=254.04 dt=258 s.Core.PressureVal=2834
+S 904 t=254.30 dt=259 s.Core.PressureVal=2715
+S 905 t=254.58 dt=285 s.Core.PressureVal=2598
+S 906 t=254.85 dt=269 s.Core.PressureVal=2462
+S 907 t=255.13 dt=281 s.Core.PressureVal=2332
+S 908 t=255.42 dt=285 m.temp=24381 m.press=1588 m.fluct=-492 s.Core.RadiationVal=2277 s.Core.PressureVal=2197
+S 909 t=255.76 dt=346 s.Core.PressureVal=2022
+S 910 t=256.03 dt=269 s.Core.PressureVal=1926
+S 911 t=256.35 dt=320 s.Core.PressureVal=1780
+EVT147 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 912 t=256.65 dt=294 s.Core.PressureVal=1700
+S 913 t=256.93 dt=281 s.Core.PressureVal=1579
+S 914 t=257.20 dt=276 m.temp=23826 m.press=1788 m.fluct=-555 s.Core.RadiationVal=2242 s.Core.PressureVal=1468
+S 915 t=257.52 dt=321 s.Core.PressureVal=1366
+EVT148 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 916 t=257.85 dt=321 s.Core.PressureVal=1263
+S 917 t=258.13 dt=284 s.Core.PressureVal=1174
+S 918 t=258.44 dt=305 s.Core.PressureVal=1100
+S 919 t=258.72 dt=289 m.temp=23206 m.press=1988 m.fluct=-620 s.Core.RadiationVal=2202 s.Core.PressureVal=1026
+S 920 t=258.98 dt=252 s.Core.PressureVal=964
+S 921 t=259.23 dt=257 s.Core.PressureVal=919
+EVT149 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 922 t=259.52 dt=282 s.Core.PressureVal=865
+S 923 t=259.78 dt=265 s.Core.PressureVal=819
+S 924 t=260.10 dt=324 s.Core.PressureVal=787
+S 925 t=260.36 dt=260 s.Core.PressureVal=749
+S 926 t=260.63 dt=268 m.temp=22803 m.press=2338 m.fluct=-403 s.Core.RadiationVal=2158 s.Core.PressureVal=726
+S 927 t=260.93 dt=301 s.Core.PressureVal=702
+S 928 t=261.21 dt=278 s.Core.PressureVal=692
+S 929 t=261.47 dt=255 s.Core.PressureVal=688
+S 932 t=262.34 dt=317 m.temp=23069 m.press=2688 m.fluct=266 c.cbl1Pct=25 c.cbl2Pct=125 c.cbl2Lvl=5 c.cbl3Pct=125 c.cbl3Lvl=5 s.Core.RadiationVal=2129
+S 939 t=264.23 dt=264 m.temp=23506 m.press=3038 m.fluct=437 s.Core.RadiationVal=2148
+EVT150 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+EVT151 CLICK Fan6
+S 945 t=265.95 dt=254 m.temp=23764 m.press=3238 m.fluct=258 s.Core.RadiationVal=2179
+S 946 t=266.21 dt=260 c.fan6=0 c.fanCount=5 s.Fans.Fan6=false
+EVT152 CLICK Fan5
+S 948 t=266.76 dt=295 c.fan5=0 c.fanCount=4 s.Fans.Fan5=false
+EVT153 CLICK Fan4
+S 951 t=267.58 dt=288 m.temp=24005 m.press=3568 m.fluct=241 c.fan4=0 c.fanCount=3 s.Core.RadiationVal=2197 s.Fans.Fan4=false
+S 958 t=269.50 dt=267 m.temp=24257 m.press=3900 m.fluct=252 s.Core.RadiationVal=2215
+S 964 t=271.22 dt=312 m.temp=24446 m.press=4232 m.fluct=189 s.Core.RadiationVal=2233
+S 970 t=272.89 dt=262 m.temp=24675 m.press=4566 m.fluct=229 s.Core.RadiationVal=2246
+S 977 t=274.87 dt=256 m.temp=24883 m.press=4902 m.fluct=208 s.Core.RadiationVal=2263
+S 983 t=276.58 dt=291 m.temp=25076 m.press=5238 m.fluct=193 s.Core.RadiationVal=2277
+S 989 t=278.22 dt=259 m.temp=25362 m.press=5576 m.fluct=286 s.Core.RadiationVal=2291
+EVT154 CLICK AVB
+S 994 t=279.56 dt=255 s.Core.PressureVal=5480
+S 995 t=279.85 dt=294 s.Core.PressureVal=5354
+S 996 t=280.16 dt=315 m.temp=25641 m.press=2276 m.fluct=279 s.Core.RadiationVal=2312 s.Core.PressureVal=5146
+S 997 t=280.43 dt=264 s.Core.PressureVal=5025
+EVT155 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 998 t=280.70 dt=273 s.Core.PressureVal=4874
+EVT156 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 999 t=280.97 dt=266 s.Core.PressureVal=4722
+S 1000 t=281.25 dt=283 s.Core.PressureVal=4600
+S 1001 t=281.54 dt=290 s.Core.PressureVal=4435
+S 1002 t=281.81 dt=269 m.temp=26189 m.press=2626 m.fluct=548 s.Core.RadiationVal=2332 s.Core.PressureVal=4290
+S 1003 t=282.09 dt=275 s.Core.PressureVal=4158
+S 1004 t=282.41 dt=330 s.Core.PressureVal=4006
+S 1005 t=282.67 dt=259 s.Core.PressureVal=3855
+S 1006 t=282.96 dt=289 s.Core.PressureVal=3699
+S 1007 t=283.25 dt=286 s.Core.PressureVal=3615
+S 1008 t=283.51 dt=259 m.temp=26717 m.press=2976 m.fluct=528 s.Core.RadiationVal=2371 s.Core.PressureVal=3467
+S 1009 t=283.80 dt=289 s.Core.PressureVal=3338
+S 1010 t=284.06 dt=259 s.Core.PressureVal=3228
+S 1011 t=284.32 dt=262 s.Core.PressureVal=3120
+S 1012 t=284.61 dt=290 s.Core.PressureVal=3021
+S 1013 t=284.89 dt=279 s.Core.PressureVal=2920
+S 1014 t=285.16 dt=277 s.Core.PressureVal=2825
+S 1015 t=285.42 dt=256 m.temp=27119 m.press=3326 m.fluct=402 s.Core.RadiationVal=2408 s.Core.PressureVal=2735
+S 1016 t=285.68 dt=264 s.Core.PressureVal=2659
+S 1017 t=285.96 dt=280 s.Core.PressureVal=2584
+S 1018 t=286.23 dt=264 s.Core.PressureVal=2507
+S 1019 t=286.49 dt=259 s.Core.PressureVal=2437
+S 1020 t=286.81 dt=322 s.Core.PressureVal=2357
+S 1021 t=287.11 dt=299 m.temp=27461 m.press=3676 m.fluct=342 s.Core.RadiationVal=2437 s.Core.PressureVal=2300
+S 1022 t=287.39 dt=284 s.Core.PressureVal=2250
+S 1023 t=287.67 dt=279 s.Core.PressureVal=2200
+S 1024 t=287.98 dt=309 s.Core.PressureVal=2159
+S 1025 t=288.28 dt=299 s.Core.PressureVal=2128
+S 1026 t=288.55 dt=272 s.Core.PressureVal=2109
+EVT157 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 1027 t=288.89 dt=344 m.temp=27830 m.press=4026 m.fluct=369 s.Core.RadiationVal=2462 s.Core.PressureVal=2086
+S 1028 t=289.18 dt=280 s.Core.PressureVal=2078
+S 1029 t=289.44 dt=264 s.Core.PressureVal=2076
+S 1034 t=290.79 dt=276 m.temp=28127 m.press=4226 m.fluct=297 s.Core.RadiationVal=2488
+EVT158 CLICK CBL2-PW1
+S 1040 t=292.46 dt=308 m.temp=28253 m.press=4426 m.fluct=126 s.Core.RadiationVal=2509
+S 1041 t=292.74 dt=279 c.cbl2Pct=25 c.cbl2Lvl=1
+EVT159 CLICK CBL2-PURGE
+EVT160 CLICK CBL3-PW1
+S 1046 t=294.17 dt=294 m.temp=28143 m.press=4926 m.fluct=-110 s.Core.RadiationVal=2518
+S 1047 t=294.44 dt=266 c.cbl3Pct=25 c.cbl3Lvl=1
+EVT161 CLICK CBL3-PURGE
+S 1052 t=295.90 dt=331 m.temp=28099 m.press=5582 m.fluct=-44 s.Core.RadiationVal=2510
+EVT162 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1059 t=297.84 dt=304 m.temp=27947 m.press=5936 m.fluct=-152 s.Core.RadiationVal=2507
+S 1065 t=299.49 dt=256 m.temp=27903 m.press=6290 m.fluct=-44 s.Core.RadiationVal=2496
+EVT163 CLICK Fan5
+S 1067 t=300.03 dt=272 c.fan5=1 c.fanCount=4 s.Fans.Fan5=true
+EVT164 CLICK Fan4
+S 1070 t=300.85 dt=273 c.fan4=1 c.fanCount=5 s.Fans.Fan4=true
+EVT165 CLICK Fan6
+S 1072 t=301.41 dt=292 m.temp=27945 m.press=6524 m.fluct=42 c.fan6=1 c.fanCount=6 s.Core.RadiationVal=2493 s.Fans.Fan6=true
+S 1078 t=303.12 dt=298 m.temp=27884 m.press=6698 m.fluct=-61 s.Core.RadiationVal=2496
+S 1084 t=304.81 dt=289 m.temp=27864 m.press=6872 m.fluct=-20 s.Core.RadiationVal=2492
+EVT166 CLICK AVB
+S 1087 t=305.70 dt=313 s.Core.PressureVal=6736
+S 1088 t=305.96 dt=268 s.Core.PressureVal=6594
+S 1089 t=306.22 dt=255 s.Core.PressureVal=6457
+S 1090 t=306.49 dt=268 m.temp=27833 m.press=3572 m.fluct=-31 s.Core.RadiationVal=2490 s.Core.PressureVal=6316
+EVT167 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 1091 t=306.76 dt=274 s.Core.PressureVal=6173
+S 1092 t=307.03 dt=267 s.Core.PressureVal=6016
+S 1093 t=307.29 dt=259 s.Core.PressureVal=5874
+S 1094 t=307.54 dt=255 s.Core.PressureVal=5734
+S 1095 t=307.80 dt=261 s.Core.PressureVal=5601
+S 1096 t=308.06 dt=257 s.Core.PressureVal=5478
+S 1097 t=308.32 dt=257 m.temp=27874 m.press=3922 m.fluct=41 s.Core.RadiationVal=2488 s.Core.PressureVal=5352
+S 1098 t=308.58 dt=260 s.Core.PressureVal=5230
+S 1099 t=308.86 dt=287 s.Core.PressureVal=5067
+S 1100 t=309.15 dt=288 s.Core.PressureVal=4976
+S 1101 t=309.42 dt=270 s.Core.PressureVal=4854
+S 1102 t=309.68 dt=262 s.Core.PressureVal=4725
+S 1103 t=309.97 dt=290 s.Core.PressureVal=4608
+S 1104 t=310.26 dt=281 m.temp=27889 m.press=4272 m.fluct=15 s.Core.RadiationVal=2491 s.Core.PressureVal=4486
+S 1105 t=310.56 dt=303 s.Core.PressureVal=4342
+S 1106 t=310.86 dt=302 s.Core.PressureVal=4240
+S 1107 t=311.15 dt=293 s.Core.PressureVal=4151
+S 1108 t=311.41 dt=259 s.Core.PressureVal=4052
+S 1109 t=311.68 dt=267 s.Core.PressureVal=3971
+S 1110 t=311.93 dt=255 m.temp=28060 m.press=4622 m.fluct=171 s.Core.RadiationVal=2492 s.Core.PressureVal=3901
+S 1111 t=312.22 dt=282 s.Core.PressureVal=3814
+S 1112 t=312.49 dt=275 s.Core.PressureVal=3735
+EVT168 CLICK CBL1-PW5
+S 1113 t=312.77 dt=282 c.cbl1Pct=125 c.cbl1Lvl=5 s.Core.PressureVal=3682
+S 1114 t=313.04 dt=266 s.Core.PressureVal=3625
+S 1115 t=313.37 dt=332 s.Core.PressureVal=3552
+S 1116 t=313.64 dt=265 m.temp=28730 m.press=4972 m.fluct=670 s.Core.RadiationVal=2504 s.Core.PressureVal=3518
+S 1117 t=313.89 dt=253 s.Core.PressureVal=3476
+EVT169 CLICK CBL2-PW5
+S 1118 t=314.17 dt=284 s.Core.PressureVal=3439
+S 1119 t=314.46 dt=292 c.cbl2Pct=125 c.cbl2Lvl=5 s.Core.PressureVal=3415
+S 1120 t=314.74 dt=274 s.Core.PressureVal=3395
+S 1121 t=315.01 dt=274 s.Core.PressureVal=3380
+EVT170 CLICK CBL3-PW5
+S 1122 t=315.29 dt=276 c.cbl3Pct=125 c.cbl3Lvl=5 s.Core.PressureVal=3373
+S 1123 t=315.58 dt=289 m.temp=29689 m.press=5322 m.fluct=959 s.Core.RadiationVal=2552 s.Core.PressureVal=3372
+S 1129 t=317.18 dt=300 m.temp=31068 m.press=6072 m.fluct=1379 s.Core.RadiationVal=3121
+EVT171 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 1136 t=319.07 dt=266 m.temp=32040 m.press=6672 m.fluct=972 s.Core.RadiationVal=3219
+EVT172 CLICK Coolant3-ON
+S 1140 t=320.14 dt=259 c.cool3=1 c.coolSum=3
+EVT173 CLICK path=Workspace.Consoles.ThermalConsole.CoolantControl3.PW3ClickPart
+S 1141 t=320.39 dt=259 c.cool3=3 c.coolSum=5
+EVT174 CLICK path=Workspace.Consoles.ThermalConsole.CoolantControl2.PW3ClickPart
+S 1143 t=320.93 dt=270 m.temp=32740 m.press=7274 m.fluct=700 s.Core.RadiationVal=3289
+S 1144 t=321.22 dt=283 c.cool2=3 c.coolSum=7
+EVT175 CLICK path=Workspace.Consoles.ThermalConsole.CoolantControl1.PW3ClickPart
+S 1146 t=321.81 dt=314 c.cool1=3 c.coolSum=9
+S 1148 t=322.49 dt=306 m.temp=33286 m.press=7878 m.fluct=546 s.Core.RadiationVal=3339
+EVT176 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW4ClickPart
+S 1155 t=324.40 dt=253 m.temp=33583 m.press=8484 m.fluct=297 s.Core.RadiationVal=3378
+EVT177 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT178 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1161 t=326.08 dt=272 m.temp=34073 m.press=9244 m.fluct=490 s.Core.RadiationVal=3399
+S 1168 t=328.00 dt=268 m.temp=34688 m.press=10006 m.fluct=615 s.Core.RadiationVal=3434
+EVT179 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1174 t=329.60 dt=260 m.press=10756 m.fluct=684 s.Core.RadiationVal=3478
+EVT180 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT181 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1181 t=331.49 dt=260 m.press=11506 m.fluct=511
+S 1187 t=333.17 dt=265 m.press=12256 m.fluct=913
+S 1194 t=335.13 dt=304 m.press=13006 m.fluct=883
+EVT182 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1200 t=336.78 dt=278 m.press=13756 m.fluct=947
+S 1206 t=338.51 dt=260 m.press=14506 m.fluct=779
+S 1212 t=340.23 dt=260 m.press=15256 m.fluct=967
+S 1219 t=342.11 dt=273 m.press=16006 m.fluct=885
+S 1225 t=343.81 dt=279 m.press=16756 m.fluct=755
+S 1231 t=345.46 dt=269 m.press=17506 m.fluct=889
+S 1238 t=347.40 dt=278 m.press=18256 m.fluct=922
+EVT183 CLICK CBL3-PURGE
+EVT184 CLICK CBL3-PURGE
+EVT185 CLICK CBL3-PURGE
+S 1244 t=349.02 dt=259 m.press=19246 m.fluct=819
+S 1251 t=350.93 dt=278 m.press=19996 m.fluct=785
+EVT186 CLICK CBL2-PURGE
+EVT187 CLICK CBL2-PURGE
+EVT188 CLICK CBL2-PURGE
+S 1257 t=352.60 dt=306 m.press=20986 m.fluct=959
+EVT189 CLICK CBL2-PW3
+S 1262 t=353.99 dt=264 c.cbl2Pct=75 c.cbl2Lvl=3
+EVT190 CLICK CBL2-PW2
+EVT191 CLICK CBL2-PW2
+S 1263 t=354.26 dt=266 c.cbl2Pct=50 c.cbl2Lvl=2
+S 1264 t=354.54 dt=284 m.press=21736 m.fluct=719
+EVT192 CLICK CBL1-PURGE
+S 1270 t=356.18 dt=262 m.press=22726 m.fluct=780
+EVT193 CLICK CBL1-PW2
+S 1277 t=358.12 dt=280 m.press=23488 m.fluct=624 c.cbl1Pct=50 c.cbl1Lvl=2
+EVT194 CLICK CBL1-PW1
+EVT195 CLICK CBL1-PW1
+S 1280 t=358.91 dt=271 c.cbl1Pct=25 c.cbl1Lvl=1
+EVT196 CLICK CBL1-PW1
+S 1283 t=359.76 dt=263 m.temp=34956 m.press=24252 m.fluct=268
+EVT197 CLICK CBL2-PW2
+EVT198 CLICK CBL2-PW2
+EVT199 CLICK CBL2-PW1
+EVT200 CLICK CBL2-PW1
+EVT201 CLICK CBL2-PW1
+S 1288 t=361.13 dt=286 c.cbl2Pct=25 c.cbl2Lvl=1
+EVT202 CLICK CBL2-PW1
+S 1290 t=361.67 dt=282 m.temp=35056 m.press=25016 m.fluct=100 s.Core.RadiationVal=3497
+EVT203 CLICK CBL3-PW1
+EVT204 CLICK CBL3-PW1
+S 1293 t=362.49 dt=280 c.cbl3Pct=25 c.cbl3Lvl=1
+EVT205 CLICK CBL3-PW1
+S 1296 t=363.28 dt=259 m.temp=35188 m.press=25782 m.fluct=132 s.Core.RadiationVal=3504
+S 1303 t=365.19 dt=277 m.temp=35285 m.press=26548 m.fluct=97 s.Core.RadiationVal=3513
+S 1309 t=366.83 dt=254 m.temp=35429 m.press=27314 m.fluct=144 s.Core.RadiationVal=3520
+S 1315 t=368.50 dt=273 m.temp=35526 m.press=27980 m.fluct=97 c.cbl2On=0 c.cbl2Lvl=0 s.Core.RadiationVal=3531 s.CBL2.Active=false
+EVT206 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1322 t=370.39 dt=293 m.temp=35423 m.press=28646 m.fluct=-103 s.Core.RadiationVal=3538
+S 1328 t=372.04 dt=256 m.temp=35402 m.press=29212 m.fluct=-21 s.Core.RadiationVal=3530
+S 1329 t=372.31 dt=271 c.cbl1On=0 c.cbl1Lvl=0 s.CBL1.Active=false
+EVT207 CLICK CBL3-PURGE
+EVT208 CLICK CBL2-PURGE
+S 1335 t=374.01 dt=278 m.temp=35220 m.press=30018 m.fluct=-182 s.Core.RadiationVal=3529
+EVT209 CLICK CBL1-PURGE
+S 1341 t=375.69 dt=286 m.temp=34976 m.press=30539 m.fluct=-244 s.Core.RadiationVal=3516
+S 1348 t=377.65 dt=291 m.temp=34604 m.press=31101 m.fluct=-372 s.Core.RadiationVal=3498
+S 1354 t=379.31 dt=306 m.temp=34239 m.press=31661 m.fluct=-365 s.Core.RadiationVal=3472
+EVT210 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1360 t=380.95 dt=272 m.temp=33997 m.press=32219 m.fluct=-242 s.Core.RadiationVal=3446
+S 1367 t=383.00 dt=304 m.temp=33589 m.press=32775 m.fluct=-408 s.Core.RadiationVal=3428
+S 1372 t=384.41 dt=286 s.Core.RadiationVal=3399
+EVT211 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 1373 t=384.70 dt=285 m.temp=33168 m.press=33329 m.fluct=-421
+EVT212 CLICK path=Workspace.Consoles.ElectricGridConsole.ExtractionLever.PW1ClickPart
+S 1379 t=386.33 dt=282 m.temp=32720 m.press=33731 m.fluct=-448 s.Core.RadiationVal=3369
+EVT213 CLICK AVB
+EVT214 CLICK AVB
+S 1382 t=387.11 dt=261 s.Core.PressureVal=33699
+EVT215 CLICK AVB
+S 1383 t=387.39 dt=284 s.Core.PressureVal=33568
+S 1384 t=387.68 dt=285 s.Core.PressureVal=33409 s.ActiveQPUs=5
+S 1385 t=387.96 dt=283 s.Core.PressureVal=33264
+S 1386 t=388.22 dt=260 m.temp=32299 m.press=30631 m.fluct=-421 s.Core.RadiationVal=3337 s.Core.PressureVal=33125
+S 1387 t=388.48 dt=259 s.Core.PressureVal=32998
+S 1388 t=388.78 dt=303 s.Core.PressureVal=32905
+S 1389 t=389.04 dt=262 s.Core.PressureVal=32658
+S 1390 t=389.31 dt=271 s.Core.PressureVal=32533
+S 1391 t=389.58 dt=268 s.Core.PressureVal=32397
+S 1392 t=389.85 dt=264 m.temp=31768 m.press=31031 m.fluct=-531 s.Core.RadiationVal=3307 s.Core.PressureVal=32234
+EVT216 CLICK path=Workspace.Consoles.ALTReactorConsole.MASS1Systems.ActivationButton.ClickPart
+S 1393 t=390.15 dt=300 s.Core.PressureVal=32099
+S 1394 t=390.43 dt=283 s.Core.PressureVal=31956
+EVT217 CLICK path=Workspace.Consoles.ALTReactorConsole.MASS1Systems.PowerLever.ClickPart
+S 1395 t=390.71 dt=277 s.Core.PressureVal=31833
+S 1396 t=390.99 dt=283 s.Core.PressureVal=31695
+S 1397 t=391.28 dt=290 s.Core.PressureVal=31582
+EVT218 CLICK path=Workspace.Consoles.ALTReactorConsole.MASS2Systems.ActivationButton.ClickPart
+S 1398 t=391.63 dt=346 m.temp=31183 m.press=31431 m.fluct=-585 s.Core.RadiationVal=2179 s.Core.PressureVal=31440
+S 1399 t=391.91 dt=285 s.Core.PressureVal=31341
+EVT219 CLICK path=Workspace.Consoles.ALTReactorConsole.MASS2Systems.PowerLever.ClickPart
+S 1400 t=392.28 dt=367 s.Core.PressureVal=31180
+S 1401 t=392.54 dt=258 s.Core.PressureVal=31082
+S 1402 t=392.84 dt=300 s.Core.PressureVal=30985
+S 1403 t=393.10 dt=258 s.Core.PressureVal=30895
+S 1404 t=393.41 dt=315 m.temp=30724 m.press=31831 m.fluct=-459 s.Core.RadiationVal=1614 s.Core.PressureVal=30792
+S 1405 t=393.69 dt=278 s.Core.PressureVal=30708
+S 1406 t=393.97 dt=279 s.Core.PressureVal=30639
+S 1407 t=394.26 dt=295 s.Core.PressureVal=30575
+S 1408 t=394.51 dt=252 s.Core.PressureVal=30510
+S 1409 t=394.78 dt=267 s.Core.PressureVal=30459
+S 1410 t=395.06 dt=277 m.temp=30225 m.press=32231 m.fluct=-499 s.Core.RadiationVal=1598 s.Core.PressureVal=30409
+S 1411 t=395.31 dt=253 s.Core.PressureVal=30367
+S 1412 t=395.56 dt=253 s.Core.PressureVal=30334
+S 1413 t=395.83 dt=266 s.Core.PressureVal=30299
+S 1414 t=396.11 dt=276 s.Core.PressureVal=30274
+S 1415 t=396.39 dt=287 s.Core.PressureVal=30251
+S 1416 t=396.68 dt=289 s.Core.PressureVal=30240
+S 1417 t=396.96 dt=279 m.temp=29748 m.press=32631 m.fluct=-477 s.Core.RadiationVal=1580 s.Core.PressureVal=30231
+S 1424 t=398.90 dt=297 m.temp=29251 m.press=33031 m.fluct=-497 s.Core.RadiationVal=1563
+S 1430 t=400.50 dt=276 m.temp=28333 m.fluct=-918 s.Core.RadiationVal=1295
+EVT220 CLICK CBL3-PURGE
+EVT221 CLICK CBL3-PURGE
+S 1436 t=402.16 dt=258 s.Core.RadiationVal=1262
+S 1437 t=402.43 dt=264 m.temp=27439 m.press=33243 m.fluct=-894
+S 1443 t=404.18 dt=286 m.temp=26566 m.press=33209 m.fluct=-873 s.Core.RadiationVal=1230
+S 1449 t=405.89 dt=256 m.temp=25495 m.press=33169 m.fluct=-1071 s.Core.RadiationVal=1199
+S 1455 t=407.59 dt=286 m.temp=24455 m.press=33121 m.fluct=-1040 s.Core.RadiationVal=1161
+S 1462 t=409.55 dt=329 m.temp=23419 m.press=33067 m.fluct=-1036 s.Core.RadiationVal=1124
+S 1468 t=411.18 dt=267 m.temp=22381 m.press=33007 m.fluct=-1038 s.Core.RadiationVal=1087
+S 1474 t=412.88 dt=283 m.temp=21281 m.press=32939 m.fluct=-1100 s.Core.RadiationVal=1050
+EVT222 CLICK AVB
+EVT223 CLICK AVB
+EVT224 CLICK AVB
+S 1476 t=413.43 dt=300 s.Core.PressureVal=32826
+S 1477 t=413.69 dt=261 s.Core.PressureVal=32671
+S 1478 t=414.01 dt=318 s.Core.PressureVal=32495
+S 1479 t=414.30 dt=286 s.Core.PressureVal=32325
+S 1480 t=414.59 dt=292 s.Core.PressureVal=32182
+S 1481 t=414.85 dt=259 m.temp=20336 m.press=29439 m.fluct=-945 s.Core.RadiationVal=1010 s.Core.PressureVal=32025
+S 1482 t=415.12 dt=278 s.Core.PressureVal=31907
+S 1483 t=415.41 dt=290 s.Core.PressureVal=31734
+S 1484 t=415.67 dt=256 s.Core.PressureVal=31601
+S 1485 t=415.98 dt=314 s.Core.PressureVal=31446
+S 1486 t=416.31 dt=321 s.Core.PressureVal=31285
+S 1487 t=416.57 dt=266 m.temp=19378 m.fluct=-958 s.Core.RadiationVal=977 s.Core.PressureVal=31160
+S 1488 t=416.84 dt=274 s.Core.PressureVal=31021
+S 1489 t=417.12 dt=279 s.Core.PressureVal=30917
+EVT225 CLICK CBL2-PW1
+EVT226 CLICK CBL2-PW1
+S 1490 t=417.39 dt=267 s.Core.PressureVal=30780
+EVT227 CLICK CBL2-PW1
+EVT228 CLICK CBL2-PW1
+S 1491 t=417.65 dt=259 s.Core.PressureVal=30679
+EVT229 CLICK CBL2-PW1
+EVT230 CLICK CBL2-PW1
+S 1492 t=417.91 dt=262 s.Core.PressureVal=30569
+EVT231 CLICK CBL2-PW1
+EVT232 CLICK CBL2-PW1
+S 1493 t=418.16 dt=252 m.temp=18679 m.press=29539 m.fluct=-699 c.cbl2Pct=50 c.cbl2On=1 c.cbl2Lvl=2 s.Core.RadiationVal=942 s.Core.PressureVal=30483 s.CBL2.Active=true
+EVT233 CLICK CBL2-PW1
+EVT234 CLICK CBL2-PW1
+EVT235 CLICK CBL2-PW1
+S 1494 t=418.48 dt=322 c.cbl2Pct=25 c.cbl2Lvl=1 s.Core.PressureVal=30355
+EVT236 CLICK CBL2-PW1
+EVT237 CLICK CBL2-PW1
+S 1495 t=418.77 dt=285 s.Core.PressureVal=30255
+EVT238 CLICK CBL2-PW1
+S 1496 t=419.05 dt=285 s.Core.PressureVal=30191
+S 1497 t=419.31 dt=257 s.Core.PressureVal=30064
+S 1498 t=419.57 dt=258 s.Core.PressureVal=29978
+EVT239 CLICK CBL2-PURGE
+S 1499 t=419.84 dt=277 s.Core.PressureVal=29901
+EVT240 CLICK CBL2-PURGE
+EVT241 CLICK CBL2-PURGE
+S 1500 t=420.11 dt=262 m.temp=17834 m.press=30150 m.fluct=-845 s.Core.RadiationVal=917 s.Core.PressureVal=29837
+S 1501 t=420.37 dt=265 s.Core.PressureVal=29772
+S 1502 t=420.67 dt=302 s.Core.PressureVal=29702
+S 1503 t=420.93 dt=259 s.Core.PressureVal=29652
+S 1504 t=421.19 dt=261 s.Core.PressureVal=29612
+S 1505 t=421.46 dt=265 s.Core.PressureVal=29568
+S 1506 t=421.77 dt=314 m.temp=17366 m.press=30350 m.fluct=-468 c.cbl1Pct=50 c.cbl1On=1 c.cbl1Lvl=2 s.Core.RadiationVal=887 s.Core.PressureVal=29527 s.CBL1.Active=true
+S 1507 t=422.03 dt=252 s.Core.PressureVal=29497
+S 1508 t=422.29 dt=261 s.Core.PressureVal=29471
+S 1509 t=422.56 dt=274 s.Core.PressureVal=29456
+S 1510 t=422.85 dt=293 s.Core.PressureVal=29443
+S 1511 t=423.12 dt=272 s.Core.PressureVal=29439
+S 1513 t=423.68 dt=282 m.temp=16864 m.fluct=-502 s.Core.RadiationVal=620
+EVT242 CLICK CBL1-PW1
+EVT243 CLICK CBL1-PW1
+EVT244 CLICK CBL1-PW1
+S 1516 t=424.49 dt=273 c.cbl1Pct=25 c.cbl1Lvl=1
+EVT245 CLICK CBL1-PW1
+EVT246 CLICK CBL1-PW1
+EVT247 CLICK CBL1-PURGE
+S 1519 t=425.32 dt=296 m.temp=16385 m.fluct=-479 s.Core.RadiationVal=603
+S 1526 t=427.27 dt=327 m.temp=16045 m.press=30590 m.fluct=-340 s.Core.RadiationVal=585
+S 1532 t=428.87 dt=261 m.temp=15503 m.press=30480 m.fluct=-542 s.Core.RadiationVal=573
+S 1538 t=430.56 dt=253 m.temp=14990 m.press=30364 m.fluct=-513 s.Core.RadiationVal=554
+EVT248 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1544 t=432.31 dt=291 m.temp=14670 m.press=30246 m.fluct=-320 s.Core.RadiationVal=536
+EVT249 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT250 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT251 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT252 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT253 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT254 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT255 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT256 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT257 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT258 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT259 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1551 t=434.23 dt=276 m.temp=14300 m.press=30126 m.fluct=-370 s.Core.RadiationVal=524
+EVT260 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT261 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT262 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT263 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT264 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT265 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT266 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT267 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT268 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT269 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1557 t=435.86 dt=269 m.temp=13948 m.press=30002 m.fluct=-352 s.Core.RadiationVal=511
+EVT270 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1564 t=437.78 dt=284 m.temp=13528 m.press=29874 m.fluct=-420 s.Core.RadiationVal=498
+S 1570 t=439.42 dt=295 m.temp=13067 m.press=29742 m.fluct=-461 s.Core.RadiationVal=483
+EVT271 CLICK AVB
+EVT272 CLICK AVB
+S 1574 t=440.54 dt=310 s.Core.PressureVal=29694
+S 1575 t=440.83 dt=297 s.Core.PressureVal=29511
+S 1576 t=441.14 dt=310 m.temp=12651 m.press=26242 m.fluct=-416 s.Core.RadiationVal=467 s.Core.PressureVal=29346
+S 1577 t=441.41 dt=264 s.Core.PressureVal=29210
+S 1578 t=441.71 dt=306 s.Core.PressureVal=29034
+S 1579 t=441.99 dt=276 s.Core.PressureVal=28911
+S 1580 t=442.28 dt=290 s.Core.PressureVal=28731
+S 1581 t=442.59 dt=307 s.Core.PressureVal=28576
+S 1582 t=442.85 dt=259 m.temp=12170 m.fluct=-481 s.Core.RadiationVal=452 s.Core.PressureVal=28436
+S 1583 t=443.10 dt=255 s.Core.PressureVal=28303
+EVT273 CLICK CBL3-PURGE
+S 1584 t=443.36 dt=260 s.Core.PressureVal=28187
+S 1585 t=443.63 dt=268 s.Core.PressureVal=28074
+S 1586 t=443.89 dt=263 s.Core.PressureVal=27930
+S 1587 t=444.16 dt=271 s.Core.PressureVal=27794
+S 1588 t=444.47 dt=306 s.Core.PressureVal=27652
+S 1589 t=444.75 dt=279 m.temp=11682 m.press=26482 m.fluct=-488 s.Core.RadiationVal=435 s.Core.PressureVal=27528
+EVT274 CLICK CBL2-PURGE
+S 1590 t=445.00 dt=256 s.Core.PressureVal=27431
+S 1591 t=445.27 dt=270 s.Core.PressureVal=27328
+S 1592 t=445.55 dt=271 s.Core.PressureVal=27213
+S 1593 t=445.80 dt=257 s.Core.PressureVal=27123
+EVT275 CLICK CBL1-PURGE
+EVT276 CLICK CBL1-PURGE
+S 1594 t=446.07 dt=264 s.Core.PressureVal=27024
+S 1595 t=446.35 dt=281 s.Core.PressureVal=26950
+S 1596 t=446.63 dt=283 m.temp=11186 m.press=26842 m.fluct=-496 s.Core.RadiationVal=417 s.Core.PressureVal=26847
+S 1597 t=446.93 dt=296 s.Core.PressureVal=26758
+S 1598 t=447.18 dt=254 s.Core.PressureVal=26681
+S 1599 t=447.45 dt=266 s.Core.PressureVal=26629
+S 1600 t=447.70 dt=252 s.Core.PressureVal=26557
+S 1601 t=447.97 dt=273 s.Core.PressureVal=26498
+S 1602 t=448.25 dt=276 m.temp=10779 m.fluct=-407 s.Core.RadiationVal=400 s.Core.PressureVal=26449
+S 1603 t=448.51 dt=262 s.Core.PressureVal=26403
+S 1604 t=448.80 dt=293 s.Core.PressureVal=26354
+S 1605 t=449.11 dt=305 s.Core.PressureVal=26320
+S 1606 t=449.38 dt=275 s.Core.PressureVal=26286
+S 1607 t=449.64 dt=256 s.Core.PressureVal=26271
+S 1608 t=449.91 dt=266 s.Core.PressureVal=26255
+S 1609 t=450.16 dt=259 m.temp=10315 m.fluct=-464 s.Core.RadiationVal=385 s.Core.PressureVal=26245
+S 1610 t=450.43 dt=262 s.Core.PressureVal=26242
+S 1615 t=451.84 dt=285 m.temp=9873 m.fluct=-442 s.Core.RadiationVal=369
+S 1621 t=453.67 dt=272 m.temp=9262 m.fluct=-611 s.Core.RadiationVal=353
+S 1627 t=455.46 dt=313 m.temp=8771 m.fluct=-491 s.Core.RadiationVal=331
+S 1633 t=457.10 dt=290 m.temp=8256 m.press=26664 m.fluct=-515 s.Core.RadiationVal=314
+S 1639 t=458.84 dt=271 m.temp=7774 m.press=26480 m.fluct=-482 s.Core.RadiationVal=295
+S 1645 t=460.51 dt=321 m.temp=7258 m.press=26290 m.fluct=-516 s.Core.RadiationVal=278
+EVT277 CLICK CBL3-PURGE
+EVT278 CLICK CBL3-PURGE
+EVT279 CLICK CBL3-PURGE
+EVT280 CLICK CBL3-PURGE
+S 1652 t=462.42 dt=263 m.temp=6792 m.press=26334 m.fluct=-466 s.Core.RadiationVal=259
+EVT281 CLICK CBL2-PURGE
+EVT282 CLICK CBL1-PURGE
+EVT283 CLICK CBL1-PURGE
+S 1659 t=464.31 dt=265 m.temp=6231 m.press=26348 m.fluct=-561 s.Core.RadiationVal=243
+S 1665 t=465.98 dt=281 m.temp=5862 m.press=26142 m.fluct=-369 s.Core.RadiationVal=223
+EVT284 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT285 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1671 t=467.70 dt=299 m.temp=5394 m.press=25928 m.fluct=-468 s.Core.RadiationVal=210
+PHASE2 DOWN t=468.26
+S 1678 t=469.65 dt=275 m.temp=4871 m.press=25708 m.fluct=-523 s.Core.RadiationVal=105
+S 1684 t=471.31 dt=268 m.temp=4393 m.press=25480 m.fluct=-478 s.Core.RadiationVal=53
+EVT286 CLICK AVB
+EVT287 CLICK AVB
+S 1686 t=471.86 dt=281 s.Core.PressureVal=25356
+S 1687 t=472.13 dt=265 s.Core.PressureVal=25231
+S 1688 t=472.41 dt=282 s.Core.PressureVal=25069
+S 1689 t=472.69 dt=280 s.Core.PressureVal=24897
+S 1690 t=472.99 dt=304 m.temp=3935 m.press=21980 m.fluct=-458 s.Core.RadiationVal=27 s.Core.PressureVal=24786
+S 1691 t=473.25 dt=253 s.Core.PressureVal=24595
+S 1692 t=473.51 dt=259 s.Core.PressureVal=24478
+EVT288 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT289 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1693 t=473.76 dt=252 s.Core.PressureVal=24343
+EVT290 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+EVT291 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1694 t=474.02 dt=262 s.Core.PressureVal=24178
+S 1695 t=474.27 dt=254 s.Core.PressureVal=24047
+S 1696 t=474.54 dt=271 s.Core.PressureVal=23912
+S 1697 t=474.82 dt=274 m.temp=2856 m.press=21880 m.fluct=-1078.5 c.cbl3On=0 c.cbl3Lvl=0 s.Core.RadiationVal=14 s.Core.PressureVal=23803 s.CBL3.Active=false
+S 1698 t=475.13 dt=316 s.Core.PressureVal=23652
+S 1699 t=475.39 dt=254 s.Core.PressureVal=23532
+S 1700 t=475.65 dt=263 s.Core.PressureVal=23404
+S 1701 t=475.91 dt=258 s.Core.PressureVal=23292
+S 1702 t=476.18 dt=274 s.Core.PressureVal=23195
+S 1703 t=476.47 dt=287 m.temp=2056 m.press=21780 m.fluct=-799.5 s.Core.RadiationVal=7 s.Core.PressureVal=23072
+S 1704 t=476.72 dt=255 s.Core.PressureVal=22970
+S 1705 t=476.98 dt=253 s.Core.PressureVal=22879
+S 1706 t=477.29 dt=308 s.Core.PressureVal=22750
+S 1707 t=477.56 dt=276 s.Core.PressureVal=22662
+S 1708 t=477.83 dt=266 s.Core.PressureVal=22569
+S 1709 t=478.09 dt=261 s.Core.PressureVal=22504
+S 1710 t=478.36 dt=268 m.temp=1114 m.press=21680 m.fluct=-942 c.cbl1On=0 c.cbl1Lvl=0 c.cbl2On=0 c.cbl2Lvl=0 s.Core.RadiationVal=4 s.Core.PressureVal=22419 s.CBL1.Active=false s.CBL2.Active=false s.GameActive=false
+S 1711 t=478.62 dt=266 s.Core.PressureVal=22356
+EVT292 CLICK CBL3-PURGE
+S 1712 t=478.89 dt=269 s.Core.PressureVal=22294
+EVT293 CLICK CBL3-PURGE
+S 1713 t=479.15 dt=263 s.Core.PressureVal=22245
+S 1714 t=479.47 dt=316 s.Core.PressureVal=22174
+S 1715 t=479.74 dt=273 s.Core.PressureVal=22127
+S 1716 t=480.04 dt=293 s.Core.PressureVal=22092
+S 1717 t=480.31 dt=269 s.Core.PressureVal=22052
+S 1718 t=480.57 dt=259 s.Core.PressureVal=22028
+EVT294 CLICK ShutdownLever
+S 1719 t=480.83 dt=269 s.Core.PressureVal=22007
+S 1720 t=481.11 dt=276 s.Core.PressureVal=21992
+S 1721 t=481.38 dt=266 s.Core.PressureVal=21982
+S 1722 t=481.68 dt=300 s.Core.PressureVal=21980
+S 1728 t=483.30 dt=256 s.MainframeMeltdown=true
+EVT295 CLICK path=Workspace.Consoles.HDEFGenerator.PowerLever.ClickPart
+S 1734 t=484.88 dt=259 s.ChamberGravity=false
+S 1804 t=503.74 dt=271 c.fan1=0 c.fanCount=5
+S 1806 t=504.29 dt=256 c.fan2=0 c.fanCount=4
+S 1808 t=504.83 dt=287 c.fan3=0 c.fanCount=3
+S 1810 t=505.42 dt=290 c.fan4=0 c.fanCount=2
+S 1812 t=505.95 dt=256 c.fan5=0 c.fanCount=1
+S 1814 t=506.49 dt=271 c.fan6=0 c.fanCount=0
+S 1860 t=518.94 dt=266 s.ResetShift=true
+EVT296 SEAL user seal
+## RECEIPT name=flow/original_260926-151207 samples=1962 lines=995 events=296 segments=473 postfails=0 spilled=0 dropped=0 flow=true hash=72364b05 over=59277 kinds CLICK=224 LAMPMAP=20 LAMPPAL=9 PHASE=2 SEAL=1 START=1 STATADD=38 TEXT=3

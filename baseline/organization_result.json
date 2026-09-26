@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"docs\":{\"README\":\"return [==[AIRemake rewrite in progress. ServerScriptService.ReactorBackend holds the replacement backend. ServerStorage.Data is preserved reference material, not executable gameplay. ServerStorage.BackendBaseline20260925 preserves the original scaffold and scene move references. Workspace.Geometry contains reorganized decorative parts. Completion requires runtime tests, not only successful installation.]==]\",\"DECISIONS\":\"return [==[This place has placeholder server scripts, not the historical GameCore described in root docs. Preserve historical documents separately. Only move unreferenced anchored decorative parts with inert descendants. Keep functional bindings untouched. Authored manual requires monitor power, shutters and monitor boot before startup; successful shutdown requires quota and temperature below 17000 F. Conflicting source constants require explicit provenance, not invented precision.]==]\",\"PROGRESS\":\"return [==[Workspace organization 2026-09-25: moved 23 verified unreferenced anchored decorative parts into Workspace.Geometry. Skipped 1149 uncertain candidates. BasePart count unchanged: 91905. All moved CFrames, sizes, colors and materials checked unchanged. No names changed, nothing deleted, no functional objects moved. Rollback: ServerStorage.BackendBaseline20260925.WorkspaceMoves ObjectValues retain each original parent and instance. The existing shadow scaffold is not a finished gameplay backend.]==]\"},\"moved\":23,\"skipped\":1149,\"beforeParts\":91905,\"afterParts\":91905}"
+    }
+  ],
+  "isError": false
+}

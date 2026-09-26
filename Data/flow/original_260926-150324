@@ -1,0 +1,2 @@
+EVT73 SEAL sample cap reached, down=false
+## RECEIPT name=flow/original_260926-150324 samples=14400 lines=78 segments=0 postfails=0 spilled=0 dropped=0 flow=false hash=189cb82b kinds LAMPMAP=20 LAMPPAL=7 SEAL=1 START=1 STATADD=41 TEXT=3

@@ -1,0 +1,11 @@
+[
+  {
+    "content": [
+      {
+        "type": "text",
+        "text": "Tool handler not found: get_runtime_logs"
+      }
+    ],
+    "isError": true
+  }
+]

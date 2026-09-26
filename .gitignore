@@ -1,0 +1,28 @@
+# Local-only.  The rule for everything below is the same: it is either not
+# ours to publish, or it is a cache that can be rebuilt, or it is machine state
+# that would only ever cause a conflict.
+
+# --- 6.0 GB of whisper model cache.  Rebuildable, and no repo wants it. ---
+_tools/models/
+
+# --- ripped game assets: 214 MB + a 212 MB zip.  Not ours to publish, and the
+#     zip is over GitHub's 100 MB hard file limit anyway. ---
+TRG Sounds & Images pack/
+TRG Sounds & Images pack.zip
+
+# --- 104 MB of third-party YouTube guides, downloaded only so they could be
+#     transcribed locally.  Copyrighted, and they are not part of the project. ---
+Videos/
+
+# --- paste / inbox / vision caches from the local vision bridge ---
+.ai/
+
+# --- machine-local claude state (the shared settings.json, if one is ever
+#     added, is deliberately NOT ignored) ---
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# --- OS and editor cruft ---
+Thumbs.db
+desktop.ini
+*.tmp

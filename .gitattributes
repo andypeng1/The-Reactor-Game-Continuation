@@ -1,0 +1,5 @@
+# The documentation in this repo is treated as an artifact: its bytes are the
+# thing under discussion (see DECISIONS 96, where two files of equal length and
+# different content were a real bug).  autocrlf would silently rewrite every .md
+# on checkout, so line endings are pinned instead of converted.
+* text=auto eol=lf

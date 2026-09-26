@@ -1,0 +1,11 @@
+[
+  {
+    "content": [
+      {
+        "type": "text",
+        "text": "Tool handler not found: get_output_log"
+      }
+    ],
+    "isError": true
+  }
+]

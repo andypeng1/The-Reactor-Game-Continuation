@@ -1,0 +1,1219 @@
+# CLAUDE — 项目交接文档
+
+> 交接目标：Roblox 游戏《反应堆游戏》的开发工作。
+> 上一任 AI 助手（deepseek-v4-flash + Roblox Studio MCP）已完成仿真核心、控制系统、
+> 监视器与视觉基础层。本文档记录全部上下文，供无缝接手。
+>
+> 生成时间：2026-09-21
+
+---
+
+## 0.0 文档同步规则（磁盘专属，不要写回 Studio 的 ModuleScript）
+
+> 下面这一节只存在于磁盘上的 `.md`，**不属于**游戏里的 `CLAUDE` / `PROGRESS` /
+> `DECISIONS` / `README` ModuleScript。写回游戏时请删掉本节。
+
+**`D:\rblxTRGproject` 下的 4 个 .md 是游戏内同名 ModuleScript 的镜像：**
+
+| 磁盘文件 | 游戏内来源 |
+|---|---|
+| `CLAUDE.md` | `game.ServerScriptService.GameCore.CLAUDE`（本节除外） |
+| `PROGRESS.md` | `game.ServerScriptService.GameCore.PROGRESS` |
+| `DECISIONS.md` | `game.ServerScriptService.GameCore.DECISIONS` |
+| `README.md` | `game.ServerScriptService.GameCore.README` |
+
+**硬性规则：任何一次改动之后，同一步就要把文档补齐，不要攒着。**
+1. 在 Studio 里改了代码 / 场景 / 配置 → 立刻更新对应的 ModuleScript
+   （新阶段进 `PROGRESS`，新的取舍进 `DECISIONS`，结构变化进 `README`）。
+2. 同一步把改动镜像到磁盘的 `.md`，两边保持一致。
+3. 镜像时剥掉 Lua 包装（`return [==[` … `]==]`）。
+4. 写回游戏时注意 §5.9：内容里不能出现 `]==]` 序列。
+
+**方向约定：** 游戏内的 ModuleScript 是权威（source of truth），
+磁盘 `.md` 是镜像。若两边冲突，以游戏内为准，并把差异报告给用户。
+
+**镜像规则（实测出来的，不是推测的，见 `DECISIONS` 96）：**
+磁盘文件 = ModuleScript 字符串体「去掉首尾换行、再补回恰好一个换行」，逐字节相等。
+四个文档各有一条由**模块自己报出**的 `(长度, 哈希)` 作为基准，
+校验脚本是 `_tools/verify_docs.py`。
+
+- **绝不能用磁盘算出来的哈希去校验磁盘** —— 那是同义反复，两边同时错也会 PASS。
+  `DECISIONS` 95 就是这么踩进去的，而且被吃过两次句号都没发现。
+- 校验一律**比哈希、不比字节数**。字节数相同而内容不同是**真实发生过**的
+  （PROGRESS 与 DECISIONS 各差一个字符），只比长度必漏。
+- **`CLAUDE.md` 是唯一的例外**：它比模块镜像长 **2524 字节**，因为本节（§0.0）只存在于磁盘。
+  校验前必须按标题切掉 `## 0.0 ` 起、到下一个 `## 0. ` 之前的整块；脚本会断言这 2524 这个数。
+- 规则本身也是「量」出来的：不要断言一条规则再验证它，要**枚举候选**（首尾各裁 0..6 字节）
+  看哪一个能重现磁盘哈希。自己在磁盘上拟合出来的规则，只会在磁盘上自洽。
+
+---
+
+## 0. 先读这个（血泪教训，能省你几小时）
+
+### 0.1 Studio MCP 的 studio_id 每次会话都会变
+```
+先调用 list_roblox_studios，用返回的 id。
+不要用 set_active_studio。每个 Studio 相关调用都要带 studio_id。
+```
+历史上出现过这些 id（都已失效，仅作识别参考）：
+`fbc8fbb2-…` → `6de56428-…` → `02ed5559-…` → `1c795da0-…` → `f1fb4960-…`
+
+### 0.2 【最重要的坑】命令栏的 require ≠ 运行脚本的 require
+Studio 的 `execute_luau`（Server 数据模型）跑在**独立的 Luau VM** 里。
+在那里 `require(GameState)` 会拿到一个**全新的空实例**：
+```
+GameState.Time = 0        ← 明明游戏在跑
+SystemManager.Systems = 0 ← 明明注册了 25 个系统
+```
+**我因为不知道这点，连续误判了三次「温度没跑」「拉杆没动」，全是假阴性。**
+
+**正确做法：读实例状态，不要读模块状态。**
+- 读监视器上的 `TextLabel.Text`
+- 读部件的 `CFrame` / `Material` / `Color`
+- 读 `ChangeHistoryService`、属性、标签
+- 或直接看 `get_console_output` 里的自检输出
+
+### 0.3 编辑 Source 后 require 缓存不会失效
+在 Edit 模式改完 `ModuleScript.Source` 后再 `require`，拿到的还是**旧字节码**。
+想立刻验证新代码，用：
+```lua
+local CV = loadstring(modScript.Source)()
+```
+（Play 模式重新加载脚本时会读新源码，正常。）
+
+### 0.4 在 Play 模式下改 Source 不会保存到工程
+我在 Play 期间通过 Server 数据模型改的 `Source`，**只改了运行时副本**，
+停止 Play 后全部丢失，必须在 **Edit 模式**重新应用。已踩过这个坑。
+
+### 0.5 Studio 需要「Allow HTTPS」
+否则 Play 模式会卡死（`start_stop_play` 一直返回 "hasn't finished yet"）。
+用户已经开好了，如果 Play 又卡，先让他确认这个开关。
+
+### 0.6 这台机器没有 Node.js
+```
+node / npx / npm / bun / pnpm  -> NOT FOUND
+winget / choco / scoop          -> NOT FOUND
+```
+`@6xvl/robloxstudio-mcp` 是 Node CLI，跑不起来。已在项目根写了 `opencode.json`
+但需要 Node + 重启 opencode 才生效。
+
+### 0.7 MCP 插件的无害报错
+```
+loadstring() is not available
+Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
+```
+是插件自身问题，不影响游戏逻辑，忽略。
+
+### 0.8 控制台被音效错误刷屏
+几百条 `Failed to load sound rbxassetid://…: User is not authorized`。
+`get_console_output` 会截断，但**保留的是尾部**。
+需要干净输出时先 `game:GetService("LogService"):ClearOutput()`。
+
+### 0.9 保存
+**用户已开启 Studio 自动保存，不要每次改完都提醒 Ctrl+S。**
+（2026-09-22 用户原话：「我已经开了自动保存，你无需担心内容丢失」。
+旧版本这条写的是「每次改完都要提醒」，已作废。）
+
+### 0.10 【坑】编辑层会解码 Lua 转义
+通过 Studio 编辑工具写进去的文本会**先被解码一次**：短字符串里的
+「反斜杠 + n」两字符会变成真正的换行，转义过的双引号会变成真正的引号 ——
+两者都会把合法的 Lua 变成语法错误，而报错指向字符串、不指向工具。
+`ControlTrigger` 因此**故意一个反斜杠都不写**：换行用 `local NL = string.char(10)`，
+需要内嵌双引号的字符串改用单引号 Lua 语法。这是约定，不是待清理的临时手段。
+
+### 0.11 【坑】官方鼠标工具的 y 不是视口坐标
+视口 1020×550 时，请求 `y=275`，读回 `UserInputService:GetMouseLocation()` 得到
+**(510, 333)** —— **y 有 +58 px 偏移**，x 没有。请求 `y=217` 读回正好 275.0，据此确认。
+这就是头两次物理点击「打在空气上」的原因。
+同一工具第二个小坑：`instance_path` **只接受 GuiObject**，对 `Part` 必须自己算像素
+（`Camera:WorldToViewportPoint`）。
+
+---
+
+### 0.12 【约定】RS / SS / SSS 的缩写（用户明确定下）
+
+用户原话：「注意:RS=ReplicatedStorage，SS = ServerStorage，SSS = ServerScriptService
+（这就是我们约定好的）」。**这是约定，不要再猜、也不要混用。**
+
+| 缩写 | 服务 | 关键性质 |
+|---|---|---|
+| **RS** | `ReplicatedStorage` | **复制给每个客户端**，但**不渲染、不参与物理** |
+| **SS** | `ServerStorage` | 仅服务端；**里面的脚本永远不运行** |
+| **SSS** | `ServerScriptService` | 服务端；**脚本在这里运行** |
+
+**三条由此推出的硬结论**（本轮踩过）：
+1. 把东西塞进 RS **省不掉客户端的负担** —— 它照样复制过去。真要卸载给客户端，终点是 **SS**。
+2. 放在 SS 里的脚本是**惰性**的。统计「谁引用了这个容器」时**必须排除 SS**，
+   否则会把死引用算成活引用（`DECISIONS` 91）。
+3. RS 里的部件**本来就不渲染**，所以「RS → SS」这种搬迁**画面零变化**，可以直接做；
+   而 Workspace 里的部件**正在渲染**，搬走就改变世界，必须先问用户。
+
+
+## 1. 项目概述
+
+### 0.13 【坑】按子串锚定的编辑会落进错误的块
+
+用 `return CoreKit` 当锚点插代码，而它在文件里第一次出现是在 `return CoreKit.Verify()` 里面
+（Build 的尾部），于是整段 —— 连 `function CoreKit.Glow` 一起 —— 被写进了 **Build 的函数体**，
+模块从此不导出 Glow，`pcall(CoreKit.Glow, ...)` 每 tick 静默失败一整场。**没有任何症状**：
+控制台、灯、七台监视器全部正常，只有「缺失」。
+
+两条纪律：**锚点要么按构造唯一，要么写之前先断言唯一**；**插完要量块深度，不要用眼睛读**
+—— 两种情况下文本都长得对：能解析、名字在、错的只有嵌套。量深度的检查器**必须先剥字符串、再剥注释**
+—— 反过来会吃掉那行含 `--` 的字符串的收尾引号，给出「Build 从未闭合」这种自信但错误的结论。
+
+顺带：`pcall(f, ...)` 里的 `f` 可能是 `nil`。pcall 是给**会抛错**的被调方用的，不是「可能不存在」
+的许可证。名字先查、缺了 warn 一次，pcall 只留给抛错 —— **与成功无法区分的错误路径不是错误处理**。
+
+### 1.1 基本信息
+| 项 | 值 |
+|---|---|
+| 游戏名 | 反应堆游戏（The Reactor Game 的复刻 / 重构） |
+| placeId | 114398686378058 |
+| 类型 | 科幻反应堆设施维护模拟 |
+| 平台 | Roblox / Roblox Studio |
+| 工作目录 | `C:\Users\andypeng1NB\BloxBot` |
+| 用户语言 | 中文（技术术语夹英文） |
+
+### 1.2 核心玩法
+玩家扮演反应堆设施的操作员，在一个**没有控制棒**的反应堆上工作。
+（这一点经过 Wiki 反复确认：The Reactor Game 里**不存在控制棒**，
+玩家只能通过三个间接手段控制反应堆。）
+
+**三大控制手段：**
+1. **环境压力** — AVB（大气排放阀）/ E-VENT（紧急排气）
+2. **CBL 强度** — 化学泵浦激光，PW1..PW5 五档
+3. **Isotope E 冷却回路** — 3 台冷却泵，每台 0..3 档
+
+**核心循环：**
+维持堆芯温度与压力在安全窗口内 → 产生电力 → 完成班次配额 → 应对随机事件 → 撑到交班。
+
+### 1.3 目标受众
+- 喜欢**硬核系统管理 / 灾难模拟**的玩家（类似《The Reactor Game》《Barotrauma》受众）
+- 享受「读懂仪表 → 判断 → 操作 → 承担后果」的玩家
+- 不是休闲玩家：有真实的停堆、熔毁、超压失败状态
+
+### 1.4 绝对约束（用户明确下达，不可违反）
+1. **永远不要改现有玩法机制**（NEVER CHANGE EXISTING GAMEPLAY MECHANICS）
+2. **不要在没有替代品的情况下删除功能**
+3. 每完成一个阶段，更新 `PROGRESS` / `DECISIONS` / `README`
+4. 不要停下来假装完成（"不要停在那里谎称做完了"）
+5. 改完要做**真实验证**（模拟点击、检查位置与颜色）
+
+---
+
+## 2. 已完成的系统
+
+### 2.1 架构总览
+```
+ServerScriptService/
+  GameCore/                      ← 主程序集
+    GameCore            [Script]       入口，注册 25 个系统
+    Core/
+      Config            [ModuleScript] 全部可调参数
+      GameState         [ModuleScript] 唯一真相源（single source of truth）
+      SystemManager     [ModuleScript] Entries/Systems/Get/Initialize/Register/Update
+      Network           [ModuleScript] 运行时 RemoteEvent
+    ReactorSystem/
+      ReactorState      [ModuleScript] TRGWeb 温度/压力模型
+      CBLSystem         [ModuleScript] 3 台激光
+      CoolantSystem     [ModuleScript] 3 泵 + 3 储液罐 + 传感器
+      PowerSystem       [ModuleScript] PowerOutput 唯一写入者
+      PEASystem         [ModuleScript] 电力抽取
+    FacilitySystem/
+      ConsoleService    [ModuleScript] 全部点击动作
+      ControlTrigger    [ModuleScript] 【唯一】点击实现 + CollectionService 标签 + 命令栏总线
+      ConsoleBinder     [ModuleScript] 只留点号表，转发给 ControlTrigger.Bind
+      ControlVisuals    [ModuleScript] 拉杆动画 + 灯色
+      MonitorService    [ModuleScript] 7 台控制室监视器
+      QPUSystem / GatewaySystem / GravLiftSystem
+      BackupPowerSystem [ModuleScript] 导出 HDEFIntegrity
+    PROGRESS / DECISIONS / README / CLAUDE  [ModuleScript] 文档
+
+Workspace/
+  GameCoreTests/
+    GameCoreSelfTest    [Script]  自检（跑一次自动禁用）
+    GameCoreControlTest [Script]  控件测试 13 项
+  Consoles/             ← 6 张桌子，68 个控件
+  Monitors/             ← Main / Thermal / Power / Quota / Alerts / Log / Forecast 监视器
+
+StarterPlayer/StarterPlayerScripts/
+  ReactorMonitorClient  [LocalScript] MESUI 布局绑定
+```
+
+**设计模式：**
+- 事件驱动 + 固定 10Hz 时间步
+- `SystemManager` 按 priority 分发，系统用 **点号调用** `system.Update(dt)`
+- `Config` 持有全部可调参数；`GameState` 是唯一真相源，**系统不得缓存副本**
+- 系统优先级范围 10–140
+- **点击只有一套实现**：`ControlTrigger.Fire()`；物理点击与命令栏调用是同一条代码路径
+
+### 2.2 系统清单（25 个）
+ReactorState / CBLSystem / CoolantSystem / PowerSystem / PEASystem /
+MonitorService / ControlVisuals / ConsoleBinder / ConsoleService /
+QPUSystem / GatewaySystem / GravLiftSystem / BackupPowerSystem /
+ShiftSystem / EventController / DataCollection / … （共 25）
+
+### 2.3 已实现的机制（全部按 Wiki / TRGWeb 校准）
+
+**时间基准**
+```lua
+Config.Sim.TRGWebTick = 2.5   -- 所有 TRGWeb 常量都是「每 2.5 秒一跳」
+                              -- 换算方式: dt / TRGWebTick
+Config.Reactor.TempUpdateInterval = 1.0  -- 温度改为 1 秒结算一次（用户要求）
+```
+
+**压力（PSI 量纲）**
+| 参数 | 值 |
+|---|---|
+| MaxPressure | 16000 |
+| 点火 | 5000 PSI / 9420 F |
+| 失速 stallout | < 2250 PSI |
+| 超压 overpressure | > 13500 PSI |
+| AVB | −3300 PSI，26s CD，压力 > 5500 PSI 时无效 |
+| E-VENT | −4000 F，每班次单次使用 |
+
+**堆芯温度状态**（`Config.Reactor.CoreStateThresholds`）
+```
+6000 / 17500 / 29500 / 39000 F
+State 3 自加热: +700 F / tick（>29500 F）
+```
+
+**发电档位**（TRGWeb 公式）
+```
+t < 某阈值 → 档位 1: t/250 + 50
+          → 档位 2: t/160 + 100
+          → 档位 3: t/120 + 250
+          → 档位 4: t/45  + 400
+```
+
+**CBL（化学泵浦激光）**
+- 3 台激光，档位 1..5
+- 加热 = `power_level × 65` / tick（**MINIMUM 档也会点火**）
+- **堆芯体温度锁定 925 K**（用户明确确认 "925k"）
+- 激光被摧毁时显示 `ERR`
+- 过载 = 暂时断电 + 自动重启；**只有 Shift 3+ 才永久损失 integrity**
+
+**冷却（Isotope E）**
+- 3 台泵，档位 0..3
+- 移除热量 = `120` / 档位 / tick
+- 3 个储液罐
+- **传感器可靠性系统（Phase 18，我做的）**：
+  - 每泵独立 `CoolantPumpStability` (0–100)
+  - 漂移 `SensorDegradePerSecond 0.30` + 每级堆芯状态 `SensorStateBonus 0.22`，运行时 ×1.5
+  - < 60 → 监视器显示琥珀色 `SENSOR n%`，读数不可信
+  - < 25 → 输出被压低至 `SensorOutputPenalty 0.45`
+  - 手动校准：点热控台 `CoolantControl{i}.BigLever` → 恢复到 100，30s 冷却
+
+**班次配额**
+```
+Shift 1: 512 GW   Shift 2: 1024 GW   Shift 3: 3072 GW（峰值输出）
+```
+
+**Equinox 事件**
+```
+Shift 3，班次秒 600（= 12:00 PM），3× 能量持续 40 秒，冷却泵会爆炸
+```
+
+### 2.4 控制系统（68 个控件 / 6 张桌子）
+```
+[ConsoleBinder] desks=6 controls=68 reused=2 created=66 missing=0
+[ConsoleBinder] rebuild desks=6 controls=66 missing=0
+control bus ready: tagged=73 reindexed=73
+```
+- 用 **ClickDetector**（不是 ProximityPrompt，用户要求的）
+- 每次按下都会打印 `[Console] <player> pressed: <label> (<console>)`
+- `Workspace.Consoles` 下 6 张台，**authored ClickDetector = 0**，66 个由绑定器创建
+- 点击逻辑全部在 `FacilitySystem.ControlTrigger`；`ConsoleBinder` 只剩点号表
+- 每个控件带 `GameCoreControl` 标签 + 6 个属性（Action/Arg/Arg2/Label/Console/Panel）；
+  `ControlTrigger.Reindex()` 从标签重建，手工在 Studio 打标签的部件下次开服就能用
+- 命令栏用 `ServerStorage.GameCore.ControlBus:Invoke(...)` —— **不要 require**（见 §0.2）。
+  `ControlBus` 返回字符串；`ControlQuery` 是同一套接口返回表，给脚本用
+- **ClickDetector 不一定挂在 `ClickPart` 上**：拉杆的板块被 `Collar`/`Grip` 埋住，
+  鼠标射线到不了它，所以挂到最近的「只拥有这一块板」的祖先 Model 上。
+  面板那种拥有很多板的祖先**不能**挂，否则整块面板变成一个巨大 hitbox（见 `DECISIONS` 75）
+- 装机前的原版读数是 `desks=7 controls=68 reused=61 created=7 missing=0`。
+  `desks 7→6` 是因为重复的 `CBLaserConsole` 已停用；`reused 61→2` / `created 7→66`
+  是因为 Mk2 台子不自带 ClickDetector。逐项对账见 `DECISIONS` 43，
+  装机过程见 `PROGRESS` 的 `INSTALLED` 段。
+
+**桌子清单：**
+`MainReactorConsole` / `ThermalConsole` / `CBLaserConsole` /
+`ElectricGridConsole` / `HDEFGenerator` / `ALTReactorConsole` / …
+
+### 2.5 拉杆与灯（ControlVisuals）
+```
+18 个拉杆，41 盏灯
+```
+（原记 31 盏：Mk2 台子给更多控件配了独立指示灯，见 `DECISIONS` 43。）
+- **拉杆只允许 `LeverUnion` 这一个部件移动**（用户强烈纠正过）
+- 转轴 = 拉杆**底部**，不是 `LeverOrginPart`
+- 档位：CBL 5 / PEA 4 / 冷却泵 4 / 风扇·E-VENT·启停 2
+- 灯：稳态白/红/暗 + 按下时 0.6s 绿色 `Pulse` 闪烁
+
+### 2.6 监视器（MonitorService）
+| 监视器 | 内容 |
+|---|---|
+| **Main** | 温度 / 压力 / 辐射 / 输出 / HDEF / PEA 应力 / 波动 / 抽取率 |
+| **Thermal** | 风扇 ON/OFF，泵 `ON L<n>` / `OFF` / `FAULT`（红）+ 传感器 % |
+| **Power** | CBL 功率 % / 应力 % / 状态 / `925 K` 或 `ERR`，Wiki 配色（过载红 / 完整性紫 / 反应蓝 / 高输出黄） |
+| **Quota** | 游戏内时钟 6AM→6PM，配额目标 + 百分比，Equinox 边框 |
+| **Alerts** | 27 盏灯，由实时状态驱动 |
+| **Log** | 滚动 5 行、按严重度配色的事件日志（青 / 琥珀 / 红），监视 11 个信号，变化触发 |
+| **Forecast** | 能量强度时间轴，每 5 秒一根柱，宽度 = PowerOutput / 当前班次配额，外加一行优先级公告 |
+
+**监视器一共 7 台，不是 5 台。** Wiki 原文：「five consoles, three main monitors, and four
+minor monitors」= 3 + 4 = 7，`Workspace.Monitors` 也确实是 7 台。本文档与 `README` 早期版本
+写的 5 台是**记录错误，不是代码缺陷** —— 脚本一行都不用改，七台本来就在。
+七台现在**全部有写入者**：Log 与 Forecast 是最后接上的两台，都写成**纯观察者**
+（只读 `GameState`，从不写），single-writer 规则不变，仿真行为零改动（`DECISIONS` 54 / 60）。
+
+**重建监视器的绑定契约（零脚本改动）：**
+
+```
+Workspace.Monitors.<Name>ControlRoomMonitor    Model
+  .Screen                                      BasePart，Neon，Transparency 0
+    .MonitorUI                                 SurfaceGui
+      .MainMonitorFrame                        Frame
+        <具名子节点>                            上表列出的标签
+```
+
+四条必须带过去：
+① **`LightInfluence`：标签是 1，屏幕是 0**。新建 `SurfaceGui` 默认是 0，而 0 = 「永远全亮」，
+无视场景光照**和**曝光补偿。控制台文字板必须是 **1**（Mk2 装台那次漏了 121 块，
+就是「装好的台子发白」的根因，`DECISIONS` 45）；但**监视器是反的** ——
+七台 `MonitorUI` 实测一律 0，且 0 才对：屏幕是自发光像素，不该被房间曝光调色。
+`DECISIONS` 57 纠正了「全部用 1」这条旧概括，重建时**不要**把 1 带过去。
+② `AlertsFrame.AlertFrame<N>` 是按**固定 27 个**索引的，Thermal 泵框上的
+`GameCoreLevelLabel` 缺失时会被自动创建 —— 两者都不能在重建里丢掉。
+③ Forecast 的 `ScrollingFrame` 只有 **292px** 真正空着：底部 60px 压在公告浮层
+（ZIndex 5）下面，所以柱数上限是 `ForecastSlices = 11` 而不是 14（`DECISIONS` 62）。
+④ **`MainMonitorFrame.Visible` 必须是 true，且 `GameCoreTitleBar` 不能漏掉。**
+前者出厂在 **Alerts 上是 false 且没有任何脚本置真** —— `MonitorService` 每 tick 写的
+27 盏灯全落在看不见的子树里（`DECISIONS` 105）；后者是内容层的绿色标题条，横跨 frame。
+重建（或搬屏幕）后跑一次 `MonitorKit.Apply()` 再 `Probe()`，期望
+`navy 7/7 greenBar 7/7 fullWidth 7/7 knockedOut 7/7 hiddenFrames 0/7`。
+
+**刷新率：** `Config.Monitor.UpdateInterval = 0` → **每个 tick 都刷新**
+（真实游戏有约 1 秒延迟，用户要即时。）
+
+### 2.7 测试
+| 测试 | 结果 |
+|---|---|
+| `GameCoreSelfTest` | `finalStatus: PASS`，`bridgeResolved 18`，`devices 15` |
+| `GameCoreControlTest` | `pass:30 fail:0`，`finalStatus: PASS`，`levers:18 lamps:41`，`fluctuation signMatches 5/5`（另有 12 项 `stateTests` 表全 PASS） |
+| GameCore 启动 | `[GameCore] started: 25 systems, 12 devices` |
+| 控制总线 | `tagged=73 reindexed=73`；物理点击与总线调用产生同一条 `[Console]` |
+
+**注意：** `GameCoreSelfTest` 跑一次后会**自动禁用自己**。
+重新验证前要 `Disabled = false`。
+
+**注意 2：** `fluctuation` 从旧记的 `60/60` 变成 **`5/5` 不是退步**。
+`60/60` 量的是 `DECISIONS` 79 修掉的双写入 bug（`PowerSystem` 每帧写 `r.Temperature`），
+所以 60 次迭代次次都有真增量。温度现在 1 秒才结算一次，`dt = 1/10` 的 60 次迭代
+只能产生约 5 次真实更新。这个循环**故意没动** —— 它量的就是 1Hz 节奏本身。
+
+**注意 3：** 旧记的 `pass:13` 是只跑第一阶段时的数字；第二阶段（12 项状态断言）
+是 `DECISIONS` 88 补上的，见 §3.3。
+
+### 2.8 视觉层（本会话完成，已保存验证）
+
+> **⚠️ 2026-09-21 更正：下面这张表已过时，不要当现状读。**
+> 通宵期间做过一次「偏暗」调色实验，用户看过之后说**「保留这版」**，
+> 于是它成了新基线（`DECISIONS` 66 / `PROGRESS` Phase 21c）。**Lighting 里的实际值现在是**：
+>
+> | 属性 | 下表（旧） | **实际（现基线）** |
+> |---|---|---|
+> | `Brightness` | 2.5 | **1.2** |
+> | `EnvironmentDiffuseScale` | 0.6 | **0.42** |
+> | `EnvironmentSpecularScale` | 0.8 | **0.15** |
+> | `ExposureCompensation` | 0.15 | **−0.08** |
+> | `Ambient` | (31,28,26) | **(25,24,27)** |
+> | `OutdoorAmbient` | (89,97,107) | **(52,60,72)** |
+> | `Atmosphere.Density` | 0.38 | **0.20** |
+> | `Atmosphere.Glare` | 0.15 | **0.08** |
+> | `Atmosphere.Haze` | 1.2 | **0.45** |
+> | `Atmosphere.Color` | (199,191,180) | **(120,128,138)** |
+> | `Atmosphere.Decay` | (106,100,94) | **(38,36,40)** |
+> | `Bloom.Intensity` | 1.15 | **0.85** |
+> | `Bloom.Threshold` | 0.95 | **1.15** |
+> | `ColorCorrection.Contrast` | 0.12 | **0.20** |
+> | `ColorCorrection.Saturation` | −0.06 | **+0.02** |
+> | `SunRays` / `ShadowSoftness` / `ClockTime` / `GlobalShadows` | 0.08/0.85, 0.3, 12, true | 未变 |
+>
+> **最关键的一条是 `EnvironmentSpecularScale` 0.8 → 0.15。** 下面 §2.8 那节记的
+> 「本房间所有 `Metal` 部件不管 albedo 多少全渲染成白色」（`DECISIONS` 58 / 59）就是它造成的 ——
+> 高光项压过漫反射，所以 `darker`(60,60,60 Metal) 和 `lighter`(186 Plastic) 渲染成同一个值。
+> 降到 0.15 **不是审美改动，是那个 bug 的修复**。监视器深色壳带当初被迫改用 Neon 近黑只是绕路，
+> 现在可以回头重做 —— **七台监视器已在新调色下复核完毕**（`PROGRESS` Phase 25 / `DECISIONS` 80）：Metal 壳带在新调色下回深灰，不再过曝成白。
+>
+> **教训：核对 Lighting 一定要读实例。** 这一轮我照这张表去核对，结果每一项都对不上，
+> 白白多绕了一圈。文档里的数值会漂，`Workspace`/`Lighting` 里的不会。
+
+**灯光大修** — 这是「画面难看」的**根本原因**：
+```
+EnvironmentDiffuseScale  0    → 0.6    ← 之前是 0，所有 PBR 材质全死
+EnvironmentSpecularScale 0    → 0.8    ← 之前是 0，金属看起来像塑料
+Brightness               2    → 2.5
+Ambient                  (1,1,1) 纯白 → (31, 28, 26) 暖深灰
+OutdoorAmbient           (0.27³)   → (89, 97, 107) 冷蓝灰
+ExposureCompensation     0    → 0.15
+ShadowSoftness           —    → 0.3
+Atmosphere               不存在 → 密度 0.38 / offset 0.25 / 色 (199,191,180)
+                                 decay (106,100,94) / glare 0.15 / haze 1.2
+SunRaysEffect            不存在 → intensity 0.08 / spread 0.85
+Bloom                    1/24 → 1.15 / 26 / threshold 0.95
+ColorCorrection          全 0 → brightness 0.02 / contrast 0.12 /
+                                 saturation −0.06 / tint (255,249,240)
+```
+
+**AI 材质（3 张，已生成并全量应用）**
+`MaterialService` 下的 3 个 `MaterialVariant`：
+| 名字 | BaseMaterial | 贴图 assetId | StudsPerTile | 应用数（现测） |
+|---|---|---|---|---|
+| `FacilitySteelPanel` | Metal | `rbxassetid://113678561896495` | 8 | **48,983** |
+| `FacilityFloorPlate` | DiamondPlate | `rbxassetid://99453180185807` | 14 | **9,103** |
+| `ReactorWallPlate` | CorrodedMetal | `rbxassetid://132401913334608` | 18 | **46,951** |
+
+**关键洞察：全场景 80.2%（100,120 个）部件都是同一个默认 `Metal` 材质。**
+换掉这一层 = 换掉整个游戏的观感。
+
+> **⚠️ 这三个数是「现在」实测，不是不变量。** 三种材质**全部带 variant、未打标 = 0**。
+> 旧值 `49,758 / 5,906 / 44,456` 是首次遍扫当时的快照；之后控制台 / 监视器重建、
+> 激光重做、LED 条都改过总数，**别拿旧数对账**（`DECISIONS` 84、`PROGRESS` Phase 29）。
+>
+> 那次遍扫**按材质名过滤（只处理 `Metal`）**，所以**本来就写成 `DiamondPlate` 的
+> 3,194 个部件根本没进循环**，渲染成库存菱形板，紧挨着 5,907 个带
+> `FacilityFloorPlate` 的同类件 —— **同一材质名、两种外观，而且永远不会报错**。
+> 已补齐 3,545 件（只匹配 `BaseMaterial`，避免赋值顺带改写 `Material` 本身），失败 0。
+>
+> `MaterialService` 另有 3 个**空壳 variant**（`MaterialVariant` / `MaterialVariant1`
+> base Plastic、`CoolantRepeatingTexture` base Concrete），**无 `Texture` 子节点、
+> 0 引用**，形态同 §5.3 的 `generate_material` 空产物。**故意不删**（§1.4 / §6）。
+
+**灯光溢出**
+给 `RoomLights` 里 260 个较大的 Neon 部件加了 `PointLight`
+（之前它们「自己亮但不照亮任何东西」）。
+
+### 2.9 场景规模（重要数字）
+| 项 | 数量 |
+|---|---|
+| Workspace 总部件 | **127,111**（封存前 129,980，见 §2.11） |
+| 顶层容器 | 42（整理前 1828） |
+| ClickDetector 实例 | **941**（旧记 1,023，见 `DECISIONS` 84；实测 Consoles 内 69） |
+| `LeverUnion` | 32 |
+| `NeonPart` 灯 | 1,145 |
+| Consoles 文件夹 | 2,381 |
+
+**顶层大容器：** `CullFolder`(21,727) / `Mainframe`(17,078) /
+`CoolantReserviors`(15,504) / `MovingParts`(13,094) / `Facility`(11,010) /
+`ReactorCBLs`(8,291) / `QuantumMainframe`(6,071) / `Geometry`(5,695) /
+`Lights`(2,659) / `GravitationShafts`(2,621) / `CRC1-3`(各 2,548) /
+`Consoles`(2,381) / `ChamberWalls`(2,267) / `PowerExtractionAssembly`(1,921) /
+`METU`(1,612) / `MonitorsFacility`(1,364) / `GravatronUnit`(1,266) /
+`Alarms`(974) / `RoomLights`(561) / `MedicalDispenser`(483)
+
+### 2.10 场景里已有的特效（不用重做！）
+`Workspace.Core` 里**已经内置了 60+ 个粒子发射器**：
+- `EFEParticlePart` 上 12 个：Meltdown / ThunderquakeLightning / Plasma /
+  Gravquake / EquinoxRad / Lightning / MASS / Ambient / Outer / Mal
+- 16 台 Laser 各带 `Fire` + `LaserHitParticle1/2` + `PointLight` + `FireLight`
+- `Effects` 部件上约 30 个：Explosion×7 / Meltdown×6 / Instability×4 /
+  EFE×7 / Equinox×2 / Core×2 / MASSParticle / ShieldShockwave
+- `ForceField` / `Shockwave` / `Radiation` / `GlassBreak`
+
+**问题不是「没特效」；但上面那句「只在事件触发时才喷」只能说对了一半。**
+实测（`DECISIONS` 83、`PROGRESS` Phase 28）：
+
+- `Workspace.Core` 确实全事件驱动 —— 97 个发射器**一个都没开**（`on=0 off=97`）。
+- 但**整个设施早就有常态层**：全场景 **278 个发射器 `Enabled` 且 `Rate > 0`**，
+  关着的 1,368 个才是事件触发那批。扣掉 `CullFolder` 里不渲染的 20 个，
+  **258 个是真正在跑的常态氛围**，主力是 `Smoke` ×105 —— 就是「蒸汽 / 热气」本身。
+  分布：`Geometry` 93 / `Facility` 56 / `Mainframe` 38 / `MovingParts` 21 /
+  `GravitationShafts` 18 / `CoolantReserviors` 10 / `GravatronUnit` 10 / `METU` 7。
+- 所以该做的**不是「造一层常态氛围」，而是让已有这层真的显示出来**：
+  278 个里 **277 个的贴图是自定义资产 id**（只有 1 个用内置 `rbxasset://`），权限一断
+  就等于「在喷但看不见」—— 不会报错，也不会有人发现。
+
+---
+
+### 2.11 旧件封存（2026-09-22，Phase 33）
+
+原版的房间流式加载机制停了（`CullController` 是回收的反编译件、躺在 SS 里不跑），
+`GameState` 也**从来没有房间/扇区概念**，所以世界冻在最后一次保存的状态。据此封存了两件：
+
+| 从 | 到 | 部件 | 性质 |
+|---|---|---|---|
+| `ReplicatedStorage.CulledParts` | `ServerStorage.CulledParts` | **38,869** | 5 个未加载的扇区房间；RS 不渲染但会复制 |
+| `Workspace.Reactor_Laser_Mk3_3` | `ServerStorage.Reactor_Laser_Mk3_3_StrayCopy` | **2,869** | 重建残渣；在反应堆舱外，零点击器/属性/标签 |
+
+两个对象各带一个 `ORIGIN` StringValue 记录来历与还原方法。**没有删除任何东西。**
+
+**计数变化（实测）：** RS 38,875 → **6**；Workspace 129,980 → **127,111**；SS 11,754 → **53,492**。
+第一次搬迁 **Workspace 一件没动**，这就是「世界没被改动」的证据。
+
+**仍然开着、需要用户拍板的**（可见、但没有任何活代码读它）：
+`MovingParts`(13,094) / `ReactorCBLs`(8,609) / `Geometry`(5,695) /
+`GravitationShafts`(2,621) / `ChamberWalls`(2,267)。
+它们**正在渲染**，搬走 = 画面少东西，所以不能自作主张。
+
+**`CullFolder`(21,727) 不在这张表里，也永远不要加进去** ——
+Workspace 根本没有 `ControlRoom` 容器，玩家所在的房间就是 `CullFolder.ControlRoom`。
+它零引用只说明没有脚本**点名**它。
+
+**那 5 个扇区房间现在不在世界里。** `Workspace.Facility.Rooms` 装的是通往它们的
+走廊 / 连接件 / 门厅（`MainHallwaySegment` / `HallwayRoomConnector` / `HMGatewayRoom` …），
+**不含房间本身**。要不要恢复房间流式加载是设计决策，不是清理。
+
+
+## 3. 待办事项 / 下一步计划
+
+### 3.1 几何体重做（主体工程，进行中）
+用户原话：「哎算了你整个游戏重新建模把我看不下去了」+「全部重做，特效与图片资产可使用」
+后续指令：「控制室难道不重做吗？所有东西都要重做哦」
+
+**已完成：**
+- [x] 灯光大修 + AI 材质（见 2.8）
+- [x] 控制台几何体：倒角、凹槽、**内嵌式按钮** —— 六张台，66 控件 / **957 件**
+      （1024 是 HDEF 机柜改写前的数字，见 `DECISIONS` 43）
+- [x] `SurfaceGui` **真实文字标签** —— Mk2 上的文字是从原版读回来的真字符串
+- [x] **圆按钮改为平放**（用户报告）—— 两个按钮构建器各绕 Z 滚 90 度，六张台统一
+      （`DECISIONS` 55 / 56）
+- [x] **整机就位** —— 六张 Mk2 已搬进 `Workspace.Consoles` 并沿用原版台子的名字。
+      **注意：`Workspace.Rebuild.Originals` 现在已不存在**，原版台子那一次的停放位置
+      没了；要回退只能靠 `ServerStorage.GameCoreBaseline` 与 Mk2 的构建代码 `RebuildKit`
+- [x] **七台监视器就地重建** —— 亮轨 + 深色壳带 + 四角支架 + 螺栓 + 底沿 + 各自铭牌（Phase 20c）
+- [x] **Log / Forecast 屏接上** —— 纯观察者，仿真零改动（Phase 20d）
+- [x] **三台 CBL 激光翻新**（`NIGHT_LOG` Task A）—— `Rebuild.LaserKit`，
+      `Workspace.ReactorCBLs.Reactor_Laser_Mk3_1/2/3` 每台 +106 件（2,763 → 2,869）。
+      **是翻新不是重建**：每台带 210 个 MeshPart / 100 个 UnionOperation /
+      485 个 Wedge / 251 个活的 Texture·Decal，没有程序化替代品，按 §1.4 不能删。
+      原机 103 种颜色**全是灰**、零自发光 —— 毛病在配色不在结构，所以只改
+      `Color` 并增件：名字、标签、ClickDetector 一个没动。
+      半径由 `SurfaceScanner` **射线**测得（不是对部件表取统计量，见 `DECISIONS` 78）；
+      新增 7 站点配色、黄铜箍 + 螺栓圈、青色嵌条、状态灯、枪口发光环 + 镜片。
+      幂等已验证（连跑两遍颜色逐字节相同），实机三台 0.34 秒跑完。
+      **注意：`NIGHT_LOG` 里记的激光尺寸（98.0 × 36.7 × 36.7，Mk3_1 在
+      (−61.4, 280.6, −0.7)）是错的**，实测轴向跨度 −57.72..+20.00、壳半径 4.78–8.08。
+
+**未开始：**
+- [x] **监视器屏幕内容的暗底 + 亮绿标题条**（`ART_DIRECTION` §3.5）—— **已完成**
+      （`PROGRESS` Phase 36 / `DECISIONS` 104、105）。七个 `Screen` 由 Neon `17,17,17`
+      改为 `10,22,48`（同亮度，只动蓝通道 —— 那层「Neon 近黑」正是 §3.5 记的那笔绕路，
+      与规格里的暗底是**同一个部件**，所以一笔改动同时结清两项）。每个 `MainMonitorFrame`
+      新增 `GameCoreTitleBar`（`120,255,140`，ZIndex 0，**横跨整个 frame**），顶层
+      `TitleText` 挖空成底色。**宽度取 frame、只有高度取 title** —— `TitleText` 是
+      AutomaticSize，按文字宽度走的条在 380px 小屏上接近满宽、在 1045–1220px 大屏上只有
+      30%，同一条规则两种外观；第一版还继承了 title 的 AnchorPoint，居中的那条会把满宽
+      条推出去一半。**没有动的两处都是量出来的**：`PowerNeon` 是电源灯不是色带；Power 台
+      嵌套的 `CBL<i>Frame.TitleText` 每 tick 被 `MonitorService` 重写，静态改色会被覆盖
+      却看着像生效。回滚：`Rebuild.MonitorKit.Revert()`。
+- [x] **控制室外壳 —— 修正而非重建**（`PROGRESS` Phase 30 / `DECISIONS` 85）——
+      `Rebuild.ShellKit`，**新建 0 件**。原计划是四面墙 182 件板/肋 + 天花板压顶 + 凹槽，
+      被它自己的碰撞审计推翻（`HARD=0 SOFT=713`）：四面墙**本来就做满了** ——
+      东墙 = `Union 40.1×21.25×0.75` 底板 + 10 片 0.125 薄竖板 + 4 根通高肋；
+      南北墙 = 下部板场 + 上部大板 + `0.2×13.25` 竖格栅；西侧 `FrontWall`
+      **根本没有整片墙面**，是跨进房间 15 studs 的管道井。
+      而且那 182 件里有 2 件会埋掉一个摄像头 `TextPart`（(141.80, 295.85, −0.71)）。
+      **真正的缺陷**：天花板板与 16 件墙件戴着 `DiamondPlate` + `FacilityFloorPlate`
+      （**地板自己的材质和 variant**）@160，`FrontWall` 另有 13 件 @205 ——
+      全都**亮过控制台 hull 的 108**，于是家具成了亮墙上的暗块。
+      房间本来就有 `100/75/60/50` 阶梯（1,379 件里 702 件在 100）。
+      改：重着色 80 + 换材质 25，失败 0，**27 件灯具/信号灯全保**，壳面最亮大面降到 **100**。
+      **差点改坏的**：第一版判据是「亮度 > 120」，干跑显示它会**把 25 件灯板和 2 盏琥珀信号灯
+      改成灰色** —— 判据因此从「亮度」换成「材质 variant」：戴 `FacilitySteelPanel` /
+      `FacilityFloorPlate` 的是结构，没戴 variant 的是灯具，一律不碰。
+      纯外观属性，未增删改移任何部件；`ControlRoom` 下 ClickDetector = 0。
+- [ ] 设施外壳 / 房间内部 —— **控制室已完成；反应堆舱已实测，无需改动**
+      （`PROGRESS` Phase 31 / `DECISIONS` 86）。**剩下的不是「修正」而是「装饰 + 英雄资产」。**
+      实测结论：舱壁那 230 件 `200,205`（全场最亮大面族，378,704 studs²）**不是离群值**
+      —— 该子树的**完整**非 Neon 色调阶梯是 **0 → 255 连续分布，众数就在 192–207（1,040/4,079）**，
+      上方还有 229 件在 240–255。**那次误判的根因是只统计大面（face ≥ 300）**
+      —— 大面统计 ≠ 房间色调：舱里 1,138 件 190–223 的非 Neon 件有 980 件**就是墙本身**，
+      过滤掉小件等于把墙留在一个被抽空的分布里看。**口径决定结论。**
+      三条独立复核：>223 的 269 件总面积仅 2,044 studs²（占墙族 0.5%），
+      **face ≥ 300 的 0 件**；墙子树里的 267 件 `FacilityFloorPlate` + 12 件亮 `Concrete`
+      **全是竖直薄条**（thin 0.1–0.2），是装饰嵌条；`Mainframe` 那 2,405 件亮件是
+      `Line` 1,421 + `TextPart` 776 + 白风扇，共 7,719 studs²。
+      **判据本身也记一笔**：按「色调距离」找离群是错的仪器 —— 它把 `CullFolder` 里
+      「舱壁 vs 控制室新壳」报成 55 件离群；真正管用的是**材料角色错配**，而第七轮那个
+      「地板材质+variant 装在天花板」的全场复测**无复发**。
+      **本轮零场景写入**，也**故意没写 kit**（一个 scan 报「无需修正」的 kit 是负债）。
+      `MonitorsFacility` / `RoomLights` / `Alarms` / `Lights` 仍是原版（实测为灯具/监视器装置，非建筑外壳）。
+- [ ] 英雄资产用 `generate_mesh` 重做：堆芯外壳、拉杆握把
+- [x] **常态氛围 VFX —— 本来就有，不是缺失项**（`DECISIONS` 83、`PROGRESS` Phase 28）。
+      实测 **278 个发射器 `Enabled` 且 `Rate > 0`**（`CullFolder` 外 **258 个**），主力 `Smoke` ×105。
+      本轮真正修的是**两个永远画不出来的**：`Texture` 写成裸 id `6422188442'`（缺前缀 + 多一个撇号），
+      已规范成 `rbxassetid://6422188442`，`MALFORMED` 归零。
+      **剩下的不是造层，是贴图权限 + 观感。**
+- [x] **竖直红 LED 条形图**（`ART_DIRECTION` §3.4）—— **已完成**（`DECISIONS` 69、
+      `PROGRESS` Phase 21a）。五张台各两条 9 段竖列，共 **+120 件**（24 × 5）。
+      纯装饰、不驱动 —— 没有任何部件以控件命名，`ConsoleBinder` 不解析它，
+      `ControlVisuals` 不看它，28 条 dot-path 一条没变。
+- [~] 材质分区的细化 —— **一致性已补齐，启发式本身仍待细化**（`DECISIONS` 84、
+      `PROGRESS` Phase 29）。已做：把遍扫漏掉的 3,545 件补齐，三种材质现在
+      **未打标 = 0**（`FacilitySteelPanel` 48,983 / `FacilityFloorPlate` 9,103 /
+      `ReactorWallPlate` 46,951）。**未做：按几何角色重新分区。**
+      顺手量了可行性 —— 对 `Facility`/`Geometry`/`CullFolder`/`Mainframe`/
+      `MovingParts`/`ChamberWalls` 共 70,871 件按形状分类，结果是
+      **FLOOR 9,797 / WALL 430 / CHUNK 60,644**：房间绝大部分是「块状」几何，
+      **纯形状启发式没有多少可分配的空间**。真要细分得按「容器意图 + 形状」
+      混合判定，而不是只看形状 —— 另外 `MovingParts`（9,206 件 `ReactorWallPlate`）
+      与 `Mainframe`（14,016 件 `FacilitySteelPanel`）同属机械却拿了两种皮，
+      这是按容器名分配的遗留不一致，**留待下一轮**。
+- [x] **整体调子转向更暗**（`ART_DIRECTION` §2.1）—— **已完成，且不再是「需用户确认」**
+      （`DECISIONS` 66、`PROGRESS` Phase 21c）。原先按 `DECISIONS` 52 押后到外壳阶段，
+      后来还是做了一次「偏暗」实验，用户看过后说**「保留这版」**，于是直接成为基线。
+      **§2.8 顶部那张更正表就是现在的实际值**，尤其是 `EnvironmentSpecularScale` 0.8 → **0.15**
+      —— 那不是审美，是 §2.8/§5.5 记的「Metal 全渲染成白色」的**修复**。
+      `DECISIONS` 52 的红线仍然有效：**控制台不得与环境脱节。**
+      **七台监视器已在新调色下复核完毕**（`PROGRESS` Phase 25 / `DECISIONS` 80）：
+      决定性的一步是把 Metal 壳带与 Plastic 亮边**设成同一个 albedo 75,75,76** 再截图 ——
+      壳带回深灰、同框的天花板灯板纯白。旧调色下两者都会过曝成白。`Screen` 保持 Neon 17,17,17。
+- [x] **主监视器示意图接上实时数据**（`PROGRESS` Phase 26 / `DECISIONS` 81）—— 两条能量柱
+      （堆芯强度 / P.E.A 抽取）、三支 CBL 光束、三个冷却泵方块、核心辉光、P.E.A 警告三角，
+      Equinox 期间整块转紫。纯观察者，不写 `GameState`；折进 `MonitorService` 而**不**注册为第 26 个系统。
+
+- [x] **堆芯随堆芯状态变色（`ART_DIRECTION` §3.6）** —— `PROGRESS` Phase 35 / `DECISIONS` 101-103。
+      `Rebuild.CoreKit.Glow` 把 57 个 Neon 件与 CORE 点光的色相随四个堆芯状态从青转到紫；
+      驱动在 `ControlVisuals.driveCore()`（折进已有系统，不新增第 26 个系统）。
+      纯观察者，只写颜色；**severity 0 时逐字节等于设计色**（HSV 往返守卫，`DECISIONS` 103）。
+      踩过的坑记在 §0.13。两个端点都已渲染确认（青色笼 / 紫色笼）。
+
+**回退手段：** Mk2 的构建代码在 `RebuildKit`；装机前的取舍与动手前必查项见
+`NIGHT_LOG.md` 的「明早的决策点」。
+
+### 3.2 已知 Bug / 疑点
+- [x] **`TempLabel` 的第二个写入者已找到并修掉**：温度值本身是 1Hz 变的
+      （`FluctuationLabel` 间隔稳定 1.10s 已证实），
+      但 `TempLabel` 变化间隔不规则（`0.40 0.72 0.38 0.30 0.80 0.40 0.70 0.10`）。
+      写它的是 `PowerSystem.Update` —— 每帧 `r.Temperature -= r.PowerOutput * cfg.ExtractionHeatLoss * dt`。
+      **已修（`DECISIONS` 79 / `PROGRESS` Phase 24）**：`PowerSystem` 不再写温度，
+      只发布 `r.ExtractionHeatRate`（F/s），由 `ReactorState` 在自己的 1 秒块里扣；
+      系数、速率、每秒总量都没变，只是把写权还给唯一所有者（`DECISIONS` 7）。
+      修复后 `TempLabel` 间隔 1.10 1.11 1.10 1.10 1.09 1.09，与 `FluctuationLabel` 同步跳变。
+- [x] 主监视器的示意图框（`ReactorDiagramFrame` / `CoreDiagramFrame`）**仍是静止的** ——
+      已接上（`PROGRESS` Phase 26 / `DECISIONS` 81）。纯观察者，只读 `GameState`。
+- [x] **HDEF 电源拉杆的动画从绑定那一刻起就是死的** —— 已修
+      （`PROGRESS` Phase 32 / `DECISIONS` 87）。`HDEFGenerator` 上 `PowerLever`（`hdef_lever`）
+      与 `EmergencyControl`（`hdef_emergency`）会走到**同一个** `LeverUnion`（该机只有这一个），
+      `Bind` 原先无条件覆盖，于是动作变成**没有 `detent` 分支**的 `hdef_emergency`，
+      `applyLever` 直接 early-return，**拉杆从此不再动** —— 而控件照常触发、状态照常翻转、
+      灯照常变色，**日志与监视器都不报错**。`Bind` 现在先问 `detent()` 这个动作能不能驱动拉杆，
+      连「不能驱动的动作顶掉能驱动的动作」这条路径一起堵掉。
+      全场共 **5 个拉杆**能被多个动作走到，**4 个合法且每个动作都有 detent，只有 HDEF 这一个是病态的**。
+
+### 3.3 测试覆盖缺口
+- [x] **原条目把两类东西并列了，是分类错误。** `ConsoleBinder` 的控件表里
+      **根本没有 QPU / Gateway / GravLift** —— 那三个是 `FacilitySystem` 下的独立系统，
+      不是控制总线上的动作，拿控制测试去覆盖它们本来就用错了仪器。
+      真正没覆盖的**控件是另外十二个**，现已全部覆盖
+      （`PROGRESS` Phase 32 / `DECISIONS` 88）：
+      `coolant_recalibrate` / `startup` / `shutdown` / `monitor_boot` /
+      `pressurizer_vent` / `pea_vent` / `gravatron_charge` / `gravatron_overload` /
+      `hdef_lever` / `hdef_emergency` / `hdef_cell` / `metu_ecc`。
+      做法是加第二个阶段，断言 `GameState` 与系统状态而**不是**断言场景
+      —— 这十二个大多**没有任何可见外观变化**，旧测试那种「看拉杆动没动 / 灯变没变色」
+      的仪器对它们无能为力。
+- [ ] **仍然缺：QPU 更换 / Gateway / GravLift 的独立测试** —— 它们需要自己的测试文件，
+      不该挂在控制测试名下。
+
+### 3.4 环境 / 工具
+- [ ] 装 Node.js 让 `@6xvl/robloxstudio-mcp` 能用（见 0.6）
+- [ ] 项目根 `opencode.json` 已写好，重启 opencode 生效
+- [ ] **Studio 截图送不到 vision sidecar**：`capture_screenshot` 只把图片**内联**返回，
+      不落盘、也不进剪贴板，而 `describe_image` 只认「路径 / URL / data URL」，两边接不上。
+      想让我「看」渲染结果，得先把图存成文件（或让 MCP 写进 `.ai/inbox`）。
+      `PreloadAsync` 的逐资源回调在命令栏 VM 里**根本不触发**（70 个全 `NO-CALLBACK`），也别指望它。
+
+---
+
+## 4. 用户的个人偏好
+
+### 4.1 沟通风格
+- **说中文**，技术术语夹英文（"拉杆"、"堆芯"、"LeverUnion"、"detach"）
+- **极简、直接、有时急躁**。典型发言：
+  - 「bro在胡搞，拉杆移动的部分是LeverUnion其他部分都不动啊！！！」
+  - 「哎算了你整个游戏重新建模把我看不下去了」
+  - 「全部重做，特效与图片资产可使用」
+- **不喜欢被反复问**。能自己判断的就自己判断、自己动手。
+  只有在真正会破坏东西或需要装软件时才停下来问。
+- **会自己去做事**（他自己去装了 MCP server、开了 Allow HTTPS、保存了工程）
+- 长时间会话，有时会离开（睡觉），期望你**持续推进**
+
+### 4.2 代码风格偏好
+- **注释要多，且解释「为什么」而不是「是什么」**
+  ```lua
+  -- 好：LeverOrginPart is only a 0.1^3 marker sitting at the handle's
+  --     centre, so rotating about it just spins the handle in place.
+  -- 坏：-- rotate the lever
+  ```
+- **变量命名**：小驼峰（`coolantRemoval`、`tickScale`、`perSensor`），
+  常量全大写（`STATES`、`MIN_ANGLE`、`MAX_ANGLE`）
+- **配置与逻辑分离**：所有魔法数字进 `Config`，代码里不写字面量
+- **文档注释用英文**（与 `DECISIONS`/`PROGRESS` 一致），对话用中文
+- 代码块内用 `--` 分隔小节，例如 `-- ========== TEMPERATURE ==========`
+- 喜欢 `pcall` 包裹可能失败的实例操作（尤其是 CFrame 赋值）
+
+### 4.3 常用 Roblox 设计模式（他认可的）
+1. **单一真相源**：`GameState` 持有全部运行时状态，系统**不得缓存副本**，
+   每次 `Update` 都通过 `R()` 取最新引用
+2. **单一写入者**：一个值只能有一个系统写（例：`PowerOutput` 只由
+   `PowerSystem` 写；冷却移除只由 `ReactorState` 算）。
+   **曾经因为双重写入出过 bug，这是他特别在意的点**
+3. **固定时间步 + 事件驱动**：`SystemManager` 按 priority 分发
+4. **自愈**：`GameState.Reset()` 会清空子表，所以 CBL/Gravatron/METU/PEA
+   在 `Update()` 里检测到自己的子表被清空会**重新 `Initialize()`**
+5. **配置驱动**：`Config.Sim.TRGWebTick` 之类的常量集中管理，
+   TRGWeb 的原值用 `dt / TRGWebTick` 换算
+6. **文档即代码**：`PROGRESS` / `DECISIONS` / `README` / `CLAUDE`
+   都是 `ModuleScript`，内容用长字符串返回：
+   ```lua
+   return [=[
+   # 标题
+   ...
+   ]=]
+   ```
+
+### 4.4 验证要求（他明确要求过）
+- **必须真实验证**，不能只说「应该可以了」
+- 验证方式：**模拟点击 → 检查部件位置 / 颜色变化**
+- 例：拉杆测试要对比所有部件的 CFrame，确认**只有 `LeverUnion` 动了**
+- 例：灯测试要读 `Color` 前后值
+- 每次进度后**自评功能质量，太差就重写**
+
+---
+
+## 5. 所有关键代码片段
+
+### 5.1 温度 1 秒结算一次（ReactorState）★ 本次会话核心改动
+用户要求：「把温度计算逻辑改成一秒一次」
+
+```lua
+-- Config.Reactor
+AmbientTemperature = 20, -- cold facility temperature (F)
+-- Core temperature is recalculated once per second, not every frame.
+TempUpdateInterval = 1.0,
+MaxCoreTemperature = 60000,
+
+-- ReactorState.Update —— 在线分支
+-- Temperature is recalculated once per second, not every frame.
+r.TempAccum = (r.TempAccum or 0) + dt
+if r.TempAccum >= cfg.TempUpdateInterval then
+    local step = r.TempAccum
+    r.TempAccum = 0
+    local before = r.Temperature
+    -- perTick is per TRGWeb tick; convert to the elapsed seconds.
+    r.Temperature += (perTick / Config.Sim.TRGWebTick) * step
+    -- One random fluctuation per update, like the prototype.
+    r.Temperature += math.random(-cfg.NoiseAmplitude, cfg.NoiseAmplitude)
+    -- Small passive loss to ambient (kept from the original model).
+    r.Temperature -= (r.Temperature - cfg.AmbientTemperature) * 0.002 * step
+    -- P.E.A extraction sink, published by PowerSystem as F per second.
+    r.Temperature -= (r.ExtractionHeatRate or 0) * step
+    r.Temperature = math.clamp(r.Temperature, cfg.AmbientTemperature, cfg.MaxCoreTemperature)
+    -- Fluctuation readout: the change applied on this update.
+    r.TempFluctuation = r.Temperature - before
+end
+
+-- ReactorState.Update —— 离线/跳闸分支（同一节奏）
+-- Offline / tripped: passive cool-down only, on the same 1s cadence.
+if not r.Online or r.Tripped then
+    r.TempAccum = (r.TempAccum or 0) + dt
+    if r.TempAccum >= cfg.TempUpdateInterval then
+        local step = r.TempAccum
+        r.TempAccum = 0
+        local before = r.Temperature
+        r.Temperature -= (r.Temperature - cfg.AmbientTemperature) * 0.05 * step
+        r.Temperature = math.clamp(r.Temperature, cfg.AmbientTemperature, cfg.MaxCoreTemperature)
+        r.TempFluctuation = r.Temperature - before
+    end
+    ReactorState.UpdateCoreState()
+    GameState.Signals.ReactorChanged:Fire(r)
+    return
+end
+```
+**注意：** 压力仍按每帧走（用户只要求改温度）。
+`r.TempAccum` 用 `(r.TempAccum or 0)` 兼容 `GameState.Reset()` 后的 nil。
+
+**注意 2（`DECISIONS` 79）：** 温度**只有 `ReactorState` 一个写入者**。
+`PowerSystem` 曾经在自己的 `Update` 里每帧扣 PEA 抽取热沉，于是这个已经改成
+「每秒一跳」的值在两次结算之间还在慢慢变 —— `%.0f` 把它显示成每 3.5 tick 掉 1 F
+（实测间隔 0.30/0.40 交替，与 0.02 × 141 GW ÷ 60 的预测吻合）。
+现在它只发布 `r.ExtractionHeatRate`，由上面这段 1 秒块统一扣。
+
+### 5.2 拉杆只动 LeverUnion（ControlVisuals）★ 用户强烈纠正的点
+用户原话：「拉杆移动的部分是LeverUnion其他部分都不动啊！！！」
+
+**错误的旧实现（整个模型一起转）：**
+```lua
+-- ❌ 错：PivotTo 会把外壳、底座、文字全部带着转
+object:PivotTo(entry.base * CFrame.Angles(angle, 0, 0))
+```
+
+**正确实现：**
+```lua
+-- Walk up from a click part to the lever's moving piece.
+-- The only part that may move is LeverUnion; LeverOrginPart is its hinge.
+-- Everything else (housing, base, text) must stay put.
+local function findLeverParts(clickPart)
+    local node = clickPart
+    while node and node ~= game.Workspace do
+        if node:IsA("Model") then
+            local moving = nil
+            for _, d in ipairs(node:GetDescendants()) do
+                if d:IsA("BasePart") and d.Name == "LeverUnion" then
+                    moving = d
+                    break
+                end
+            end
+            if moving then
+                -- LeverOrginPart is only a 0.1^3 marker sitting at the handle's
+                -- centre, so rotating about it just spins the handle in place.
+                -- The real hinge is the bottom of the handle.
+                local hingeCF = moving.CFrame * CFrame.new(0, -moving.Size.Y * 0.5, 0)
+                return moving, hingeCF, true
+            end
+        end
+        node = node.Parent
+    end
+    return nil, nil
+end
+
+local function applyLever(moving, entry)
+    local index = detent(entry.action, entry.arg, entry.arg2)
+    if not index and entry.clickIndex then
+        index = entry.clickIndex
+    end
+    if not index then return end
+    local states = math.max(2, entry.states or 2)
+    local frac = (math.clamp(index, 1, states) - 1) / (states - 1)
+    local angle = math.rad(MIN_ANGLE + (MAX_ANGLE - MIN_ANGLE) * frac)  -- 28 .. -28
+    -- Swing the handle around the hinge; the rest of the lever never moves.
+    local ok = pcall(function()
+        if entry.hingeIsPoint then
+            local hingeCF = entry.hinge
+            local relative = hingeCF:Inverse() * entry.base
+            moving.CFrame = hingeCF * CFrame.Angles(angle, 0, 0) * relative
+        else
+            local relative = entry.hinge:Inverse() * entry.base
+            moving.CFrame = entry.hinge * CFrame.Angles(angle, 0, 0) * relative
+        end
+    end)
+    return ok
+end
+```
+
+**Bind 里必须用 `levers[moving]` 而不是 `levers[object]`；而且不能被「驱动不了拉杆的动作」顶掉：**
+```lua
+-- A lever can be driven by several click parts (PW1..PW5): keep the action
+-- and remember the explicit notch for the last click.
+--
+-- A control that CANNOT drive a lever must not displace one that can.
+-- HDEFGenerator is the case that bit: EmergencyControl sits beside PowerLever,
+-- owns no LeverUnion of its own, so its walk climbs to the generator - where the
+-- only lever IS PowerLever's. Last bind won, so the emergency control overwrote
+-- the power lever's action with hdef_emergency, which has no detent branch, and
+-- the lever never moved again.
+-- detent() is the single authority on whether an action can drive a lever, so ask
+-- it rather than keeping a second list of actions in sync by hand.
+local incomingDrives = action and detent(action, 0, 0) ~= nil
+local heldAction = levers[moving].action
+local heldDrives = heldAction and detent(heldAction, 0, 0) ~= nil
+if action and (not heldAction or incomingDrives or not heldDrives) then
+    levers[moving].action = action
+    levers[moving].arg = arg
+    -- Adopt the detent count of the richer action (e.g. a coolant
+    -- lever starts as ON/OFF then gains the 0..3 level notches).
+    levers[moving].states = STATES[action] or levers[moving].states
+end
+if arg2 and arg2 >= 1 then
+    levers[moving].clickIndex = arg2
+end
+```
+
+**这道闸的意义（`DECISIONS` 87）：** 全场 **5 个拉杆**能被多个动作走到 ——
+`CoolantControl1/2/3` 的 `coolant_pump_on/off/level`，`StartUpBigLever` 的 `startup`/`shutdown`，
+以及 `HDEFGenerator` 的 `PowerLever`/`EmergencyControl`。**前四组每个动作都有 `detent` 分支，
+所以 last-bind-wins 是正确行为**（`startup`/`shutdown` 判据同样是 `r.Online`，两个都能驱动）；
+**只有 HDEF 那一组里 `hdef_emergency` 没有分支**，于是它一绑上去就把拉杆锁死了。
+
+**档位表：**
+```lua
+local STATES = {
+    cfan = 2, event = 2, startup = 2, shutdown = 2,
+    hdef_lever = 2, hdef_emergency = 2,
+    cbl_set_power = 5, cbl_power = 5,
+    pea_set_extraction = 4, pea_extraction = 4,
+    coolant_pump = 2, coolant_pump_on = 2, coolant_pump_off = 2,
+    coolant_pump_level = 4,
+}
+```
+
+**实测结果（5 个拉杆全部 PASS）：**
+```
+CoolantControl1      PASS  swing=0.246 studs  parts=25
+E_VENTLever1         PASS  swing=0.223 studs  parts=24
+CFLever1             PASS  swing=0.167 studs  parts=24
+CBL LargeLever       PASS  swing=0.246 studs  parts=33
+PEA ExtractionLever  PASS  swing=0.246 studs  parts=25
+```
+
+### 5.3 创建 AI 材质（MaterialVariant）
+`generate_material` 生成的变体是**空的**（没有 `Texture` 子节点），必须自己挂贴图，
+并且必须是 `MaterialService` 的**直接子节点**才能被 `part.MaterialVariant` 引用。
+
+```lua
+local MS = game:GetService("MaterialService")
+local specs = {
+    { name = "FacilitySteelPanel", base = Enum.Material.Metal,         id = "rbxassetid://113678561896495", tile = 8 },
+    { name = "FacilityFloorPlate", base = Enum.Material.DiamondPlate,  id = "rbxassetid://99453180185807",  tile = 14 },
+    { name = "ReactorWallPlate",   base = Enum.Material.CorrodedMetal, id = "rbxassetid://132401913334608", tile = 18 },
+}
+for _, s in ipairs(specs) do
+    local old = MS:FindFirstChild(s.name)
+    if old then old:Destroy() end
+    local mv = Instance.new("MaterialVariant")
+    mv.Name = s.name
+    mv.BaseMaterial = s.base
+    local tex = Instance.new("Texture")
+    tex.Name = "Texture"
+    tex.Texture = s.id
+    tex.StudsPerTileU = s.tile
+    tex.StudsPerTileV = s.tile
+    tex.Parent = mv
+    mv.Parent = MS
+end
+```
+
+### 5.4 全场景材质应用（100,120 个部件，3.87 秒）
+```lua
+local ws = game.Workspace
+local CHS = game:GetService("ChangeHistoryService")
+pcall(function() CHS:SetWaypoint("MaterialPass") end)
+
+local CONSOLE = { Consoles=true, Monitors=true, MonitorsFacility=true, Alarms=true,
+    MedicalDispenser=true, Tools=true, Mainframe=true, QuantumMainframe=true,
+    MES=true, MainframeToolStorageCull=true, Stats=true, ClickInfo=true, UISounds=true }
+local HEAVY = { ChamberWalls=true, ReactorCBLs=true, Core=true, GravatronUnit=true,
+    METU=true, CoolantReserviors=true, PowerExtractionAssembly=true, GravitationShafts=true,
+    CRC1=true, CRC2=true, CRC3=true, MovingParts=true, PhysicsObjects=true }
+
+local stats = { steel = 0, wall = 0, floor = 0, skipped = 0 }
+local function isFloor(d)
+    local s = d.Size
+    return s.Y <= 1.5 and (s.X >= 8 or s.Z >= 8)
+end
+
+local done = 0
+for _, top in ipairs(ws:GetChildren()) do
+    if (top:IsA("Model") or top:IsA("Folder")) and top.Name ~= "GameCoreTests" then
+        local mode = CONSOLE[top.Name] and "steel" or (HEAVY[top.Name] and "wall" or "mixed")
+        for _, d in ipairs(top:GetDescendants()) do
+            if d:IsA("BasePart") then
+                if d.Material == Enum.Material.Metal then
+                    if mode == "steel" then
+                        d.MaterialVariant = "FacilitySteelPanel"; stats.steel += 1
+                    elseif mode == "wall" then
+                        d.Material = Enum.Material.CorrodedMetal
+                        d.MaterialVariant = "ReactorWallPlate"; stats.wall += 1
+                    else
+                        if isFloor(d) then
+                            d.Material = Enum.Material.DiamondPlate
+                            d.MaterialVariant = "FacilityFloorPlate"; stats.floor += 1
+                        else
+                            d.MaterialVariant = "FacilitySteelPanel"; stats.steel += 1
+                        end
+                    end
+                else
+                    stats.skipped += 1
+                end
+                done += 1
+                if done % 8000 == 0 then task.wait() end
+            end
+        end
+    end
+end
+```
+**结果：** `steel 49,758 / wall 44,456 / floor 5,906 / skipped 24,746`
+
+### 5.5 灯光大修（画面难看的根因）
+
+> **⚠️ 下面这段代码是当时的改动，不是现状。** 现基线值见 §2.8 顶部的更正表
+> 与 `DECISIONS` 66。`EnvironmentSpecularScale` 已从 0.8 降到 **0.15**。
+```lua
+local L = game.Lighting
+
+-- ---------- 1. Atmosphere (air/depth) ----------
+local atm = L:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
+atm.Name = "Atmosphere"
+atm.Density = 0.38
+atm.Offset = 0.25
+atm.Color = Color3.fromRGB(199, 191, 180)
+atm.Decay = Color3.fromRGB(106, 100, 94)
+atm.Glare = 0.15
+atm.Haze = 1.2
+atm.Parent = L
+
+-- ---------- 2. Environment lighting (the big fix) ----------
+L.EnvironmentDiffuseScale = 0.6      -- 之前是 0，所有 PBR 材质全死
+L.EnvironmentSpecularScale = 0.8     -- 之前是 0，金属像塑料
+L.Brightness = 2.5
+L.Ambient = Color3.fromRGB(31, 28, 26)
+L.OutdoorAmbient = Color3.fromRGB(89, 97, 107)
+L.ExposureCompensation = 0.15
+L.ShadowSoftness = 0.3
+L.GlobalShadows = true
+
+-- ---------- 3. Sun rays ----------
+local sr = L:FindFirstChildOfClass("SunRaysEffect") or Instance.new("SunRaysEffect")
+sr.Name = "SunRays"
+sr.Intensity = 0.08
+sr.Spread = 0.85
+sr.Parent = L
+```
+
+### 5.6 灯光溢出（给 Neon 部件加 PointLight）
+```lua
+local CAP = 260
+local added = 0
+local PRIORITY = { "Alarms", "RoomLights", "Lights", "Monitors", "MonitorsFacility", "Core", "ReactorCBLs" }
+
+local function area(p)
+    local s = p.Size
+    return (s.X * s.Y + s.Y * s.Z + s.X * s.Z)
+end
+
+for _, name in ipairs(PRIORITY) do
+    local top = ws:FindFirstChild(name)
+    if top then
+        for _, d in ipairs(top:GetDescendants()) do
+            if added >= CAP then break end
+            if d:IsA("BasePart") and d.Material == Enum.Material.Neon
+                and not d:FindFirstChildOfClass("PointLight") then
+                if area(d) >= 1.2 then
+                    local pl = Instance.new("PointLight")
+                    pl.Color = d.Color
+                    pl.Brightness = 2.2
+                    pl.Range = math.clamp(area(d) * 2.2, 6, 22)
+                    pl.Shadows = false
+                    pl.Parent = d
+                    added += 1
+                end
+            end
+        end
+    end
+end
+```
+
+### 5.7 正确的运行时验证模式 ★ 必读
+**因为 0.2 的坑，验证必须读实例状态。**
+
+**测 1Hz 节奏 —— 采样 TextLabel 的变化时间戳：**
+```lua
+local mon = game.Workspace.Monitors.MainControlRoomMonitor
+local fluct
+for _, d in ipairs(mon:GetDescendants()) do
+    if d:IsA("TextLabel") and d.Name == "FluctuationLabel" then fluct = d end
+end
+
+local last = fluct.Text
+local stamps = {}
+local t0 = os.clock()
+while os.clock() - t0 < 5 do
+    if fluct.Text ~= last then
+        stamps[#stamps+1] = { os.clock() - t0, fluct.Text }
+        last = fluct.Text
+    end
+    task.wait()
+end
+local gaps = {}
+for i = 2, #stamps do
+    gaps[#gaps+1] = string.format("%.2f", stamps[i][1] - stamps[i-1][1])
+end
+-- 实测输出: FluctuationLabel: 5 changes in 5.0s | gaps: 1.10 1.10 1.10 1.10
+```
+
+**测拉杆 —— 对比所有部件的 CFrame：**
+```lua
+local lever = game.Workspace.Consoles.ThermalConsole.CoolantControl1.BigLever
+local before, order = {}, {}
+for _, d in ipairs(lever:GetDescendants()) do
+    if d:IsA("BasePart") then
+        before[d] = d.CFrame
+        order[#order+1] = d
+    end
+end
+-- ... 触发状态变化 ...
+task.wait(0.5)
+local moved = {}
+for _, d in ipairs(order) do
+    if d.Parent and (d.CFrame.Position - before[d].Position).Magnitude > 0.001 then
+        moved[#moved+1] = d.Name
+    end
+end
+-- 判定: #moved == 1 and moved[1] == "LeverUnion"
+```
+
+### 5.8 在 Edit 模式验证新代码（绕过 require 缓存）
+```lua
+local modScript = game.ServerScriptService.GameCore.FacilitySystem.ControlVisuals
+local CV = loadstring(modScript.Source)()   -- 全新实例，绕过缓存
+```
+
+### 5.9 文档 ModuleScript 格式
+```lua
+return [=[
+# 标题
+
+内容...
+
+]=]
+```
+**注意：内容里不能出现「右方括号+两个等号+右方括号」这个序列。**
+
+---
+
+## 6. 场景里不能碰的东西（功能性绑定）
+
+改动几何体时，以下**名字**是脚本绑定依赖，改名或删除会导致功能失效：
+
+| 名字 | 用途 | 数量 |
+|---|---|---|
+| `ClickPart` | ClickDetector 宿主 | 941（旧记 1,023） |
+| `LeverUnion` | 拉杆唯一的移动件 | 32 |
+| `LeverOrginPart` | 0.1³ 标记，**无用**，可忽略 | — |
+| `NeonPart` | 灯 | 1,145 |
+| `*ControlRoomMonitor` | 监视器屏幕 | 7 |
+| `Text` | 控制台上的文字部件 | — |
+| `Core` / `EFEParticlePart` / `Effects` | 特效宿主 | — |
+
+**安全做法：只改外观属性（Material / MaterialVariant / Color / Size / CFrame），
+不改名字、不删部件。**
+
+---
+
+## 7. 有用的参考资源
+
+| 资源 | 位置 | 说明 |
+|---|---|---|
+| TRGWeb | `ServerScriptService.Misc.TRGWeb` | **权威原型**，所有数值的来源 |
+| Summary01 | `ServerScriptService.Misc.Summary01` | 参考 |
+| DataCollection (+ `.Log`) | `ServerScriptService.Misc` | 参考 |
+| The Reactor Game Wiki | 外部 | 用户多次引用，校准依据 |
+
+**Wiki 关键结论：**
+- **不存在控制棒**（反复确认过）
+- 冷却传感器设备「有不可靠的倾向」，需要「手动干预校准」
+- 操作员用手补充 ECC（METU 的 ECC 容器就是物理交互点）
+
+---
+
+## 8. 一句话总结
+
+仿真核心、控制系统、监视器、测试、灯光、材质**都已就绪并验证通过**。
+**剩下的是几何体重做**（倒角 / 凹槽 / 内嵌按钮 / 文字标签 / 英雄资产），
+以及查清 `TempLabel` 的第二个写入者。
+
+**动手前记住：** 先 `list_roblox_studios`，改完提醒用户 Ctrl+S，
+验证读实例状态而不是模块状态。

@@ -1,0 +1,11 @@
+[
+  {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"backend\":[\"Config:ModuleScript:module\",\"StateService:ModuleScript:module\",\"ShiftService:ModuleScript:module\",\"BackendRuntime:ModuleScript:module\",\"Bootstrap:Script:false\",\"PROGRESS:ModuleScript:module\",\"DECISIONS:ModuleScript:module\",\"README:ModuleScript:module\",\"Engine:ModuleScript:module\",\"StateBridge:ModuleScript:module\",\"ControlBinder:ModuleScript:module\"],\"stats\":{\"OutputVal\":0,\"PressureVal\":20,\"BreachVal\":false,\"TemperatureVal\":0,\"HDEFVal\":0,\"RadiationVal\":0}}"
+      }
+    ],
+    "isError": false
+  }
+]
