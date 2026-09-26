@@ -1805,7 +1805,7 @@
     mid-shift. The operator said they had injected first and started the core afterwards. The file
     is on their side: `B 1 t=1.34` carries `s.Core.TemperatureVal=0 s.Core.OutputVal=0
     s.Core.RadiationVal=0` with every fan, every coolant pump and every CBL off, and
-    `EVT2072-2078 CLICK StartUpLever` -- seven clicks at t=2..13 s -- is the power-on. What made the
+    `EVT2072-2079 CLICK StartUpLever` -- eight clicks at t=2..13 s -- is the power-on. What made the
     wrong reading look right is one line: `EVT1139 TEXT x.temp ERR F`. The monitors had not been
     booted, so the label being read was printing `ERR F` for the first 99 seconds.
 
@@ -1820,9 +1820,15 @@
     HOW TO APPLY. Before reading a series as a state, ask whether it is a LABEL -- something a
     screen prints, which can print `ERR`, which can lag a tick, and which can be blank because
     nobody turned the screen on. `s.Core.*` is the state; `m.*` is a screen. And when two sources
-    overlap, splice them rather than choosing between them: they meet at t~98 with `s.Core` at 9420
-    (t=97.90) and `m.temp` at 9330 (t=98.77) -- 90 F over 0.87 s, which is 103 F/s against the
-    98 F/s the stat had been climbing at. The splice is not a fudge, the AGREEMENT is the check.
+    overlap, prefer the one that spans the run -- but check first whether a third series already
+    spans it. Here one did. `t.ReadingsFrame.TempLabel` runs t=88.53 to t=865.09, 416 samples, and
+    compares EQUAL to `m.temp` on every overlapping poll; 394 + 22 = 416, and the 22 are exactly the
+    polls where `s.Core.TemperatureVal` still had a value. The numbers never needed splicing -- they
+    were one reading recorded twice, through two paths that start at different times.
+    (This paragraph replaced a wrong one, 2026-09-27: it spliced `s.Core` 9420 at t=97.90 to
+    `m.temp` 9330 at t=98.77 and called it "90 F over 0.87 s = 103 F/s, the same speed the stat had
+    been climbing at". That compares a FALL against a RISE, and 9420 is a terminal value -- the
+    series never appears again after t=97.90 -- not a waypoint. See PROGRESS 49.4b.)
 
 139. `m.fluct` IS THE TEMPERATURE STEP, AND THAT REWRITES WHAT "STABILITY" MEANS.
 
@@ -1976,3 +1982,38 @@
     message happened to be pure ASCII while the second's contained an em-dash. Read subprocess output
     as bytes and decode with the encoding the *sender* used, not the one the console prefers -- an
     intermittently-working text pipeline is usually an encoding that is right for the first sample.
+
+
+144. AN UNATTRIBUTED CHANGE MEANS "NOT THIS CLIENT" -- AND THAT IS ONLY EVIDENCE IF THE HOOK IS PROVABLY ALIVE.
+
+    WHAT HAPPENED. The operator asked whether the full start-up sequence had been recorded. The
+    states are all there: the capture opens on a fully cold plant (`s.Core.TemperatureVal=0`, every
+    fan, every pump and every CBL off, `s.GameActive=false`) and closes on the seal. The operator s
+    own clicks are there by name too -- twenty between t=1.95 and t=13.39, ending with
+    `EVT2072-2079 CLICK StartUpLever` eight times and followed by `EVT2081 SUBSPACE REACTOR START-UP
+    SEQUENCE INITIATED` and `PowerLabel 524 GW -> 3.001 TW`, so the panels confirm they were real
+    presses and not an artefact of attaching the recorder. Then, for seventy-seven seconds, the
+    plant is configured -- three coolant pumps onto level 1, six fans on, three CBLs onto level 4
+    and back to level 2 -- and NOT ONE click is recorded.
+
+    WHY THE ABSENCE IS STILL READABLE. Taken alone, "no click" proves nothing: the client may have
+    been out of activation range, or the control may never have been hooked. What makes it readable
+    here is a positive control inside the same file -- later, the same three control families DO
+    produce clicks (Coolant3-OFF at t=124.30, Fan4/5/6 at t=107-132, CBL*-PW* at t=113-120), and the
+    PROMPT count for the whole run is zero, so the presses did not arrive by ProximityPrompt either.
+    With the hook demonstrably alive, the earlier silence is evidence. And the SHAPE agrees: the
+    three coolant pumps change in the same poll, the three CBLs change in the same poll, and the six
+    fans come on in numeric order at 0.30-0.60 s intervals. Hands do not do that; a script does. So
+    the machine configured the plant and the operator threw the lever -- which is also why the core
+    sits at exactly 0 F for the first 88 s of a 98 s start-up.
+
+    THE PART TO REMEMBER. `UNATTR` is a claim about the observing client, not about the world. It
+    becomes a claim about the world only when you can point at the same instrument working elsewhere
+    in the same recording. A hook that is checked once, at attach, carries no such guarantee -- its
+    value is entirely borrowed from the clicks that did arrive, so the clicks that did arrive are
+    part of the evidence, not just the result.
+
+    HOW TO APPLY. Before reading an absence as evidence, look for a positive control in the same
+    file: the same family, the same instrument, a different time. And when the shape of the changes
+    is available -- lockstep, even spacing, ordinal order -- read it; shape distinguishes a script
+    from a hand more cheaply than any instrumentation does.
