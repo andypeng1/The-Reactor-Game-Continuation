@@ -16,6 +16,19 @@ function StateBridge.Publish(state: any)
     set(core,'RadiationVal',math.floor(state.radiation))
     set(core,'HDEFVal',math.floor(state.hdef.integrity))
     set(core,'BreachVal',state.hdef.integrity<=0)
+
+    -- Stats.HDEF.IntegrityVal, and not Core.HDEFVal, is the field the shipped game
+    -- actually carried the generator's integrity in: its telemetry records that one
+    -- over 12..99 while Core.HDEFVal stays 0 across all 477 ticks. Nothing in this
+    -- place reads either field, so this aligns the value without changing a display.
+    local hdef=stats:FindFirstChild('HDEF')
+    if hdef then set(hdef,'IntegrityVal',math.floor(state.hdef.integrity)) end
+
+    set(core,'EnergyVal',math.floor(state.energy))
+
+    set(core,'QuotaVal',math.floor(state.quota))
+
+    set(core,'StressVal',math.floor(state.peaStress))
     set(stats,'GameActive',state.phase=='Running' or state.phase=='Starting' or state.phase=='Stopping')
     set(stats,'GameStart',state.phase=='Cold' or state.phase=='Ready')
     set(stats,'GameFail',state.phase=='Failed')

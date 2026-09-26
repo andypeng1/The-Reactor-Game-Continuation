@@ -1,8 +1,23 @@
 --!strict
--- Client-side visual feedback: drives lever position and lamp color by reading
--- workspace.Stats ValueObjects. Server publishes state; client reflects it on
--- the physical controls. This sidesteps StreamingEnabled: the client only
--- updates controls that have streamed in, and workspace.Stats is always loaded.
+-- SUPERSEDED 2026-09-26: disabled, not deleted.
+--
+-- This client reflector writes LeverUnion.CFrame and NeonPart.Color on every
+-- Heartbeat from workspace.Stats. ReactorBackend.VisualFeedback now does the
+-- same job on the server from the authoritative Engine state, so this file is a
+-- second writer of the very same parts. Two writers of one CFrame is the exact
+-- failure this project has hit before, and here it was not theoretical: the
+-- client won, because a client write is not overwritten until the server next
+-- changes that property. Measured live: the C-Pump 3 lever sat at its authored
+-- CFrame on the client while the server held it 1.6 studs along its throw, so a
+-- player saw nothing move when the lever was clicked; and all six CFLever
+-- unions were pinned 50.000 studs along their LookVector, because
+-- Config.Visual.LeverArcDegrees is 50 and was read as a stud distance.
+--
+-- Kept rather than deleted because it documents the client-side approach, and
+-- because nothing here is lost by disabling it: the server module covers every
+-- lever and lamp this one touched and several it did not, and a server CFrame
+-- write reaches a client when the part streams in, so StreamingEnabled is not a
+-- reason to keep a client-side copy.
 
 local VisualFeedback = {}
 local RunService = game:GetService("RunService")
@@ -144,4 +159,5 @@ function VisualFeedback.Start()
     end)
 end
 
+VisualFeedback.Start()
 return VisualFeedback

@@ -3568,3 +3568,14 @@ RECV flow/original_260926-230049 append 60 bf7727fd
 RECV flow/original_260926-230049 append 145 af9da987
 RECV flow/original_260926-230049 append 3573 82ad3106
 RECV flow/original_260926-230049 append 434 93f6747a
+RECV Config.luau write 6176 f8e09694
+RECV Engine.luau write 14930 22611a01
+RECV StateBridge.luau write 2455 fca1e040
+RECV ControlBinder.luau write 5792 86ba3f2a
+RECV Runtime.server.luau write 3581 f143a2b0
+RECV VisualFeedback.luau write 33390 dcd37800
+RECV VisualFeedback.client.luau write 6510 ad7abfeb
+RECV EndShiftHandler.client.luau write 22562 11652cc0
+RECV MouseHandler.client.luau write 2269 613260b3
+RECV MCP_LampProbe.luau write 12934 74c140cb
+RECV _MCP_FlowCollector.luau write 38324 b22c0587

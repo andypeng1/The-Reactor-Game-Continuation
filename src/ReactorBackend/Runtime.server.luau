@@ -4,15 +4,24 @@ backend:SetAttribute('RuntimeBooted',true)
 backend:SetAttribute('RuntimeError','')
 local ok, err = xpcall(function()
     local RunService=game:GetService('RunService')
+    local ReplicatedStorage=game:GetService('ReplicatedStorage')
     local Config=require(backend.Config)
     local Engine=require(backend.Engine)
     local StateBridge=require(backend.StateBridge)
     local ControlBinder=require(backend.ControlBinder)
+    local VisualFeedback=require(backend.VisualFeedback)
     local engine=Engine.new(Config)
     backend:SetAttribute('RuntimePhase',engine.state.phase)
     StateBridge.Publish(engine.state)
+    -- Baselines are captured after the first publish and before anything has
+    -- had a chance to move a lever, so they are the authored CFrames.
+    VisualFeedback.Initialize(Config)
+    VisualFeedback.Refresh(engine.state,Config)
     local bound = ControlBinder.Bind(engine,function(state)
         backend:SetAttribute('RuntimePhase',state.phase)
+        -- Refreshed before the publish so the lever and the monitor reading it
+        -- caused are never one tick apart.
+        VisualFeedback.Refresh(state,Config)
         StateBridge.Publish(state)
     end)
     backend:SetAttribute('BoundControls',bound)
@@ -24,6 +33,10 @@ local ok, err = xpcall(function()
         local updateOk,updateErr=pcall(function()
             engine:Update(step)
             backend:SetAttribute('RuntimePhase',engine.state.phase)
+            -- The engine's own drift has to reach the levers too, not only the
+            -- numbers: temperature, integrity and stress all move with no player
+            -- input at all, and indicators must follow them.
+            VisualFeedback.Refresh(engine.state,Config)
             StateBridge.Publish(engine.state)
         end)
         if not updateOk then
@@ -32,6 +45,24 @@ local ok, err = xpcall(function()
         end
     end)
     print(string.format('[ReactorBackend] runtime %s online: 62-control adapter, server-owned engine',Config.Version))
+    -- ResetEvent has sat in ReplicatedStorage since before this backend and had
+    -- no listener, while Engine has implemented 'reset' and 'next' with no
+    -- caller: once a shift is Failed or Report every other action is refused,
+    -- so a shift that ended could never be left without restarting the place.
+    -- Binding the two here is the missing transport, not a new mechanic -- the
+    -- gates are Engine's own phase checks, and the two flags the legacy
+    -- end-shift UI already reads (Stats.ResetShift, Stats.NextShift) are
+    -- published from those same phases, so a client can only ask for a
+    -- transition the engine is already willing to make.
+    local resetEvent=ReplicatedStorage:FindFirstChild('ResetEvent')
+    if resetEvent and resetEvent:IsA('RemoteEvent') then
+        resetEvent.OnServerEvent:Connect(function(_,mode)
+            local ok,err=engine:Command(mode=='next' and 'next' or 'reset')
+            if not ok then warn('[ReactorBackend] shift transition refused: '..tostring(err)) end
+        end)
+    else
+        warn('[ReactorBackend] ResetEvent missing; shift transitions unavailable')
+    end
 end, debug.traceback)
 if not ok then
     backend:SetAttribute('RuntimeError',tostring(err))
