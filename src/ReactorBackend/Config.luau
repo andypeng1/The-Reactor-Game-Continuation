@@ -87,5 +87,46 @@ local Config = {
         Yellow=Color3.fromRGB(240,220,60),
         Purple=Color3.fromRGB(150,60,220),
         Blue=Color3.fromRGB(60,130,240)},
+    -- The facility shell: what the Control Room Functions do to the ROOM, as
+    -- opposed to what they do to a console. These are the only values the shell
+    -- needs, and both pairs are measured off the place's own light art rather
+    -- than picked here -- no script in the DataModel has ever named RoomLights,
+    -- MonitorUI or PowerNeon, so the world side of the start-up chain was
+    -- authored as art and left unwired.
+    Shell = {
+        -- Measured off the control room's own lit siblings: every cell in
+        -- Workspace.RoomLights that is on -- SynthRoomLight and CRC1-3Lights --
+        -- wears NeonPart at (248,248,248) with Transparency 0.25, next to a
+        -- LightPart (Material Neon, Transparency 1, i.e. an invisible emitter)
+        -- whose SurfaceLight is Enabled. ControlRoomLights is the one cell
+        -- authored the other way: 20 NeonParts at (17,17,17) Transparency 0.50
+        -- with all 8 SurfaceLights off. So these two pairs are the same art in
+        -- its two authored positions. Brightness, Range and Face are
+        -- deliberately absent: each cell keeps its own (ControlRoomLights
+        -- authored 0.25/32, SynthRoomLight 0.25/30, Face Bottom), and
+        -- overwriting them would be this module inventing light, not restoring
+        -- it.
+        RoomLightOn = {Color=Color3.fromRGB(248,248,248), Transparency=0.25},
+        RoomLightOff = {Color=Color3.fromRGB(17,17,17), Transparency=0.50},
+        -- Measured, and only ever checked, never written: all 64 emitter bodies
+        -- across CRC1-3Lights, SynthRoomLight and RoomLights sit at exactly
+        -- 1.000. A cell's emitter is an invisible housing for the SurfaceLight
+        -- that actually lights the room, so its own colour and transparency are
+        -- fixture design rather than lighting state -- which is why the lamps
+        -- above are allowed to move and this is not. RoomShell reports a
+        -- departure from it instead of restoring it.
+        EmitterTransparency = 1,
+        -- Measured: all 7 Monitor.PowerNeon parts are authored (255,0,0).
+        -- Restated here rather than captured at Initialize on purpose. A
+        -- captured baseline is only correct on the first call: re-run
+        -- Initialize after the monitors are already powered and it would
+        -- capture the green as the "authored" red, permanently inverting the
+        -- lamp. Restating it makes Initialize idempotent by construction, which
+        -- is the same trap VisualFeedback's lever baselines were rebuilt to
+        -- avoid. The ON colour is not restated -- it is Visual.Nominal above,
+        -- the place's own healthy green, reused for the same reason it is
+        -- reused everywhere else.
+        MonitorPowerOff = Color3.fromRGB(255,0,0),
+    },
 }
 return Config

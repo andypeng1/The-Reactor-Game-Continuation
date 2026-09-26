@@ -17,6 +17,18 @@ Videos/
 # --- paste / inbox / vision caches from the local vision bridge ---
 .ai/
 
+# --- the Studio <-> disk byte channel's scratch space.  _pull/ holds copies
+#     PULLED OUT of Studio to be compared against src/; they are duplicates by
+#     construction, so committing them would create a second copy of every
+#     module that can drift from the one that actually runs.  The comparison is
+#     the product, not the copies. ---
+_tools/_pull/
+
+# --- server logs from _tools/receive.py and _tools/serve.py.  Machine state on
+#     a localhost port: it records when THIS session pulled what, which is not a
+#     fact about the project and would conflict on every machine. ---
+_tools/_attic/logs/
+
 # --- machine-local claude state (the shared settings.json, if one is ever
 #     added, is deliberately NOT ignored) ---
 .claude/settings.local.json

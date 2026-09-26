@@ -33,7 +33,16 @@ function Engine:Reset(shift)
     self.state = {
         time=0, phase='Cold', phaseTime=0, shift=shift, elapsed=0,
         energy=0, quota=c.Shift.Quotas[shift], accumulator=0, failure=nil,
-        monitorPower=false, booted=false, shuttersOpen=false, lights=true, mute=false, sam=false,
+        -- lights was true. It is false because the cold state is authored dark in
+        -- two independent places and lit in none: the place saves
+        -- Workspace.RoomLights.ControlRoomLights with all 20 lamps at (17,17,17)
+        -- and all 8 SurfaceLights off while every sibling light cell is lit, and
+        -- the shipped recording's first action after entering the control room is
+        -- CLICK RoomLight (EVT2060) followed by LAMPPAL g=0,0,0. A true here made
+        -- that first click turn the room OFF. No gate, cost or formula moves --
+        -- this is the initial value of a presentation switch, and RoomShell is
+        -- what gives it a consequence.
+        monitorPower=false, booted=false, shuttersOpen=false, lights=false, mute=false, sam=false,
         temperature=c.Sim.Ambient, pressure=c.Sim.Ambient, output=0, netOutput=0,
         fluctuation=0, radiation=0, coreState=0, extraction=2, peaStress=0,
         fans=array(6, function() return true end),

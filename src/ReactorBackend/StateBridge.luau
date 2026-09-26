@@ -6,6 +6,23 @@ local function set(folder: Instance, name: string, value: any)
     local node=folder:FindFirstChild(name)
     if node and node:IsA('ValueBase') then node.Value=value end
 end
+-- Every value above is written only into a node the place already has: this is a
+-- compatibility adapter, not the author of the interface it targets. The four
+-- control room switches are the one exception, and they are the exception
+-- because there is nothing to be compatible WITH -- Workspace.Stats has never
+-- carried them. They are created here so the start-up chain leaves instance
+-- state behind it that anything can read, which is the only kind of state this
+-- project trusts: reading a module's own table back has produced false
+-- negatives often enough to be a rule (CLAUDE.md 0.2).
+local function ensure(parent: Instance, name: string)
+    local node=parent:FindFirstChild(name)
+    if node and node:IsA('BoolValue') then return node end
+    local made=Instance.new('BoolValue')
+    made.Name=name
+    made.Value=false
+    made.Parent=parent
+    return made
+end
 function StateBridge.Publish(state: any)
     local stats=workspace:FindFirstChild('Stats')
     if not stats then return end
@@ -38,6 +55,14 @@ function StateBridge.Publish(state: any)
     set(stats,'GravatronActive',state.grav.damage<80)
     set(stats,'DecayFields',state.radiation>0)
     set(stats,'ActiveQPUs',6)
+    -- The four Control Room Functions, in the order the manual lists them as
+    -- start-up prerequisites (items 20, 54, 55). RoomShell reads these same
+    -- fields off the engine state to drive the room; they are published because
+    -- the chain they gate is otherwise invisible from outside the server.
+    ensure(stats,'Lights').Value=state.lights==true
+    ensure(stats,'MonitorPower').Value=state.monitorPower==true
+    ensure(stats,'ShuttersOpen').Value=state.shuttersOpen==true
+    ensure(stats,'Booted').Value=state.booted==true
     local cbls=state.cbl
     for i=1,3 do
         local folder=stats:FindFirstChild('CBL'..i)

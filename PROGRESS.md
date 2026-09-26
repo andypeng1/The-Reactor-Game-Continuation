@@ -3250,3 +3250,117 @@ git push origin main                  # efe5775..205f627
 第一笔推成功是因为那笔提交的 message 全是 ASCII；第二笔在读回时**死在提交信息里的破折号上**
 （`UnicodeDecodeError: 'gbk' codec`）。现在一律 `capture_output=True` 拿 bytes、
 再手动 `.decode('utf-8')`。
+
+---
+
+## Phase 52 — 世界那一半：控制室开灯、监视器供电、开机链的其余三步  [DONE]
+
+**用户的话：**「那你把现在把那个我们的项目的完整开机流程做了（包括控制室开灯，监视器供电什么的）」。
+
+### 52.1 缺的从来不是逻辑，是「世界」那一半
+
+先把账量清楚：整条开机链**早就完整地在 `Engine` 里**，而且是带闸门的 ——
+`monitor_power`（掉电顺手清 `booted`）、`shutters`、`lights`、`mute`、
+`boot`（`not monitorPower or not shuttersOpen` → `'Power monitors and open shutters first'`）、
+`start`（`not booted or not monitorPower or not shuttersOpen` → `'Complete control room boot first'`）。
+
+六个控件也都在 `workspace.Consoles` 里，**标签**和 `ControlBinder.commandFrom` 逐字对上：
+
+| 标签 | part |
+|---|---|
+| `ROOM LIGHT BUTTON` | `ALTReactorConsole.ControlRoomSystems.RoomLightButton.ClickPart` |
+| `MONITOR POWER BUTTON` | `ALTReactorConsole.ControlRoomSystems.MonitorPowerButton.ClickPart` |
+| `CONTROL ROOM SHUTTERS SWITCH` | `ALTReactorConsole.ControlRoomSystems.ShuttersLever.ClickPart` |
+| `MONITOR BOOT BUTTON` | `MainReactorConsole.MonitorBootButton.ClickPart` |
+| `MASTER START-UP SWITCH` / `MASTER SHUTDOWN SWITCH` | `MainReactorConsole.StartUpBigLever.StartClickPart` / `.ShutClickPart` |
+
+**（注意 `ControlBinder` 是按标签绑的，不是按实例名** —— 所以 grep `RoomLightButton`
+在它里面 0 命中，一开始差点得出「压根没绑」的错误结论。）
+
+**缺的是这些开关对世界的后果。** 三个按钮自己**没有 NeonPart**（`VisualFeedback` 地址表末尾记着），
+而全 DataModel 里**没有任何脚本**提过 `RoomLights` / `MonitorUI` / `PowerNeon` ——
+世界那一半是**当美术做出来、然后没接线**。`RoomShell` 就是那根线。
+
+### 52.2 `RoomShell`：谁写什么
+
+单一写入者，跟 `VisualFeedback` 同一个形状（先 `Initialize` 采引用、再 `Refresh` 按签名门控写）：
+
+| 控制 | 写什么 |
+|---|---|
+| `ROOM LIGHT` | `RoomLights.ControlRoomLights` 的 20 个 `NeonPart` 的 Color + Transparency，8 个 `LightPart` 上 `SurfaceLight.Enabled` |
+| `MONITOR POWER` | 每台监视器 `PowerNeon.Color`、`Screen.SurfaceLight.Enabled`、`Screen.MonitorUI.Enabled` |
+| `MONITOR BOOT` + `MASTER START-UP` | 每台监视器**作者画好的那几个画面**里哪一个 `Visible`（`Booting`→`BootFrame`；`Ready`→待机画面 + `PreStartupFrame`；`Starting`/`Running`→`MainMonitorFrame`；`Stopping`/`Report`→`ShutdownFrame`；`Failed`→`ErrorFrame`） |
+
+颜色不是选的，是**量**的（进 `Config.Shell`）：同排**亮着**的兄弟灯格
+（`SynthRoomLight` / `CRC1Lights`）都是 `(248,248,248)` 透明 0.25，旁边跟一个 Transparency 1 的
+「发射体」壳；而 `ControlRoomLights` 是唯一被作者做成 `(17,17,17)` 透明 0.50 + 8 个 `SurfaceLight`
+全关的一格 —— **这两对就是同一份美术的两个作者位置。** Brightness / Range / Face **故意不写**，
+每一格保留自己的（0.25 / 32 / Bottom），写它等于**发明光**而不是恢复光。
+
+### 52.3 我犯的三个错，前两个是在场景里改出来的（自动保存已开，所以都是真的）
+
+**① 我把 8 个发射体壳当成灯了。** 采集按 `Material == Neon` 收，把 Transparency **1.00** 的
+`LightPart` 一起收进 `lamps`，`applyLights` 于是把它们的 Transparency **从 1.00 写成 0.50** ——
+**把看不见的发射体变成看得见。** 改法是**按结构分**（`FindFirstChildWhichIsA('SurfaceLight')`
+→ 发射体，只**检查不写**；否则才是灯），并把 8 个壳修回 1.00。
+依据：这个 place 里**所有 64 个发射体壳都精确在 1.000**，而颜色各不相同（有 `(255,255,0)`）——
+**发射体的外观是灯具设计、不是照明状态**，所以灯能动、它不能。
+修完矩阵 12 行全是 `transp=1.00..1.00`，`Initialize: lamps=20 emitters=8 monitors=7`（原来是 28 / 48）。
+
+**② 断电时我没管画面，于是同一个引擎状态留下两个不同的世界。** 原来只在「有电」那支写
+`Visible`，断电那支原样不动 —— 我进场景时看到的是**五台监视器停在待机画面、三台停在 `BootFrame`**，
+而它们的美术其实是一样的。改成**两支都写**：断电 = 全部 `owned` 画面 `Visible=false`。
+现在 `DETERMINISTIC: true`（`Running→断电` 与 `Failed→断电` 结果相同）。
+
+**③（§0.13 那一类）`Initialize` 原来是追加的。** 采引用是这里唯一能被跑两次的东西，追加的话
+第二次就把每张写表翻倍 —— 写是幂等的所以**看不出来**，但会白干一整场。改成开头清空三张表。
+
+### 52.4 `Engine` 只动了一个初值
+
+`Reset` 里 `lights` 从 `true` 改成 `false`。**没有动任何闸门、代价或时序。**
+理由是**两处互相独立的地方都把冷态作者成「暗的」**：这个 place 存着 `ControlRoomLights`
+全 20 盏 `(17,17,17)` + 8 个 `SurfaceLight` 关着，而同排每一格都是亮的；而且**发售版的录像里，
+进控制室后第一个动作就是 `CLICK RoomLight`（`EVT2060`）**，紧跟 `LAMPPAL g=0,0,0`。
+**原来的 `true` 会让那第一下点击把房间关掉。**
+
+### 52.5 `StateBridge` 第一次「创造」东西
+
+`StateBridge` 本来是**兼容适配器**：只写 place 里已经有的节点。四个开关
+（`Lights` / `MonitorPower` / `ShuttersOpen` / `Booted`）`Workspace.Stats` 从来没有过，
+所以加了一个 `ensure()` 建 `BoolValue` —— **让它成为开机链留在实例上的痕迹**，
+任何东西（包括我）都能读到，而不必去读模块状态（§0.2）。
+
+### 52.6 验证：分成「验到的」和「没验到的」
+
+**验到的（读实例状态，权威）：**
+
+- 六个控件标签逐字对上 `commandFrom`，都在 `workspace.Consoles` 下（所以 `Bind` 会扫到）；
+- `RoomShell` 采集 `20 灯 / 8 发射体 / 7 监视器`；
+- 12 个手搭状态 → 画面映射全对，读的是真属性；
+- **冷态：** 灯 `(17,17,17)`/0.50、8 个 `SurfaceLight` 关、监视器 `(255,0,0)`、`uiEnabled=false`、可见画面 0；
+- **通电：** 灯 `(248,248,248)`/0.25、发射体 `Enabled=true`、七台全绿 `(137,255,147)` + 各自待机画面；
+- `DETERMINISTIC: true`（12 态里对比得出）；
+- **磁盘 ↔ Studio 七个模块逐字节相同**：`cmp` 全 `IDENTICAL`，md5 也对
+  （`Config 7548d2efebcb6a180e07186dfe6bca2e`、`RoomShell a9c4e7ab5b8d6ff7495d7e38ad2c3f50`，两边一致）。
+
+**没验到的，说清楚：** 「真的跑起来点一下会怎样」**没验**。这台机器上
+`solo_playtest` / `start_playtest` 能起来（`isRunning: true`），但插件**不注册 server peer** ——
+`get_connected_instances` 永远只有 `edit`，`eval_server_runtime` 和 `execute_luau target='server'`
+一律 `No "server" peer answered`，playtest 里的 `print` 也读不到（见 `CLAUDE.md` §0.16）。
+**两个截图工具也都不认我给的相机** —— 两次不同相机位给出**逐字节相同**的画面（§0.14），
+所以「开灯前后拍两张图对比」这条也走不通。
+**这一轮的验证靠的是实例属性和源码，不是运行日志、也不是图。** 没验的那一半不假装验过。
+
+### 52.7 收尾
+
+- place **还原成作者写的冷态**（灯灭、监视器断电、可见画面 0），相机放回一个正常人看的位置；
+- 为截图临时改名的**两个 Model 都改回 `Camera` 了**（§0.14）；
+- `_tools/serve.py`（磁盘 → Studio 的字节通道，`receive.py` 的镜像）留下来，
+  `allow_reuse_address = False` 是**故意的**（Windows 上重复绑定会静默成功、老进程吃掉流量，见文件里的注释）。
+
+### 52.8 没做、留给用户的（进了 `QUESTIONS.md` 🔴）
+
+**卷帘门的玻璃没有可以量的行程。** `Workspace.MovingParts` 里没有、`Geometry` 里没有、
+`ReplicatedStorage.CulledParts` 的 **89448** 个后代里 **0 命中**；而框只比玻璃高 **0.32 studs**，
+整块收上去玻璃会**浮在自己的框上面**。**量不到就不编。**
+控制台那一半（拉杆 + `OfflineLight`）是 `VisualFeedback` 的，本来就好使 —— 缺的只有玻璃本身。

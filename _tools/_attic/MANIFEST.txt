@@ -80,3 +80,4 @@ logs/receive.log
 logs/_http.log
 mirror/verify_docs.py
 mirror/selftest_verify_docs.py
+mirror/make_rbxmx.py

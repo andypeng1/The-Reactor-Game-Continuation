@@ -219,6 +219,56 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 顺带：`pcall(f, ...)` 里的 `f` 可能是 `nil`。pcall 是给**会抛错**的被调方用的，不是「可能不存在」
 的许可证。名字先查、缺了 warn 一次，pcall 只留给抛错 —— **与成功无法区分的错误路径不是错误处理**。
 
+### 0.14 【坑】`workspace.Camera` 是点号查找，这个 place 里有**两个** Model 叫这个名字
+
+`workspace.Camera` **不是** `CurrentCamera` 的别名 —— 它是普通的子物体查找，返回**叫这个名字的
+子物体**。这个 place 里有**两个 `Model` 叫 `Camera`**（`(310.4, 136.7, 8.5)` 和
+`(310.4, 136.7, −9.8)`，各 14 个部件，是场景里的**道具摄像机**），真正的相机是第三个同名子物体
+（一个 `Camera` 实例）。
+
+后果：官方 `rblx_screen_capture` **在给相机定位之前就死了** ——
+`CameraType is not a valid member of Model "Workspace.Camera"`。
+
+**改一个不够。** 我改了 `FindFirstChild` 拿到的那个，第二个立刻顶上，`workspace.Camera` 还是 Model
+（`GetFullName()` 才会告诉你搬走的是哪一个）。要**先枚举、把所有同名的都挪开**，再断言
+`workspace.Camera.CameraType` 读得到，才算改对。**改完记得改回原名** —— 全 DataModel 126 个脚本
+只有 1 处注释提到 `.Camera`，没有任何东西绑定它，**搬动是安全的**，但它是**世界的一部分**，不是我的。
+
+**顺带（同一天量到的，两个都是负结果）：** 这台机器上**两个**截图工具
+（第三方 `capture_screenshot`、官方 `rblx_screen_capture`）都**不认我给的相机** —— 两次不同的
+相机位给出**逐字节相同**的画面（暗底 + 角落一个小图标），而那个画面显然不是世界。
+所以「开灯前后拍两张图对比」这条路**现在走不通**，验证只能靠**读实例属性**
+（§4.4 本来要求的也正是这个）。`capture_device_matrix` 同样是坏的
+（`device simulator get failed … missing argument #1`）。
+
+### 0.15 【坑】过期的 `require` 递给你的是**少键的表**，报错落在**消费者**身上
+
+§0.3 说「编辑 Source 后 require 缓存不失效」。这一轮它换了一张比 §0.3 更难认的脸：
+插件 VM 里 `require(Config)` 拿到的 `Shell` 表键是
+`[MonitorPowerOff, RoomLightOff, RoomLightOn]`，**没有 `EmitterTransparency`**，
+于是崩在 **`RoomShell` 的第 126 行** —— 而 `#Config.Source` 是 **8975**，和磁盘**逐字节相同**，
+源码那边一个字都没错。
+
+**报错的位置和出错的位置隔着一个模块。** 所以：看到「消费者里某个 config 字段是 nil」，
+**先怀疑缓存里的模块是旧版**，不要先去改消费者 —— 改消费者等于给一个**不存在的旧版本**打补丁。
+
+现成解法（比 §0.3 的 `loadstring` 稳，插件 VM 里 `loadstring` 未必可用）：
+**`Clone()` 一份到临时 Folder 再 `require`** —— 新实例 = 新缓存项 = 重新编译；用完 `Destroy()`。
+
+### 0.16 【坑】「游戏真的跑起来之后」那一半，现在读不到
+
+- `solo_playtest start` / `start_playtest` **能起来**（`solo_playtest state` 回 `isRunning: true`），
+  但这个插件**不注册 server / client peer** —— `get_connected_instances` 永远只有 `edit`。
+  于是 `eval_server_runtime` 和 `execute_luau target='server'` 一律 `No "server" peer answered`。
+- 日志也不行：`get_playtest_output` 只回资产报错（§0.8 那一类），
+  `get_output_log` 回的是 **edit** 那份（时间戳还是早先 probe 的）—— **playtest 里的 `print` 读不到**。
+- **停得掉 playtest 的是官方 `rblx_start_stop_play(is_start=false)`**，不是 `solo_playtest stop`
+  （它只「发信号」，之后 `start_playtest` 仍报 `A test is already running`）。
+
+**结论：用现在这套工具，「跑起来的游戏里发生了什么」验不了。** 能验的是**实例状态**和**源码** ——
+而 §4.4 要求的**本来**就是前者（模拟点击 → 检查部件位置/颜色）。别把「读不到运行日志」当成
+「功能没做」，也别反过来把「源码看起来对」当成「验证过了」。**哪一半验了、哪一半没验，分开写。**
+
 ### 1.1 基本信息
 | 项 | 值 |
 |---|---|

@@ -2017,3 +2017,164 @@
     file: the same family, the same instrument, a different time. And when the shape of the changes
     is available -- lockstep, even spacing, ordinal order -- read it; shape distinguishes a script
     from a hand more cheaply than any instrumentation does.
+
+
+145. A CONTROL THAT MOVES THE WORLD IS NOT A NEW MECHANIC -- BUT ONLY IF THE WORLD ALREADY HAS BOTH AUTHORED POSITIONS.
+
+    WHAT HAPPENED. The operator asked for the complete start-up flow in this project, naming the room
+    lights and monitor power specifically. The engine already owned the whole chain, gated and costed:
+    `monitor_power` (which also clears `booted`), `shutters`, `lights`, `mute`, `boot` (refused unless
+    monitors are powered and shutters open), `start` (refused unless the boot has finished). All six
+    controls were already in `workspace.Consoles` under labels ControlBinder matches verbatim. What
+    was missing was that nothing happened to the ROOM: MonitorBootButton, MonitorPowerButton and
+    RoomLightButton carry no NeonPart of their own (measured, recorded at the foot of
+    VisualFeedback.Refresh), and no script anywhere in the DataModel had ever named `RoomLights`,
+    `MonitorUI` or `PowerNeon`. The world half was authored as art and left unwired.
+
+    THE PART TO REMEMBER. The justification for writing world state is not "the user asked for it" and
+    not "it looks better" -- it is that the place itself already contains the other position.
+    ControlRoomLights is the one cell of Workspace.RoomLights authored dark (20 NeonParts at
+    (17,17,17) Transparency 0.50, all 8 SurfaceLights off) while every sibling cell -- SynthRoomLight,
+    CRC1-3Lights -- is authored lit at (248,248,248) Transparency 0.25. The two pairs are the same
+    fixture in its two authored positions, so writing one from the other is restoring the art rather
+    than inventing it. The distinction decides what may be written: Brightness, Range and Face are NOT
+    written, because each cell has its own (0.25/32 for ControlRoomLights, 0.25/30 for SynthRoomLight)
+    and overwriting them WOULD be inventing light. Reading both positions off the world is what makes
+    the write admissible under the standing constraint never to change existing gameplay mechanics --
+    no gate, cost or timing in Engine is touched to make this happen.
+
+    HOW TO APPLY. Before adding state to the world, find both authored positions in the place and
+    write only the fields where the two positions actually differ. If a field varies for reasons of
+    per-cell design rather than on/off, it is not yours to write.
+
+146. AN EMITTER IS FIXTURE DESIGN, NOT LIGHTING STATE -- AND NAME IS THE WRONG WAY TO TELL THEM APART.
+
+    WHAT HAPPENED. The first capture swept up every part in the light cell with Material Neon and
+    called them lamps. That collection included eight parts at Transparency 1.00 -- invisible
+    housings, each carrying the SurfaceLight that does the actual lighting -- and the first
+    applyLights then wrote the off-state transparency 0.50 onto them, which does not dim an emitter,
+    it makes it visible. They were only caught because the on-state matrix was read back row by row
+    and showed `transp=0.50` where the emitter bodies were meant to be untouched. The fix splits the
+    collection STRUCTURALLY -- `FindFirstChildWhichIsA('SurfaceLight')` means emitter, and emitters
+    are checked but never written -- rather than by name, which would have been a list of eight names
+    that the next art pass invalidates silently.
+
+    THE PART TO REMEMBER. All 64 emitter bodies across the place's light cells sit at exactly 1.000,
+    in colours as arbitrary as (255,255,0). That uniformity is the tell: an emitter's own appearance
+    is what the fixture is MADE of, not what state it is in. The lamps are allowed to move and the
+    emitters are not, and the reason is the same one as 145 -- one of the two has an authored second
+    position and the other does not.
+
+    HOW TO APPLY. Classify by structure -- what the part contains, what it is attached to -- whenever
+    a property can plausibly be shared by two roles. A name list is a claim about the art that the art
+    never agreed to. And read the matrix back: a write that produces a plausible-looking value is
+    exactly the kind that goes unnoticed.
+
+147. SET THE FLAG ON BOTH BRANCHES, OR ONE ENGINE STATE LEAVES TWO DIFFERENT WORLDS.
+
+    WHAT HAPPENED. Monitor faces were originally set only inside the powered branch; the unpowered
+    branch left Visible exactly as it found it. Entering the place to verify, five monitors were
+    holding an idle face and three were holding BootFrame, on monitors the art otherwise builds
+    identically. The world was carrying history rather than state: "unpowered" showed whatever the
+    last powered phase had happened to put there. Writing both branches -- powered shows its phase's
+    face, unpowered hides every owned face -- turns two reachable worlds per engine state into one. A
+    twelve-state matrix comparing `Running->unpowered` against `Failed->unpowered` now reads
+    DETERMINISTIC: true.
+
+    THE PART TO REMEMBER. A branch that does nothing is a branch that preserves whatever was there,
+    which is a dependency on history nobody declared. The single-writer rule is about who MAY write;
+    this is the companion rule about who MUST. A writer that owns a value has to assign it on every
+    path, not only on the interesting one.
+
+    HOW TO APPLY. For any owned property, ask what the "off" path writes. If the answer is "nothing",
+    the value is co-owned by the last thing that touched it. Test it by driving two different states
+    into the same branch and comparing the results.
+
+148. A CACHED `require` HANDS BACK A TABLE THAT IS MISSING KEYS -- AND THE CRASH LANDS IN THE CONSUMER.
+
+    WHAT HAPPENED. RoomShell aborted at line 126 with `attempt to perform arithmetic (sub) on number
+    and nil`, reading `config.Shell.EmitterTransparency`. The same module's `Shell` table, required in
+    the same plugin VM, had exactly three keys -- MonitorPowerOff, RoomLightOff, RoomLightOn -- and the
+    diagnostic printed `items(#)=3` while `#config.Source` was 8975 and byte-identical to disk. The
+    plugin VM was serving a compiled `Config` from before the fourth key existed. The important detail
+    is not that the cache was stale. It is that the failure surfaced in the MODULE THAT READS THE
+    TABLE, three files away from the stale one, so the error named the wrong suspect. The remedy was
+    to Clone() the Config and RoomShell ModuleScripts into a temporary Folder in ServerStorage and
+    require the clones -- a new instance is a new cache entry, so the bytecode recompiles -- then
+    Destroy() the folder. Result: `fresh require -> EmitterTransparency=1 ; captured lamps=20
+    emitters=8 monitors=7`.
+
+    THE PART TO REMEMBER. This generalises CLAUDE.md 0.3, which says the require cache does not
+    invalidate. The sharper form is that a stale require does not throw where it is stale: it returns
+    a structurally valid table with keys missing, and every consumer downstream reads nil. So "the
+    source is correct, therefore the running code is correct" is unsound in the plugin VM, and a
+    byte-identical `cmp` against disk is not evidence that what is loaded came from those bytes.
+
+    HOW TO APPLY. When a value reads nil that the source obviously defines, suspect the cache before
+    editing anything. Check with a clone-and-require rather than by reading Source -- reading Source
+    shows you the bytes, not the bytecode. And read the error's file location as "where the nil was
+    consumed", not "where it was produced".
+
+149. `workspace.Camera` IS A DOT LOOKUP, AND THIS PLACE HAS TWO MODELS NAMED `Camera`.
+
+    WHAT HAPPENED. `rblx_screen_capture` failed with `CameraType is not a valid member of Model
+    "Workspace.Camera"` -- because `workspace.Camera` had resolved to an art Model at
+    (310.4,136.7,8.5), not to the Camera instance. Renaming that one did not fix it: a SECOND Model of
+    the same name at (310.4,136.7,-9.8) took over the lookup, so `workspace.Camera` was still a Model
+    even though the first had been renamed. Both had to be renamed before `workspace.Camera.CameraType`
+    read back Enum.CameraType.Fixed. Both names were restored afterwards (126 scripts searched, one
+    comment hit, nothing bound to either).
+
+    THE PART TO REMEMBER. `workspace.Camera` is not a service getter; it is a find-by-name, and art
+    can shadow it. And a fix that appears not to work may simply have uncovered the next instance of
+    the same cause -- "I renamed it and nothing changed" is not evidence that renaming was the wrong
+    fix, it is evidence there is more than one.
+
+    HOW TO APPLY. Enumerate children and count before asserting that a name-based lookup resolves the
+    way you expect. And note that this route is abandoned, not pending: neither capture tool honours a
+    camera passed to it -- two different cameras produced BYTE-IDENTICAL images, meaning the tool
+    drives the camera itself -- and `capture_device_matrix` fails with `device simulator get failed on
+    edit: ... missing argument #1`. There is currently no working way to photograph this place, so no
+    claim in this phase rests on an image.
+
+150. WHEN A VERIFICATION ROUTE IS CLOSED, SAY WHICH HALF WAS VERIFIED.
+
+    WHAT HAPPENED. The world side was verified hard: room lamps, emitters, monitor neons and faces
+    all read back off real instance properties, twelve hand-driven states each matched their intended
+    face, the cold state matched the art, and all seven modules compared byte-identical to disk
+    (`cmp` IDENTICAL; md5 `Config 7548d2ef…`, `RoomShell a9c4e7ab…`, both sides). What could NOT be
+    verified is the thing the operator actually named -- what happens when the game really runs. On
+    this machine `solo_playtest` reports `isRunning: true`, but the plugin registers no server or
+    client peer: `get_connected_instances` returns only `edit`, `eval_server_runtime` and
+    `execute_luau target='server'` both answer `No "server" peer answered`, and the playtest's own
+    prints are unreadable (`get_playtest_output` returns asset-permission errors; `get_output_log`
+    returns the EDIT log, timestamps included). Both screenshot routes are closed as recorded in 149.
+
+    THE PART TO REMEMBER. "Verified" is not a property of a phase, it is a property of a claim.
+    Reporting a phase as verified when the runtime half was only read off source is the specific
+    failure the standing constraint about not pretending to be finished is aimed at, and it is easy
+    to commit by accident here, because the instance-state evidence is genuinely strong. Strong
+    adjacent evidence does not transfer.
+
+    HOW TO APPLY. Split the report: what was read off the world, what was read off source, and what
+    was never observed at all. Write the third list down even when it is embarrassing, and do not
+    close the gap by reasoning about it. This is also why RoomShell publishes its four flags through
+    StateBridge -- so the next attempt has an instance-state trail to read, instead of needing the log
+    that is not available.
+
+151. THE BRIDGE CREATES NODES EXACTLY ONCE, AND SAYS SO.
+
+    WHAT HAPPENED. StateBridge was written as a compatibility adapter: it publishes into nodes the
+    place already has and never creates anything. The four start-up flags -- Lights, MonitorPower,
+    ShuttersOpen, Booted -- had no node under Workspace.Stats to publish into, so a single `ensure()`
+    helper was added that creates the BoolValue if it is absent, and only then. The alternative was to
+    leave the chain with no instance-visible trace, which would have made the whole feature readable
+    only through module state -- the exact thing CLAUDE.md 0.2 forbids reading.
+
+    THE PART TO REMEMBER. This is a deliberate exception and the module header says so, because an
+    adapter that silently creates whatever it is asked to write stops being an adapter: a typo in a
+    node name becomes a new node instead of a missing-node report, and the failure mode inverts from
+    loud to silent.
+
+    HOW TO APPLY. When an adapter must create, keep it one narrow named helper with the reason in the
+    comment, so the exception is greppable and the rule it breaks stays legible.

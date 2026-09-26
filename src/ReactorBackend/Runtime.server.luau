@@ -10,6 +10,7 @@ local ok, err = xpcall(function()
     local StateBridge=require(backend.StateBridge)
     local ControlBinder=require(backend.ControlBinder)
     local VisualFeedback=require(backend.VisualFeedback)
+    local RoomShell=require(backend.RoomShell)
     local engine=Engine.new(Config)
     backend:SetAttribute('RuntimePhase',engine.state.phase)
     StateBridge.Publish(engine.state)
@@ -17,11 +18,18 @@ local ok, err = xpcall(function()
     -- had a chance to move a lever, so they are the authored CFrames.
     VisualFeedback.Initialize(Config)
     VisualFeedback.Refresh(engine.state,Config)
+    -- RoomShell is the facility half of the same two controls VisualFeedback
+    -- poses on the console: the room lights, and the seven monitors' own power
+    -- lamps and screens. It follows the identical capture-then-refresh shape,
+    -- and the identical rule that only one module writes a given property.
+    RoomShell.Initialize(Config)
+    RoomShell.Refresh(engine.state,Config)
     local bound = ControlBinder.Bind(engine,function(state)
         backend:SetAttribute('RuntimePhase',state.phase)
         -- Refreshed before the publish so the lever and the monitor reading it
         -- caused are never one tick apart.
         VisualFeedback.Refresh(state,Config)
+        RoomShell.Refresh(state,Config)
         StateBridge.Publish(state)
     end)
     backend:SetAttribute('BoundControls',bound)
@@ -37,6 +45,7 @@ local ok, err = xpcall(function()
             -- numbers: temperature, integrity and stress all move with no player
             -- input at all, and indicators must follow them.
             VisualFeedback.Refresh(engine.state,Config)
+            RoomShell.Refresh(engine.state,Config)
             StateBridge.Publish(engine.state)
         end)
         if not updateOk then
