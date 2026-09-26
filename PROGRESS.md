@@ -3122,3 +3122,14 @@ GitHub 抹掉的一个结尾换行），但作者身份被换成了 GitHub 的
 ```
 git fetch origin && git reset --hard origin/main
 ```
+
+同一个脚本随后又推了一笔（本地 `09a93c8` → 远端 `46439ebd`）。**所以这不是一次性事故，
+而是这条通道的常态：走 API 出去的每一笔，远端 sha 都和本地不同。** 上面那一行
+`git fetch origin && git reset --hard origin/main` 对每一笔都管用，且每次都不丢内容
+—— 它是收口，不是一个需要每笔都写一遍的新事实。
+
+**顺带一个坑（脚本自己踩的）：** 这台机器的控制台编码是 **GBK**，Python 里
+`subprocess.run(..., text=True)` 会用它去解 `gh api` 的 UTF-8 输出。
+第一笔推成功是因为那笔提交的 message 全是 ASCII；第二笔在读回时**死在提交信息里的破折号上**
+（`UnicodeDecodeError: 'gbk' codec`）。现在一律 `capture_output=True` 拿 bytes、
+再手动 `.decode('utf-8')`。

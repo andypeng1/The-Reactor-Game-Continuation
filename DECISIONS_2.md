@@ -1969,3 +1969,10 @@
     separately before concluding the service is down. Then, if you have to go in by the other door,
     pick an identity check the receiving side computes itself -- a content hash, not a byte count and
     not an echo of what you sent -- and fail before mutating anything if it does not match.
+
+    AND A SMALLER TRAP THAT LOOKED LIKE A FLAKE. The first push succeeded and the second died with
+    `UnicodeDecodeError: 'gbk' codec can't decode byte 0x88`. Nothing about the network had changed.
+    The local console codec is GBK, `subprocess.run(..., text=True)` uses it, and the first commit's
+    message happened to be pure ASCII while the second's contained an em-dash. Read subprocess output
+    as bytes and decode with the encoding the *sender* used, not the one the console prefers -- an
+    intermittently-working text pipeline is usually an encoding that is right for the first sample.
