@@ -430,6 +430,18 @@ tick ≈ **1.8 s**。**温度是积分器不是惯性环节**（t=560.78–610.9
 **顺带：这条数从文件外面锁死了 tick** —— 用户说的「每 tick」和压力变化的间隔
 **1.79 s** 一致，和温度的 1.79 s 也一致，这是第一次有外部见证确认 tick ≈ 1.8 s。
 
+**Phase 51 —— 上版本控制，推到 GitHub（`The-Reactor-Game-Continuation`）。**
+工作文件夹以前**从来没有 `.git`**。远端 public、MIT、原本只有 `LICENSE` / `README.md` /
+`reactor_telemetry.txt` 三个文件。本地初始提交 `3ed1dd4`，与 `origin/main` 的 `e299752`
+**无关历史合并**成 `3461509` 推上去，最终 **175 个文件**在版本控制里。
+**6527 MB → 9.04 MB**：`.gitignore` 排掉 **5986 MB** whisper 模型缓存、
+**426 MB** 原版拆包资产（zip 另超 100 MB 硬限）、**104 MB** 三个第三方 YouTube 视频、
+本地缓存。**排除清单不只是关于大小** —— 资产和视频都在限额以内，排掉是因为**不是我们的东西**。
+顺带把行尾钉成 LF（`.gitattributes` + `core.autocrlf=false`）：全局 autocrlf 会在 checkout 时
+改写每一份 `.md`，而这个工程的文档**按字节当工作**（`DECISIONS` 96）。
+**留了一条**：`Data/TRGWeb.luau` / `DataCollection.luau` / `Summary01.luau` 是原版源码的
+逐字副本，现在公开了 —— 见 `QUESTIONS.md` **P5**。
+
 **Phase 47 —— 整理 Workspace 与工作文件夹。**
 779 个已证惰性的散件进了 `Workspace.Geometry`（该夹 23 → **802**），19 个散落 `Sound` 进了
 `Workspace.Sounds`，根目录直接子物体 1802 → **999**，Part 总数 **91905 不变**，

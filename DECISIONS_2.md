@@ -1906,3 +1906,38 @@
     already in the unit they will think in. The same check also says what NOT to generalise: the
     coolant pumps' pressure deltas across five toggles are +0, +11, +4, -102 and -4, so the tidy
     -60 belongs to the fans and does not transfer.
+
+142. A PUBLIC REPO IS A DIFFERENT ARTIFACT FROM A WORKING FOLDER, AND WHAT IT LEAVES OUT IS THE DECISION.
+
+    WHAT HAPPENED. The working folder had never been a git repo. Turning it into one and pushing it
+    to a public GitHub repo needed a judgement per top-level entry rather than a single `git add
+    -A`, because the folder held 6527 MB whose only sensible destination was 9.04 MB of it.
+
+    WHY NOT JUST ADD EVERYTHING. Three of the four exclusions are not about size at all, which is
+    the part a size threshold would have got wrong. 5986 MB of whisper model cache is merely
+    wasteful -- rebuildable, and no repo wants it. But 426 MB of unpacked game assets and 104 MB of
+    third-party YouTube guides are *within* GitHub's limits and were excluded because they are
+    someone else's work, and a rule of "ignore files over N MB" would have published them. The
+    fourth, the machine-local vision and permission caches, is excluded because it is state that
+    would only ever conflict.
+
+    AND ONE THING THAT WOULD HAVE BEEN LOST SILENTLY. `core.autocrlf` was true, which rewrites
+    every .md on checkout. In most repos that is cosmetic. Here the documentation is the artifact
+    -- DECISIONS 96 is a bug that turned on two files of equal byte length and different content,
+    and the whole doc-verification apparatus of that era was built to notice exactly that class of
+    drift. A VCS quietly re-encoding every document would have defeated it at the storage layer
+    while every check stayed green. So line endings are pinned in .gitattributes and the repo's
+    autocrlf is off, rather than trusting a global Windows default that was set for someone else's
+    C# project.
+
+    HOW TO APPLY. Sort every candidate by "is this ours to publish", then "can it be rebuilt", then
+    by hard limits -- in that order, because the size filter runs last and only catches the
+    cheapest mistakes. Write the reason into .gitignore itself rather than into a commit message:
+    the commit message scrolls away, and the ignore file is the one place a future reader looks
+    when they wonder why something is missing. And when the artifact is bytes you are on record
+    about, pin the encoding instead of inheriting a global default.
+
+    THE PART THAT IS NOT MINE TO DECIDE. Three files under Data/ are verbatim copies of the
+    original game's ModuleScript source, and they are now public. That is a legal exposure rather
+    than a technical one, so it is recorded as a question for the operator (QUESTIONS P5) rather
+    than settled here.

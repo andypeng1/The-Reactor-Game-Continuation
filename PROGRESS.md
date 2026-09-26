@@ -3024,3 +3024,63 @@ fan 3→4 的四次拨动是 −57 / −47 / −62 / −58（中位 −57，还�
 **风扇 → 压力：−60 PSI/tick（已验证，3 个风扇以内）。**
 fan=0 时 cblPct=75 / cool=0 那一点的基线是 **+118 PSI/tick**。
 压力同样是累加量（不是惯性环节）。**冷却泵 → 压力：这一份没量出来。**
+
+---
+
+## Phase 51 — 上版本控制，推到 GitHub（`The-Reactor-Game-Continuation`）[DONE]
+
+**日期：** 2026-09-27 00:05。**触发：** 用户给了仓库地址并说「既然你能 git，那 push 吧」。
+**对象：** 工作文件夹本身，不是游戏。
+
+### 51.1 之前是什么都没有
+
+`D:\rblxTRGproject` **从来没有过 `.git`**（`/c/Users/andypeng1NB/BloxBot` 和 `D:\BloxBot` 也没有）。
+远端 `https://github.com/andypeng1/The-Reactor-Game-Continuation` 是 **public**、MIT、
+只推过一次（`e299752`，2026-09-17），里面**只有 3 个文件**：
+`LICENSE` / `README.md` / `reactor_telemetry.txt`。
+
+### 51.2 做了什么
+
+| 步骤 | 结果 |
+|---|---|
+| `git init -b main` | — |
+| 初始提交 | `3ed1dd4`，**173 个文件 / 9.04 MB** |
+| 与 `origin/main` 合并 | `--allow-unrelated-histories`（两边没有共同祖先），只有 `README.md` 冲突（add/add） |
+| 冲突解决 | **取本地那份** —— 它已经把远端那段「This project was inspired by…」前言抄进去了，所以两边的内容都在 |
+| 推送 | `e299752..3461509  main -> main` |
+| 远端核对 | 树里 **191 项**，`LICENSE` 和 `reactor_telemetry.txt` 原样保留 |
+
+最终 **175 个文件**在版本控制里。
+
+### 51.3 故意没进去的四个东西
+
+`.gitignore` 里每一条都写了理由 —— 因为**忽略文件是以后唯一会有人去看的地方**：
+
+| 排除 | 大小 | 为什么 |
+|---|---|---|
+| `_tools/models/` | **5986 MB** | whisper 模型缓存，可重建 |
+| `TRG Sounds & Images pack/` + `.zip` | **426 MB** | 原版游戏的拆包资产；zip 另外还超 GitHub 单文件 **100 MB 硬限** |
+| `Videos/` | **104 MB** | 三个**第三方 YouTube 攻略视频**，只是拿来本地转写的 |
+| `.ai/`、`.claude/settings.local.json`、`scheduled_tasks.lock` | <1 MB | 机器本地缓存 / 本地权限状态 |
+
+**总盘子 6527 MB → 进仓库 9.04 MB。** 排除的 99.9% 是模型缓存；
+**但排除清单不只是关于大小** —— 资产包 214 MB、视频 104 MB 都在 GitHub 限额以内，
+它们被排掉是因为**不是我们的东西**，这个判断文件大小替你做不了。
+
+**保留的：** `src/`（ReactorBackend 本体）、全部 `.md` 文档、`docs/`、
+`Data/`（含 7 份 `flow/original_*` 采集文件 + `DataCollection.Log`）、
+`_tools/`（去掉 `models/`）、`baseline/`、`Addition/`、`Run.ps1`。
+
+### 51.4 顺带定了一件以前没有的事：行尾
+
+全局 `core.autocrlf=true` 会在 checkout 时**把每一份 `.md` 改写成 CRLF** ——
+而这个工程的文档是**按字节当工件**的（`DECISIONS` 96 就是「长度相同、内容不同」
+那个真出过的 bug）。所以加了 `.gitattributes` 钉成 `* text=auto eol=lf`，
+并把这个 repo 的 `core.autocrlf` 设成 `false`。仓库里存 LF，工作区那份下次
+checkout 才会跟着变。
+
+### 51.5 留了一条给用户拍板
+
+`Data/TRGWeb.luau`（357 行）、`Data/DataCollection.luau`（489 行）、
+`Data/Summary01.luau`（37 行）是**原版游戏 ModuleScript 的逐字副本**，
+现在跟着 public 仓库公开了。已进 `QUESTIONS.md` **P5**。
