@@ -2347,3 +2347,29 @@
     certifies the argument and cannot be noticed by reading the argument. Since 2026-09-27 the
     convention is mechanical and checkable: "run N" means Data/roomwatch_runN, and the archive
     directories carry exactly those names, so a grep for the number decides it.
+
+159. AN UNREACHABLE RULE READS EXACTLY LIKE A WORKING ONE -- SO CHECK OWNERSHIP, NOT PLACEMENT.
+    Watching the mixer's seven SoundGroups required a propsFor branch for SoundGroup, and while
+    adding it I also added one for SoundEffect. That second branch could never run: SoundEffect is
+    matched by an earlier elseif in the same chain, and Lua stops at the first match. The dead rule
+    was indistinguishable from a live one by reading it -- right class, right property, a comment
+    explaining why Enabled matters. Nothing about it looked wrong. The only reliable test is
+    structural and does not need a run: in a chain of elseifs, a class tested twice means the second
+    test is dead, and a grep for the class name answers that in one line.
+
+    WHY IT MATTERS MORE HERE THAN ORDINARY DEAD CODE. This file's whole contract is "what is watched
+    is what the report says is watched". A dead branch in propsFor is a silent hole in a coverage
+    claim, i.e. the exact failure the entry above is about, and it would have been invisible in
+    exactly the same way: no error, no gap in the output, just a class that reads as covered.
+
+    THE SAME LESSON ARRIVED TWICE IN ONE ROUND, from the other direction. buildAudioIndex assigned
+    report.byGroup['Audio'], and coverageReport printed groups by iterating the GROUPS list -- which
+    holds ControlRoom and Chamber only. So 77 newly registered instances were counted in the header
+    total and detailed nowhere, and the run read as "77 more than last time, unexplained". A tally
+    that is written but never read is the same defect as a branch that is read but never reached:
+    the writer and the reader each look right on their own.
+
+    HOW TO APPLY. When you add a case to a dispatch chain, grep for the class or key first -- if it
+    is already claimed, the new arm is dead. When you add a bucket to a report, check who iterates
+    the container it lives in. Both are one-line checks and neither can be done by reading the code
+    you just wrote, because the code you just wrote is the thing that looks fine.

@@ -3618,3 +3618,64 @@ t=6.81 09:58:05 | ControlRoom | ... | ENDED   | bus=Interactables | id=rbxasseti
 **没验的是「操作员动作会响什么」** —— 三趟里没有一只手碰过控制台
 （`MCP_AudioProbe` 是唯一的声源，而且它是我）。控制台上任何一个按钮会响什么，
 **现在还是空的**，这一条不要写成「已验」。
+
+### 53.10 混音台也要看：`SoundGroup.Volume`，和一个「看起来生效但永远跑不到」的分支
+
+**这一段是从我自己注释里的一句假话长出来的。** `attachAudioOnly` 上面那段注释写着
+audio-only 那两个根「their properties do not move, only their playback does」——
+这句对**音效库**（`Workspace.Sounds`，226 个 Sound 全是放音用的资产）是对的，
+对**混音台**是**假的**：`SoundService` 底下那 7 个 `SoundGroup` 是**每一条总线**，
+`EnvironmentSounds` 的 `Volume` 只要被推下去，23 个环境音 loop **照样读 `Playing = true`**，
+tally 照样把它们报成「audible」—— **房间已经静了，记录说它还在响**。
+这正是这一整套东西最怕的那类错：不是漏读，是**读数正确而结论相反**。
+
+**先量再改。** 现场数出来的：
+`SoundService` = **7 个 `SoundGroup`** + 1 个 `Sound`（+ 根自身），
+`Workspace.Sounds` = **226 个 `Sound` + 70 个 `SoundEffect` + 12 个 `Folder` + 1 个 `SurfaceAppearance`**。
+七个总线的实测 `Volume`：`EnvironmentSounds=1`、`Interactables=4`、`ControlRoomSounds=1`、
+`MESSounds=1`、`MusicSounds=1`、`SpecialSounds=0`、`AlarmSounds=0.6` ——
+**`SpecialSounds` 已经是 0**，也就是说「总线把声音关掉了」这件事在这个 place 里**已经发生过**，
+只是当时没人在看。
+
+**改动三处。** ① `propsFor` 加 `SoundGroup` 分支 → `{'Volume'}`（一个键）。
+② `attachAudioOnly` 里非 `Sound` 的现在交给**普通属性监听**（`propsFor` 认就 `register`）。
+③ `register` 因为要被**它上面**的 `attachAudioOnly` 调到，按 `buildAudioIndex` 那个老办法
+**前置声明** —— 第 699 行从 `local function register` 改成 `function register`，
+否则会**再创建一个新的 local**，而上面那个引用到的还是 nil。
+**代价量得很清楚**：实例 30,142 → **30,219（+77）**，属性 235,318 → **235,553（+235）**。
+**+235 能逐项对上**：7 个 `SoundGroup` × 1 + 33×4 + 16×2 + 8×2 + 7×6 + 3×1 + 3×1 =
+7+132+32+16+42+3+3 = **235**。
+**顺带发现原来 `Workspace.Sounds` 里那 70 个 `SoundEffect` 一个都没被监听过** ——
+它们本来就在 `propsFor` 的契约里（`SoundEffect` 分支早就有，连每种效果的参数都分开列了），
+只是那个分支**从来没被走到过**，因为整个库不在属性监听范围里。
+
+**我自己在这一轮里犯的错，记下来因为它太像对的。** 我给 `propsFor` **又加了一个
+`SoundEffect` 分支**（返回 `{'Enabled'}`）。它**一行都不会执行** —— `SoundEffect` 分支在
+**上面**（第 242 行）已经认领了这个类，Lua 的 `elseif` 从上往下匹配，第二个永远够不到。
+它是**死代码，而且长得和活代码一模一样**：名字对、类对、注释还解释得挺像回事。
+**判据不是读它，是问「还有谁认领这个类」** —— 一个 `elseif` 链里，同一个 `IsA` 出现两次，
+第二次就是死的，这个检查是**纯结构的**，不需要跑。
+已删，并在原位留了一句注释说明为什么不能加回来。
+
+**同一轮里第二个「打了但没打印」。** `report.byGroup['Audio']` 我建了、`register` 也往里面
+记了类计数，但 `coverageReport` 打印分组时遍历的是 **`GROUPS` 那个具名列表**
+（只有 ControlRoom / Chamber），所以 `Audio` 那一组**根本不会被打印** ——
+后果是头部说 30,219 个实例，而多出来的 77 个**在任何地方都查不到出处**。
+「比上一趟多了 77 个」读起来就成了一件没法解释的事。已改成在 `GROUPS` 之后单独打印：
+
+```
+## Audio -- 77 instances OUTSIDE the two rooms, watched as properties
+   EqualizerSoundEffect     33
+   DistortionSoundEffect    16
+   PitchShiftSoundEffect     8
+   ReverbSoundEffect         7
+   SoundGroup                7
+   CompressorSoundEffect     3
+   EchoSoundEffect           3
+```
+
+**验的（`Data/roomwatch_run15`）：** `error.txt` **没有** —— 这就是前置声明那处**真的绑上了**
+的证明（`register` 若是 nil，`attachAudioOnly` 会在第一拍就抛，`error.txt` 会有东西），
+比 grep 那句 `function register` 强得多。`rooms.txt` 与 run 14 **只差新增的 `## Audio` 一节**
+（`diff` 只有那 9 行），`audio_tally.txt` 与 run 14 **只差时间戳**。
+30,219 / 235,553 在 run 14 和 run 15 **两趟逐字节相同**，说明它是确定的、不是抖出来的。

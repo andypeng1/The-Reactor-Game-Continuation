@@ -262,6 +262,15 @@ local function propsFor(inst)
         -- is the game's own classification of the sound rather than a guess we
         -- would have to make from the asset id.
         return {'Playing', 'Volume', 'Pitch', 'SoundId', 'Looped', 'SoundGroup'}
+    elseif inst:IsA('SoundGroup') then
+        -- Volume is the one property on a bus that can silence everything routed
+        -- through it, and it is the only thing in the audio chain whose state the
+        -- Sound rows cannot see: every member Sound would still read Playing=true.
+        -- (SoundEffect needs no branch here: the one above already claims that
+        -- class with its full per-kind property set.  A second SoundEffect branch
+        -- lived here for one revision and was unreachable -- the class is matched
+        -- earlier, so it read as a live rule and could never run.)
+        return {'Volume'}
     elseif inst:IsA('GuiObject') then
         local p = {'Visible', 'BackgroundColor3', 'BackgroundTransparency',
                    'Size', 'Position', 'ZIndex'}
@@ -569,12 +578,31 @@ local function attachAudio(ent)
     end
 end
 
+-- register is defined far below, next to what it does, but the audio-only walk
+-- needs it for SoundGroups, so it is forward-declared here -- same reason and same
+-- shape as buildAudioIndex further down.  A `local function` is not in scope above
+-- its own definition, and the failure would be a nil-call at Start.
+local register
+
 -- A Sound outside the two rooms: hooked, polled for Playing, but not registered
 -- for the property watch, because these are the sound LIBRARY (Workspace.Sounds,
 -- 715 of them) and its properties do not move -- only its playback does.
+--
+-- SoundGroup is the exception, and it was an assumption until 2026-09-27: the
+-- comment here used to say "their properties do not move" about the whole
+-- audio-only scope, which is true of the library and FALSE of the mixer.  The
+-- seven SoundGroups are the buses every in-room sound is routed through, so if
+-- anything ever ramps SoundService.EnvironmentSounds.Volume down, all 23 ambient
+-- loops keep reading Playing=true and the tally keeps calling them audible while
+-- the room has gone silent.  Seven keys is nothing to pay for closing that.
 local function attachAudioOnly(inst)
-    if not inst:IsA('Sound') then return end
     if audioSeen[inst] then return end
+    if not inst:IsA('Sound') then
+        -- Never a Sound: hand it to the ordinary property watch and stop.  A
+        -- SoundGroup has no playback to hook.
+        if propsFor(inst) ~= nil then register(inst, 'Audio') end
+        return
+    end
     audioSeen[inst] = true
     hookedSounds = hookedSounds + 1
     local ent = {inst = inst, path = uniquePath(inst), group = 'Audio'}
@@ -696,7 +724,10 @@ local function audioTally()
     return table.concat(out, NL) .. NL
 end
 
-local function register(inst, group)
+-- Not `local function`: attachAudioOnly above forward-declares this name, so the
+-- assignment here has to land in THAT local rather than create a second one that
+-- the audio-only walk never sees.  Same shape as buildAudioIndex.
+function register(inst, group)
     if seen[inst] then return end
     local props = propsFor(inst)
     if props == nil then return end
@@ -792,6 +823,11 @@ end
 -- library would otherwise read as a silent reactor.
 function buildAudioIndex()
     report.audio = {found = {}, missing = {}}
+    -- The audio-only walk registers the mixer's SoundGroups and any loose
+    -- SoundEffect through the ordinary property watch, and register() files its
+    -- class counts under report.byGroup[group] -- so the key has to exist here or
+    -- those classes count in classTotal while their group reports nothing.
+    report.byGroup['Audio'] = {}
     for _, spec in ipairs(AUDIO_ROOTS) do
         local ok, svc = pcall(function() return game:GetService(spec.service) end)
         local node = ok and svc or nil
@@ -849,6 +885,28 @@ local function coverageReport()
         end
         out[#out+1] = ''
     end
+    -- The audio-only walk registers the mixer through the ordinary property watch,
+    -- and iterating GROUPS above means its class counts would land in the totals
+    -- (the header says %d instances) while their breakdown printed nowhere.  That
+    -- is how "77 more instances than last run" reads as unexplained.  So the
+    -- Audio tally is printed here, and only when there is one.
+    local audioCounts = report.byGroup['Audio']
+    if audioCounts then
+        local keys, total = {}, 0
+        for k, v in pairs(audioCounts) do keys[#keys+1] = k; total = total + v end
+        if total > 0 then
+            table.sort(keys, function(a, b)
+                if audioCounts[a] ~= audioCounts[b] then return audioCounts[a] > audioCounts[b] end
+                return a < b
+            end)
+            out[#out+1] = string.format(
+                '## Audio -- %d instances OUTSIDE the two rooms, watched as properties', total)
+            for _, k in ipairs(keys) do
+                out[#out+1] = string.format('   %-24s %d', k, audioCounts[k])
+            end
+            out[#out+1] = ''
+        end
+    end
     if #report.missing > 0 then
         out[#out+1] = '## roots NOT found -- the room is under-covered if this is not empty'
         for _, p in ipairs(report.missing) do out[#out+1] = '   MISSING ' .. p end
@@ -860,7 +918,7 @@ local function coverageReport()
         if ent.inst:IsA('Sound') then inRoomSounds = inRoomSounds + 1 end
     end
     out[#out+1] = string.format(
-        '## audio-only scope -- playback hooks, no property watch (%d hook(s) attached, %d refused)',
+        '## audio-only scope -- playback hooks, plus a property watch on the mixer only (%d hook(s) attached, %d refused)',
         audioHooks, audioRefused)
     out[#out+1] = string.format('   %-24s %d', 'Sounds inside the two rooms', inRoomSounds)
     for _, r in ipairs(audio.found) do

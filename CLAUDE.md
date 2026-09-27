@@ -453,7 +453,10 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 **永远发不出 `Played`**，所以挂 hook 时**另读一次 `Playing`** 补上（`ALREADY-PLAYING` 行）。
 探针判决：停着且 `Pitch=1.00` 的音效 `:Play()` → `PLAYED t=6.08` / `ENDED t=6.81`，
 **差 0.73 s = 片段长度**，hook 整条通。**23 个里有 15 个 `Pitch=0.00` 而 `Playing=true`** ——
-`Playing` 单看**不等于听得见**，这就是 `Pitch` 进属性列表的理由。产出 `audio.txt` 时间线 +
+`Playing` 单看**不等于听得见**，这就是 `Pitch` 进属性列表的理由。
+**混音台也看**：7 个 `SoundGroup` 的 `Volume` 进属性监听（`SpecialSounds` 实测**已经是 0**）——
+`Playing` 为真而总线被调零，是这套东西最怕的那类错：**读数正确而结论相反**。
+代价 **+77 实例 / +235 属性**（30,219 / 235,553），逐项对得上。产出 `audio.txt` 时间线 +
 `audio_tally.txt` 快照（含 `audible by bus` 汇总）。**`Data/roomwatch*/inventory.txt` 七份
 逐字节相同（md5 `5ae9ab97`），已进 `.gitignore`** —— 盖的是同一个没变过的世界，`rooms.txt` 才是答案。
 **`QUESTIONS.md` 现在有一条待你拍板的：D11（这两个 SSS 实例留在发版里还是删）。**
