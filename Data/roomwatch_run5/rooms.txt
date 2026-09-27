@@ -1,0 +1,104 @@
+# coverage -- what this watcher has in front of it
+# 30142 instances, 235038 watched properties, 43 roots found, 0 roots missing
+# 25258 instance(s) needed a path suffix: their GetFullName was not unique
+
+## ControlRoom -- 5089 watched instances
+   Part                     2065
+   Frame                    923
+   TextLabel                851
+   Decal                    232
+   ImageLabel               231
+   SurfaceGui               195
+   StringValue              114
+   Texture                  95
+   Sound                    71
+   ClickDetector            62
+   UnionOperation           57
+   SurfaceLight             39
+   WedgePart                33
+   ParticleEmitter          21
+   ScrollingFrame           20
+   EqualizerSoundEffect     18
+   TextButton               16
+   PitchShiftSoundEffect    14
+   MeshPart                 12
+   Attachment               8
+   DistortionSoundEffect    7
+   Script                   4
+   PointLight               1
+
+## Chamber -- 25053 watched instances
+   Part                     13953
+   MeshPart                 2976
+   Texture                  2012
+   WedgePart                1821
+   Decal                    896
+   UnionOperation           569
+   ParticleEmitter          514
+   SpecialMesh              481
+   SurfaceLight             378
+   Attachment               324
+   Sound                    209
+   CornerWedgePart          192
+   EqualizerSoundEffect     110
+   SurfaceGui               92
+   TextLabel                92
+   PointLight               88
+   Beam                     69
+   BlockMesh                54
+   RopeConstraint           48
+   DistortionSoundEffect    43
+   HingeConstraint          27
+   StringValue              24
+   BoolValue                20
+   PitchShiftSoundEffect    14
+   NumberValue              12
+   ReverbSoundEffect        12
+   Script                   12
+   ClickDetector            8
+   Trail                    3
+
+## roots found
+   ControlRoom  Consoles                                   Folder       3636 descendants
+   ControlRoom  Monitors                                   Folder       1754 descendants
+   ControlRoom  RoomLights.ControlRoomLights               Model        84 descendants
+   ControlRoom  MovingParts.ControlRoomLShutter            Model        6 descendants
+   ControlRoom  MovingParts.ControlRoomMShutter            Model        6 descendants
+   ControlRoom  MovingParts.ControlRoomRShutter            Model        6 descendants
+   ControlRoom  MovingParts.ControlRoomMAPLeft             Part         3 descendants
+   ControlRoom  MovingParts.ControlRoomMAPRight            Part         3 descendants
+   Chamber      Core                                       Model        344 descendants
+   Chamber      ChamberWalls                               Folder       2800 descendants
+   Chamber      ReactorCBLs                                Folder       11993 descendants
+   Chamber      CHMBRBlastDoor                             Model        212 descendants
+   Chamber      ChamberCoolantPipe1                        Model        13 descendants
+   Chamber      ChamberCoolantPipe2                        Model        14 descendants
+   Chamber      ChamberCoolantPipe3                        Model        14 descendants
+   Chamber      MovingParts.ChamberFan1                    Model        94 descendants
+   Chamber      MovingParts.ChamberFan2                    Model        94 descendants
+   Chamber      MovingParts.ChamberFan3                    Model        94 descendants
+   Chamber      MovingParts.ChamberFan4                    Model        94 descendants
+   Chamber      MovingParts.ChamberFan5                    Model        94 descendants
+   Chamber      MovingParts.ChamberFan6                    Model        94 descendants
+   Chamber      MovingParts.ReactorClamps1                 Model        451 descendants
+   Chamber      MovingParts.ReactorClamps2                 Model        451 descendants
+   Chamber      MovingParts.ReactorClamps3                 Model        451 descendants
+   Chamber      MovingParts.ReactorClamps4                 Model        451 descendants
+   Chamber      MovingParts.ReactorClamps5                 Model        451 descendants
+   Chamber      MovingParts.ReactorClamps6                 Model        451 descendants
+   Chamber      MovingParts.E_VENT1                        Model        537 descendants
+   Chamber      MovingParts.E_VENT2                        Model        537 descendants
+   Chamber      MovingParts.E_VENT3                        Model        537 descendants
+   Chamber      MovingParts.METUSpire1                     Model        106 descendants
+   Chamber      MovingParts.METUSpire2                     Model        106 descendants
+   Chamber      MovingParts.METUSpire3                     Model        106 descendants
+   Chamber      MovingParts.METUSpire4                     Model        106 descendants
+   Chamber      MovingParts.METUSpire5                     Model        106 descendants
+   Chamber      MovingParts.METUSpire6                     Model        106 descendants
+   Chamber      MovingParts.FanTriggerParts                Folder       24 descendants
+   Chamber      MovingParts.DecayFields                    Folder       3912 descendants
+   Chamber      MovingParts.CoolantPipes                   Model        529 descendants
+   Chamber      MovingParts.CoolantParticleParts           Model        78 descendants
+   Chamber      MovingParts.ISEParticleParts               Model        8 descendants
+   Chamber      MovingParts.ISEParticleParts2              Model        8 descendants
+   Chamber      MovingParts.CoreAntenna                    Folder       4146 descendants

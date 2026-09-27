@@ -1,0 +1,7 @@
+# 507 Sound(s) hooked; 1521 hook(s) attached, 0 refused; 2 play/stop/end event(s) seen
+# 1 of them have been audible; 0 play(s) were caught by the poll and NOT by a hook
+# 23 were ALREADY playing when the watcher attached -- a hook cannot see those, and
+# their asset and bus were read off the instance instead of off a Played event
+# plays by bus: Interactables=1
+
+ControlRoom Consoles.ALTReactorConsole.MASS1Systems.PowerLever.LeverUnion.LeverSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://209530691 | last t=6.81 09:58:05

@@ -2178,3 +2178,172 @@
 
     HOW TO APPLY. When an adapter must create, keep it one narrow named helper with the reason in the
     comment, so the exception is greppable and the rule it breaks stays legible.
+
+152. A LINE YOU CANNOT UN-WRITE MUST NEVER BE WRITTEN -- SUPPRESSION IS A HOLD, NOT AN ERASURE.
+    The room watcher has to separate operator events from ambient motion in a place that has both, and
+    the first design tried to do it after the fact: write every line immediately, and when a key had
+    moved often enough to prove it was decoration, tombstone its history and report how many lines
+    were erased.
+
+    MEASURED, AND IT DOES NOT WORK. The sink APPENDS, so by the time the ninth move tripped the rule,
+    moves one through eight were already flushed. Two files carry the proof, and they are consecutive
+    runs of the SAME design: Data/roomwatch_run4/changes.log (8,857,672 bytes, 18,365 lines) contains
+    the three tombstones it wrote in place of the history --
+    "...CONTINUOUS, moved on each of the last 9 scans -- its first 8 line(s) erased, suppressed until
+    it is quiet for 5"; Data/roomwatch_run5/suppressed.txt then tallies "# 1942 key(s) suppressed as
+    ambient" over rows reading "[144 change(s) by t=12.0s, 8 line(s) erased]" while run5's own
+    changes.log was 7,624,702 bytes and 15,733 lines -- the erasure was real in memory and invisible
+    on disk. A design that can only work if the file system cooperates is not a design; the append was
+    not a limitation to route around, it was the specification.
+
+    CITATION CORRECTED 2026-09-27. This entry used to read "run 4's suppressed.txt honestly reported
+    1,891 keys at '8 line(s) erased' while changes.log was still 7,557,244 bytes and 15,527 lines",
+    and three things were wrong with that sentence. run4 has NO suppressed.txt at all -- that file
+    first exists in run5, so the sentence named a file that does not exist. The byte and line counts
+    match no file on disk (run5 is the nearest at 7,624,702 / 15,733; run4 is 8,857,672 / 18,365).
+    And 1,891 belongs to a DIFFERENT and LATER design -- it is Data/roomwatch_run11/suppressed.txt's
+    "# 1891 key(s) judged ambient: moved more than 8 times without going quiet for 5 scans", i.e. the
+    hold design this entry argues FOR, quoted as evidence for the erasure design it argues AGAINST.
+    The argument was right and its evidence was assembled from three runs while reading as one. Serves
+    as the reminder that a number in a decision is a citation: check it resolves to a file.
+
+    REPLACED BY A HOLD. Every key keeps a ring of its recent lines un-written, capped at NoisyAfter.
+    A key that fills the ring is ambient: the ring is dropped and the key is named in suppressed.txt.
+    A key that instead goes quiet for QuietScans is an event: the ring is written out in order. Nothing
+    is ever un-written, so nothing has to be recovered, and the failure mode of the whole mechanism --
+    dropping an event -- is bounded by ring size and disclosed by file rather than by absence.
+
+    HOW TO APPLY. When a sink is append-only, erase-after-the-fact is not a slower version of correct,
+    it is a different program that reports success while doing nothing. Withhold first.
+
+153. AGE IS NOT EVIDENCE THAT A SPINNER IS NOT A CLOCK -- THE RING FILLING IS.
+    The first hold design promoted a key to "an event" a fixed number of scans (12) after its first
+    move if it had not overflowed the ring by then. That reads as the conservative choice and is the
+    opposite: it certifies a key before the key has had a chance to say what it is.
+
+    MEASURED. Run 6 ran the fixed clock: 90 seconds produced 1,045 lines, led by two ChamberFan keys at
+    47 and 46 lines each, whose first move was followed by a 32-second gap. They were judged events
+    during the gap and then logged every move for the rest of the run. Removing the clock and letting
+    only ring overflow decide -- with release on five quiet scans as the other half -- gave 232 lines
+    over a comparable window, with 1,943 keys named in suppressed.txt.
+
+    The two halves are not symmetric and that is why both exist. Overflow is proof of decoration and
+    can be acted on at once. Going quiet is proof of an EVENT and only exists afterwards, which is why
+    it is measured from the last move rather than from the key's age.
+
+    HOW TO APPLY. When classifying a stream you cannot rewind, prefer the test that only fires on
+    positive evidence over the one that fires on the absence of it -- a timeout is a guess about what
+    has not happened yet.
+
+154. A DIAGNOSTIC THAT DIES FROM ITS OWN BUG IS WORSE THAN NO DIAGNOSTIC -- SO IT WATCHES ITSELF.
+    The watcher's scan loop lives in a spawned thread, so nothing awaits it and nothing catches it. When
+    an arithmetic-on-nil in releaseQuiet killed the loop on the first tick of run 7, the only symptom
+    from outside was that two files had been written and a third never was -- indistinguishable from a
+    watcher that is running correctly and finding nothing. That is the same shape as the defect
+    recorded in CLAUDE.md 0.16 (the runtime half was unreadable, so "not verified" and "not working"
+    looked alike), except here the missing evidence was the instrument's own output.
+
+    WHAT CHANGED. scan() is wrapped in pcall; a failure writes error.txt to the same sink as every other
+    artifact, warns once, and sets a `fatal` field that Status() reports. The run is then readable from
+    disk, which is the one channel that survives the session.
+
+    HOW TO APPLY. Any long-lived diagnostic process should be required to say why it stopped. Silence
+    from a monitoring tool must never be the same bytes as health.
+
+155. THE SHUTTER TRAVEL WAS NEVER MISSING -- THE SEARCH WAS POINTED THE WRONG WAY.
+    Phase 52 recorded that the control room shutter travel "cannot be measured" and declined to invent
+    it. Both halves of that conclusion were wrong. The thing that retracts is not the Glass, it is the
+    shutter Model; and the travel is not inside the glass's own frame, it is INTO THE WALL BESIDE IT.
+
+    The operator gave the number -- descend 10.58 -- and the world confirms it independently: all three
+    shutters sit closed at Y ~ 282.199 and open at Y ~ 271.619, a difference of exactly -10.5800. It is
+    not a round number precisely because it is not a guess; 10.58 puts the top of the 10.650-tall Glass
+    flush with the sill at 276.7.
+
+    The subtraction is a world Vector3 and not `CFrame * CFrame.new(0,-travel,0)`, because the middle
+    shutter's Frame is rotated 90 degrees about Y and there is no reason to depend on its local Y
+    happening to coincide with the world's.
+
+    HOW TO APPLY. "Cannot be measured" is a claim about the search that was run, not about the world.
+    Say which search was run and what it covered, so the next reader can tell an absent value from an
+    absent idea.
+
+156. SEVEN IDENTICAL DUMPS ARE NOT SEVEN PIECES OF EVIDENCE.
+    Phase 53's watcher writes a per-run instance dump, Data/roomwatch*/inventory.txt, 5,278,228 bytes.
+    All seven runs produced a BYTE-IDENTICAL copy -- the same md5, the same length -- because it is a
+    snapshot of a world nobody edited between runs. Committing all seven would have added 37 MB of one
+    file to a repository that Phase 51 had just shrunk from 6527 MB to 9.04 MB.
+
+    The dump is ignored; the derived answer is not. rooms.txt (5.7 KB) carries the coverage numbers
+    the dump exists to support, and it is tracked -- and it too came out byte-identical between run 6
+    and run 8, which is an independent check that the coverage does not drift run to run. The dump can
+    be regenerated by running the watcher again; the fact that the seven copies agreed is recorded
+    here, so the agreement survives even though the redundant bytes do not.
+
+    The files stayed on disk. Ignored is not deleted.
+
+    HOW TO APPLY. Before tracking N copies of an artifact, hash them. If they agree, track one -- or
+    none, and track the derivation instead. Redundancy is not volume of evidence; it is the same
+    evidence repeated, and it costs the same to carry.
+
+157. A HOOK SEES TRANSITIONS, NOT STATES -- SO A WATCHER THAT ONLY HOOKS IS BLIND AT t=0.
+    The audio half of the room watcher subscribes to Sound.Played / Stopped / Ended, because a
+    0.73-second clip starts and finishes inside one 1-second poll and polling structurally cannot
+    see it. That reasoning is right, and it buys a second blind spot in the same move: a signal fires
+    on a CHANGE, so a sound that is already playing when the hook attaches can never produce a
+    Played event. It is not a rare edge -- it was the whole ambient floor of the place.
+
+    MEASURED. Data/roomwatch_run11/audio.txt (the first audio run) held one line, a STOPPED, and no
+    PLAYED at all, for a sound that
+    by the property watch (Data/roomwatch_run11/changes.log t=23.93 "...FanSFX.Playing | true | false") had been audible
+    from before the watcher finished attaching. Two candidate explanations, and one sample could not
+    separate them: (a) the hook cannot see the state it attached into, or (b) Pitch=0.00 meant the
+    sound never really started. So the probe played a sound that was stopped, had a SoundId and
+    Pitch=1.00, and let the engine rule: PLAYED at t=6.08, ENDED at t=6.81. ENDED minus PLAYED is
+    0.73 s, the clip's own length. (a) confirmed, (b) refuted. 280 Sounds under the 43 roots, of
+    which 23 were Playing before anything attached.
+
+    THE FIX IS THE SECOND PATH, NOT A BETTER HOOK. attachAudio reads Playing once at attach time and
+    emits its own ALREADY-PLAYING event, and reads the asset id and SoundGroup off the instance
+    rather than off a Played event that does not exist. Two mechanisms covering one subject is the
+    point: the hook gets short clips the poll cannot see, the poll gets state the hook cannot see,
+    and each one's absence is evidence about the other.
+
+    AND THE FIX EXPOSED A THIRD BUG IN MY OWN TALLY, which is the sharper lesson. The tally printed
+    one row per sound and filtered rows on "plays + stops + ends > 0". The ALREADY-PLAYING path adds
+    none of those three, so all 23 pre-existing sounds printed no row, the "[ALREADY PLAYING AT t=0]"
+    marker was unreachable code, the header read "1 of them have been audible" against 24 audible
+    sounds, and the roll-up said "plays by bus: Interactables=1" while EnvironmentSounds hummed.
+    A filter written for one kind of row was silently excluding the other kind -- and the failure
+    looked like a quiet room rather than like a bug.
+
+    HOW TO APPLY. When one subject is observed two ways, count each observation with the test that
+    matches how it was made, and never let one kind of record be filtered out by a predicate written
+    for the other. Ask of every counter: what does zero mean here, and can the thing it counts
+    arrive by a path that skips the increment? Also: a summary that rolls up by "plays" cannot
+    summarise a stream that includes things that never played.
+
+158. A CITATION IN A DECISION IS AN ADDRESS -- IF IT DOES NOT RESOLVE, THE ARGUMENT IS UNSUPPORTED
+     EVEN WHEN THE CONCLUSION IS RIGHT.
+    Entry 152 argued against erase-after-the-fact and cited "run 4's suppressed.txt honestly reported
+    1,891 keys at '8 line(s) erased' while changes.log was still 7,557,244 bytes and 15,527 lines."
+    Three separate things were wrong with one sentence. Data/roomwatch_run4/ has NO suppressed.txt --
+    that file first exists in run 5, so the address pointed at nothing. No file on disk has those byte
+    and line counts (run5's changes.log is 7,624,702 / 15,733; run4's is 8,857,672 / 18,365). And
+    1,891 is Data/roomwatch_run11/suppressed.txt's count for the HOLD design -- the design 152 argues FOR -- quoted as evidence
+    for the erasure design it argues against.
+
+    The conclusion survived because it was re-derived from the files while correcting this: run4's
+    changes.log really does contain the tombstones it wrote in place of history ("...CONTINUOUS,
+    moved on each of the last 9 scans -- its first 8 line(s) erased..."), and run5's suppressed.txt
+    really does tally "# 1942 key(s) suppressed as ambient" over rows reading "[144 change(s) by
+    t=12.0s, 8 line(s) erased]" while its own changes.log was 7,624,702 bytes. The erasure was real
+    in memory and invisible on disk. Right answer, fabricated citation -- and it read as one coherent
+    measurement because three runs' numbers sitting in one sentence look like one run's numbers.
+
+    HOW TO APPLY. Numbers in a decision are addresses: resolve them. Where a claim carries counts or
+    quotes, name the file they came from, and when a run is renumbered or a directory is archived,
+    re-resolve the citations that named it. A wrong citation is worse than a missing one, because it
+    certifies the argument and cannot be noticed by reading the argument. Since 2026-09-27 the
+    convention is mechanical and checkable: "run N" means Data/roomwatch_runN, and the archive
+    directories carry exactly those names, so a grep for the number decides it.

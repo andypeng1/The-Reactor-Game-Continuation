@@ -9,6 +9,9 @@
 --   ROOM LIGHT     Workspace.RoomLights.ControlRoomLights: the Color and
 --                  Transparency of its 20 NeonParts, and the Enabled flag of
 --                  the SurfaceLights on its 8 LightParts.
+--   SHUTTERS       the three control room window shutters, which retract by
+--                  moving DOWN by Config.Shell.ShutterTravel. Only each
+--                  shutter's Frame is written: Glass is welded to it.
 --   MONITOR POWER  per monitor: PowerNeon.Color, Screen.SurfaceLight.Enabled
 --                  and Screen.MonitorUI.Enabled.
 --   MONITOR BOOT   which of each monitor's authored faces is Visible.
@@ -32,13 +35,6 @@
 -- Engine is touched to make it happen.
 --
 -- Deliberately NOT owned here:
---   * the shutters' glass. There is no authored open position anywhere -- not
---     in Workspace.MovingParts, not in Geometry, and 0 hits across the 89448
---     descendants of ReplicatedStorage.CulledParts -- and the frame is only
---     0.32 studs taller than the glass, so a full-height retraction would leave
---     the glass floating above its own frame. The travel cannot be measured, so
---     it is not invented. The console side of the switch (the lever and its
---     OfflineLight) is VisualFeedback's and already works.
 --   * BootUI. Its BootUpText is authored empty, so it renders nothing in any
 --     state; toggling it would change nothing visible, and writing text into it
 --     would overlap BootFrame, whose own 'MS-1S DIAGNOSTIC MODE' is the
@@ -57,6 +53,14 @@ local RoomShell = {}
 -- rename in Studio shows up here as a missing node rather than as silence.
 local ROOM_LIGHTS = 'RoomLights.ControlRoomLights'
 local MONITORS = 'Monitors'
+-- The three control room windows. Each is a Model holding an anchored Frame
+-- (the panel, and the parent of the weld) and an unanchored Glass welded to it,
+-- so writing the Frame's CFrame is what moves both.
+local SHUTTERS = {
+    'MovingParts.ControlRoomLShutter',
+    'MovingParts.ControlRoomMShutter',
+    'MovingParts.ControlRoomRShutter',
+}
 
 -- The authored faces every control room monitor either has or does not. Kept as
 -- a list so a monitor missing one is reported by name at Initialize instead of
@@ -84,6 +88,10 @@ end
 local lamps = {}
 local emitters = {}
 local monitors = {}
+local shutters = {}
+-- Unlike the three tables above, this latch is NOT cleared by Initialize. See
+-- the capture block below for why.
+local shuttersCaptured = false
 local lastSignature: string? = nil
 
 local function collectFaces(ui, names)
@@ -172,15 +180,42 @@ function RoomShell.Initialize(config)
         end
         if #monitors == 0 then problems[#problems+1] = MONITORS..' has no control room monitors' end
     end
+    -- Read once and never again, which is why the latch is not cleared above.
+    -- A shutter's open position is the closed one minus the travel, so the
+    -- authored (closed) CFrame is the only thing that has to come off the world
+    -- -- and reading it a second time, after a Refresh has already lowered the
+    -- panel, would capture the OPEN position as the authored one and invert the
+    -- switch, exactly the trap Config.Shell.MonitorPowerOff warns about.
+    -- Restating three world CFrames in Config would dodge the read but would
+    -- put the art's coordinates in a config file; a latch keeps the read and
+    -- still makes a re-run a no-op.
+    if not shuttersCaptured then
+        for _, path in ipairs(SHUTTERS) do
+            local model = resolve(path)
+            if model == nil then
+                problems[#problems+1] = 'missing '..path
+            else
+                local frame = model:FindFirstChild('Frame')
+                if frame == nil or not frame:IsA('BasePart') then
+                    problems[#problems+1] = path..' has no Frame part to move'
+                else
+                    shutters[#shutters+1] = {path = path, frame = frame, closed = frame.CFrame}
+                end
+            end
+        end
+        -- Latched only on a complete read, so a partial capture is retried by
+        -- the next Initialize instead of being frozen in half-built.
+        shuttersCaptured = #shutters == #SHUTTERS
+    end
     if #problems > 0 then
         -- Reported rather than skipped. A silent miss here would look exactly
         -- like a monitor that is simply switched off, which is the one failure
         -- this module can produce that nobody would notice.
         warn('[RoomShell] incomplete capture: '..table.concat(problems,'; '))
     end
-    print(string.format('[RoomShell] captured %d room lamps, %d room lights, %d monitors',
-        #lamps, #emitters, #monitors))
-    return #lamps, #emitters, #monitors
+    print(string.format('[RoomShell] captured %d room lamps, %d room lights, %d monitors, %d shutters',
+        #lamps, #emitters, #monitors, #shutters))
+    return #lamps, #emitters, #monitors, #shutters
 end
 
 -- ========== WRITERS ==========
@@ -262,16 +297,37 @@ local function applyMonitors(state, config)
     end
 end
 
+-- Open is closed MINUS the travel, and the subtraction is a world vector rather
+-- than a rotation: the shutters slide down in world space. That matters for the
+-- middle one -- its Frame is rotated 90 degrees about Y, so writing
+-- `closed * CFrame.new(0,-travel,0)` would move it along its own local Y, which
+-- is still up, but there is no reason to depend on the rotation being harmless.
+-- Subtracting a Vector3 from a CFrame is the engine's own "translate in world
+-- space" and is the same operation the operator described: descend 10.58.
+local function applyShutters(open, config)
+    local travel = Vector3.new(0, config.Shell.ShutterTravel, 0)
+    for _, shutter in ipairs(shutters) do
+        if shutter.frame.Parent then
+            shutter.frame.CFrame = open and (shutter.closed - travel) or shutter.closed
+        end
+    end
+end
+
 -- ========== REFRESH ==========
 -- Signature-gated for the same reason VisualFeedback is: a quiet tick must not
--- walk 7 monitors and 28 light instances to write the values they already hold.
+-- walk 7 monitors, 28 light instances and 3 shutters to write the values they
+-- already hold. The shutter state belongs in the signature for the same reason
+-- the others do -- without it, the one tick that opens the shutters would be
+-- swallowed as a no-op by a signature that had not changed.
 function RoomShell.Refresh(state, config)
     local signature = table.concat({
         tostring(state.lights), tostring(state.monitorPower),
-        tostring(state.booted), tostring(state.phase)}, '|')
+        tostring(state.booted), tostring(state.phase),
+        tostring(state.shuttersOpen)}, '|')
     if signature == lastSignature then return end
     lastSignature = signature
     applyLights(state.lights == true, config)
+    applyShutters(state.shuttersOpen == true, config)
     applyMonitors(state, config)
 end
 

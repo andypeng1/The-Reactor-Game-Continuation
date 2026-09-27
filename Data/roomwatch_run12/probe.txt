@@ -1,0 +1,8 @@
+# audio probe -- what the engine actually announces
+# 280 Sound(s) under the 43 roots: 23 Playing, 280 with a SoundId, 264 with Pitch > 0
+TEST A: playing Workspace.Consoles.ALTReactorConsole.MASS1Systems.PowerLever.LeverUnion.LeverSound (id=rbxassetid://209530691 pitch=1.00 vol=0.50 looped=false)
+TEST A: Playing before = false
+TEST A: Playing 2s after :Play() = false
+TEST A: Playing after :Stop() = false
+TEST B: SKIPPED -- nothing was already playing
+PROBE DONE

@@ -3360,7 +3360,252 @@ git push origin main                  # efe5775..205f627
 
 ### 52.8 没做、留给用户的（进了 `QUESTIONS.md` 🔴）
 
-**卷帘门的玻璃没有可以量的行程。** `Workspace.MovingParts` 里没有、`Geometry` 里没有、
+**这一段 2026-09-27 被用户当场推翻，原文留在下面当证据。** 我写的「玻璃没有可以量的行程」，
+错在**两处**：收的不是玻璃，是 `Workspace.MovingParts.ControlRoom(L/M/R)Shutter` 整个 **Model**；
+行程也不是量不到，是用户直接给的 —— **向下 10.58**。我当时在玻璃自己的框里找「上面」的开口，
+而行程其实在**旁边的墙里**。几何从来没缺，是搜索方向指反了。裁决与实现见 Phase 53。
+
+~~**卷帘门的玻璃没有可以量的行程。** `Workspace.MovingParts` 里没有、`Geometry` 里没有、
 `ReplicatedStorage.CulledParts` 的 **89448** 个后代里 **0 命中**；而框只比玻璃高 **0.32 studs**，
 整块收上去玻璃会**浮在自己的框上面**。**量不到就不编。**
-控制台那一半（拉杆 + `OfflineLight`）是 `VisualFeedback` 的，本来就好使 —— 缺的只有玻璃本身。
+控制台那一半（拉杆 + `OfflineLight`）是 `VisualFeedback` 的，本来就好使 —— 缺的只有玻璃本身。~~
+
+---
+
+## Phase 53 — 卷帘门收在哪儿，和一台「只监听、不猜」的房间监视器  [DONE]
+
+用户一句话把 Phase 52 的两半都点了：
+
+> 收玻璃干什么？？收的是 `game.Workspace.MovingParts.ControlRoom`（L/M/R）`Shutter`，
+> 需要他下降 **10.58** 个单位，还有**你根本不会做开机**，你写个脚本，
+> 就**监听整个控制室内容和腔室内容**
+
+于是这一阶段做了三件事：把行程接上、把监视器写出来、把「我不会做开机」这句话当成结论
+而不是情绪 —— 它是**对的**，理由见 53.3。
+
+### 53.1 卷帘门：收的是 Model，行程是 10.58 向下
+
+`Config.Shell.ShutterTravel = 10.58`，`RoomShell.applyShutters` 写的是
+**每个 shutter 的 `Frame`**（`Glass` 焊在它上面，动 `Frame` 就是动整扇）。
+
+三个 Model 的实测：三个都关在 **Y ≈ 282.199**，开在 **Y ≈ 271.619**，**Δ 恰好 −10.5800**。
+M 那一扇的 `Frame` 旋转是单位阵，只有它的 `Glass` 转了 90° —— 所以位移必须写成
+**世界空间**的减法（`closed - Vector3.new(0, travel, 0)`），不能写 `closed * CFrame.new(0,-travel,0)`：
+后者沿**自身局部** Y 走，对 M 来说虽然一样是向上，但没有任何理由去依赖「旋转恰好无害」。
+
+几何上为什么是 10.58：`Glass` 高 **10.650**，加上去正好让它的顶边和 **276.7** 的窗台齐平 ——
+它不是一个整齐的数，**因为它本来就不是猜的**。
+
+### 53.2 `_tools/room_watch.luau`：只读、不猜、把「没变化」当默认
+
+一份**只读**的单文件脚本（`ServerScriptService.MCP_RoomWatch` + 一个 11 行的
+`MCP_RoomWatchRunner` 在旁边 `Start()` 它）。它不 `require` `ReactorBackend` / `Config` / `Engine`，
+所以它也能丢进一个没有这些的 place 里，也不会被 §0.15 那种过期 `require` 喂错表。
+**它写世界吗？不写。** 全文件没有任何一处对被监视实例的 `=`。
+
+**它监听什么（`rooms.txt` 的原文，43 个根，0 个缺）：**
+
+| 组 | 实例 | 属性 | 根 |
+|---|---|---|---|
+| **ControlRoom** | 5,089 | — | 8 |
+| **Chamber** | 25,053 | — | 35 |
+| 合计 | **30,142** | **235,038** | **43 找到 / 0 缺失** |
+
+ControlRoom 的 8 个根：`Consoles`(3,636)、`Monitors`(1,754)、`RoomLights.ControlRoomLights`(84)、
+`MovingParts.ControlRoom{L,M,R}Shutter`(各 6)、`MovingParts.ControlRoomMAP{Left,Right}`(各 3)。
+Chamber 的 35 个根里最大的几个：`ReactorCBLs`(11,993)、`CoreAntenna`(4,146)、`DecayFields`(3,912)、
+`ChamberWalls`(2,800)、六个 `ReactorClamps`(各 451)、三个 `E_VENT`(各 537)、`Core`(344)、
+`CHMBRBlastDoor`(212)、六个 `METUSpire`(各 106)、六个 `ChamberFan`(各 94)、
+`CoolantPipes`(529)、`CoolantParticleParts`(78)、`FanTriggerParts`(24)、`ISEParticleParts{ ,2}`(各 8)、
+三根 `ChamberCoolantPipe`(13/14/14)。
+
+**故意不在里面的：** `HDEF`、`Gravatron`、`Mainframe`、`MES`、`Lounge`、`CRC1-3` —— 用户点名的是
+「整个控制室内容和腔室内容」，多收一个房间就是把信噪比还给噪音。
+
+`Script`（16 个）也在表里：**只读它们的属性，不读 `.Source`**，所以那条
+「用 `Source` 当指纹会被别人的编辑搅乱」的坑不适用。
+
+**四份产物 + 一份披露**，都推到本机 HTTP sink（`_tools/receive.py`），字节不进上下文：
+`rooms.txt`（覆盖，一次）、`inventory.txt`（30,142 行，每个实例一条 + 这个类读了哪些属性，一次）、
+`summary.txt`（**有变化才重写**，每个动过的键一行，带当前值 / 起始值 / 变化次数）、
+`changes.log`（追加的时间线）、`suppressed.txt`（**被抑制的键的名单**）。
+
+### 53.3 「你根本不会做开机」—— 这句话是对的，而且我有据
+
+不是语气问题。Phase 52 的 52.8 写着「玻璃的行程量不到」，我当时**在玻璃自己的框里**找上面
+有没有开口 —— 而行程在**旁边的墙里**。同一个错误在 52.1 里也出现过一次（「缺的是世界那一半」），
+两次都是**先读代码、再假定世界**，而不是**先量世界**。
+所以这一阶段的产物**故意是一台只读的仪器**，而不是又一个我猜出来的实现。
+
+这台仪器在我自己身上已经抓到三次错，全部是**只有跑起来才会出现**的：
+
+1. **`HoldScans` 那个「到点就判它是事件」的设计是错的。** 第一次跑：90 秒 1,045 行，
+   榜首是两个 `ChamberFan`（47 / 46 行）——它们第一次动完之后**静了 32 秒**，
+   于是在还没露出真面目之前就被判成了事件。**年龄不是证据，环填满才是。**
+   改成「环超过 8 就判 ambient，静够 5 拍就写出去」之后：同样窗口 **232 行**。
+2. **抑制不能「先写后擦」。** sink 是**追加**的，第 9 拍触发规则时，
+   第 1..8 拍**早就落到盘上了**。run 4 的 `suppressed.txt` 老老实实写着
+   `1,891 × 8 line(s) erased`，而 `changes.log` 一行没少（7,557,244 字节 / 15,527 行）。
+   擦除在内存里是真的、在盘上是**看不见的**。现在的做法是**扣在手里不写**。
+3. **第一次跑环设计时，循环在第一拍就死了，而且死得无声无息。** `releaseQuiet` 对每个键做
+   `tick - lastTick[j]`，而 `register` 现在把 `lastTick` 置 nil —— **算 nil 报错**，
+   发生在 `task.spawn` 出来的线程里，**没有任何人 await 它**。症状是 `rooms.txt` /
+   `inventory.txt` 写完之后**再也不长**，和「在跑但什么也没发生」**长得一模一样**。
+   现在 `scan` 外面套 `pcall`，错了就写一份 **`error.txt` 到 sink**，并在 `Status()` 里报 `fatal=`。
+
+第 3 条是 §0.16 那条「运行的那一半验不了」的**正面解法**：不让工具**替我**看，让**脚本自己**留痕。
+
+### 53.4 实测（`Data/roomwatch_run{2,3,4,5,6}` 是失败版本，`Data/roomwatch` 是当前版本）
+
+| 版本 | 窗口 | `changes.log` | 抑制键数 |
+|---|---|---|---|
+| run 4（先写后擦） | 90 s | **15,527 行 / 7,557,244 B** | 1,891（无效） |
+| run 6（到点判事件） | ~180 s | 3,716 行 | 1,9xx（无效） |
+| **当前**（环 + 静默释放） | ~150 s | **232 行 / 84,730 B** | **1,943** |
+
+**当前版本这一轮 232 行全部来自 Chamber，ControlRoom 一行没有** —— 因为**没人碰控制台**。
+这不是漏收：`rooms.txt` 里 ControlRoom 的 5,089 个实例一个不少地在看，只是**值没变**，
+而「没变化不要收集」是用户自己定的规矩。要验控制室那一半，得有人去按。
+
+**抑制是无损的**：`summary.txt` 里每个动过的键**连被抑制的一起**都有当前值 / 起始值 / 完整变化次数，
+`suppressed.txt` 逐个点名 —— 所以「不在 `changes.log` 里」永远不会被误读成「没动过」。
+
+### 53.5 这一阶段顺带确认的两条工具事实
+
+- **第三方 `mcp__robloxstudio__execute_luau` 的插件 VM 把 `HttpService:GetAsync` 打成了桩**
+  （`pcall` 回 `ok=true, type=nil`，而 `serve.py` 那边**真的**记了 `SENT`），
+  于是 `m.Source = src` 会死在 `ProtectedString expected, got nil`。
+  **官方 `rblx_execute_luau` + `datamodel_type:"Edit"` 走真 HTTP**（`type=string`）。→ 见 `CLAUDE.md` §0.17。
+- **`rblx_start_stop_play(is_start=false)` 是唯一停得掉 playtest 的**（§0.16 旧记）。
+  这一阶段每次推源码前都要先停它，因为 `Edit datamodel is not available in Play mode`。
+
+
+### 53.6 收尾实测（run 8 定稿，run 9 起在跑）
+
+`Data/roomwatch_run8/` 是设计定稿之后那一整趟的记录，`t=3.41s` 到 `t=404.83s`，全程**零操作员输入**：
+
+| 文件 | 数 |
+|---|---|
+| `changes.log` | **844 行 / 317,769 B**，**844 行全部 group=Chamber，ControlRoom 零行** |
+| `suppressed.txt` | **1,942 个键**被判定 ambient（表头 + 每个键一行 = 1,947 行） |
+| `summary.txt` | **1952 / 235038** 个属性动过（`t=412.9s`，那一拍扫描 **112 ms**） |
+| `rooms.txt` | 43 个根、30,142 实例、235,038 属性，**与 run 6 逐字节相同** |
+| `error.txt` | **不存在** —— 扫描循环没死 |
+
+抑制版和 run 4 的 15,527 行 / 7.5 MB 比，是 **~18× 行数、~24× 字节**的收缩，而抑制掉的键数是
+1,942 对 1,891（**更多**）—— 也就是说少写出去的不是「少看了」，是「看全了但没写」。
+
+`rooms.txt` 在 run 6 和 run 8 之间**逐字节相同**，这是一条独立的自检：覆盖范围不随运行漂移。
+
+**run 9 已经在跑**（09:46 起，用的就是下面 53.7 推上去的那份 43,920 B 源码），
+目的只有一个：**等有人真的去动控制台**，好用同一台仪器记下 ControlRoom 那一半 ——
+这是到目前为止唯一**没验过**的东西。
+
+### 53.7 源码同步：disk 43,920 B = Studio 43,920 B
+
+| 方向 | 通道 | 结果 |
+|---|---|---|
+| disk → Studio | `serve.py`:8773 + 官方 `rblx_execute_luau`(Edit) `GetAsync` | `fetched=43920 before=43806 after=43920` |
+| Studio → disk | `receive.py`:8765 + `PostAsync` | `sync8_room_watch.luau` 43920 B |
+| 比对 | `cmp` + `md5sum` | **`d34face4d2bbb442000972a91d96dc3c` 两边相同** |
+
+`D:\Lua\5.1\lua.exe` 的 `loadfile` 语法闸也过（`PARSE OK`）。
+
+**顺带量到的目录事实：** readback 落地的其实是 `_tools/_pull/verify/readback/`，不是
+`Data/roomwatch/readback/`（后者是早先几轮的位置，已把它和 run 8 一起归档）。
+文档里写的路径和使用中的路径不是同一条，是这一轮才发现的。
+
+### 53.8 `.gitignore` 加了 `Data/roomwatch*/inventory.txt`
+
+**七份 `inventory.txt` 逐字节相同**（run2/3/4/5/6/8 + 当前，md5 `5ae9ab97526f39b3fbe530d12f97f6f3`，
+各 5,278,228 B）—— 因为它是**同一个世界的快照**，几趟之间没人改过世界。
+七份就是 37 MB 的同一个文件，而**没有任何东西读它**：`rooms.txt`（5.7 KB）才是推导出来的答案，
+那个**在版本控制里**；这份 dump 重跑一次就有。
+所以进 `.gitignore`，不进仓库 —— 文件本身**留在磁盘上**，没有删。
+加之前 `Data/roomwatch*` 合计 **81 MB**，加之后进仓库的约 **7 MB**。
+
+### 53.9 音频那一半：`Played` / `Stopped` / `Ended` 三个 hook，和一条只有轮询看不见的事实
+
+用户要求：**「哦对别忘了监听音频的播放情况」**。音频是这一阶段加的第二类监听，和属性监听
+**不是同一种东西**，所以单独记。
+
+**为什么是事件不是轮询。** 属性监听每 `Interval=1` s 扫一遍 235,318 个属性，那是「现在是什么」；
+但一个 0.73 s 长的音效，在 1 s 的扫描间隔里**开始又结束**，两次扫描都看不见它 —— 轮询在
+结构上就量不到短音效。所以音频走 `Sound.Played` / `Stopped` / `Ended` 三个信号。
+**这三个名字不是查文档查来的，是量出来的**：`rblx_get_http` 那次网络挂了，所以改成让引擎自己
+回答 —— 507 个 Sound × 3 个信号 = **1,521 个 hook，`0 refused`**。挂上就是存在。
+
+**监听范围。** 43 个根里的 Sound（**280 个**，与独立探针数的数字**逐个吻合**）走**双路**：
+属性监听（`Playing` / `Volume` / `Pitch` / `SoundId` / `Looped` / `SoundGroup`）+ 事件 hook。
+另外两个根**只挂 hook、不挂属性监听** —— `SoundService`（8 个子物体里只有 **1 个** Sound，
+它是**混音总线**不是场景）和 `Workspace.Sounds`（308 个子物体里 **226 个** Sound，
+Phase 47 才搬进去的散件）。合计 **507 Sound / 1,521 hook**。
+`SoundGroup` 进属性列表是因为**那七个组名（`EnvironmentSounds` / `Interactables` /
+`ControlRoomSounds` / `MESSounds` / `MusicSounds` / `SpecialSounds` / `AlarmSounds`）
+是游戏自己的分类**，不是我从 asset id 猜的。
+
+**两个文件。** `audio.txt` 是**时间线**（append，每行一个事件）；`audio_tally.txt` 是**快照**
+（rewrite，每个出过声的 Sound 一行 + 按总线汇总）—— 因为前者跑一小时会很长，而「什么都没响」
+必须是一句**有出处**的话，不能是一个空文件。
+
+**`Data/roomwatch_run11` 暴露的两个缺陷，和 `run12` 的裁决。** run 11 的 `audio.txt`
+只出现 `STOPPED`，**一条 `PLAYED` 都没有**。
+有两个候选解释：(a) **hook 看见的是「变化」不是「状态」** —— 挂上 hook 时那个风扇声**已经在响**，
+`Played` 这个跳变**在过去**，永远补不回来；(b) `Pitch = 0.00` 说明它**从来没真的开始**，
+所以本来就没有 `Played`。**一个样本分不出这两个，所以我写了 `MCP_AudioProbe` 去分**。
+
+探针（临时 `Script`，跑完已 `Destroy`）先普查：43 个根下 **280 个 Sound，23 个 `Playing`，
+280 个有 `SoundId`，264 个 `Pitch > 0`**。然后 TEST A 挑一个**停着、有 `SoundId`、`Pitch = 1.00`**
+的（`Consoles.ALTReactorConsole.MASS1Systems.PowerLever.LeverUnion.LeverSound`，841 B 的短音效）
+调 `:Play()`。**判决：(a) 成立，(b) 被推翻** —— 引擎**看见了**：
+
+```
+t=6.08 09:58:04 | ControlRoom | Consoles.ALTReactorConsole.MASS1Systems.PowerLever.LeverUnion.LeverSound | PLAYED  | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=6.81 09:58:05 | ControlRoom | ... | ENDED   | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+```
+
+**`ENDED − PLAYED = 0.73 s`，正是那个音效的长度** —— hook 那条路整条通了。
+（探针自己那行 `Playing 2s after :Play() = false` **不是**「播放失败」：片段 0.73 s，
+2 s 之后它**已经播完了**。谁把这一行读成失败，就是把 §0.2 那条假阴性换个地方再犯一次。
+`stops=0 ends=1` 也是同一个道理 —— `:Stop()` 打在**已经播完**的声音上，`Stopped` 不该响。）
+
+**修复的两个点。** ① `attachAudio` 挂完 hook 后**读一次 `Playing`**，为真就发一条
+`ALREADY-PLAYING` 事件（`audio.txt` 里 23 行），并把 `id` / `bus` 从实例上读下来 ——
+于是 hook 的盲区**由属性监听补上**，这正是双路设计存在的理由。② `audio_tally.txt` 加
+`# 23 were ALREADY playing …` 那句报表。
+
+**`Data/roomwatch_run13` 又抓出我自己一个缺陷（已修、已验证）。** `audio_tally` 的行过滤写的是
+`plays/stops/ends > 0`，而 `ALREADY-PLAYING` 那条路**三个都不加** —— 后果是：
+那 23 行**一行都不打印**，`[ALREADY PLAYING AT t=0]` 这个标记是**够不到的代码**，
+头部 `# 1 of them have been audible` 少数 23，而**汇总行 `plays by bus: Interactables=1`
+把整个环境声底噪说成了零**。改后 `run13`：
+
+```
+# 507 Sound(s) hooked; 1521 hook(s) attached, 0 refused; 0 play/stop/end event(s) seen
+# 23 of them have been audible; 0 play(s) were caught by the poll and NOT by a hook
+# 23 were ALREADY playing when the watcher attached -- a hook cannot see those, and
+# their asset and bus were read off the instance instead of off a Played event
+# audible by bus: EnvironmentSounds=20  (none)=3
+```
+
+23 行全部打出、全部带 `[ALREADY PLAYING AT t=0]`、`plays=0 stops=0 ends=0` ——
+**`plays=0` 本身就是「hook 漏了它」的证据**，而「有没有出声」现在按「有没有行」算，
+两个问题分开回答，谁也不冒充谁。汇总行也从 `plays by bus` 改名 `audible by bus`，
+因为一个 `t=0` 就响着的 loop **贡献不了任何 play**，按 play 汇总是按错的东西汇总。
+
+**顺带量到的一条真事实：23 个里有 15 个 `Pitch = 0.00` 而 `Playing = true`**（另 4 个 0.40、
+4 个 1.00）。`Playing` 单看**不等于「听得见」**。这正好是 `Pitch` 进属性列表的理由 ——
+游戏大概是靠把 `Pitch` 从 0 推上去**让环境声随着状态变响**，那条曲线只有属性监听看得见。
+
+**盲区（有意不看的，和 43 个根同一条理由）：** `Workspace.MovingParts.Synthesisers.*`
+的 286 个 Sound、`Workspace.MonitorsFacility.VitaMonitor{1..4}…Flatline`、
+`Workspace.SoundBlocks.MainframeSoundBlock.*` —— 都不在 43 个根里，**一个都不挂**。
+`Workspace.Sounds` 那 226 个**挂了 hook 但不在属性监听里**，所以它们的 `Playing`
+只能靠 `Played`/`Stopped` 事件推，**没有 t=0 的起始值**。
+
+**哪一半验了、哪一半没验（§0.16）：** 验了的是**工具自己** —— 507/1,521/0 refused、
+280 与独立探针逐个吻合、`PLAYED`+`ENDED` 真的落盘、`ENDED − PLAYED` 等于片段长度、
+23 行环境声在 `run13` 正确打出、三个 sink 文件在 `run11`/`run12`/`run13` 之间字节级稳定。
+**没验的是「操作员动作会响什么」** —— 三趟里没有一只手碰过控制台
+（`MCP_AudioProbe` 是唯一的声源，而且它是我）。控制台上任何一个按钮会响什么，
+**现在还是空的**，这一条不要写成「已验」。

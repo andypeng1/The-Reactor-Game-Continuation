@@ -1,0 +1,5 @@
+# 507 Sound(s) hooked; 1521 hook(s) attached, 0 refused; 1 play/stop/end event(s) seen
+# 1 of them have been audible; 0 play(s) were caught by the poll and NOT by a hook
+# plays by bus: (unknown)=0
+
+Chamber   MovingParts.ChamberFan1.MotorPart.FanSFX | plays=0 stops=1 ends=0 | bus=(unknown) | id=(none) | last t=21.37 09:54:37

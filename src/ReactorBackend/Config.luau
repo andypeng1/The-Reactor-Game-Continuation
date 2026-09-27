@@ -116,6 +116,18 @@ local Config = {
         -- above are allowed to move and this is not. RoomShell reports a
         -- departure from it instead of restoring it.
         EmitterTransparency = 1,
+        -- The shutter travel, in studs, DOWNWARD: the three control room window
+        -- shutters retract by descending into the wall below the sill. Given by
+        -- the operator on 2026-09-27, not guessed here -- and it is not a round
+        -- number precisely because it is not a guess. 10.58 puts the top of the
+        -- 10.650-tall Glass flush with the sill at 276.7, so it is the distance
+        -- that actually stows the pane. An earlier pass recorded that this
+        -- travel "cannot be measured" and declined to invent it; that was wrong
+        -- in a way worth keeping in the record -- it looked for an opening
+        -- ABOVE the glass, inside the glass's own frame, when the travel is
+        -- INTO THE WALL BESIDE IT. The geometry was never missing; the search
+        -- was pointed the wrong way.
+        ShutterTravel = 10.58,
         -- Measured: all 7 Monitor.PowerNeon parts are authored (255,0,0).
         -- Restated here rather than captured at Initialize on purpose. A
         -- captured baseline is only correct on the first call: re-run
