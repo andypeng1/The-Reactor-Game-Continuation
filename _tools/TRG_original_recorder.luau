@@ -25,27 +25,27 @@
 --   the no-HTTP fallback writes one file per segment, so no single write is
 --   ever proportional to the whole recording.
 --
--- SCOPE: exactly one shutdown -> startup flow, then the file is sealed and the
---   collector stops. The boundary is detected automatically from the core state
---   (see the FLOW section), with a manual seal key and an on-screen button.
+-- SCOPE: the recorder runs from the instant it is injected, and it seals on
+--   exactly the two conditions the operator named (2026-09-30: "SEAL的情况是1：
+--   手动关机，2：核心自动关机如熔毁，温度过低等") -- a manual shutdown, or an automatic one
+--   the reactor does to itself. The boundary is detected from the core state
+--   (see the FLOW section), with a manual seal key and an on-screen button as
+--   the human's own way out.
 --
--- OPERATING ITSELF: the DRIVER section presses the switches, so a complete flow
---   can be captured with nobody at the console. It needs one thing the rest of
---   this file does not: the injector s `fireclickdetector`. Without it the
---   driver is off from the first poll and says so on the panel, in the receipt
---   and in the candidate line, and the run falls back to exactly the manual
---   recorder it was before.
+-- NOTHING ABOUT THE REACTOR IS WRITTEN UNTIL THE CORE IS FULLY ON. See THE CORE
+--   GATE, where the signal is named and the two runs that bracket it are cited.
+--   The short version: a shift opens with the core COLD, a cold core's readouts
+--   are zeroes and error text rather than low numbers, and a file that records
+--   them from the first poll cannot show the ignition at all.
 --
--- THE ATTEMPT IS SPENT BY HAND, AND IT IS SPENT ONCE: the user reported on
---   2026-09-26 that the core can be switched off and on ONCE. So AutoDrive is
---   false, the driver waits for the panel s DRIVER button, and after that press
---   it never presses a second time -- one shutdown candidate, one startup
---   candidate, one press each, and a press that proves inert ends the run
---   naming the control instead of trying another. Inject while the core is
---   RUNNING: a cold core is refused rather than lit, because the target flow is
---   one shutdown followed by one startup, and a run that spends its startup on
---   the opening has none left for the half it was injected to capture.
---
+-- THE RECORDER PRESSES NOTHING. A DRIVER section used to work the two switches
+--   on its own, through the injector's `fireclickdetector`; it is gone, because
+--   the operator does not want one ("不需要什么driver，只需要seal") and because a
+--   press it did not need is a press it must not invent on a shift he cannot
+--   restart. The replacement is his own hand, and every press of it is still
+--   recorded: the CLICK hook below is untouched and hooks every ClickDetector
+--   and ProximityPrompt in the world, named or not. The trade-off is written up
+--   in DECISIONS_2.
 -- ON BACKSLASHES: there are none in this file, on purpose. Text passing through
 --   certain editing tools gets its escape sequences decoded once, which turns a
 --   newline escape inside a string literal into a real newline and breaks the
@@ -83,6 +83,19 @@
 -- ========================== CONFIG ========================================
 -- Every magic number lives here, so no literal appears in the logic.
 local Config = {
+	-- WHICH BUILD THIS IS, and it is written into the file's own header. The
+	-- operator's 2026-09-27 run was made with copies of BOTH scripts older than the
+	-- fixes they were read as testing -- his capture is stamped 12:41:40 while the
+	-- shipped recorder is 13:58:44 and the shipped watcher 13:54:07 -- so the
+	-- Phase 57 boundary work had never run in the original game while the two were
+	-- treated as one thing for a while. I cannot read the file he holds, so the tag
+	-- is the answer: the artifacts say which build wrote them, and 'not the build I
+	-- gave you' is a question the reading end settles alone.
+	-- r60: the DRIVER section is gone (no driver; the operator's hand does the
+	-- pressing) and the reactor readings are gated on the core being fully on.
+	-- r58: the low-trip line is 1000 F, which is a MEASUREMENT and not a new
+	-- number, and every artifact now carries its build tag.
+	Build           = 'r60',
 	-- Four polls per second. The game itself ticks at 1 Hz, so polling at 1 Hz
 	-- would occasionally straddle a tick and lose one outright, while the change
 	-- filter means over-polling costs CPU and not one byte of output.
@@ -104,6 +117,19 @@ local Config = {
 	-- thousand rows is worth being told about rather than worth writing out.
 	MaxPanelLabels  = 200,
 	MaxPanelChars   = 1200,
+	-- Player-GUI capture. Two separate caps because the two halves cost
+	-- different things: a flag is one property read per object per poll, while a
+	-- label is a property read AND an entry in the chatter guard. The counts are
+	-- reported in the file rather than enforced silently, because "the GUI had
+	-- 600 objects" and "the GUI had more than 600" are different findings.
+	MaxGuiObjects   = 600,
+	MaxGuiLabels    = 400,
+	-- Timing self-report, every PerfPolls polls. `dt` on an S line cannot answer
+	-- "is the recorder why the client is slow": a stalled client and a busy
+	-- recorder both show up as a long dt, and only one of them is ours. The
+	-- PERF line separates them -- read_ms and pass_ms are os.clock() the
+	-- recorder itself consumed, hz is what the client actually gave it.
+	PerfPolls       = 240,
 	-- How long after a click a control change still counts as attributed. Four
 	-- polls is one game tick: the game applies a click on its own 1 Hz step, so
 	-- a change that lands further out than that was not caused by the click this
@@ -134,8 +160,17 @@ local Config = {
 	Port            = 8765,
 	NamePrefix      = 'flow/original_',
 	CoreThresholds  = {5600, 17500, 29500, 39000},  -- the game s own, Fahrenheit
-	-- The two temperature lines that END a shift, both reported by the operator
-	-- and neither one guessed.
+	-- The two temperature lines that END a shift, both reported by the operator.
+	-- The cold one has now been reported TWICE: `Q1` said 2000 F, and on
+	-- 2026-09-27 the same operator corrected it to 1000 F. A later statement from
+	-- the same witness replaces the earlier one -- there is no third opinion to
+	-- weigh it against, and no capture has ever watched this arm fire, so the
+	-- number is reported rather than measured either way.
+	--
+	-- The correction is NOT the fix for the stall he reported it with. His own
+	-- 12:32 capture bottoms out at 4316 F, never near either number, and the arm
+	-- that ended that run was the 40-poll backstop. Reading the two as one thing
+	-- would have buried the backstop behind a changed constant.
 	--
 	-- LowTripF is the cold trip: below it the core shuts itself down. That is
 	-- why a shift has a floor to stay off, and why a control that RAISES
@@ -154,91 +189,26 @@ local Config = {
 	-- meltdown it had never seen. So the flag now seals as what it is (see
 	-- endReason) and the core rule here is read from the temperature itself,
 	-- which is the only thing that can witness it.
-	LowTripF        = 2000,
+	LowTripF        = 1000,
 	MeltdownF       = 39000,
 	NeonOn          = {240, 240, 240},              -- lamp lit, per the wiki
 	SealKey         = Enum.KeyCode.RightShift,
 
-	-- ---- driver -------------------------------------------------------------
-	-- See the DRIVER section for what these mean and why the driver exists at
-	-- all. The numbers are judgements, so they are here where they can be
-	-- changed without touching logic.
-	-- AutoDrive is FALSE, and the default is the point rather than a safe
-	-- setting. An action that can be spent once is not one a recorder takes the
-	-- instant it is injected; the DRIVER button is the gate, and the human at
-	-- the console is who decides when the single attempt begins. Everything
-	-- AFTER that press is unattended, which is the part that needed a machine:
-	-- nobody can hit a lever at the right second for three minutes running.
-	AutoDrive        = false,  -- arm by hand; the button spends the attempt
-	-- ---- the driver presses NOTHING ----------------------------------------
-	-- THE OPERATOR DRIVES, THE DRIVER WATCHES AND NARRATES. This is the flag
-	-- that says so, and it is the live setting.
-	--
-	-- `D7: 我自己手动关` -- the shutdown is the operator s own press. The
-	-- startup is his too: the recorder is injected on a COLD core before the
-	-- shift has begun, and `A1` has the operator lighting it himself and arming
-	-- the driver only once it is up. So the driver is handed no control to
-	-- press, and a press it does not need is a press it must not invent.
-	--
-	-- What is left is the half that actually needed a machine, and it is not a
-	-- small half: noticing WHICH poll the operator s press landed in, and
-	-- recording the game s own reaction to it, is what makes the two halves of
-	-- the experiment comparable in one file. The operator s press is already
-	-- stamped by the CLICK hook; what this state adds is the state transition
-	-- and the verdict, so the file says "the operator shut it down and here is
-	-- when" rather than leaving a reader to infer it from a click line.
-	--
-	-- The press path is NOT deleted -- §1.4 forbids deleting a capability
-	-- without a replacement, and there is no replacement for a press this file
-	-- may one day be asked to make. It stays behind this flag, reachable by
-	-- changing one constant, and the harness exercises it in both positions.
-	DrivePressControls = false, -- false: the operator presses, the driver watches
-	DriveArmSeconds  = 20,     -- still cold this long after inject -> the core was cold
-	DriveHoldSeconds = 60,     -- run this long before switching it off
-	-- THE SHUT HAS NO PROOF WINDOW, BECAUSE IT NEEDS NONE. The operator is
-	-- explicit that pressing the shutdown lever shuts the core down AT ONCE --
-	-- there is no cold state to wait for -- so the press IS the shutdown and the
-	-- driver acts on it in the same poll. `DriveProveF` used to sit here and is
-	-- gone; see the PROVING section for the measurement that killed it.
-	--
-	-- The start keeps a window, because there the state change is the core
-	-- ARRIVING, and arriving at a threshold is something the readout can be asked
-	-- about. `DriveProveSeconds` is that window and it is wide on purpose: a core
-	-- that lights proves itself in seconds, and a window that expires early would
-	-- end the run with a wrong verdict and nothing left to spend on a right one.
-	DriveProveSeconds = 40,    -- a start press has this long to light the core
-	DriveColdSeconds = 30,     -- stay down this long before lighting it again
-
 	-- ---- end of shift -------------------------------------------------------
-	-- A shift ends the moment the core goes down. The operator is explicit: a
-	-- shutdown ends the shift whether the quota was met or not, and the session
-	-- cannot be continued afterwards. Two consequences, and both are structural
-	-- rather than cosmetic.
+	-- A shift ends the moment the core goes down, and the recorder is what has to
+	-- notice: the client does not wait to be told. The 18:35 run is the
+	-- measurement -- s.GameActive went false on the very last sample the script
+	-- ever took, the loop had no rule that looked at it, and the task.wait that
+	-- followed never returned, so 1.4 MB of good data arrived with no receipt.
+	-- The rule that reads it lives in `endReason`, which is where every other end
+	-- condition lives too.
 	--
-	-- First, there is nothing after the shutdown to record, so the driver has no
-	-- reason to light the core again -- and it must not, because it would spend
-	-- the one switch that exists on a world action nobody asked for, seconds
-	-- before the client is killed. ShutdownEndsShift stops the driver at
-	-- shut_down, the very poll its press lands in, and the recorder s own
-	-- end-of-shift rule is what seals the file.
-	--
-	-- That the press ends it immediately is the operator s answer and not an
-	-- inference: pressing the shutdown lever shuts the core down at once, and
-	-- there is no cold state that has to arrive first. So the driver has nothing
-	-- to wait for between the press and the end, and it does not wait for one.
-	--
-	-- Note what this does NOT do. It does not remove the driver s ability to
-	-- light a core; the operator asked for that ability explicitly, and it is
-	-- now entered from `arming` when the core reads cold. What it removes is
-	-- only the RELIGHT -- the second startup, after the shutdown, which in this
-	-- game is a startup that happens after the shift has already ended.
-	--
-	-- Second, THE FILE MUST BE SEALED BY SOMETHING THAT NOTICES THE END, because
-	-- the client does not wait to be told. The 18:35 run is the measurement:
-	-- s.GameActive went false on the very last sample the script ever took, the
-	-- loop had no rule that looked at it, and the task.wait that followed never
-	-- returned. 1.4 MB of good data with no receipt, lost to a missing if.
-	ShutdownEndsShift = true,
+	-- `ShutdownEndsShift` sat here because it told the DRIVER to stop, and the
+	-- driver told the recorder how long to wait after its own press. Both are gone
+	-- with the DRIVER section (2026-09-30, the operator: "不需要什么driver，只需要seal"),
+	-- so the flag went with them rather than being left as a constant nothing
+	-- reads -- a config key with no reader is a claim about behaviour that no
+	-- longer exists.
 	-- Seal targets, in polls at the configured rate. GameActive false gets no
 	-- dwell at all: it is checked first, in the same iteration that saw it, and
 	-- it is checked by EDGE so a session that starts with the flag already false
@@ -289,70 +259,30 @@ local HttpService = game:GetService('HttpService')
 local t0 = os.clock()
 local now = t0
 local lastPoll = t0
--- How long the previous poll really took, measured by the loop rather than
--- assumed from Config.SampleInterval. The driver advances its dwell timers by
--- this, so that the seconds it announces are the seconds that elapsed: the 18:01
--- run announced 60 s and spent 70.59, because the loop ran at 3.38 Hz against a
--- configured 0.25 s and every dwell was 18 per cent long. Declared here with the
--- rest of the clock for the usual reason -- the loop below assigns it and
--- driveStep, compiled earlier than that assignment, has to see the same name.
-local pollDt = Config.SampleInterval
+-- The timing window's two ends. `lastPerf` is in samples rather than seconds so
+-- the window cannot be stretched by a slow client, and `lastPollB` is the
+-- previous iteration's own clock reading -- which is where the wall interval
+-- actually comes from, rather than from os.clock() - t0 divided by a counter
+-- that may have started life late.
+local lastPerf = 0
+local lastPollB = 0
 local sample = 0
 local sawDown = false
+-- Whether the core has been LIT since the DOWN edge -- a different claim from
+-- "the temperature came back up", and the difference cost the operator a run.
+-- `sawDown` is true from the moment the core reads as stopped until something
+-- clears it, and nothing ever did: the only paths out were the relight and the
+-- seal. But a reactor that stalls and recovers crosses that threshold in both
+-- directions without anything being lit. On the 12:32 run the monitor fell to
+-- 5586 F at t=549.17 and was back at 5810 F by t=567.57, every click in
+-- between a `Coolant*-OFF`, `s.GameActive` true the whole way through -- and
+-- the recorder called it a shutdown, then a restart, then sealed. So the two
+-- facts are tracked apart now: this flag is set by a real start-up click and
+-- by nothing else, and the UP path below requires it. A recovery is not a
+-- relight, and only a relight ends a shift that the game still says is live.
+local startedSinceDown = false
 local flowArmed = false
 local buoy = {}          -- shared with the seal key and the on-screen button
-
--- The driver s state, forward declared for the same reason as the clock above:
--- seal() writes the driver s verdict into the receipt line, and seal() is
--- compiled before the DRIVER section exists. Filling this table later is fine;
--- reading a name that is not yet a local is not.
-local drive = {
-	on      = false,   -- turned on by the DRIVER section if the injector can fire
-	state   = 'arming',
-	verdict = 'not-started',
-	holdT   = 0,
-	coldT   = 0,
-	armT    = 0,
-	proofT  = 0,
-	proofCd = nil,
-	-- What the core was doing at the instant of the press, and the START proof is
-	-- the only thing left that needs it: "not running now" and "not running now
-	-- AND running then" are two different facts, and only the second one is
-	-- evidence about the press. The shutdown proof that also used it is gone --
-	-- see PROVING for why it could not have been evidence about anything.
-	proofRunning = nil,
-	-- Set while press_shut is declining to press because the core is already
-	-- down. It exists so the wait is announced once instead of on every poll.
-	waitingRun = false,
-	-- The same latch for the other configuration: armed on a cold core with no
-	-- licence to press, the driver has nothing to do but wait for the operator,
-	-- and it has to say so once rather than on every poll.
-	waitingCold = false,
-	-- The end-of-shift signal that has already been written down, as the exact
-	-- text the file carries for it. It is what stops the confirmation in
-	-- `shut_down` from naming the same signal twice: `watching` fires on the
-	-- FIRST signal it sees, and `shut_down` then goes looking again, so without
-	-- this the very signal that ended `watching` would be reported a second time
-	-- one poll later as if it were the game s answer to something.
-	--
-	-- The two states search in DIFFERENT orders on purpose, and that is what
-	-- makes this work rather than merely dedupe: `watching` puts the operator s
-	-- own press screen first (`v.shutdown`, the one `B3` named), while
-	-- `shut_down` puts the game s formal flags first. So a signal that arrives
-	-- later always outranks its way to the front and is found, while the signal
-	-- that already fired is found only if nothing else has appeared -- which is
-	-- exactly the test for whether there is anything new to say.
-	shutSaid = '',
-	shutIdx = 1,
-	startIdx = 1,
-	-- Whether THIS driver ever switched the core off. It is the only thing that
-	-- distinguishes the two ways a run can reach a lit core: one where the
-	-- driver shut it down and is waiting for the flow to close, and one where
-	-- the core was cold at inject and the driver only lit it. Without this,
-	-- the cold path parks in `waiting_up` waiting for a `sawDown` that is never
-	-- going to come, and the run records a healthy reactor until the sample cap.
-	shutDone = false,
-}
 
 -- ========================== SINK ==========================================
 -- The one place bytes leave this script. Everything that lands on disk or on
@@ -392,15 +322,23 @@ end
 -- The candidates are stored as thunks, not as values in an array: a table
 -- literal holding nils would stop ipairs at the first nil and silently skip
 -- every candidate behind it.
+-- Returns the winner AND ITS NAME. The name is not decoration: on the operator's
+-- 12:32 run this header said `transport=http8765` with postfails=0, which proves a
+-- POST transport worked in that executor -- the watcher, injected into the same
+-- session and calling only HttpService:PostAsync, delivered nothing -- but it does
+-- not say WHICH candidate won, and that is the whole question. `http8765` alone is
+-- consistent with "PostAsync works fine here", which would put the watcher's silence
+-- somewhere else entirely. The name is now written down so the next run settles it
+-- without a probe.
 local function pickHttp()
 	local cands = {
-		function() return syn and syn.request end,
-		function() return http_request end,
-		function() return request end,
-		function() return http and http.request end,
-		function() return fluxus and fluxus.request end,
-		function() return krnl and krnl.request end,
-		function() return getgenv and getgenv().request end,
+		{ 'syn.request', function() return syn and syn.request end },
+		{ 'http_request', function() return http_request end },
+		{ 'request', function() return request end },
+		{ 'http.request', function() return http and http.request end },
+		{ 'fluxus.request', function() return fluxus and fluxus.request end },
+		{ 'krnl.request', function() return krnl and krnl.request end },
+		{ 'getgenv().request', function() return getgenv and getgenv().request end },
 		-- Last, and deliberately so. HttpService:PostAsync is not an executor
 		-- function and a plain client is not allowed to call it -- it raises at
 		-- once, the pcall turns that into a failed send, and the sink falls
@@ -408,22 +346,25 @@ local function pickHttp()
 		-- executor, and the probes this project already uses to move bytes out
 		-- of Studio, do have it and nothing else. It takes positional arguments,
 		-- so it is wrapped into the same request-table shape as the rest.
-		function()
+		{ 'HttpService:PostAsync', function()
 			if HttpService == nil or HttpService.PostAsync == nil then return nil end
 			return function(req)
 				local ok = pcall(HttpService.PostAsync, HttpService, req.Url, req.Body)
 				if ok then return { StatusCode = 200 } end
 				return { StatusCode = 0 }
 			end
-		end,
+		end },
 	}
-	for _, get in ipairs(cands) do
-		local ok, f = pcall(get)
-		if ok and type(f) == 'function' then return f end
+	-- A thunk per candidate, not the callable: a table holding nils would stop
+	-- ipairs at the first missing one and silently skip every candidate after it,
+	-- which here is PostAsync -- the only one a plain client has.
+	for _, cand in ipairs(cands) do
+		local ok, f = pcall(cand[2])
+		if ok and type(f) == 'function' then return f, cand[1] end
 	end
-	return nil
+	return nil, 'none'
 end
-local httpFn = pickHttp()
+local httpFn, httpName = pickHttp()
 
 local function haveWritefile()
 	return type(writefile) == 'function'
@@ -767,6 +708,24 @@ local function readLabel(key, parent, name)
 	end
 end
 
+-- ==================== PLAYER GUI: STATE ==================================
+-- The player's own screen. It is CLIENT-ONLY -- PlayerGui does not exist on the
+-- server and nothing about it replicates -- so a script injected into the client
+-- is the only thing in the world that can see it at all, which is why this is
+-- the recorder's job and not the room watcher's.
+--
+-- The state is declared HERE, above its first use, because the readout walk
+-- below reaches into PlayerGui to pick up the player's labels. Only functions
+-- have to be in scope above their definition; a `local` just has to exist, and
+-- this file has lost a night to the difference. `isOwnGui` is the one forward
+-- declaration, because it is a function and it is used above where it belongs.
+local guiRecords, guiDirty = {}, true
+local guiCount, guiOver, guiUnreadable = 0, 0, 0
+local guiLabels, guiLabelOver = 0, 0
+local guiRoot, guiHooked = nil, false
+local guiMapped = {}
+local isOwnGui
+
 -- ==================== READOUT DISCOVERY ==================================
 -- The names in readReactor below were read off the remake, and seven of the ten
 -- are simply not what the original calls its labels: TempLabel, PressureLabel
@@ -845,7 +804,14 @@ local function buildReadouts()
 		seenLabel[label] = true
 		local key = keyForLabel(label, seen)
 		seen[key] = true
-		out[#out + 1] = { key = key, label = label }
+		-- The two prefixed keys are built once, here, rather than on every poll.
+		-- The loop below runs over a thousand labels four times a second, so a
+		-- concatenation per label per poll is four thousand strings a second that
+		-- exist only long enough to be a table index.
+		out[#out + 1] = {
+			key = key, label = label,
+			numKey = 't.' .. key, txtKey = 'x.' .. key,
+		}
 	end
 	local mf = Workspace:FindFirstChild('MonitorsFacility')
 	if mf then
@@ -864,6 +830,30 @@ local function buildReadouts()
 		for _, d in ipairs(consoles:GetDescendants()) do
 			if d:IsA('TextLabel') and string.sub(d.Name, -5) == 'Label' then add(d) end
 		end
+	end
+	-- The player s own screen, walked LAST. The order is a decision and not an
+	-- accident: keyForLabel deepens a key until it is free, so walking the world
+	-- first means a world label keeps the short key and the player-GUI label of
+	-- the same name gets the longer one. The wall is the primary record here and
+	-- the screen is the commentary on it, so that is the right way round.
+	--
+	-- Buttons and text boxes are included and not just labels: a button caption
+	-- is how a menu tells you what it is offering, and it changes in place when
+	-- the offer changes. The recorder s own panel is excluded by ancestry.
+	if guiRoot then
+		local added = 0
+		for _, d in ipairs(guiRoot:GetDescendants()) do
+			if (d:IsA('TextLabel') or d:IsA('TextButton') or d:IsA('TextBox'))
+				and not isOwnGui(d) then
+				if added >= Config.MaxGuiLabels then
+					guiLabelOver = guiLabelOver + 1
+				else
+					added = added + 1
+					add(d)
+				end
+			end
+		end
+		guiLabels = added
 	end
 	readouts = out
 	readoutCount = #out
@@ -907,9 +897,20 @@ local function readReadouts()
 			if type(raw) == 'string' then
 				local num = nil
 				if raw ~= '' then num = tonumber(raw:match('([+-]?%d+%.?%d*)')) end
-				local key = (num ~= nil) and ('t.' .. rec.key) or ('x.' .. rec.key)
-				local clean = raw == '' and '<empty>' or (raw:gsub('%s+', ' '))
-				local shown = (num ~= nil) and num or clean
+				local key, shown
+				if num ~= nil then
+					key, shown = rec.numKey, num
+				else
+					key = rec.txtKey
+					-- Built only on the arm that uses it. This used to be computed
+					-- unconditionally, which put a whitespace-collapsing gsub over
+					-- every numeric label in the game four times a second -- a
+					-- fresh string per label per poll whose only reader was the
+					-- branch the match above had already ruled out. That is the
+					-- cheapest kind of waste to remove: it cannot change an answer,
+					-- because the value it produced was never read on this path.
+					shown = raw == '' and '<empty>' or (raw:gsub('%s+', ' '))
+				end
 
 				st.polls = st.polls + 1
 				st.thisPoll = st.thisPoll + 1
@@ -924,10 +925,13 @@ local function readReadouts()
 						' times inside one poll; dropped as an animation')
 				else
 					if num ~= nil then
-						put('t.' .. rec.key, num)
-						last['x.' .. rec.key] = nil
+						put(rec.numKey, num)
+						-- Leave the unreadable state behind without emitting
+						-- anything: the key going nil means "unknown", so the next
+						-- unreadable sample reports again.
+						last[rec.txtKey] = nil
 					else
-						putText('x.' .. rec.key, clean)
+						putText(rec.txtKey, shown)
 					end
 					-- The persistence arm, and judged exactly once, so a label
 					-- that happened to be busy during a meltdown is not condemned
@@ -953,7 +957,82 @@ local function readReadouts()
 	end
 end
 
+-- ==================== THE CORE GATE =======================================
+-- NOTHING ABOUT THE REACTOR IS WRITTEN UNTIL THE GAME SAYS THE CORE IS ON.
+--
+-- The operator's rule (2026-09-30): "注入后立刻开始（注意在核心完全开启前不要采集温度、
+-- 压力等）". A shift opens with the core COLD, and a cold core's readouts are not low
+-- numbers, they are NOTHING: `s.Core.TemperatureVal` sits at 0, the pressure at its
+-- resting value, and the monitor prints its own error text. A file that records
+-- those from the first poll is a file whose opening third is a stream of zeroes
+-- and `ERR F` that describes no reactor state at all -- and, worse, it hides the
+-- one thing the opening is for. The interesting fact is the moment the reading
+-- STARTS, and a reading already being written at 0 cannot show it.
+--
+-- THE SIGNAL IS `Stats.GameActive`, AND IT IS A MEASUREMENT RATHER THAN A GUESS.
+-- Two runs on disk bracket it from both sides:
+--
+--   * original_260930-200834 -- the lever WAS pressed (EVT3170 CLICK StartUpLever)
+--     and the boot banner ran all the way to `ALL SYSTEMS PRIMED`, and the core
+--     still never lit: four state transitions in the whole file, all at t=5.28, and
+--     not one `s.GameActive=true`. So GameActive does not fire at the lever, and it
+--     does not fire when the banner finishes either.
+--   * original_260926-230049 -- `s.Core.TemperatureVal` 0 at t=1.34, then 510 F at
+--     t=88.53, 9420 F at t=97.90, and `s.GameActive=true` at t=98.47. It goes true
+--     at the TOP of the ignition ramp, which is exactly "the core is fully on".
+--
+-- IT LATCHES, AND THE LATCH IS NOT AN OPTIMISATION. The readers gated here are the
+-- same readers that have to keep working AFTER the shutdown -- the cold-trip arm
+-- reads `m.temp` under LowTripF for `SealColdSamples` polls -- so a gate that
+-- closed again when GameActive went false would silence the very readings the seal
+-- rule is made of. Once open it stays open for the rest of the run.
+--
+-- WHAT IT DOES NOT COVER, on purpose: the generic readout walk (`t.*`) and the
+-- facility panels. Those are where the BOOT SEQUENCE itself gets recorded, and
+-- gating them would throw away the thing this recorder was pointed at. The gate is
+-- about the reactor's own readings -- the ReactorFrame labels and `Stats.Core` --
+-- and nothing else.
+local coreLive = false
+
+-- Opens the gate if the game says the core is up, and answers whether it is open.
+-- Read from the game's own flag and not from a temperature, because the
+-- temperature is the thing being gated: deriving the gate from it would make the
+-- recorder's first reading depend on a value it has already decided not to trust.
+local function coreGateOpen()
+	if coreLive then return true end
+	-- Re-fetched here rather than merely read, and the difference is the whole
+	-- point of the function being callable from two places. `MainData` is captured
+	-- once at load, so a recorder injected before `Workspace.Stats` exists holds a
+	-- nil until some OTHER reader happens to refresh it -- which would make this
+	-- gate's behaviour depend on the stats scan having run first, the one
+	-- dependency having two callers was meant to remove. Found by the gate
+	-- harness's G10, which is the scenario a run injected during the boot exactly
+	-- hits.
+	if MainData == nil then MainData = Workspace:FindFirstChild('Stats') end
+	local flag = MainData and MainData:FindFirstChild('GameActive')
+	if flag == nil or not flag:IsA('ValueBase') then return false end
+	if flag.Value ~= true then return false end
+	coreLive = true
+	-- Announced as an event, so the file itself carries the fact that the readings
+	-- below this point are the live ones. A reader who finds the batch that
+	-- follows can now tell "the core came on here" from "the core was on before
+	-- the recorder arrived" without re-deriving it from a temperature.
+	emitEvt('COREGATE', 'Stats.GameActive went true; the core is fully on and the'
+		.. ' reactor readings start from this poll')
+	return true
+end
+
+-- Whether a Stats path is one of the reactor's own readings. The test is on the
+-- container `Core` rather than on a list of leaf names, because a list is a thing
+-- a rename escapes silently: TemperatureVal, PressureVal, RadiationVal, OutputVal,
+-- HDEFVal and BreachVal all live under it, and anything added there later is
+-- covered without this file being edited.
+local function isCoreStat(path)
+	return path == 'Core' or path:sub(1, 5) == 'Core.'
+end
+
 local function readReactor()
+	if not coreGateOpen() then return end
 	if ReactorFrame == nil then return end
 	readLabel('temp',      ReactorFrame, 'TempLabel')
 	readLabel('press',     ReactorFrame, 'PressureLabel')
@@ -1042,19 +1121,37 @@ local statsSeen = {}
 local function readStats()
 	if MainData == nil then MainData = Workspace:FindFirstChild('Stats') end
 	if MainData == nil then return end
+	-- Called here as well as in readReactor even though pollOnce always runs
+	-- readReactor first. The gate is idempotent and latches, so the second call is
+	-- free; what it buys is that neither reader depends on the other having run,
+	-- and this file has lost a day to exactly that kind of ordering assumption.
+	coreGateOpen()
 	local seen = {}
 	local function scan(inst, prefix)
 		for _, d in ipairs(inst:GetChildren()) do
 			local path = prefix .. d.Name
 			seen[path] = true
 			if d:IsA('ValueBase') then
-				local v = d.Value
-				local t = type(v)
-				if t == 'number' or t == 'boolean' then
-					put('s.' .. path, v)
-				elseif v ~= nil then
-					-- A StringValue, or a type with no space-free rendering.
-					putText('s.' .. path, tostring(v))
+				-- HELD BACK until the core is on, and "held back" means not written at
+				-- all: `last` is not touched either, so the first sample after the gate
+				-- opens arrives as a NEW key and the ignition shows up in the file as
+				-- its own batch. Writing the pre-boot zero into `last` and then letting
+				-- the real reading differ from it would record the same fact as one
+				-- line of noise inside a run of changes, which is how it gets missed.
+				--
+				-- The traversal is NOT gated: `seen[path]` is set above either way, so a
+				-- held-back key is still a key the STATADD/STATDEL announcement knows
+				-- about and the goings and comings of the container are still recorded
+				-- exactly as before.
+				if coreLive or not isCoreStat(path) then
+					local v = d.Value
+					local t = type(v)
+					if t == 'number' or t == 'boolean' then
+						put('s.' .. path, v)
+					elseif v ~= nil then
+						-- A StringValue, or a type with no space-free rendering.
+						putText('s.' .. path, tostring(v))
+					end
 				end
 			end
 			if #d:GetChildren() > 0 then scan(d, path .. '.') end
@@ -1082,24 +1179,35 @@ end
 -- against a palette that ships alongside. A whole subsystem changing is then a
 -- handful of bytes.
 local lampSystems = {}
-local palette, colorChar = {}, {}
+local paletteCount = 0
+local colorChar = {}   -- packed 0xRRGGBB -> the one-character code
 local lampParts, lampDirty = 0, true
 
+-- Packed into ONE integer rather than the "r,g,b" text this used to build. That
+-- text allocated three strings and two concatenations per lamp per poll, and the
+-- lamps are read four times a second -- a thousand parts makes it roughly eight
+-- thousand allocations a second of pure garbage, none of which the file ever
+-- contained: the string existed only so that it could be a table key. The
+-- legend that the text was FOR is still emitted, once per colour, rebuilt from
+-- the integer. Components are in [0,1] by construction, so each byte is exact.
+local function packedColor(c)
+	return math.floor(c.R * 255 + 0.5) * 65536
+		+ math.floor(c.G * 255 + 0.5) * 256
+		+ math.floor(c.B * 255 + 0.5)
+end
+
 local function charForColor(c)
-	local k = tostring(math.floor(c.R * 255 + 0.5)) .. ',' ..
-		tostring(math.floor(c.G * 255 + 0.5)) .. ',' ..
-		tostring(math.floor(c.B * 255 + 0.5))
+	local k = packedColor(c)
 	local ch = colorChar[k]
 	if ch then return ch end
-	local n = 0
-	for _ in pairs(palette) do n = n + 1 end
-	if n >= #PALETTE then return '?' end
-	ch = string.sub(PALETTE, n + 1, n + 1)
+	if paletteCount >= #PALETTE then return '?' end
+	ch = string.sub(PALETTE, paletteCount + 1, paletteCount + 1)
+	paletteCount = paletteCount + 1
 	colorChar[k] = ch
-	palette[k] = ch
 	-- The legend ships as its own line the first time a colour appears, so every
 	-- code in the file can be decoded from the file alone.
-	emitEvt('LAMPPAL', ch .. '=' .. k)
+	emitEvt('LAMPPAL', ch .. '=' .. tostring(math.floor(k / 65536)) .. ',' ..
+		tostring(math.floor(k / 256) % 256) .. ',' .. tostring(k % 256))
 	return ch
 end
 
@@ -1172,6 +1280,147 @@ local function readLamps()
 	put('z.parts', lampParts)
 end
 
+-- ========================== PLAYER GUI ====================================
+-- What the game tells the PLAYER, which is not the same thing as what it tells
+-- the wall. Every reader above this line is pointed at a world object -- a
+-- monitor bolted to a wall, a labelled console. This one is pointed at
+-- PlayerGui: the screen the operator is actually looking at, which is
+-- CLIENT-ONLY and does not replicate, so nothing but a script running inside the
+-- client can see it at all.
+--
+-- Two different things are collected from PlayerGui and they are deliberately
+-- kept in two different namespaces, because one writer per fact is the rule:
+--
+--   g.<key>   the object's own flag -- Visible on a GuiObject, Enabled on a
+--             ScreenGui. Read once per object per poll, changed-filtered, so a
+--             screen that just sits there costs nothing after its first poll.
+--   t./x.<key> the caption, and those labels are handed to the readout walk
+--             above instead of being read here, because the readout walk already
+--             has the chatter guard, the TMAP manifest and the ANIM/NOISY
+--             verdicts, and a second copy of that machinery would be a second
+--             opinion about the same string.
+--
+-- `g.<key>` is the object's OWN flag and is NOT a claim about what the player can
+-- see. A Visible=true label inside a Visible=false Frame, or inside a ScreenGui
+-- whose Enabled is false, is recorded as true and is not on screen. That gap is
+-- deliberate, and it is the whole argument for this design: the honest flag
+-- costs one ancestor read per object per poll, which at four polls a second is a
+-- bigger bill than every world readout in this file put together -- and the
+-- operator is already paying the bill for the world. What closes most of the gap
+-- for free is the ScreenGui's own Enabled, which is read here: a screen that is
+-- off is one line, and everything under it is off with it.
+local function readVisible(o) return o.Visible end
+local function readEnabled(o) return o.Enabled end
+
+-- Which of the two a given object answers to is PROBED, not decided from its
+-- class name. Measured in Studio on 2026-09-27: LayerCollector (ScreenGui,
+-- SurfaceGui, BillboardGui, GuiMain) has Enabled and THROWS on Visible, while
+-- GuiObject (Frame, TextLabel, ..., CanvasGroup, ScrollingFrame) has Visible and
+-- THROWS on Enabled -- no class has both, and asking for the wrong one is not a
+-- nil, it is an error. An `IsA('LayerCollector') and ... or ...` test would be
+-- correct today and silently wrong the day a class is added, and the cost of
+-- being wrong is not one bad line: readGui throws, the whole poll throws, and
+-- the run records nothing at all. So the object is asked once per rebuild --
+-- never per poll, which is why this can afford a pcall -- and anything that
+-- answers neither is dropped and counted rather than guessed at.
+local function flagReaderFor(d)
+	if pcall(readVisible, d) then return readVisible end
+	if pcall(readEnabled, d) then return readEnabled end
+	return nil
+end
+
+-- The recorder's own panel is parented to PlayerGui and rewrites its text four
+-- times a second by construction. Recording it would be recording the recorder:
+-- the readout guard would eventually condemn it as NOISY, so the file would
+-- carry a complaint about a label this very script owns. Excluded by ANCESTRY
+-- rather than by name, so renaming the panel cannot put it back in. This is the
+-- definition of the forward declaration made above the readout walk.
+function isOwnGui(inst)
+	local g = buoy.gui
+	if g == nil then return false end
+	return inst == g or inst:IsDescendantOf(g)
+end
+
+local function ensureGuiRoot()
+	if guiRoot ~= nil then return true end
+	local player = Players.LocalPlayer
+	if player == nil then return false end
+	local pg = player:FindFirstChild('PlayerGui')
+	if pg == nil then return false end
+	guiRoot = pg
+	if not guiHooked then
+		guiHooked = true
+		-- Structure is event-driven, values are polled -- the same split the lamp
+		-- matrix and the readout list already use. A screen the game creates
+		-- halfway through the shift is then picked up on the poll after it
+		-- appears rather than at the next periodic rescan a minute later.
+		pcall(function()
+			pg.DescendantAdded:Connect(function() guiDirty = true end)
+			pg.DescendantRemoving:Connect(function() guiDirty = true end)
+		end)
+	end
+	return true
+end
+
+local function buildGui()
+	if not ensureGuiRoot() then return end
+	local seen = {}
+	local out, n, over, unreadable = {}, 0, 0, 0
+	for _, d in ipairs(guiRoot:GetDescendants()) do
+		local isLayer = d:IsA('LayerCollector')
+		if (isLayer or d:IsA('GuiObject')) and not isOwnGui(d) then
+			local reader = flagReaderFor(d)
+			if reader == nil then
+				unreadable = unreadable + 1
+			elseif n >= Config.MaxGuiObjects then
+				over = over + 1
+			else
+				n = n + 1
+				local k = keyForLabel(d, seen)
+				seen[k] = true
+				out[#out + 1] = { inst = d, key = 'g.' .. k, read = reader }
+			end
+		end
+	end
+	guiRecords, guiCount, guiOver, guiUnreadable = out, n, over, unreadable
+	-- One manifest line per object, once. A `g.` key in a change line with no
+	-- GMAP anywhere in the file is a boolean nobody can attribute, which is the
+	-- same reason TMAP and LAMPMAP exist.
+	for _, rec in ipairs(out) do
+		if not guiMapped[rec.key] then
+			guiMapped[rec.key] = true
+			emitEvt('GMAP', rec.key .. ' ' .. rec.inst.ClassName ..
+				' ' .. rec.inst:GetFullName())
+		end
+	end
+	-- The count is reported even when the cap was not reached, and the overflow
+	-- separately, because "600 objects" and "at least 600 objects" are different
+	-- findings and only one of them means the recording is incomplete.
+	emitEvt('GUI', 'objects=' .. tostring(n) ..
+		' over=' .. tostring(over) ..
+		' unreadable=' .. tostring(unreadable) ..
+		' labels=' .. tostring(guiLabels) ..
+		' label_over=' .. tostring(guiLabelOver))
+	-- The readout list is built by a different pass and holds its own copy of the
+	-- player's labels, so a rebuild here has to invalidate that list too or a
+	-- screen created mid-shift is never read for text.
+	readoutDirty = true
+	guiDirty = false
+end
+
+local function readGui()
+	if guiDirty then buildGui() end
+	for i = 1, #guiRecords do
+		local rec = guiRecords[i]
+		put(rec.key, rec.read(rec.inst))
+	end
+	put('g.objects', guiCount)
+	put('g.over', guiOver)
+	put('g.unreadable', guiUnreadable)
+	put('g.labels', guiLabels)
+	put('g.labelOver', guiLabelOver)
+end
+
 -- ========================== FLOW ==========================================
 -- One shutdown then one startup, then seal. The state is the game s own: tempF
 -- against the authored thresholds, plus the output readout as a second opinion,
@@ -1202,12 +1451,6 @@ local function seal(reason)
 		' spilled=' .. tostring(spilled) ..
 		' dropped=' .. tostring(dropped) ..
 		' flow=' .. tostring(sawDown) ..
-		-- The driver s verdict belongs in the receipt, not only in an EVT line
-		-- among two thousand: whether a human or the driver operated the
-		-- switches is the first thing a reader of an unattended run needs, and
-		-- whether a control turned out to be inert is the answer to "why is
-		-- there no flow in this file".
-		' drive=' .. tostring(drive.state) .. '/' .. tostring(drive.verdict) ..
 		' readouts=' .. tostring(readoutCount) ..
 		' hash=' .. hex8(h) ..
 		' over=' .. tostring(pre) ..
@@ -1309,582 +1552,6 @@ if ThermalConsole then
 	end
 end
 
--- ========================== DRIVER ========================================
--- Autonomous operation of the two switches this flow is made of, so one
--- complete shutdown -> startup can be captured without a hand on the console.
---
--- WHY IT EXISTS: the recorder has made three attempts at this flow and none of
--- them contains both halves. original_260926-151207 holds a shutdown that was
--- not a shutdown -- the core was already cooling on its own from t=462 (6792 F
--- at t=462.4, 5394 F at t=467.7) and the ShutdownLever press at t=480 arrived
--- twelve seconds after the boundary had been crossed. ...-155513 never armed at
--- all, and ...-155619 is the startup half by itself. The missing ingredient was
--- never the recorder; it was a person pressing the right control at the right
--- moment, and a person cannot be a dependency of an unattended measurement.
---
--- HOW A PRESS REACHES THE GAME: `fireclickdetector` is an EXECUTOR global, not
--- Roblox API -- plain Luau has no way to make a ClickDetector press reach the
--- server. The evidence that it works in THIS game is Addition/Shift4.luau, a
--- client-side mod of this same place whose coolant, CBL and extraction consoles
--- are all driven as `fireclickdetector(<ClickDetector>)`; those systems are
--- server-side, so the call must be reaching the server. That file s own source
--- only warns when the global is absent, which is the whole dependency: if the
--- injector does not provide it, this driver turns itself off and says so,
--- rather than sitting in RUN looking like a recorder with nothing to record.
---
--- CONTROL BY CANDIDATE, NOT BY ASSUMPTION: `StartUpBigLever` carries two click
--- parts, `StartClickPart` and `ShutClickPart`, and both names were read off the
--- live game. But a control that is named correctly and wired to nothing is
--- indistinguishable from one that works until you press it and watch. So every
--- press opens a PROOF WINDOW, and a press that does not move the core the way
--- it was supposed to is reported INERT by path and the next candidate is tried.
--- A run therefore ends with either a captured flow or a named dead control --
--- never with a recorder that merely appears idle.
-local fireClick = nil
-do
-	-- pcall, because reading an undefined global is fine but an executor that
-	-- defines this name as a non-function is not, and this is the one place in
-	-- the file that depends on the injector rather than on the game.
-	local ok, fn = pcall(function() return fireclickdetector end)
-	if ok and type(fn) == 'function' then fireClick = fn end
-end
-
-local function pathOf(cd)
-	if cd == nil then return 'nil' end
-	local ok, p = pcall(function() return cd.Parent and cd.Parent:GetFullName() end)
-	if ok and type(p) == 'string' then return p end
-	return 'unresolved'
-end
-
-local function press(cd)
-	local ok, err = pcall(fireClick, cd)
-	if not ok then emitEvt('DRIVE', 'press FAILED ' .. tostring(err)) end
-	return ok
-end
-
-local function detectorOf(part)
-	if part == nil then return nil end
-	local ok, cd = pcall(function() return part:FindFirstChildOfClass('ClickDetector') end)
-	if ok then return cd end
-	return nil
-end
-
--- Match on the host part s name OR the detector s own name, so a control the
--- game renames from ShutClickPart to ShutPart is still found. `pattern` is a
--- Lua pattern and the callers only pass plain anchored words.
-local function detectorsMatching(root, pattern)
-	local out = {}
-	if root == nil then return out end
-	pcall(function()
-		for _, d in ipairs(root:GetDescendants()) do
-			if d:IsA('ClickDetector') then
-				local host = d.Parent
-				local hostName = host and host.Name or ''
-				if string.find(hostName, pattern) or string.find(d.Name, pattern) then
-					out[#out + 1] = d
-				end
-			end
-		end
-	end)
-	return out
-end
-
-local shutCandidates, startCandidates = {}, {}
-local function addCandidate(list, cd)
-	if cd == nil then return end
-	for i = 1, #list do
-		if list[i] == cd then return end
-	end
-	list[#list + 1] = cd
-end
-
-do
-	local bigLever = MainConsole and child(MainConsole, 'StartUpBigLever')
-	addCandidate(shutCandidates,  detectorOf(child(bigLever, 'ShutClickPart')))
-	addCandidate(startCandidates, detectorOf(child(bigLever, 'StartClickPart')))
-	for _, d in ipairs(detectorsMatching(bigLever, '^Shut')) do addCandidate(shutCandidates, d) end
-	for _, d in ipairs(detectorsMatching(bigLever, '^Start')) do addCandidate(startCandidates, d) end
-	-- Widen to the whole console ONLY when the lever itself offered nothing. The
-	-- wider net can catch an unrelated button, and a wrong press on a live
-	-- reactor is a change to the world, not a probe.
-	if #shutCandidates == 0 then
-		for _, d in ipairs(detectorsMatching(MainConsole, 'Shut')) do addCandidate(shutCandidates, d) end
-	end
-	if #startCandidates == 0 then
-		for _, d in ipairs(detectorsMatching(MainConsole, 'Start')) do addCandidate(startCandidates, d) end
-	end
-end
-
-drive.on = Config.AutoDrive and fireClick ~= nil
--- Three ways the driver can be off, and they want three different answers: no
--- injector function means this run cannot be driven at all; AutoDrive false
--- means the attempt has not been spent yet; on means it is ready to spend. One
--- verdict covering all three would send the reader looking for a missing
--- executor feature when the real answer is a button nobody has pressed.
-drive.verdict = (fireClick == nil) and 'off-no-fireclickdetector'
-	or ((not Config.AutoDrive) and 'off-waiting-arm' or 'unsupported')
-
-local function pathsOf(list)
-	if #list == 0 then return '(none)' end
-	local out = {}
-	for i = 1, #list do out[i] = pathOf(list[i]) end
-	return table.concat(out, ' | ')
-end
-
--- What the driver found, written BEFORE it presses anything and written even by
--- a run that never presses. If the single attempt goes to the wrong control,
--- this line is what says which control that was and what else was on offer, and
--- it lands in the file rather than only on screen -- a console scrolls away.
-emitEvt('DRIVE', 'candidates shut=' .. pathsOf(shutCandidates) ..
-	' start=' .. pathsOf(startCandidates) ..
-	' fireclickdetector=' .. (fireClick and 'yes' or 'NO'))
-
--- One step per poll, fed the same tempF and isRunning the flow boundary uses.
--- Every state that can wait also has a way out that is not waiting forever: an
--- unattended recorder that hangs is indistinguishable from one that is simply
--- recording a quiet reactor, and that is the failure this whole file exists to
--- make impossible.
-local function driveStep(tempF, isRunning, dt)
-	if not drive.on then return end
-	if drive.state == 'inert' or drive.state == 'done' then return end
-
-	-- dt is the caller s MEASUREMENT of the poll just finished, not the poll
-	-- period this file configures. A configured constant is a claim about the
-	-- loop; only the loop can report what the loop did. The 18:01 run is why that
-	-- distinction is worth a parameter: the constant said 0.25 s, the loop ran at
-	-- 3.38 Hz, and every dwell below came out 18 per cent long -- so the receipt
-	-- said the core was switched off 60 s after the driver decided to, and the
-	-- timestamps said 70.59.
-	--
-	-- Deliberately no upper clamp. If the client stalls for thirty seconds then
-	-- thirty seconds passed, and the reactor spent them running; crediting thirty
-	-- is the measurement, and clamping it would be a second assumption of exactly
-	-- the kind this parameter removes. Only a value that cannot be a duration --
-	-- absent, negative, or not a number at all -- falls back to the constant, so
-	-- that a harness with no clock can still call this.
-	if type(dt) ~= 'number' or dt ~= dt or dt <= 0 then
-		dt = Config.SampleInterval
-	end
-
-	if drive.state == 'arming' then
-		-- The core may already be lit when this is injected, or it may be cold.
-		-- Arming is the wait that tells those two apart without a rule that can
-		-- disagree with the game: flowArmed is the recorder s own confirmation
-		-- that the core is running, and DriveArmSeconds of unbroken cold is the
-		-- point at which it is not going to light itself.
-		if flowArmed then
-			-- WHERE THE CORE BEING UP LEADS DEPENDS ON WHO PRESSES. With the
-			-- driver holding the controls, a running core means hold, then shut.
-			-- With the operator holding them -- the live setting -- the same
-			-- fact means the run has begun and the driver s job is to watch for
-			-- his press. Splitting here rather than inside `holding` keeps every
-			-- state readable as a statement about who acts next.
-			if Config.DrivePressControls then
-				drive.state = 'holding'
-				drive.verdict = 'holding'
-				emitEvt('DRIVE', 'armed, core already running; will switch it off in ' ..
-					tostring(Config.DriveHoldSeconds) .. 's')
-			else
-				drive.state = 'watching'
-				drive.verdict = 'watching'
-				emitEvt('DRIVE', 'armed, core running; the driver presses nothing -- ' ..
-					'press the shutdown lever when the shift should end')
-				print('[rec] DRIVER: watching. Press the shutdown lever yourself;')
-				print('[rec] DRIVER: the recorder will note the press and the reply.')
-			end
-			return
-		end
-		drive.armT = drive.armT + dt
-		if drive.armT >= Config.DriveArmSeconds then
-			if tempF == nil then
-				-- Nothing to judge the core by, so nothing is pressed. Pressing
-				-- blind on a live reactor is the one action here that cannot be
-				-- undone, and "the readout is missing" is not "the core is off".
-				drive.verdict = 'no-temp-readout'
-				return
-			end
-			-- The timer has expired, but the core is READING AS RUNNING, so this
-			-- is not the core the timeout is about. It is the debounce catching
-			-- up: flowArmed needs DebounceSamples polls and this is still an
-			-- early one. Wait for it rather than refusing.
-			--
-			-- This guard is what makes the measured dt safe. The first poll is
-			-- the only one with no measured predecessor, and it is the one
-			-- carrying the initial readout and lamp sweeps, so nothing bounds
-			-- how long it takes. With dt measured, a first poll of twenty
-			-- seconds or more would credit armT with twenty seconds in a single
-			-- step and a driver injected on a perfectly healthy running core
-			-- would report cold-at-inject and go inert -- on the run that has
-			-- exactly one attempt. Under the old constant dt the debounce window
-			-- was eighty polls wide and could not be crossed in one step.
-			if isRunning then return end
-			-- A COLD CORE IS NOT AN ERROR WHEN THE OPERATOR DRIVES, IT IS THE
-			-- SCHEDULE. The recorder is injected before the shift begins and
-			-- `A1` has the operator light the core himself, so a cold core at the
-			-- end of the arm window is the expected opening rather than a state
-			-- to act on. Nothing is pressed; the wait is announced once and the
-			-- state machine stays in `arming`, which is the one state that goes on
-			-- watching for `flowArmed`. The operator lighting the core is
-			-- therefore not a special case -- it is the same edge that carries
-			-- every other run into `watching`.
-			if not Config.DrivePressControls then
-				if not drive.waitingCold then
-					drive.waitingCold = true
-					emitEvt('DRIVE', 'core is cold after ' ..
-						tostring(Config.DriveArmSeconds) .. 's tempF=' ..
-						tostring(tempF) .. ' -- waiting for the operator to light it')
-					print('[rec] DRIVER: the core is cold. Light it when you are ready;')
-					print('[rec] DRIVER: nothing is pressed and nothing is spent.')
-				end
-				return
-			end
-			-- THE BUTTON IS THE AUTHORISATION, SO THE DRIVER LIGHTS IT.
-			--
-			-- This branch used to refuse, on the arithmetic that a flow needs one
-			-- startup and one shutdown and that spending the startup on the
-			-- opening leaves the end with none. The operator overruled that, and
-			-- the reasoning is better than the arithmetic: pressing DRIVER is a
-			-- person deciding that THIS attempt is the one to spend, and the
-			-- driver declining to act on a decision it was handed is not caution
-			-- -- it is the attempt spent on nothing.
-			--
-			-- What replaces the veto is a choice the driver can make from the
-			-- plant instead of from an assumption. `arming` is the only state
-			-- that does not know whether the core is up, and it answers that
-			-- question by looking: running sends it to `holding` (switch it off),
-			-- cold sends it here (switch it on). Neither mode needs the operator
-			-- to declare which one he wanted, so neither can be declared wrong.
-			emitEvt('DRIVE', 'armed cold after ' ..
-				tostring(Config.DriveArmSeconds) .. 's tempF=' .. tostring(tempF) ..
-				' -- lighting the core')
-			print('[rec] DRIVER: the core is cold; lighting it.')
-			print('[rec] DRIVER: one attempt, hands off the console.')
-			drive.state = 'press_start'
-			drive.verdict = 'arming-cold'
-		end
-		return
-	end
-
-	if drive.state == 'watching' then
-		-- THE LIVE STATE. The core is up, the driver is holding no controls, and
-		-- the only thing left to record is the operator s own shutdown and the
-		-- game s answer to it.
-		--
-		-- The evidence is the same set of signals `shut_down` confirms from, read
-		-- as a LEVEL rather than as an edge, because this is a report about the
-		-- state of the world and not a trigger. The verdict doubles as the latch.
-		--
-		-- `v.shutdown` is first, and it is the one the operator named for the
-		-- press itself (`B3`): pressing the shutdown lever puts
-		-- `MonitorUI.ShutdownFrame` on screen. That is a screen appearing in the
-		-- same second as the press, which is the closest thing to a direct read
-		-- of the press that does not depend on a click line arriving. The end
-		-- flags follow as fallbacks: a shift that ended some other way -- a cold
-		-- trip, a machine-room meltdown -- is still a shift whose shutdown the
-		-- driver should name rather than leave the file to explain.
-		--
-		-- No press is made here under any arm, including the flags. A machine
-		-- that has ended the shift by itself is not one to hand a startup to --
-		-- and with the driver unarmed that decision is not even reachable.
-		if drive.verdict == 'watching' then
-			local said
-			if last['v.shutdown'] == true then
-				said = 'the shutdown screen is up'
-			elseif last['s.GameActive'] == false then
-				said = 's.GameActive=false'
-			elseif last['s.MainframeMeltdown'] == true then
-				said = 's.MainframeMeltdown=true'
-			elseif last['s.GameFail'] == true then
-				said = 's.GameFail=true'
-			end
-			if said ~= nil then
-				-- The wording follows the FLAG, because only the first flag is an
-				-- operator action. The other three are the machine ending the
-				-- shift by itself, and the comment above already says so -- but
-				-- the sentence said `the operator shut it down` for all four, so
-				-- it contradicted its own `said` field in the one line that
-				-- records the seal. Seen 2026-09-26 in
-				-- Data/flow/original_260926-230049: `the operator shut it down:
-				-- s.MainframeMeltdown=true`, in a file with no shutdown-lever
-				-- click anywhere -- 124 CLICK events, 0 of them on
-				-- StartUpBigLever.ShutClickPart, and no v.shutdown either.
-				--
-				-- THE VERDICT IS LEFT ALONE. `user-shut` answers "who pressed",
-				-- and "not the driver" is the honest answer for a meltdown too;
-				-- renaming it would move the receipt field, the HOWTO table and
-				-- four mutation proofs to say the same thing less precisely.
-				local pressed = last['v.shutdown'] == true
-				drive.shutDone = true
-				drive.shutSaid = said
-				drive.verdict = 'user-shut'
-				emitEvt('DRIVE', (pressed and 'the operator shut it down: '
-					or 'the shift ended: ') .. said .. ' tempF=' .. tostring(tempF))
-				drive.state = 'shut_down'
-			end
-		end
-		return
-	end
-
-	if drive.state == 'holding' then
-		-- Real time before the switch-off, so the file contains steady state and
-		-- not only two transients. It costs almost nothing: a steady reactor
-		-- changes nothing, and nothing is what gets written.
-		drive.holdT = drive.holdT + dt
-		if drive.holdT >= Config.DriveHoldSeconds then drive.state = 'press_shut' end
-		return
-	end
-
-	if drive.state == 'press_shut' then
-		if tempF == nil then return end
-		if not isRunning then
-			-- Refuse. Pressing a shutdown switch on a core that is already down
-			-- cannot be shown to have done anything, and the 18:01 run is the
-			-- measured case: the hold expired at t=64, the core had crossed the
-			-- threshold at t=65, and the press went out at t=73 on a reactor
-			-- that was on its way back up. Wait for it to be running, then the
-			-- press means what it says.
-			if not drive.waitingRun then
-				drive.waitingRun = true
-				emitEvt('DRIVE', 'core is down before the shut press; waiting for a run')
-			end
-			return
-		end
-		drive.waitingRun = false
-		-- Index 1 and only index 1. The list can hold more than one name for
-		-- the same control, and the driver used to walk down it whenever a press
-		-- proved inert. With one attempt there is no walking: the best evidenced
-		-- candidate is pressed once, and a press that does nothing ends the run
-		-- naming the control rather than spending a second attempt on a guess.
-		local cd = shutCandidates[1]
-		if cd == nil then
-			drive.state = 'inert'
-			drive.verdict = 'no-shut-control'
-			emitEvt('DRIVE', 'no shutdown control found, nothing pressed')
-			print('[rec] DRIVER: found no shutdown control. Nothing was pressed.')
-			return
-		end
-		press(cd)
-		-- The counters are the panel s, not the driver s: the panel prints
-		-- `shut <shutIdx - 1>/<#candidates>`, so advancing it here is what makes
-		-- the panel say one press was spent rather than none.
-		drive.shutIdx = 2
-		emitEvt('DRIVE', 'press shut ' .. pathOf(cd) .. ' tempF=' .. tostring(tempF) ..
-			' running=' .. tostring(isRunning))
-		-- THE PRESS IS THE SHUTDOWN, AND THE DRIVER BELIEVES IT IMMEDIATELY.
-		--
-		-- The operator is emphatic that pressing this lever shuts the core down
-		-- at once and that there is no cold state to wait for. So there is no
-		-- cooldown to watch and nothing to prove: this does not open a window, it
-		-- declares the end in the same poll that it pressed.
-		--
-		-- What stood here was a forty-second window that accepted the press once
-		-- the monitor temperature had fallen DriveProveF degrees below where it
-		-- was at the press. On the 18:35 run that reported `shut accepted after
-		-- 8.7s` at t=335.37, and the verdict was manufactured by its own
-		-- threshold: m.fluct in that same file has p5 = -218 F, p95 = +253 F, and
-		-- extremes past -1700 F, so a 431 F move in 8.7 s is inside the plant s
-		-- ordinary wobble. The core had not gone down. s.GameActive stayed true
-		-- for 414 seconds after the press, and the temperature ROSE from 10713 to
-		-- 11838 in the thirty seconds that followed it. The proof did not measure
-		-- a shutdown; it measured the noise and answered yes.
-		--
-		-- The price of believing the press is that an inert press is no longer
-		-- named HERE. It is named by the thing that actually knows -- the game s
-		-- own end-of-shift statement, watched in `shut_down` below. That is a
-		-- stricter test than the old one rather than a looser one: a flag the game
-		-- sets about itself cannot be satisfied by a sensor wobble.
-		drive.shutDone = true
-		drive.verdict = 'shut-accepted'
-		if Config.ShutdownEndsShift then
-			drive.state = 'shut_down'
-		else
-			drive.state = 'waiting_down'
-		end
-		return
-	end
-
-	if drive.state == 'shut_down' then
-		-- A shutdown has already been declared -- by this driver s press, or by
-		-- the operator s -- and it ended the shift. This state presses nothing and
-		-- waits for nothing; it exists to WATCH, and only to watch.
-		--
-		-- The one thing worth having after the press is whether the game agreed
-		-- with it. The 18:35 run is why. The driver pressed at t=326.71 and the
-		-- plant showed no reaction for 414 seconds, so that file cannot say
-		-- whether the shutdown lever works when an executor presses it -- which is
-		-- the single most valuable thing the next run should answer. Recording
-		-- the game s own statement separates "the press did not land" from "it
-		-- landed and the shift runs on regardless", and it costs one line.
-		--
-		-- These are the same signals endReason trusts, and they are read as a
-		-- LEVEL here rather than as an edge, because this is a report about the
-		-- state of the world and not a trigger.
-		--
-		-- Two verdicts reach this state, and both mean "a shutdown was declared
-		-- and nothing has been heard back about it yet": `shut-accepted` is this
-		-- driver s own press, `user-shut` is the operator s. They are kept apart
-		-- rather than collapsed into one, because they are the two answers to the
-		-- question the run exists to ask -- does an executor s press land, and
-		-- does the operator s -- and a file that merged them could not answer it.
-		--
-		-- SO `user-shut` IS NEVER OVERWRITTEN HERE, and that is a correction, not
-		-- a preference. The first version of this block ran for both verdicts and
-		-- set `shut-confirmed` on whatever it found -- which, for the operator s
-		-- press, was the very signal that had just ended `watching`. The receipt
-		-- therefore read `shut-confirmed` on a run where this driver never pressed
-		-- anything, one poll after the file had said `user-shut`. The word means
-		-- "the executor s press landed"; handing it to a press the executor did
-		-- not make destroys the one distinction the live run exists to record.
-		-- So the verdict is an answer to WHO PRESSED and only the press path
-		-- changes it.
-		--
-		-- What the operator s run does still get is any signal that arrives AFTER
-		-- the one that ended `watching` -- `v.shutdown` goes up with the press, and
-		-- the game s formal `s.GameActive=false` can land 400 seconds later, and
-		-- that second statement is news rather than an echo. `shutSaid` is what
-		-- tells them apart: the signal already written down never fires again, and
-		-- a different one always does. The two states search in different orders
-		-- (see the field s own comment), so a later signal outranks its way to the
-		-- front and the earlier one is found only when nothing else has come.
-		local said
-		if last['s.GameActive'] == false then
-			said = 's.GameActive=false'
-		elseif last['s.MainframeMeltdown'] == true then
-			said = 's.MainframeMeltdown=true'
-		elseif last['s.GameFail'] == true then
-			said = 's.GameFail=true'
-		elseif last['v.shutdown'] == true then
-			said = 'the shutdown screen is up'
-		end
-		if said ~= nil and said ~= drive.shutSaid then
-			drive.shutSaid = said
-			if drive.verdict == 'shut-accepted' then
-				drive.verdict = 'shut-confirmed'
-			end
-			emitEvt('DRIVE', 'the game confirms the shutdown: ' .. said ..
-				' tempF=' .. tostring(tempF))
-		end
-		return
-	end
-
-	if drive.state == 'waiting_down' then
-		-- REACHED ONLY WHEN A SHUTDOWN DOES NOT END THE SHIFT. The live
-		-- configuration ends the run at the press itself -- press_shut goes
-		-- straight to shut_down -- so what is left here is the other
-		-- configuration s wait: the core has been told to stop, and the driver
-		-- must not relight it until it actually has.
-		--
-		-- The gate is sawDown, the recorder s own DOWN edge, rather than a second
-		-- opinion computed here. That is the point the whole PROVING section makes:
-		-- a private temperature test is a second opinion about a plant the
-		-- recorder is already reading, and when the two disagree there is nothing
-		-- in the file that can settle which one was right.
-		if sawDown and not isRunning then
-			drive.coldT = 0
-			drive.state = 'dwell_cold'
-		end
-		return
-	end
-
-	if drive.state == 'dwell_cold' then
-		drive.coldT = drive.coldT + dt
-		if drive.coldT >= Config.DriveColdSeconds then
-			drive.state = 'press_start'
-		end
-		return
-	end
-
-	if drive.state == 'press_start' then
-		if tempF == nil then return end
-		if isRunning then
-			drive.state = 'done'
-			drive.verdict = 'relit-itself'
-			emitEvt('DRIVE', 'core lit again without the driver')
-			return
-		end
-		local cd = startCandidates[1]
-		if cd == nil then
-			drive.state = 'inert'
-			drive.verdict = 'no-start-control'
-			emitEvt('DRIVE', 'no startup control found, nothing pressed')
-			print('[rec] DRIVER: found no startup control. Nothing was pressed.')
-			return
-		end
-		drive.proofCd, drive.proofT = cd, 0
-		drive.proofRunning = isRunning
-		press(cd)
-		drive.startIdx = 2   -- display only, for the same reason as shutIdx
-		emitEvt('DRIVE', 'press start ' .. pathOf(cd) .. ' tempF=' .. tostring(tempF) ..
-			' running=' .. tostring(isRunning))
-		drive.state = 'proving_start'
-		return
-	end
-
-	if drive.state == 'proving_start' then
-		drive.proofT = drive.proofT + dt
-		-- A START IS PROVED BY ARRIVAL, NOT BY A DELTA, for the same reason the
-		-- shut is no longer proved at all. `rose` -- which accepted the press once
-		-- the temperature had climbed DriveProveF degrees above where it stood at
-		-- the press -- is gone with `fell`. They were the same test, and the same
-		-- measurement disproved both.
-		--
-		-- The readout crossing the running threshold IS the state change, and it
-		-- cannot be reached by wobble: the threshold sits thousands of degrees
-		-- above a cold core, so nothing the noise does can fake this arrival.
-		--
-		-- press_start already returns early when the core is lit, so proofRunning
-		-- is false here by construction; the field is read rather than assumed
-		-- because "cannot currently be wrong" is a claim about today s code and
-		-- not about the field.
-		local nowUp = isRunning and drive.proofRunning == false
-		if nowUp then
-			emitEvt('DRIVE', 'start accepted after ' ..
-				string.format('%.1f', drive.proofT) .. 's tempF=' .. tostring(tempF))
-			drive.verdict = 'start-accepted'
-			-- The core is up, so the driver goes back to `holding` and later
-			-- switches it off. That makes the two ways in symmetric -- armed on
-			-- a running core it shuts down, armed on a cold core it starts and
-			-- THEN shuts down -- and both end in the same complete flow. It is
-			-- also why `arming` does not have to be told which mode is wanted.
-			--
-			-- This branch was previously cut, on the argument that a startup
-			-- opening the run left the end with no startup to spend and that a
-			-- cold core was therefore refused. The refusal is gone (the operator
-			-- made the button the authorisation), so the branch it was built
-			-- against is reachable again and has to exist. `waiting_up` and its
-			-- `flow-complete` verdict stay for the other configuration, where a
-			-- shutdown does not end the shift and the recording is meant to
-			-- close on the core coming back up.
-			if Config.ShutdownEndsShift then
-				drive.state = 'holding'
-				drive.holdT = 0
-			else
-				drive.state = 'waiting_up'
-			end
-			return
-		end
-		if drive.proofT >= Config.DriveProveSeconds then
-			emitEvt('DRIVE', 'start INERT ' .. pathOf(drive.proofCd) .. ' after ' ..
-				tostring(Config.DriveProveSeconds) .. 's tempF=' .. tostring(tempF))
-			print('[rec] DRIVER: ' .. pathOf(drive.proofCd) .. ' did nothing.')
-			print('[rec] DRIVER: no second press. The core is down; seal when ready.')
-			drive.state = 'inert'
-			drive.verdict = 'start-inert'
-		end
-		return
-	end
-
-	if drive.state == 'waiting_up' then
-		-- The recorder owns the rest: RUN -> DOWN -> UP, then it seals itself.
-		if sawDown and isRunning then
-			drive.state = 'done'
-			drive.verdict = 'flow-complete'
-			emitEvt('DRIVE', 'flow complete; the recorder will seal on its own')
-		end
-		return
-	end
-end
-
 -- The user s own clicks are half of the experiment; the reactor s response is
 -- the other half. Every ClickDetector and ProximityPrompt in the workspace is
 -- hooked, whether or not we know its name, so a control family that has never
@@ -1899,9 +1566,20 @@ local function hook(inst)
 		local name = host and labels[host:GetFullName()] or nil
 		inst.MouseClick:Connect(function()
 			-- Stamp the poll, not the clock. The stamp is compared against the
-			-- poll counter, and a wall-clock stamp in a 4 Hz loop would drift
-			-- against it for the same reason the driver s dwell timers did.
+			-- poll counter, and a wall-clock stamp drifts against it: the loop s
+			-- achieved rate is not its configured one, so the two disagree by
+			-- however far the run has slipped. The PERF event reports the achieved
+			-- rate, and this stamp is deliberately not derived from it.
 			clickPoll = sample
+			-- A start-up click is the only thing that turns "the core is up
+			-- again" into "the core was RELIT", which is the claim the UP path
+			-- acts on. Read off the same label the log prints, so the two can
+			-- never disagree about which part was pressed: `StartUpLever` is
+			-- StartClickPart's label, assigned by the console walk above.
+			-- Set unconditionally rather than only while down -- any DOWN edge
+			-- clears it, and the UP path is the only reader, so an idle press
+			-- on a running core cannot leak into a later decision.
+			if name == 'StartUpLever' then startedSinceDown = true end
 			emitEvt('CLICK', name or ('path=' .. ((host and host:GetFullName()) or 'nil')))
 		end)
 		hooked = hooked + 1
@@ -2069,7 +1747,7 @@ end
 -- What the file actually shows is that the press produced no shutdown for 414
 -- seconds, and it does not say why. A causality was hung on that gap and the
 -- operator has removed its premise from both ends (`D8`): SAM is OFF by default,
--- it is his to switch, and it is not a condition the driver has to account for.
+-- it is his to switch, and it is not a condition anything here accounts for.
 -- With the machine off, the coolant changes cannot be its work.
 --
 -- So the causal claim is gone and the measurement stays. Nothing here is a
@@ -2238,8 +1916,9 @@ local function announceSam()
 	samAnnounced = true
 	if last['sam.on'] == true then
 		-- Stated, not advised. The old line told the operator to turn SAM off
-		-- before arming the driver, and the operator has since said SAM is off by
-		-- default, is his to control, and is not the driver s business (`D8`).
+		-- before arming the driver. The operator has since said SAM is off by
+		-- default and is his to control (`D8`), and the driver that advice was
+		-- aimed at is gone -- so the instruction is gone from both ends.
 		-- An instruction inside a recorder is a claim that the recorder knows
 		-- better than the person reading it, and here it did not.
 		emitEvt('SAM', 'SAM IS ON at inject')
@@ -2350,6 +2029,53 @@ local function reportUnattributed()
 	end
 end
 
+-- ========================== TIMING ========================================
+-- The recorder has to be able to say whether IT is why the client is slow, and
+-- no counter it already keeps can answer that. `dt` is the one number that looks
+-- like an answer and is not: a client that is stalling and a recorder that is
+-- eating the frame both show up as a long dt, and only one of those is ours.
+--
+-- So two clocks are kept apart. os.clock() advances only while this script is
+-- actually running, so the sum of it is work THIS recorder did; the wall time
+-- the client gave us is `dt`, and it is not ours to explain. A run whose
+-- pass_ms is two and whose dt is three hundred is a run where the recorder is
+-- not the problem, and saying so requires the two numbers to have been recorded
+-- separately rather than inferred from one.
+local perfReads, perfPass, perfFlush = 0, 0, 0     -- os.clock, in seconds
+local perfWall, perfN, perfWorst = 0, 0, 0
+local perfT = 0
+local readStart = 0
+
+-- Called from the one loop, once per window. Emitted as an EVENT rather than
+-- folded into the S line because S lines only exist when something changed, and
+-- a quiet window is exactly the window whose timing is worth having.
+local function reportPerf(now)
+	if perfN == 0 then return end
+	local n = perfN
+	local readMs  = perfReads / n * 1000
+	local passMs  = perfPass  / n * 1000
+	local flushMs = perfFlush / n * 1000
+	local wallMs  = perfWall  / n * 1000
+	-- The first window has no previous end to measure from. Falling back to the
+	-- nominal interval is honest but it UNDERSTATES the span, so it can only make
+	-- the reported rate too high -- and the first window is the one a reader is
+	-- least likely to trust anyway, which is why the poll count ships with it.
+	local span = (perfT > 0) and (now - perfT) or (n * Config.SampleInterval)
+	emitEvt('PERF',
+		'polls=' .. tostring(n) ..
+		' hz=' .. string.format('%.2f', n / math.max(span, 0.001)) ..
+		' read_ms=' .. string.format('%.2f', readMs) ..
+		' pass_ms=' .. string.format('%.2f', passMs) ..
+		' flush_ms=' .. string.format('%.2f', flushMs) ..
+		' wall_ms=' .. string.format('%.1f', wallMs) ..
+		' cpu_pct=' .. string.format('%.1f', 100 * passMs / math.max(wallMs, 0.001)) ..
+		' read_pct=' .. string.format('%.1f', 100 * readMs / math.max(wallMs, 0.001)) ..
+		' worst_ms=' .. string.format('%.1f', perfWorst * 1000))
+	perfReads, perfPass, perfFlush = 0, 0, 0
+	perfWall, perfN, perfWorst = 0, 0, 0
+	perfT = now
+end
+
 -- ========================== THE ONE LOOP ==================================
 -- There is exactly one reader and exactly one writer. This project has lost
 -- real runs to a second dispatcher that looked like the first and disagreed
@@ -2357,6 +2083,7 @@ end
 local function pollOnce()
 	now = os.clock()
 	sample = sample + 1
+	readStart = now
 
 	if lampDirty then scanLamps() end
 	changed = {}
@@ -2367,6 +2094,12 @@ local function pollOnce()
 	readCBL()
 	readCoolant()
 	readStats()
+	-- Before the readouts, and the order is load-bearing: this is where the
+	-- PlayerGui tree is first walked, and the readout walk below picks the
+	-- player's labels up out of guiRoot. Read the other way round, the first
+	-- poll would find no guiRoot and the player's screen would be missing from
+	-- the readout list until the next periodic rescan a minute later.
+	readGui()
 	readReadouts()
 	readLamps()
 	readPanels()
@@ -2376,10 +2109,17 @@ local function pollOnce()
 	announceSam()
 	announceClock()
 
+	-- Closed here, before the emit work: this is the share of the poll that went
+	-- into READING, and the whole point of measuring it apart from the rest is
+	-- that "the reads are expensive" and "the file is expensive to write" have
+	-- different remedies.
+	perfReads = perfReads + (os.clock() - readStart)
+
 	if #changed > 0 then
 		local head = 'S ' .. tostring(sample) ..
 			' t=' .. string.format('%.2f', now - t0) ..
-			' dt=' .. tostring(math.floor((now - lastPoll) * 1000 + 0.5))
+			' dt=' .. tostring(math.floor((now - lastPoll) * 1000 + 0.5)) ..
+			' rd=' .. string.format('%.1f', (os.clock() - readStart) * 1000)
 		local per = Config.MaxPairsPerLine
 		for i = 1, #changed, per do
 			local chunk = {}
@@ -2410,17 +2150,6 @@ local function pollOnce()
 	local tempF = last['m.temp']
 	local isRunning = (tempF ~= nil and tempF >= Config.CoreThresholds[1])
 
-	-- The driver reads the same two numbers the boundary does, computed once
-	-- above rather than twice. A second copy of isRunning is a second opinion,
-	-- and two opinions about whether the core is lit is how this project once
-	-- spent a day on a reactor that had been running the whole time.
-	local okDrive, driveErr = pcall(driveStep, tempF, isRunning, pollDt)
-	if not okDrive then
-		emitEvt('DRIVEERR', tostring(driveErr))
-		drive.on = false
-		drive.verdict = 'errored'
-	end
-
 	if not flowArmed then
 		if isRunning then
 			lowRun = lowRun + 1
@@ -2439,9 +2168,29 @@ local function pollOnce()
 		if sawDown and settle == 0 then
 			lowRun = lowRun + 1
 			if lowRun >= Config.DebounceSamples then
-				emitPhase('UP')
-				settle = Config.SettleSamples
 				lowRun = 0
+				if startedSinceDown then
+					emitPhase('UP')
+					settle = Config.SettleSamples
+				else
+					-- The core is running again and NOTHING was lit. That is a
+					-- recovery, and a recovery does not end a shift -- the game
+					-- still says the same shift is live and the operator never
+					-- left. So rather than start the settle countdown, clear the
+					-- down state: `sawDown` is read elsewhere as "the core is
+					-- stopped" (the on-screen phase, and the UP arm below)
+					-- and leaving it set would make every later line wrong.
+					--
+					-- `lowRun` was already reset above, so a second dip needs its
+					-- own three polls to count -- a recovery does not pre-charge
+					-- the next DOWN. And the phase is emitted, not swallowed: the
+					-- operator's complaint about this run was that the file said
+					-- "shutdown" and "restart" for what was a stall, so the file
+					-- has to SAY what it now believes instead of going quiet.
+					sawDown = false
+					startedSinceDown = false
+					emitPhase('RECOVER')
+				end
 			end
 		end
 		if settle > 0 then
@@ -2453,6 +2202,19 @@ local function pollOnce()
 			lowDown = lowDown + 1
 			if lowDown >= Config.DebounceSamples then
 				sawDown = true
+				-- Every DOWN begins with nothing lit since the last one. Without
+				-- this the flag would latch across a whole shift and the second
+				-- real shutdown would be read as a recovery.
+				startedSinceDown = false
+				-- And with the recovery debounce at zero, which it was not:
+				-- arming the flow leaves `lowRun` sitting at DebounceSamples (it
+				-- is the same counter), so the first hot poll after a DOWN
+				-- already satisfied `lowRun >= DebounceSamples` and the UP fired
+				-- on ONE poll instead of three. That is a debounce that holds
+				-- while a shift warms up and silently stops holding for every
+				-- recovery afterwards -- the same one-poll flip being read as a
+				-- real event that the 12:32 seal was made of. Found by F4 b.
+				lowRun = 0
 				emitPhase('DOWN')
 			end
 		end
@@ -2548,10 +2310,33 @@ local function endReason()
 	else
 		hotPolls = 0
 	end
-	if sawDown then
+	-- The backstop may only count while the thing it is a backstop for is STILL
+	-- TRUE, and "the core read as stopped" is a claim about the temperature, not
+	-- about a key. `sawDown` is an EDGE -- it stays set from the DOWN until
+	-- something clears it -- so a counter gated on the edge alone keeps counting
+	-- through a recovery and then fires on a core that is demonstrably running.
+	-- That is what sealed the 12:32 run: DOWN at t=549.73, back above the line at
+	-- t=567.57, sealed 0.33 s after the recorder had itself emitted the UP, for
+	-- "having been down 40 polls". Worse, it stole the ending from the settle
+	-- path, so the receipt named the backstop instead of the relight -- a wrong
+	-- cause, which is worse than no cause.
+	--
+	-- The reset uses the same expression `isRunning` uses, one line of arithmetic
+	-- in one place. A monitor that reads `ERR F` (a string) resets nothing and
+	-- counts nothing but stays down, which is the pre-existing behaviour for a
+	-- blind monitor and is not what this change is about.
+	if type(t) == 'number' and t >= Config.CoreThresholds[1] then
+		-- Three cases, not a reset followed by the old two-way test: resetting
+		-- and then falling through to the increment leaves the counter at 1 on
+		-- a poll where the core is demonstrably RUNNING. That cannot fire the
+		-- arm (1 is not 40), but it does make the dwell after a recovery one
+		-- poll short, which is the sort of off-by-one that is only ever found by
+		-- a harness -- and this one was.
+		downPolls = 0
+	elseif sawDown then
 		downPolls = downPolls + 1
 		if downPolls >= Config.SealDownSamples then
-			return 'held down ' .. tostring(downPolls) .. ' polls with no end signal'
+			return 'core read as down for ' .. tostring(downPolls) .. ' polls with no end signal'
 		end
 	else
 		downPolls = 0
@@ -2573,27 +2358,39 @@ local function endReason()
 end
 
 local function main()
-	emit('# The Reactor Game -- original-game change recorder v1.0')
+	emit('# The Reactor Game -- original-game change recorder build=' .. Config.Build)
 	emit('# constraint: only changed values are written; no heartbeat')
 	local player = Players.LocalPlayer
 	emit('# session ' .. stamp ..
 		' placeId=' .. tostring(game.PlaceId) ..
 		' jobId=' .. tostring(game.JobId) ..
 		' player=' .. ((player and player.Name) or 'nil') ..
-		' transport=' .. (httpFn and ('http' .. tostring(Config.Port))
+		-- The transport is named down to the CANDIDATE, not just "http": which of
+		-- the executor's request functions exists here is the one structural
+		-- difference between this script and the watcher that went silent beside it.
+		' transport=' .. (httpFn and ('http' .. tostring(Config.Port) .. '/' .. httpName)
 			or (haveWritefile() and 'writefile' or 'NONE')))
-	emit('# keys r=reactor m=monitor x=unreadable c=control s=stats z=lamp t=readout')
+	emit('# keys r=reactor m=monitor x=unreadable c=control s=stats z=lamp '
+		.. 't=readout g=playerGui')
 	emitEvt('START', 'reactorFrame=' .. tostring(ReactorFrame ~= nil) ..
 		' thermal=' .. tostring(ThermalConsole ~= nil) ..
 		' cbl=' .. tostring(CBLConsoles ~= nil) ..
 		' power=' .. tostring(PowerFrame ~= nil) ..
 		' stats=' .. tostring(MainData ~= nil) ..
 		' logs=' .. tostring(LogsFrame ~= nil) ..
+		' gui=' .. tostring(ensureGuiRoot()) ..
 		' hooks=' .. tostring(hooked))
 	-- `readouts` is the count the TMAP manifest will expand to. It is in the
 	-- receipt too, because "the sweep found 0 labels" and "the sweep found 90
 	-- labels and none of them ever changed" are different results and a bare
 	-- absence of t.* lines cannot tell them apart.
+	--
+	-- The GUI is built FIRST, because the readout sweep below walks PlayerGui for
+	-- the player's own labels and can only do that once guiRoot exists. Left the
+	-- other way round the startup line would report a readout count that did not
+	-- include the player's screen, and the count would then change under the
+	-- reader at the first poll with nothing in the file to say why.
+	pcall(buildGui)
 	readoutDirty = true
 	buildReadouts()
 	emitEvt('READOUTS', 'found=' .. tostring(readoutCount) ..
@@ -2664,6 +2461,9 @@ local function main()
 		-- longer than the configured wait is not a poll that never happened.
 		local iterStart = os.clock()
 		local ok, done = pcall(pollOnce)
+		local iterDone = os.clock()
+		perfPass = perfPass + (iterDone - iterStart)
+		if iterDone - iterStart > perfWorst then perfWorst = iterDone - iterStart end
 		if not ok then emitEvt('POLLERR', tostring(done)) end
 
 		-- Ahead of every other check, and in the same iteration that saw the
@@ -2682,13 +2482,33 @@ local function main()
 			lastRescan = sample
 			lampDirty = true
 			readoutDirty = true
+			-- A safety net, not the mechanism: the GUI tree is kept dirty by its
+			-- own DescendantAdded/Removing connections. This is here because a
+			-- MISSED event is silent -- the screen simply stops being recorded --
+			-- and a once-a-minute full re-walk costs nothing next to never
+			-- noticing that the player's labels had gone stale.
+			guiDirty = true
 		end
 		if os.clock() - lastFlush >= Config.FlushSeconds then
 			lastFlush = os.clock()
+			local fA = os.clock()
 			flush()
+			perfFlush = perfFlush + (os.clock() - fA)
+		end
+		-- The window closes on the same numbers the loop just finished adding to,
+		-- and it is closed here rather than inside pollOnce because the flush
+		-- above is part of what the window is supposed to describe.
+		perfN = perfN + 1
+		-- The first iteration has no previous end to measure from, and t0 is not
+		-- an answer: it is the top of the whole run, so using it would count the
+		-- startup as one enormous poll interval.
+		if lastPollB > 0 then perfWall = perfWall + (iterDone - lastPollB) end
+		lastPollB = iterDone
+		if sample - lastPerf >= Config.PerfPolls then
+			lastPerf = sample
+			reportPerf(iterDone)
 		end
 		task.wait(Config.SampleInterval)
-		pollDt = os.clock() - iterStart
 	end
 end
 
@@ -2749,42 +2569,10 @@ local function buildUi()
 		btn.Text = 'SEALING'
 	end)
 
-	-- The driver switches a live reactor off by itself, which is a real change to
-	-- the world and not something to leave with no way out. Disarming only stops
-	-- FUTURE presses: a press already in flight has already happened, and the
-	-- proof window it opened is what tells the reader whether it did anything.
-	local drvBtn = Instance.new('TextButton')
-	drvBtn.Size = UDim2.new(0, 116, 0, 30)
-	drvBtn.Position = UDim2.new(0, 160, 0.01, 82)
-	drvBtn.Text = 'DRIVER: ' .. (drive.on and 'ON' or 'OFF')
-	drvBtn.TextColor3 = Color3.new(1, 1, 1)
-	drvBtn.BackgroundColor3 = drive.on and Color3.fromRGB(34, 96, 160)
-		or Color3.fromRGB(60, 60, 60)
-	drvBtn.Font = Enum.Font.GothamMedium
-	drvBtn.TextSize = 14
-	drvBtn.Parent = gui
-	local c3 = Instance.new('UICorner')
-	c3.CornerRadius = UDim.new(0, 4)
-	c3.Parent = drvBtn
-	drvBtn.MouseButton1Click:Connect(function()
-		drive.on = not drive.on
-		if not drive.on then
-			drive.verdict = 'disarmed-by-user'
-		elseif drive.state == 'inert' then
-			-- Resuming an inert driver would press the same dead controls again.
-			drive.state = 'arming'
-			drive.armT = 0
-			drive.verdict = 'rearmed'
-		end
-		drvBtn.Text = 'DRIVER: ' .. (drive.on and 'ON' or 'OFF')
-		drvBtn.BackgroundColor3 = drive.on and Color3.fromRGB(34, 96, 160)
-			or Color3.fromRGB(60, 60, 60)
-		emitEvt('DRIVE', 'user ' .. (drive.on and 're-armed' or 'disarmed'))
-	end)
-
-	buoy.text = text
-	buoy.btn = btn
-	buoy.drvBtn = drvBtn
+	-- Published because the player-GUI reader has to be able to tell the
+	-- recorder's own panel apart from the game's screens. Without this the
+	-- recorder spends the run recording itself.
+	buoy.gui = gui
 end
 
 local function buildHotkey()
@@ -2812,14 +2600,9 @@ local function refreshLoop()
 				.. string.char(10) ..
 				'seg %d  buf %d B  fails %d'
 				.. string.char(10) ..
-				'drop %d  spill %d  evt %d'
-				.. string.char(10) ..
-				'drv %s %s  shut %d/%d start %d/%d',
+				'drop %d  spill %d  evt %d',
 				phaseName, sample, lines, segNo, bufBytes, postFails,
-				dropped, spilled, evtNo,
-				drive.state, drive.verdict,
-				drive.shutIdx - 1, #shutCandidates,
-				drive.startIdx - 1, #startCandidates)
+				dropped, spilled, evtNo)
 		end
 		task.wait(0.25)
 	end

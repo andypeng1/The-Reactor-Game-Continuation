@@ -1,0 +1,13 @@
+# transport_probe summary -- sent through the first transport that worked
+winner=http_request
+prefix=probe/260930-200834/
+
+syn          post present=false works=false not present in this executor
+http_request post present=true  works=true  status 200
+request      post present=true  works=true  status 200
+http         post present=true  works=true  status 200
+fluxus       post present=false works=false not present in this executor
+krnl         post present=false works=false not present in this executor
+getgenv      post present=true  works=true  status 200
+httpget      get  present=true  works=false raised: invalid argument #1 to 'HttpGet' (string expected, got nil)
+httpservice  post present=true  works=false status 0 (loadstring:82: Blocked function)

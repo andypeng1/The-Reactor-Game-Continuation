@@ -1,0 +1,13 @@
+# the recording window -- when this run was being recorded, and what was not
+# rule: from the start-up lever to the shift dial reading 12:00
+state=closed
+opened_at=not yet why=(nothing has opened it)
+closed_at=93.70 why=the window never opened; the timeline is the whole run
+withheld_before_open=0 line(s), plus 0 audio line(s)
+recorded=10439 line(s)
+lever_path=Consoles.MainReactorConsole.StartUpBigLever.StartClickPart
+lever_hooked=true
+opened_by_fallback_flag=false
+clock_path=Monitors.QuotaControlRoomMonitor.Screen.MonitorUI.MainMonitorFrame.TimeFrame.TimeLabel
+clock_text=11:57 PM
+clock_mins=717  (the close rule is >= 720, 2 poll(s) in a row)

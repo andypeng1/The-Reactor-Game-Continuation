@@ -395,5 +395,175 @@ return [=[
 ```
 **注意：内容里不能出现「右方括号+两个等号+右方括号」这个序列。**
 
+### 5.10 拉杆的平滑落位（VisualFeedback.poseLever）★ Phase 59
+> **§5.2 是旧的。** 它是 `ControlVisuals` 的**旋转**写法，已被取代 ——
+> 现在写拉杆 CFrame 的是 `SSS.ReactorBackend.VisualFeedback`，运动是**纯平移**。
+> 照着 §5.2 改会退回一个**已经撤过的**方案（`DECISIONS_2` 187）。
+
+改成 tween 之前（一帧落位，没有动画，但档位是对的）：
+```lua
+part.CFrame = entry.baseline + entry.baseline.LookVector * throwDistance(level, maxLevel, entry.travel)
+```
+
+现在：
+```lua
+local function poseLever(key: string, level: number, maxLevel: number)
+    local entry = levers[key]
+    if not entry then return end
+    local part = entry.part
+    if not part.Parent then return end
+
+    -- The goal is a pure translation along the lever's own axis: CFrame +
+    -- Vector3 adds to the position and leaves the rotation alone, which is
+    -- what makes carrying over a stored baseline exact.
+    local goal = entry.baseline + entry.baseline.LookVector * throwDistance(level, maxLevel, entry.travel)
+
+    -- Cancel before create. Two live tweens on one property both write it
+    -- every frame and the winner is decided per frame, so a second click
+    -- mid-flight can park the union on a detent nobody asked for. Cancel
+    -- leaves it where it is, so the new throw continues from there rather
+    -- than snapping back to the last completed stop.
+    if entry.tween then entry.tween:Cancel() end
+    local tween = TweenService:Create(part, leverTweenInfo, {CFrame = goal})
+    entry.tween = tween
+    tween:Play()
+end
+```
+
+配置端（`Config.Visual`）：
+```lua
+-- Must sit BELOW RefreshSeconds: the refresh is signature-gated, so a stop
+-- still being animated when the next pose arrives is a stop the union never
+-- rests on.
+LeverTweenSeconds=0.3,
+```
+读取端**不能**让一个 `nil` 把机制打下去（`DECISIONS_2` 190）—— 缺键就退回模块自带的
+0.3 s，并**只 warn 一次**（每帧 warn 会把真消息变成噪音）。
+
+**两个必须有的安全性质**（`DECISIONS_2` 188 / 189）：
+1. **创建前先 `Cancel()`** —— 见上面代码里的注释。
+2. **同一个实例被重新解析时沿用旧 `baseline` / `travel`**：
+```lua
+if known and known.part == part then
+    if known.tween then known.tween:Cancel() end
+    levers[key] = {part = part, baseline = known.baseline, travel = known.travel}
+else
+    local amount = travel
+    if fromStop then amount = smallThrow(part) end
+    levers[key] = {part = part, baseline = part.CFrame, travel = amount}
+end
+```
+`smallThrow(part)` 是从该 rig 自己的 `ClickPart` 读 throw 的**符号**的，只在 union
+坐在两个档位之一时才成立。半路重新测量会把**档位之间**的姿势当基准，符号可能反过来，
+此后**每一抛都走错方向而且没有任何症状**（去错档位的拉杆仍然是一根在动的拉杆）。
+
+**怎么验的（`§4.4` 要求真实验证；`§0.16` 挡着「读运行中的游戏」）** ——
+不要等 Play 模式，用 Edit 模式的 `Heartbeat` 在进程内采样：
+```lua
+-- Edit 模式有真的 Heartbeat（实测 ~45-47 Hz），TweenService 也照常推进，
+-- 所以「在两次工具调用之间」也能采到中途的姿势。
+local conn = game:GetService("RunService").Heartbeat:Connect(function()
+    -- 记下 part.CFrame，顺便在到达某个行程百分比时打断（Cancel + 重新 pose），
+    -- 用来量「打断处有没有跳变」——这是端点检查看不见的那一半。
+end)
+```
+本轮量到的数：**203 个不同姿势、单调、沿轴纯平移**；同 rig 的另外 23 个兄弟部件
+和另外 20 根拉杆**逐位相同**（没被误伤）；两个档位都是**逐位精确**落位；
+打断在行程 **41.8%** 处，跨过 cancel 的那一步 **0.000000 studs**，最终仍在
+t = 13.498 s 精确落到远档。（**时间是按工具调用次数推进的**，
+`task.delay` 不是可靠时钟 —— 0.4 s 的会在一次重调用**内部**烧掉，7.5 s 的**从没烧到**。）
+
 ---
+
+### 5.11 百叶窗的缓动（`RoomShell.applyShutters`）★ Phase 60
+
+**同一件事的另一半**：§5.10 是**控制台**上的拉杆（`VisualFeedback`），
+这里是拉杆**指向**的三扇门（`RoomShell`）。落位公式**一个字没改**，
+改的只有「怎么到那里」。
+
+`Config.Shell` —— 和 `ShutterTravel` 做邻居（`Config` 与逻辑分离）：
+
+```lua
+-- How long the shutters take to travel that 10.58, read by RoomShell.
+-- Deliberately not the levers' 0.3: a shutter moves about 15 times the
+-- distance of a lever throw, so the same number would make the panel
+-- crawl. 0.6 s is 17.6 studs/s, which is what a powered door looks like
+-- -- and it is short enough that a double-toggle lands its second tween
+-- while the first is still on screen, which is why RoomShell cancels the
+-- live one before creating another instead of letting two share it.
+ShutterTweenSeconds = 0.6,
+```
+
+`RoomShell` 的三段。**缓动词汇故意和拉杆一样**（`Quad` / `Out`）——
+一个控制家族不该有两种手感；**缓动不进 `Config`**，它不是谁能调的旋钮：
+
+```lua
+-- ========== TWEEN ==========
+-- Declared above Initialize because Initialize reads the config key. A local
+-- declared after the function body still compiles, but the name inside
+-- Initialize would resolve to a global and read nil -- the failure looks like
+-- the knob doing nothing, with no error anywhere.
+local DEFAULT_SHUTTER_TWEEN_SECONDS = 0.6
+local SHUTTER_EASING_STYLE = Enum.EasingStyle.Quad
+local SHUTTER_EASING_DIRECTION = Enum.EasingDirection.Out
+local shutterTweenInfo = TweenInfo.new(
+    DEFAULT_SHUTTER_TWEEN_SECONDS, SHUTTER_EASING_STYLE, SHUTTER_EASING_DIRECTION)
+local warnedShutterTweenSeconds = false
+```
+
+**`DEFAULT_SHUTTER_TWEEN_SECONDS` 不是白写的**：配置坏掉时它不是错，是退路 ——
+但**只说一次**，而且要说清行程没受影响（`DECISIONS_2` 190）。
+「与成功无法区分的错误路径不是错误处理」，所以这里 warn 而不是静默：
+
+```lua
+    local seconds = config and config.Shell and config.Shell.ShutterTweenSeconds
+    if typeof(seconds) == 'number' and seconds > 0 then
+        shutterTweenInfo = TweenInfo.new(seconds, SHUTTER_EASING_STYLE, SHUTTER_EASING_DIRECTION)
+    elseif not warnedShutterTweenSeconds then
+        warnedShutterTweenSeconds = true
+        warn(string.format("[RoomShell] Config.Shell.ShutterTweenSeconds is %s, not a positive number, so shutters take the module's own %.2f s. The travel itself is unaffected.", tostring(seconds), DEFAULT_SHUTTER_TWEEN_SECONDS))
+    end
+```
+
+每个门条目带一个**活 tween 句柄**（`--!strict` 下要 `type` 别名，
+和 `VisualFeedback` 的 `levers` 同一处理）；**创建前先 `Cancel()`**：
+
+```lua
+type ShutterEntry = {path: string, frame: BasePart, closed: CFrame, tween: Tween?}
+local shutters: {ShutterEntry} = {}
+
+local function applyShutters(open, config)
+    local travel = Vector3.new(0, config.Shell.ShutterTravel, 0)
+    for _, shutter in ipairs(shutters) do
+        local frame = shutter.frame
+        if frame.Parent then
+            local goal = open and (shutter.closed - travel) or shutter.closed
+            -- Cancel before create. See the note on ShutterEntry.
+            if shutter.tween then shutter.tween:Cancel() end
+            local tween = TweenService:Create(frame, shutterTweenInfo, {CFrame = goal})
+            shutter.tween = tween
+            tween:Play()
+        end
+    end
+end
+```
+
+**`open` 那一支是 `closed - travel`（减 `Vector3`），不是 `closed * CFrame.new(...)`**：
+中间那扇门的 `Frame` 绕 Y 转了 90°，减 `Vector3` 是引擎自己的「世界空间平移」，
+和操作员那句「下降 10.58」是同一个操作。
+
+**验证配方（§4.4），量到的数：** `Clone()` 到 `SSS.<temp>` 再 `require`（§0.15 → 绕过缓存），
+驱动**发货的 `RoomShell.Refresh`**，并用 `RunService.Heartbeat` 采样。
+
+- 关 → 开 `worstUpStepY = 0`；落点 `[271.619, 271.619, 271.620]`，**误差 0**；行程 **10.580**。
+- 开 → 关回到作者姿势，**误差 0**，`worstDownStep = 0`（151 tick）。
+- 真正走完 **0.583 s**（配置 0.6）。
+- 中途 `Cancel`：开关那一刻前后两帧差 **0**，最终还是精确落档。
+- 门里的 `Glass` 相对 `Frame` 漂移 **0**（焊着的，跟着走）；门以外写入 **0**。
+
+> **⚠️ Edit 模式下逐 tick 的位移读不出「平不平」。** 第一版分析里出现过
+> **2.707 studs / 11.9 ms**（≈ 227 studs/s），而 `Quad/Out` 的峰值只有 35.3 studs/s。
+> 那是**采样假象**：tween 跟渲染步走，而 `Heartbeat` 回调**成串**投递 ——
+> 121 个回调里 **111 个** `|Δy| < 0.005`。**换成 50 ms 时间桶**（最大 1.934，
+> 解析上限 1.763）才读得出形状。细节与判据见 `DECISIONS_2` 193 / `PROGRESS` 60.3。
 

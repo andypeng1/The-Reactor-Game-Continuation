@@ -61,6 +61,27 @@ MUTATIONS = [
     ),
 ]
 
+# Mutations the suite has to SURVIVE, because the harness reads the number
+# instead of carrying one. Green is the pass condition here, which is the
+# opposite of every entry above, and so is the claim: not "the recorder is
+# guarded" but "the harness has no opinion of its own".
+#
+# The 1000 F correction is why this class exists. The builder's Config used to be
+# a typed copy of the recorder's, so moving the cold-trip line left the dwell test
+# measuring the line the recorder had just stopped using -- green, and about
+# nothing. A test that only ever goes red cannot tell that case from a working
+# one, so this one is asserted to stay green AND to show the new number.
+FOLLOW_MUTATIONS = [
+    (
+        "the cold-trip line moves",
+        "\tLowTripF        = 1000,",
+        "\tLowTripF        = 800,",
+        "LowTripF = 800,",
+        "The built states file must carry the shipped number. A typed copy would "
+        "keep 1000 and go on passing about a line nothing uses.",
+    ),
+]
+
 
 def run(args):
     """rc, combined output. Never raises on a nonzero rc; that IS the datum."""
@@ -122,6 +143,33 @@ def main() -> int:
                 print("     caught by: %s" % want_fail)
                 if other:
                     print("     also red: %s" % "; ".join(other))
+
+        for name, needle, replacement, must_contain, why in FOLLOW_MUTATIONS:
+            hits = original.decode("utf-8").count(needle)
+            if hits != 1:
+                print("SKIP %s -- the needle occurs %d times, expected 1" % (name, hits))
+                bad += 1
+                continue
+
+            mutated = original.decode("utf-8").replace(needle, replacement, 1)
+            RECORDER.write_bytes(mutated.encode("utf-8"))
+            mrc, mout = build_and_run()
+            states = STATES.read_text(encoding="utf-8")
+
+            if mrc != 0:
+                print("BAD  %s -- a change the harness is supposed to FOLLOW turned it red" % name)
+                for f in failed_lines(mout):
+                    print("     %s" % f)
+                print("     %s" % why)
+                bad += 1
+            elif must_contain not in states:
+                print("BAD  %s -- the states file has no %r, so the harness is not"
+                      " reading the shipped number" % (name, must_contain))
+                print("     %s" % why)
+                bad += 1
+            else:
+                print("OK   %s" % name)
+                print("     the states file carries %r and the suite stayed green" % must_contain)
     finally:
         RECORDER.write_bytes(original)
 
@@ -134,10 +182,13 @@ def main() -> int:
         1 for ln in out.splitlines() if ln.startswith("PASS")))
 
     if bad:
-        print("%d of %d mutations were not caught as specified" % (bad, len(MUTATIONS)))
+        print("%d of %d mutations were not caught as specified"
+              % (bad, len(MUTATIONS) + len(FOLLOW_MUTATIONS)))
         return 1
-    print("all %d guards are load-bearing: removing any one turns the suite red"
-          % len(MUTATIONS))
+    print("all %d guards are load-bearing: removing any one turns the suite red,"
+          " and the %d the harness is meant to FOLLOW leave it green while moving"
+          " the number it measures"
+          % (len(MUTATIONS), len(FOLLOW_MUTATIONS)))
     return 0
 
 

@@ -22,18 +22,32 @@ local function checkTrue(name, cond, why)
 	if not cond then say('     ' .. why) end
 end
 
--- The recorder's own numbers, or the dwells under test would be this file's
--- opinion of them rather than the shipped ones.
+-- The recorder's own numbers, EXTRACTED from it by extract_config() below.
+-- They were typed here until the cold-trip line moved from 2000 F to 1000 F and
+-- this copy did not: the dwell test then went on measuring a line the recorder
+-- no longer had, and it would have kept passing. A copy of a configuration
+-- proves nothing about that configuration, so there is no longer a copy.
 local Config = {
 	SampleInterval = 0.25,
 	CoreThresholds = {5600, 17500, 29500, 39000},
-	LowTripF = 2000,
+	LowTripF = 1000,
 	MeltdownF = 39000,
 	SealColdSamples = 8,
 	SealHotSamples = 8,
 	SealDownSamples = 40,
 	SealDeadSamples = 40,
 }
+
+-- A core that is cold ON PURPOSE, derived rather than typed so that a test about
+-- the cold arm cannot outlive the number the cold arm uses.
+local COLD_F = math.floor(Config.LowTripF / 2)
+
+-- A core that is WARM BUT NOT RUNNING: above the cold-trip line and below the
+-- run line at the same time. Two tests below need exactly that shape -- one to
+-- keep the cold arm silent while the down counter is measured, one to keep it
+-- silent while the counter is reset -- and both used to type a number that only
+-- had that property by coincidence.
+local WARM_F = math.floor((Config.LowTripF + Config.CoreThresholds[1]) / 2)
 
 -- `last` is the recorder's carried-forward reading table: a key holds the last
 -- value SEEN, not the value of this poll. The mock sets it directly, which is
@@ -99,10 +113,33 @@ local function endReason()
 	else
 		hotPolls = 0
 	end
-	if sawDown then
+	-- The backstop may only count while the thing it is a backstop for is STILL
+	-- TRUE, and "the core read as stopped" is a claim about the temperature, not
+	-- about a key. `sawDown` is an EDGE -- it stays set from the DOWN until
+	-- something clears it -- so a counter gated on the edge alone keeps counting
+	-- through a recovery and then fires on a core that is demonstrably running.
+	-- That is what sealed the 12:32 run: DOWN at t=549.73, back above the line at
+	-- t=567.57, sealed 0.33 s after the recorder had itself emitted the UP, for
+	-- "having been down 40 polls". Worse, it stole the ending from the settle
+	-- path, so the receipt named the backstop instead of the relight -- a wrong
+	-- cause, which is worse than no cause.
+	--
+	-- The reset uses the same expression `isRunning` uses, one line of arithmetic
+	-- in one place. A monitor that reads `ERR F` (a string) resets nothing and
+	-- counts nothing but stays down, which is the pre-existing behaviour for a
+	-- blind monitor and is not what this change is about.
+	if type(t) == 'number' and t >= Config.CoreThresholds[1] then
+		-- Three cases, not a reset followed by the old two-way test: resetting
+		-- and then falling through to the increment leaves the counter at 1 on
+		-- a poll where the core is demonstrably RUNNING. That cannot fire the
+		-- arm (1 is not 40), but it does make the dwell after a recovery one
+		-- poll short, which is the sort of off-by-one that is only ever found by
+		-- a harness -- and this one was.
+		downPolls = 0
+	elseif sawDown then
 		downPolls = downPolls + 1
 		if downPolls >= Config.SealDownSamples then
-			return 'held down ' .. tostring(downPolls) .. ' polls with no end signal'
+			return 'core read as down for ' .. tostring(downPolls) .. ' polls with no end signal'
 		end
 	else
 		downPolls = 0
@@ -164,12 +201,12 @@ check('E1 true to false seals on the FIRST poll', run(1),
 
 -- ------------------------------------------------- E2 the cold opening -----
 -- THE ASSERTION THAT PROTECTS THE WHOLE NEW FLOW. A shift opens with the core
--- cold: 900 F, below the 2000 F trip line, and below the 5600 F run line too --
--- so the recorder's own boundary has latched `sawDown` as well. Both level tests
--- are true simultaneously, in the state every run now STARTS in, and this must
--- stay silent indefinitely.
+-- cold: COLD_F, below the cold-trip line and below the run line
+-- (Config.CoreThresholds[1]) too -- so the recorder's own boundary has latched
+-- `sawDown` as well. Both level tests are true simultaneously, in the state every
+-- run now STARTS in, and this must stay silent indefinitely.
 reset()
-last['m.temp'] = 900
+last['m.temp'] = COLD_F
 sawDown = true
 checkTrue('E2 a cold opening never seals itself', run(200) == nil,
 	'a cold shift start sealed the file, so every run would die two seconds in')
@@ -180,7 +217,7 @@ checkTrue('E2 a cold opening never seals itself', run(200) == nil,
 reset()
 last['m.temp'] = 9000
 endReason()
-last['m.temp'] = 900
+last['m.temp'] = COLD_F
 local _, at = run(Config.SealColdSamples + 5)
 check('E2 the same reading trips once the core has run', at, Config.SealColdSamples)
 
@@ -195,15 +232,18 @@ checkTrue('E3 a missing readout never seals', run(500) == nil,
 
 -- ------------------------------------------------- E4 the cold trip --------
 -- The dwell, pinned at both ends: one poll short is not enough, and the poll the
--- configuration names is. The core is at 1500, under LowTripF and over nothing
--- else, so no other arm can fire and the count is unambiguous.
+-- configuration names is. The core is at COLD_F, under the cold-trip line and
+-- over nothing else, so no other arm can fire and the count is unambiguous.
 reset()
 last['m.temp'] = 9000
 endReason()
-last['m.temp'] = 1500
+last['m.temp'] = COLD_F
 check('E4 one poll short of the cold dwell', run(Config.SealColdSamples - 1), nil)
+-- The expected reason is built from the same two fields the recorder builds it
+-- from, so the number in the message cannot drift away from the number in the arm.
 check('E4 the cold dwell fires on its own poll', run(1),
-	'cold trip (under 2000 F for ' .. tostring(Config.SealColdSamples) .. ' polls)')
+	'cold trip (under ' .. tostring(Config.LowTripF) .. ' F for ' ..
+		tostring(Config.SealColdSamples) .. ' polls)')
 
 -- A single dip must NOT accumulate: the counter is consecutive, or a core that
 -- grazes the line eight times over an hour would seal on the eighth touch.
@@ -296,8 +336,8 @@ checkTrue('E5 a level is not an edge', run(1) == nil,
 
 -- ------------------------------------------------- E6 already-dead session --
 -- The only arm that does not need an edge, for a session that was over before
--- the script arrived. The temperature is above LowTripF (3000) so the cold arm
--- cannot fire, and sawDown is false so the down arm cannot either -- which
+-- the script arrived. The temperature is above the cold-trip line, so the cold
+-- arm cannot fire, and sawDown is false so the down arm cannot either -- which
 -- leaves exactly one thing that can produce a reason here.
 --
 -- `flagWas` is cleared between setting the flag and polling, because that IS the
@@ -317,7 +357,7 @@ check('E6 a session that ended before inject still seals', at2, Config.SealDeadS
 -- either. Without the gate, E2's plant plus a GameActive that reads false at
 -- inject would seal ten seconds in.
 reset()
-last['m.temp'] = 900
+last['m.temp'] = COLD_F
 last['s.GameActive'] = false
 checkTrue('E6 the dead arm is gated too', run(500) == nil,
 	'an unstarted cold core sealed on GameActive alone')
@@ -335,15 +375,95 @@ checkTrue('E7 an absent flag is not a dead shift', run(500) == nil,
 -- The reason is what a reader sees first, so when several arms are satisfiable
 -- at once it must name the most definitive: the shift ended, not a cold trip
 -- that happens to be true on the same poll. The 18:35 tail is exactly this
--- shape -- GameActive false arrived in the same poll as a temperature of 902.
+-- shape -- GameActive false arrived in the same poll as a temperature of 902,
+-- and COLD_F is that shape by construction rather than by luck.
 reset()
 last['m.temp'] = 9000
 endReason()
-last['m.temp'] = 900
+last['m.temp'] = COLD_F
 sawDown = true
 last['s.GameActive'] = false
 check('E8 the shift ending outranks the cold trip', run(1),
 	'shift over (GameActive true to false)')
+
+-- ------------------------------------------------- E9 the down backstop -----
+-- The arm that fired on a RECOVERED core in the 12:32 run, and until that run it
+-- had NO test of its own: `SealDownSamples` appeared exactly once in this file --
+-- in the Config table above -- and nothing here ever made it fire. A guard that
+-- has never gone off is indistinguishable from one wired to nothing, which is
+-- how a backstop becomes the thing that truncates a live recording.
+--
+-- The temperature here is BELOW CoreThresholds[1] on purpose, and that is the
+-- whole trick of the new rule: the arm now resets its counter while the core
+-- reads as running, so the obvious test -- 9000 F with sawDown set -- would find
+-- itself measuring the RESET rather than the count, and would pass against a
+-- backstop that can no longer fire at all. WARM_F is above the trip line, so the
+-- cold arm cannot answer, and below the run line, so the counter is left alone.
+reset()
+last['m.temp'] = 9000
+endReason()
+last['m.temp'] = WARM_F
+sawDown = true
+local _, downAt = run(Config.SealDownSamples + 5)
+check('E9 a core down with no end signal still seals', downAt, Config.SealDownSamples)
+
+-- The wording is part of the fix and not decoration. The old string was "held
+-- down 40 polls with no end signal", and the operator read it the natural way --
+-- as a key being held down -- which is wrong: `sawDown` is an edge over the
+-- core's own temperature reading. A receipt's reason line is the one line a
+-- reader trusts when they are not going to re-derive the run, so it has to name
+-- what was actually measured.
+reset()
+last['m.temp'] = 9000
+endReason()
+last['m.temp'] = WARM_F
+sawDown = true
+check('E9 the reason names the core, not a key',
+	select(1, run(Config.SealDownSamples)),
+	'core read as down for ' .. tostring(Config.SealDownSamples) ..
+	' polls with no end signal')
+
+-- E9 b THE 12:32 DEFECT, IN FOUR LINES. Count the backstop almost to its dwell,
+-- let the core read as running for ONE poll, then go quiet again. The count must
+-- restart, or the file is sealed by a dwell that was accumulated across a
+-- recovery -- and the old rule tested only the `sawDown` EDGE, which nothing had
+-- cleared, so it counted straight through the recovery and fired 0.33 s after the
+-- recorder had itself emitted the UP, on a core that was back at 5810 F.
+--
+-- `sawDown` is deliberately LEFT TRUE, i.e. the edge is not cleared as the flow
+-- rule now clears it. The reset has to hold on its own: the two rules live in
+-- different regions of the recorder, and the order they run in within a single
+-- poll is not something this arm should depend on.
+reset()
+last['m.temp'] = 9000
+endReason()
+last['m.temp'] = WARM_F
+sawDown = true
+run(Config.SealDownSamples - 4)
+last['m.temp'] = 9000
+checkTrue('E9 b one running poll resets the countdown', endReason() == nil,
+	'the up poll itself fired the backstop')
+last['m.temp'] = WARM_F
+local leaked = run(Config.SealDownSamples - 1)
+checkTrue('E9 b the countdown restarts from the recovery', leaked == nil,
+	'the counter carried across a recovery, so the dwell was reached early')
+check('E9 b and it fires on its own poll afterwards', select(1, run(1)),
+	'core read as down for ' .. tostring(Config.SealDownSamples) ..
+	' polls with no end signal')
+
+-- E9 c a monitor reading `ERR F` while the core is down must not disable the
+-- backstop. `ERR F` is a STRING, so the reset cannot mistake it for a running
+-- core. Treating an unreadable temperature as "possibly running" would mean a
+-- sensor that dies with the core leaves the file unsealed forever -- which is
+-- the 18:35 failure, arrived at from the other side.
+reset()
+last['m.temp'] = 9000
+endReason()
+last['m.temp'] = 'ERR F'
+sawDown = true
+local _, blindAt = run(Config.SealDownSamples + 5)
+check('E9 c an unreadable monitor does not stop the backstop', blindAt,
+	Config.SealDownSamples)
 
 -- ------------------------------------------------------ report + exit ------
 local report = table.concat(results, string.char(10))
