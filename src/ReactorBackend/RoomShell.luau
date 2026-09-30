@@ -48,6 +48,8 @@
 
 local RoomShell = {}
 
+local TweenService = game:GetService("TweenService")
+
 -- ========== ADDRESSES ==========
 -- Dot paths resolved from Workspace, spelled the way the place spells them so a
 -- rename in Studio shows up here as a missing node rather than as silence.
@@ -81,6 +83,25 @@ local function resolve(path)
     return node
 end
 
+-- ========== TWEEN ==========
+-- Shutters are heavy and powered, so they are animated rather than snapped.
+-- The lever that commands them already tweens (VisualFeedback), and a panel
+-- that teleports 10.58 studs while its own switch eases across 0.7 studs reads
+-- as the one part of the console that is not wired to anything. The easing
+-- vocabulary is deliberately the same as the levers': one control family should
+-- not feel like two different games.
+--
+-- Declared above Initialize because Initialize reads the config key. A local
+-- declared after the function body still compiles, but the name inside
+-- Initialize would resolve to a global and read nil -- the failure looks like
+-- the knob doing nothing, with no error anywhere.
+local DEFAULT_SHUTTER_TWEEN_SECONDS = 0.6
+local SHUTTER_EASING_STYLE = Enum.EasingStyle.Quad
+local SHUTTER_EASING_DIRECTION = Enum.EasingDirection.Out
+local shutterTweenInfo = TweenInfo.new(
+    DEFAULT_SHUTTER_TWEEN_SECONDS, SHUTTER_EASING_STYLE, SHUTTER_EASING_DIRECTION)
+local warnedShutterTweenSeconds = false
+
 -- ========== CAPTURE ==========
 -- References only. No colour, transparency or Visible flag is baselined from
 -- the world, because a baseline captured after the first Refresh would read the
@@ -88,7 +109,13 @@ end
 local lamps = {}
 local emitters = {}
 local monitors = {}
-local shutters = {}
+-- One entry per shutter, plus the live tween. The tween is kept so the next
+-- pose can cancel it before creating another: two live tweens on one CFrame
+-- both write it every frame and the winner is decided per frame, so a
+-- double-toggle could park the panel at a height nobody asked for. Cancel
+-- leaves it where it is, so the new travel continues from where it had got to.
+type ShutterEntry = {path: string, frame: BasePart, closed: CFrame, tween: Tween?}
+local shutters: {ShutterEntry} = {}
 -- Unlike the three tables above, this latch is NOT cleared by Initialize. See
 -- the capture block below for why.
 local shuttersCaptured = false
@@ -114,6 +141,17 @@ function RoomShell.Initialize(config)
     emitters = {}
     monitors = {}
     local problems = {}
+    -- The duration is a timing knob, not the mechanism: a missing or nonsense
+    -- value must not stop the panels moving. Fall back to the module's own and
+    -- say so once -- and say that the travel is unaffected, so a reader does not
+    -- go looking for a broken door.
+    local seconds = config and config.Shell and config.Shell.ShutterTweenSeconds
+    if typeof(seconds) == 'number' and seconds > 0 then
+        shutterTweenInfo = TweenInfo.new(seconds, SHUTTER_EASING_STYLE, SHUTTER_EASING_DIRECTION)
+    elseif not warnedShutterTweenSeconds then
+        warnedShutterTweenSeconds = true
+        warn(string.format("[RoomShell] Config.Shell.ShutterTweenSeconds is %s, not a positive number, so shutters take the module's own %.2f s. The travel itself is unaffected.", tostring(seconds), DEFAULT_SHUTTER_TWEEN_SECONDS))
+    end
     local root = resolve(ROOM_LIGHTS)
     if root == nil then
         problems[#problems+1] = 'missing '..ROOM_LIGHTS
@@ -199,7 +237,7 @@ function RoomShell.Initialize(config)
                 if frame == nil or not frame:IsA('BasePart') then
                     problems[#problems+1] = path..' has no Frame part to move'
                 else
-                    shutters[#shutters+1] = {path = path, frame = frame, closed = frame.CFrame}
+                    shutters[#shutters+1] = {path = path, frame = frame, closed = frame.CFrame, tween = nil}
                 end
             end
         end
@@ -307,8 +345,14 @@ end
 local function applyShutters(open, config)
     local travel = Vector3.new(0, config.Shell.ShutterTravel, 0)
     for _, shutter in ipairs(shutters) do
-        if shutter.frame.Parent then
-            shutter.frame.CFrame = open and (shutter.closed - travel) or shutter.closed
+        local frame = shutter.frame
+        if frame.Parent then
+            local goal = open and (shutter.closed - travel) or shutter.closed
+            -- Cancel before create. See the note on ShutterEntry.
+            if shutter.tween then shutter.tween:Cancel() end
+            local tween = TweenService:Create(frame, shutterTweenInfo, {CFrame = goal})
+            shutter.tween = tween
+            tween:Play()
         end
     end
 end

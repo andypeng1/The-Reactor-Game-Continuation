@@ -156,6 +156,38 @@ control bus ready: tagged=73 reindexed=73
 - 档位：CBL 5 / PEA 4 / 冷却泵 4 / 风扇·E-VENT·启停 2
 - 灯：稳态白/红/暗 + 按下时 0.6s 绿色 `Pulse` 闪烁
 
+**拉杆的运动 —— Phase 59（2026-09-30）起是 tween。**
+这是本节最容易读错的地方，所以把「谁在写」「怎么动」「多快」拆开写：
+
+- **写入者是 `SSS.ReactorBackend.VisualFeedback`，不是 `ControlVisuals`** ——
+  模块自己第 4 行就写着它是这些 CFrame 的单一写入者，`Engine` 从不碰部件。
+  §5.2 那套 `ControlVisuals` 的**旋转**写法**已被取代**（旧的，别再照着改）。
+- **运动契约是平移，不是旋转**：拉杆沿自己的 `baseline.LookVector` 滑到档位。
+  `CFrame + Vector3` 只加位置、保留旋转，所以「把存下来的 `baseline` 接着用」是精确的
+  （`part.CFrame.LookVector == baseline.LookVector` 恒成立）。
+- **档位 → 位移** = `throwDistance(level, maxLevel, travel)`
+  = `(clamp(level,1,maxLevel) - 1) / (maxLevel - 1) * travel`。
+  **level 1 给出 throw 0，也就是作者原本摆的那个姿势** ——
+  1 档不是一个需要动画的位移，而是原点。这解释了为什么 `poseToggle(key, on)`
+  只能是 2 或 1（`TOGGLE_MAX_LEVEL`）。
+- **`Config.Visual.LeverArcDegrees`（50）现在没有任何读者**。它是旧的旋转写法留下的键，
+  当前写入者是纯平移的；grep 到它**不要**据此以为 throw 会转（`DECISIONS_2` 187）。
+- **落位方式**：`TweenService:Create(part, leverTweenInfo, {CFrame = goal}):Play()`，
+  时长取自 `Config.Visual.LeverTweenSeconds`（**0.3 s**，`Quad` / `Out`）。
+  **它必须短于 `Config.Visual.RefreshSeconds`（1 s）**：refresh 是**签名门控**的
+  （输入不变就早退，姿势只在有输入动过时才重写），所以下一次姿势到来时还在动的档位，
+  就是**这根 union 永远不会停在上面的档位**。
+- 两个必须有的安全性质：创建新 tween 前先 `Cancel()` 旧的（否则一个属性上两个活 tween
+  逐帧竞争）；**同一个实例**被重新解析时沿用旧 `baseline` / `travel`
+  （`smallThrow` 只在 union 坐在档位上时才读得对符号）。理由见 `DECISIONS_2` 188 / 189。
+- **数量是本轮实测，和本节上面的旧数字对不上**：place 里 **41** 个 `LeverUnion`
+  （`CLAUDE.md` §6 记的 32 是旧的），模块自己有 **21** 个 lever key。
+  `18 个拉杆` / `31 盏灯` / `41 盏灯` 这几个数和「模块会写的 21 个 lever / 31 个 lamp key」
+  是**不同的集合**，不要互相加减。(`DECISIONS` 43 记的那次装机变动仍然有效。)
+
+**上面写的是「控制台上的东西」。控制台指向的东西**（房间灯带、七台监视器、
+三扇百叶窗门）由**另一个模块**写 —— 见 §2.12。
+
 ### 2.6 监视器（MonitorService）
 | 监视器 | 内容 |
 |---|---|
@@ -369,5 +401,50 @@ Workspace 根本没有 `ControlRoom` 容器，玩家所在的房间就是 `CullF
 **那 5 个扇区房间现在不在世界里。** `Workspace.Facility.Rooms` 装的是通往它们的
 走廊 / 连接件 / 门厅（`MainHallwaySegment` / `HallwayRoomConnector` / `HMGatewayRoom` …），
 **不含房间本身**。要不要恢复房间流式加载是设计决策，不是清理。
+
+### 2.12 `RoomShell` —— 控制台**指向**的那些东西的写入者（灯带 / 监视器 / 百叶窗）
+
+`SSS.ReactorBackend.RoomShell` 和 `VisualFeedback` 是**一对**，分工是一条线：
+**`VisualFeedback` 写控制台上的东西**（拉杆、灯），**`RoomShell` 写那些控制台指向的东西**
+（房间灯带、七台监视器、三扇百叶窗门）。两边都是 `--!strict`、都有一个
+`Refresh(state, config)` 入口、都用**签名门**（`lastSignature`）挡掉没变化的 tick ——
+所以「一个值只有一个写入者」（§2.5）在这条线上也是成立的：
+**没有第二个模块碰这些部件。**
+
+| `RoomShell` 写什么 | 在哪 | 由哪个 `state` 字段驱动 |
+|---|---|---|
+| 20 个 `NeonPart` 的颜色/透明度 + 8 个光源的 `Enabled` | 房间灯带 | `state.lights` |
+| 7 台监视器（电源灯 / 屏幕光 / `ScreenGui.Enabled` / 若干面 `Visible`） | `Monitors` | `state.monitorPower`、`state.booted`、`state.phase` |
+| **3 扇门的 `Frame.CFrame`** | `Workspace.MovingParts.ControlRoom{L,M,R}Shutter.Frame` | `state.shuttersOpen` |
+
+**Phase 60（2026-09-30）起，百叶窗是 tween，不是瞬移。**
+
+- **写入者没换**，换的只是「怎么到那里」（`DECISIONS_2` 187）。
+- 行程 `Config.Shell.ShutterTravel = 10.58`；**开 = 关 减去世界空间的 `(0, 10.58, 0)`**。
+  这个减法必须在**世界空间**做：中间那扇门的 `Frame` 绕 Y 转了 90°，
+  写成 `CFrame.new(0,-travel,0)` 就是绕它**自己**的轴。
+- 时长 `Config.Shell.ShutterTweenSeconds = 0.6`，`Quad` / `Out`（和拉杆同一套缓动词汇）。
+  **不是**拉杆的 0.3：门走 **10.58** studs，拉杆一抛约 **0.7**，差 15 倍 ——
+  同一个数会让门以 35 studs/s 飞过去。0.6 s 是 17.6 studs/s，一扇**带动力**的门的样子。
+- 每扇门带一个**活 tween 句柄**，**创建新的之前先 `Cancel()` 旧的**（`DECISIONS_2` 188）：
+  一个属性上两个活 tween 逐帧竞争、赢家按帧决定，中点连点可能把门停在
+  **谁都没要求过的高度** —— 而那是**世界状态**，不是控制台上的一个姿势。
+  `Cancel()` 留在原地，新 tween 从那里继续。
+- **时长是配置，缓动不是**（和拉杆同一条）：缓动是机构的手感，不是谁能调的旋钮。
+- `Config.Shell.ShutterTweenSeconds` 缺失或非正数时**只 `warn` 一次并退回模块自带的 0.6**，
+  **行程不受影响**；warn 里明说行程没变，免得读的人去找一扇坏门（`DECISIONS_2` 190）。
+
+**门的位置只从世界里读一次**（`shuttersCaptured` 闩，`Initialize` **故意不清它**）：
+开位是「关位减行程」，所以**关位只能读一次** —— 等 `Refresh` 把门放下去之后再读，
+读到的是**开位**，那个开关从此**反着**。闩只在**读全**时才落（`#shutters == 3`），
+所以读了一半不会被冻在半个状态里。
+
+**两个容易搞混的名字：**
+`Config.Visual.LeverArcDegrees`（50）属于**旧的 `ControlVisuals`**（旋转式写入者），
+`RoomShell` 和 `VisualFeedback` **都不读它**；
+`StarterPlayer.StarterPlayerScripts.VisualFeedback` 是一个
+`SUPERSEDED 2026-09-26` 的**客户端**反射器，**属性层确认 `Disabled = true`** ——
+如果它活着，它就是一个逐 `Heartbeat` 写 `LeverUnion.CFrame` 的第二写入者，
+会把服务端那个 tween **逐帧按回去**（Phase 59 之前它真的赢过，见 `PROGRESS` 59.2）。
 
 

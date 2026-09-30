@@ -748,6 +748,16 @@ went from the off colour to lit, which is the correct partition at integrity 99 
 The rotation block is a clean **60°** about the lever's own axis — `THROW_DEGREES = 60` — and only
 `LeverUnion` carries it.
 
+> **LATER CORRECTION — this paragraph is history, not the current behaviour.** That 60° rotation was
+> the motion of the writer as it stood on the day, and it was **wrong for a whole family of levers**.
+> `poseLever` now **translates along the lever's own `baseline.LookVector` and does not rotate at
+> all**, and the travel is measured per family (`TRAVEL`) rather than carried as one constant — see
+> this directory's `README.md` (lever throw entry) and `PROGRESS.md` 45. The numbers in the table
+> above were **really measured** and are kept as recorded; only `THROW_DEGREES = 60` is no longer the
+> live code. From Phase 59 (2026-09-30) the throw is also tweened (0.3 s, Quad/Out) rather than
+> snapped. Note also that `Config.Visual.LeverArcDegrees = 50` exists today with **no readers at all**
+> — it is a leftover of the rotation era, so grepping it is not evidence that a throw rotates.
+
 ### A display boundary found on the way, and not "fixed"
 
 Integrity publishes as **99 while the generator is on and healthy**, and the engine's own value there is

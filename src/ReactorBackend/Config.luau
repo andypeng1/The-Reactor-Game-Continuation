@@ -70,6 +70,13 @@ local Config = {
     -- why those colours exist as keys of their own instead of being folded into
     -- Fault, and why the order they are tested in is the manual's own order.
     Visual = {LeverArcDegrees=50, PulseSeconds=0.6, RefreshSeconds=1,
+        -- How long a console lever takes to slide from one stop to the next,
+        -- read by VisualFeedback. It deliberately sits below RefreshSeconds:
+        -- the throw has to finish inside one logic tick, because the refresh is
+        -- signature-gated and a stop that is still being animated when the next
+        -- pose arrives is a stop the union never rests on. 0.3 s is short enough
+        -- that a click reads as answered and long enough to see the lever move.
+        LeverTweenSeconds=0.3,
         Ready=Color3.fromRGB(235,235,235), Off=Color3.fromRGB(45,45,45),
         Pulse=Color3.fromRGB(90,255,120), Fault=Color3.fromRGB(255,70,40),
         -- Measured: the authored colour of AtmosphereVentButton.NeonPart and of
@@ -128,6 +135,14 @@ local Config = {
         -- INTO THE WALL BESIDE IT. The geometry was never missing; the search
         -- was pointed the wrong way.
         ShutterTravel = 10.58,
+        -- How long the shutters take to travel that 10.58, read by RoomShell.
+        -- Deliberately not the levers' 0.3: a shutter moves about 15 times the
+        -- distance of a lever throw, so the same number would make the panel
+        -- crawl. 0.6 s is 17.6 studs/s, which is what a powered door looks like
+        -- -- and it is short enough that a double-toggle lands its second tween
+        -- while the first is still on screen, which is why RoomShell cancels the
+        -- live one before creating another instead of letting two share it.
+        ShutterTweenSeconds = 0.6,
         -- Measured: all 7 Monitor.PowerNeon parts are authored (255,0,0).
         -- Restated here rather than captured at Initialize on purpose. A
         -- captured baseline is only correct on the first call: re-run

@@ -69,6 +69,11 @@
 
 local VisualFeedback = {}
 
+-- Used by poseLever, which is the one place a lever is written. See the note
+-- there for why the throw is animated here on the server rather than handed to
+-- the client tween relay this place already carries.
+local TweenService = game:GetService("TweenService")
+
 -- ========== MOTION ==========
 -- Slide in studs per family, measured from the art. A lever at its top stop has
 -- moved this far along its own axis. Nothing about a lever rotates.
@@ -87,6 +92,23 @@ local TRAVEL = {
     -- none, so there is no span to read and the console family average stands in.
     generic = 1.6,
 }
+
+-- How long a throw takes and how it is eased. The duration is read from
+-- Config.Visual.LeverTweenSeconds in Initialize, because it belongs with the two
+-- other timing values the visual layer already owns -- PulseSeconds and
+-- RefreshSeconds. The number below is only the fallback for a Config that does
+-- not carry the key yet, and Initialize warns when it is the one in use.
+--
+-- The easing is not in Config. It is not a number anyone tunes, it is the shape
+-- of a mechanism: Quad/Out decelerates into the stop, which is what a
+-- hand-thrown detent lever does. Sine/InOut -- the easing the shared tween
+-- library in ReplicatedStorage.Functions uses for everything -- starts slowly
+-- and reads as a motor rather than a lever.
+local DEFAULT_LEVER_TWEEN_SECONDS = 0.3
+local LEVER_EASING_STYLE = Enum.EasingStyle.Quad
+local LEVER_EASING_DIRECTION = Enum.EasingDirection.Out
+local leverTweenInfo = TweenInfo.new(DEFAULT_LEVER_TWEEN_SECONDS, LEVER_EASING_STYLE, LEVER_EASING_DIRECTION)
+local warnedTweenSeconds = false
 
 -- The two stops of the SmallLever rig, as the offset from the lever's own
 -- ClickPart along the lever's own axis. d, defined below, reads 0.250 with the
@@ -212,7 +234,7 @@ local A = {
     gravArmedLamp = "Consoles.ElectricGridConsole.OverloadButton.NeonPart",
 }
 
-local levers: {[string]: {part: BasePart, baseline: CFrame, travel: number}} = {}
+local levers: {[string]: {part: BasePart, baseline: CFrame, travel: number, tween: Tween?}} = {}
 local lamps: {[string]: {part: BasePart, baseline: Color3}} = {}
 local lastSignature: string? = nil
 
@@ -226,6 +248,23 @@ local function resolve(path: string): Instance?
 end
 
 -- ========== WRITERS ==========
+-- One lever pose, animated. The union SLIDES along its own axis (see the motion
+-- contract at the top of the file), and it is tweened to the stop it was asked
+-- for rather than assigned to it, so a throw reads as a hand working a detent
+-- lever instead of a teleport. Nothing about the geometry changes: the stop
+-- tweened to is the same CFrame this function used to assign, so the pose a
+-- lever rests on is bit for bit what it always was. Only the way it gets there
+-- is new.
+--
+-- The tween is created HERE, on the server. Delegating it to the client relay
+-- the place already carries -- ReplicatedStorage.TweeningEvent, played by
+-- ReplicatedFirst.ClientTweenReplicatedFirst -- would hand the write to every
+-- client, and a client write is not overwritten until the server next changes
+-- that property. That is the defect that retired the old
+-- StarterPlayerScripts.VisualFeedback reflector, whose superseded header records
+-- a C-Pump 3 lever reading 1.6 studs apart on the two sides and so appearing not
+-- to move when it was clicked. Animating on this side of the wire keeps this
+-- module the only writer of lever CFrames, which is the rule the backend follows.
 local function poseLever(key: string, level: number, maxLevel: number)
     local entry = levers[key]
     if not entry then return end
@@ -236,7 +275,17 @@ local function poseLever(key: string, level: number, maxLevel: number)
     -- Translation only, along the lever's own baseline LookVector, so every
     -- lever slides on its own axis: the HDEF lever's LookVector is straight
     -- down and it has to travel straight down, not along world Y by accident.
-    part.CFrame = entry.baseline + entry.baseline.LookVector * throwDistance(level, maxLevel, entry.travel)
+    local goal = entry.baseline + entry.baseline.LookVector * throwDistance(level, maxLevel, entry.travel)
+    -- Cancel before creating. Two live tweens on one CFrame both write it every
+    -- frame and the winner is decided per frame, so a fast click-click could
+    -- leave the union resting on a stop that is neither of the two that were
+    -- asked for. Cancel leaves the union wherever it had reached and the new
+    -- tween starts from there, which is also what makes an interrupted throw
+    -- continue instead of jumping back to the stop it last finished on.
+    if entry.tween then entry.tween:Cancel() end
+    local tween = TweenService:Create(part, leverTweenInfo, {CFrame = goal})
+    entry.tween = tween
+    tween:Play()
 end
 
 -- A two-position control: level 1 is the authored position, level 2 is one
@@ -286,6 +335,24 @@ function VisualFeedback.Initialize(config: any)
     -- captured count comparable between calls.
     lastSignature = nil
 
+    -- The throw duration is read from Config rather than fixed here, and it is
+    -- deliberately not required. This project has already spent a shift on a
+    -- stale copy of a script whose only symptom was a field the Config module
+    -- did not have yet, so a missing number must not take the levers down with
+    -- it: it falls back to the module's own default and says which one it used.
+    -- A lever that throws at the wrong speed is a much smaller failure than a
+    -- lever that does not throw at all, and a silent fallback would be
+    -- indistinguishable from the value having been read.
+    local seconds = config and config.Visual and config.Visual.LeverTweenSeconds
+    if typeof(seconds) == "number" and seconds > 0 then
+        leverTweenInfo = TweenInfo.new(seconds, LEVER_EASING_STYLE, LEVER_EASING_DIRECTION)
+    elseif not warnedTweenSeconds then
+        warnedTweenSeconds = true
+        warn(string.format(
+            "[ReactorBackend][Visual] Config.Visual.LeverTweenSeconds is %s, not a positive number, so levers throw in the module's own %.2f s. The stops themselves are unaffected.",
+            tostring(seconds), DEFAULT_LEVER_TWEEN_SECONDS))
+    end
+
     local captured, missing = 0, {}
 
     -- `travel` is the family's measured span. `fromStop` marks the SmallLever
@@ -299,9 +366,28 @@ function VisualFeedback.Initialize(config: any)
         end
         local part = resolve(path)
         if part and part:IsA("BasePart") then
-            local amount = travel
-            if fromStop then amount = smallThrow(part) end
-            levers[key] = {part = part, baseline = part.CFrame, travel = amount}
+            -- A union can be lost and re-resolved while it is midway through a
+            -- throw, and a throw is now animated, so part.CFrame is not
+            -- necessarily the pose the art authored. Re-measuring from it would
+            -- capture a position between two stops, and smallThrow would then
+            -- read the SIGN of the throw off that position -- the same invisible
+            -- inversion the note at the top of Initialize describes. When the
+            -- same instance came back there is nothing to measure: the entry we
+            -- already hold records the authored CFrame and the throw that was
+            -- measured from it, and both are still exact.
+            if known and known.part == part then
+                -- Its tween may still be running. Cancelling and dropping the
+                -- handle is what stops the next pose from putting a second tween
+                -- on the same CFrame; the union keeps the pose it had reached,
+                -- and the Refresh that follows re-poses it from the baseline
+                -- carried here.
+                if known.tween then known.tween:Cancel() end
+                levers[key] = {part = part, baseline = known.baseline, travel = known.travel}
+            else
+                local amount = travel
+                if fromStop then amount = smallThrow(part) end
+                levers[key] = {part = part, baseline = part.CFrame, travel = amount}
+            end
             captured += 1
         else
             table.insert(missing, path)
