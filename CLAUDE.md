@@ -10,48 +10,24 @@
 
 ## 0.0 文档同步规则（2026-09-26 起：**不再往 Studio 里放文档**）
 
-> **【这条规矩变了，先看这里】** 用户 2026-09-26 明确指示：
-> 「以后不再需要把 decision 那些东西放到 studio 里面了」、
+> **【先看这条】** 用户 2026-09-26：「以后不再需要把 decision 那些东西放到 studio 里面了」、
 > 「SS 里面的东西我们的工作文件夹有了，就不用在 studio 里面放着了」。
 >
 > **现在的规矩只有一条：改完同一步把磁盘 `.md` 补齐。** 没有镜像、没有「以游戏内为准」，
-> 盘上写什么就是什么。下面的内容保留下来当**历史**（它解释了为什么这些文件长成
-> 现在这样、为什么有些地方被拆成两半），**不要再照着它去推 Studio**：
-> - `_tools/verify_docs.py` + `selftest_verify_docs.py` **已归档**到 `_tools/_attic/mirror/`
->   （2026-09-26）。不用修、也不用再跑：它钉的是 Studio 里那个 `CLAUDE` 模块的哈希，
->   而 Studio 那边已经没有可比对的东西了 —— **作废的是整个校验器，不只是它的钉子**。
->   它在归档前就已经**永远红**（本节横幅比它写死的 `SEC00_LEN = 6071` 多了 980 字节，
->   它那句 `rc 0 → 1 → 0` 自证再也成立不了）。永远红的检查就是噪音，同 §0.13；
-> - 游戏内 `GameCore` 里那几份旧文档是**历史副本**，删或留都不影响记录；
-> - §0.10 那条「文本进 Studio 会被解码一次」的坑**依然有效**，
->   因为脚本本体（`TRG_original_recorder.luau`）还是要注入游戏，只是文档不用了。
+> **盘上写什么就是什么。** 游戏内 `GameCore` 里那几份旧文档是**历史副本**，删或留都不影响记录。
+> §0.10 那条「文本进 Studio 会被解码一次」的坑**依然有效** ——
+> 因为脚本本体（`TRG_original_recorder.luau`）还是要注入游戏，只是文档不用了。
 
-> 下面这一节只存在于磁盘上的 `.md`，**不属于**游戏里的 `CLAUDE` / `PROGRESS` /
-> `DECISIONS` / `README` ModuleScript。写回游戏时请删掉本节。
+**2026-09-27 又收了一次：** 本节原来带着整套镜像时代的细节（磁盘↔Studio 对照表、
+`verify_docs.py` 怎么拼哈希、`split_claude.py` 的无损证明、`DECISIONS` 为什么拆成两份）。
+那些**规则全部作废**（校验器已归档到 `_tools/_attic/mirror/`，且在归档前就永远红 ——
+它钉的 `SEC00_LEN` 早对不上了，**永远红的检查就是噪音**，同 §0.13），
+所以从每轮都要进上下文的这一份里搬走，全文仍在 `PROGRESS.md` / `DECISIONS` 96 / 123。
+**只留两条还会复发的教训**（它们的现代版本是 `DECISIONS_2` **183**）：
+**绝不能用磁盘算出来的哈希去校验磁盘**（同义反复，两边同时错也 PASS，`DECISIONS` 95）；
+**比哈希、不比字节数**（字节数相同而内容不同是**真实发生过**的，只比长度必漏）。
 
-**磁盘 `.md` ↔ 游戏内 ModuleScript 的对应：**
-
-| 磁盘文件 | 游戏内来源 |
-|---|---|
-| `CLAUDE.md` + `docs/SYSTEMS.md` + `docs/TODO.md` + `docs/SNIPPETS.md` | `game.ServerScriptService.GameCore.CLAUDE` |
-| `PROGRESS.md` | `game.ServerScriptService.GameCore.PROGRESS` |
-| `DECISIONS.md` | `game.ServerScriptService.GameCore.DECISIONS`（条目 1..74） |
-| `DECISIONS_2.md` | `game.ServerScriptService.GameCore.DECISIONS_2`（条目 75..） |
-| `README.md` | `game.ServerScriptService.GameCore.README` |
-
-**为什么 `DECISIONS` 也拆成了两份（2026-09-23）：** 跟 `CLAUDE.md` 那次**不是同一类问题**。
-`ModuleScript.Source` 有**引擎硬上限 200000 字节**，写入 202893 的那次是**直接被拒绝**的
-（`Provided string length (202910) ... max length (200000)`），没有预算可调，只能拆。
-边界定在**条目 75** —— 是条目号，不是字节偏移，所以它是文档的性质而不是当天长度的性质。
-**这两个磁盘文件不是 `docs/` 卫星文件，没有磁盘专属前言**，各自**逐字节等于**自己模块的镜像；
-拼回来的规则是 `DECISIONS.md` 去掉尾部换行 + 一个空行 + `DECISIONS_2.md`，校验脚本会断言这条缝。
-**`DECISIONS.md` 里含 2 个反斜杠**（早期条目里 Lua 代码片段中的「反斜杠 + n」），
-因此这一份**只能在 Studio 内部从已有文本搬移出来，不能通过工具调用传文本**（见 §0.10）。
-详见 `DECISIONS` 123。
-
-**为什么 `CLAUDE.md` 拆成了四份（2026-09-23）：** Claude Code 只会自动把 `CLAUDE.md`
-塞进每轮上下文，**超过 40.0K 字符就报警**。整份是 45,050 字符，报警就是这么来的。
-现在只留每轮都要看的，其余按需读：
+**磁盘 `.md` 的分工（这条是活的）：**
 
 | 章节 | 在哪 | 什么时候读 |
 |---|---|---|
@@ -59,48 +35,17 @@
 | §2 已完成的系统 | `docs/SYSTEMS.md` | 动代码 / 场景之前 |
 | §3 待办 / 下一步 | `docs/TODO.md` | 决定做什么之前 |
 | §5 关键代码片段 | `docs/SNIPPETS.md` | 抄 / 改任何一段实现之前 |
+| 采集器/监视器怎么跑 | `docs/RECORDER_HOWTO.md` | 注入前后 |
+| 阶段记录 / 取舍 | `PROGRESS.md` / `DECISIONS.md`(1..74) + `DECISIONS_2.md`(75..) | 动手前后按需 |
 
 **章节号一律没动** —— `PROGRESS` / `DECISIONS` 里那几百处 `§2.6`、`§5.9`、`§0.13`
 之类的引用继续有效，只是那个「章节」现在落在目录下的另一份文件里。
 
 **硬性规则：任何一次改动之后，同一步就要把文档补齐，不要攒着。**
-1. 在 Studio 里改了代码 / 场景 / 配置 → 立刻更新对应的 ModuleScript
-   （新阶段进 `PROGRESS`，新的取舍进 `DECISIONS`，结构变化进 `README`）。
-2. 同一步把改动镜像到磁盘的 `.md`，两边保持一致。
-   **改的是 §2 / §3 / §5 → 镜像进 `docs/` 下对应那份，不是 `CLAUDE.md`。**
-3. 镜像时剥掉 Lua 包装（`return [==[` … `]==]`）。
-4. 写回游戏时注意 §5.9：内容里不能出现 `]==]` 序列。
-
-**方向约定：** 游戏内的 ModuleScript 是权威（source of truth），磁盘 `.md` 是镜像。
-若两边冲突，以游戏内为准，并把差异报告给用户。
-
-**镜像规则（实测出来的，不是推测的，见 `DECISIONS` 96）：**
-磁盘文件 = ModuleScript 字符串体「去掉首尾换行、再补回恰好一个换行」，逐字节相等。
-模块自己报出 `(长度, 哈希)` 作为基准，校验脚本是 `_tools/verify_docs.py`。
-
-- **绝不能用磁盘算出来的哈希去校验磁盘** —— 那是同义反复，两边同时错也会 PASS。
-  `DECISIONS` 95 就是这么踩进去的，而且被吃过两次句号都没发现。
-- 校验一律**比哈希、不比字节数**。字节数相同而内容不同是**真实发生过**的
-  （PROGRESS 与 DECISIONS 各差一个字符），只比长度必漏。
-- **拆开之后 `CLAUDE` 的校验方式跟着变，但没有变松：** 脚本按**章节号**把
-  `CLAUDE.md`（剥掉本节）+ `docs/SYSTEMS.md` + `docs/TODO.md` + `docs/SNIPPETS.md`
-  **重新拼回整份模块镜像**，再比模块报出的那一对 `(62580, 2b6be228)`。
-  三个 part **不需要各自单独的基准哈希** —— 拼回来对不上就是错。这比「逐文件各比一次」
-  更强：逐文件比对漏掉的那类漂移（两处同时改错、总长度还凑得巧）在这里必然暴露成
-  一个整体哈希不符。脚本另外断言章节集合恰好是 0..8，不重不漏。
-- 拆分本身也是量出来的，不是靠眼睛读：`_tools/split_claude.py` 断言
-  「拆完再拼 == 拆之前的整份镜像（含 `## 0.0 ` 之前那 327 字节的文档头）」，
-  逐字节相等才落盘。**第一次跑它就是在这里翻的车**：那个脚本把自己的前缀一起丢了，
-  而它的「无损证明」是在两边都丢了同一段 327 字节的前提下比对的，于是照样 PASS ——
-  把丢失范围排除在证明之外的证明，就是本节警告的那个同义反复换了个样子。
-  现在的证明含前缀，并额外断言拼回来的长度 = 模块报出的 62580。
-  看文件名就知道它是**一次性**的；留下它是因为再拆一次时还要用。
-- **校验器自己也被验过，不是「看起来能跑」就完事：** `_tools/selftest_verify_docs.py`
-  故意改坏一个字节、跑一次、再还原，断言 `rc 0 → 1 → 0`。它顺带把「比哈希不比字节数」
-  这条现场演示了一遍 —— 那个改动**总长度一模一样**（`body=62580` 不变），
-  只有哈希从 `2b6be228` 掉到 `425080bf`；只比长度的校验器在这里会全绿。
-- **`docs/*.md` 开头那段磁盘专属前言**按「第一个 `## ` 之前全部丢掉」剥离，
-  长度写死在脚本里，所以改前言会让校验变红 —— 这是有意的，不是麻烦。
+改了代码 / 场景 / 配置 → 同一步写盘：新阶段进 `PROGRESS.md`，新取舍进 `DECISIONS_2.md`，
+结构变化进 `README.md`，改的是 §2 / §3 / §5 就进 `docs/` 下对应那份。
+**`CLAUDE.md` 每轮都进上下文，所以它只留「需要每轮看到」的东西**：
+新的 Phase 段写**能直接用的那几句**，细节写进 `PROGRESS.md`，别在两边各写一份全文。
 
 ## 0. 先读这个（血泪教训，能省你几小时）
 
@@ -396,7 +341,7 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 | 名字 | 用途 | 数量 |
 |---|---|---|
 | `ClickPart` | ClickDetector 宿主 | 941（旧记 1,023） |
-| `LeverUnion` | 拉杆唯一的移动件 | 32 |
+| `LeverUnion` | 拉杆唯一的移动件 | 41（旧记 32） |
 | `LeverOrginPart` | 0.1³ 标记，**无用**，可忽略 | — |
 | `NeonPart` | 灯 | 1,145 |
 | `*ControlRoomMonitor` | 监视器屏幕 | 7 |
@@ -431,137 +376,183 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 `docs/TODO.md` §3.1 里那两条未开始的几何条目（设施外壳/房间内部的装饰与英雄资产、
 堆芯外壳与拉杆握把的 `generate_mesh` 重做）已删掉，该节剩下的只是已完成的施工记录。
 
-**Phase 53（2026-09-27）—— 卷帘门收在 `ControlRoom{L/M/R}Shutter`（向下 10.58），
-外加一台只读的房间监视器。** 用户纠正了两处：收的是 **Model** 不是玻璃；行程是 **10.58 向下**
-（世界侧独立确认：三个都关在 Y≈282.199、开在 Y≈271.619，**Δ 恰好 −10.5800**，
-10.58 正好让 10.650 高的 `Glass` 顶边和 276.7 的窗台齐平）。位移必须是**世界空间**减法，
-因为 M 那扇的 `Frame` 转了 90°。`_tools/room_watch.luau` + `_room_watch_runner.luau`
-（`SSS.MCP_RoomWatch` / `MCP_RoomWatchRunner`）**只读、不写世界**，监听 **43 个根 / 30,142 个实例 /
-235,038 个属性**（ControlRoom 5,089，Chamber 25,053），产物四份推本机 sink：
-`rooms.txt` / `inventory.txt` / `summary.txt` / `changes.log` + 一份 `suppressed.txt`。
-**抑制是「扣在手里不写」，不是「先写后擦」** —— sink 是追加的，擦除在盘上等于没做
-（run 4 的 `changes.log` 真写了墓碑「its first 8 line(s) erased」，run 5 的 `suppressed.txt`
-真报了 `# 1942 key(s) suppressed as ambient`，而它的 `changes.log` 一行没少 —— 擦除只在内存里）。
-判据是**环填满 = ambient**、**静够 5 拍 = event**；**「到点就判事件」是错的**
-（run 6：90 秒 1,045 行，榜首是两个静了 32 秒才动的风扇）。run 8 跑满 **405 s**：
-**844 行 / 317,769 字节**，**1,942 个键**进 `suppressed.txt`，`1952/235038` 个属性动过，
-一拍扫描 **112 ms**，**844 行全部 group=Chamber、ControlRoom 零行**（没人碰控制台，不是漏收）。
-三次错全部只有跑起来才看得见，第三条让它现在**自己写 `error.txt`**。
-**音频走另一条路：`Sound.Played/Stopped/Ended`，507 Sound / 1,521 hook / 0 refused**
-（三个事件名是**量出来的**不是查来的）。理由是 0.73 s 的片段在 1 s 轮询里**开始又结束**，
-轮询**结构上**看不见；代价是 **hook 看见的是「变化」不是「状态」** —— t=0 就响着的 23 个环境声
-**永远发不出 `Played`**，所以挂 hook 时**另读一次 `Playing`** 补上（`ALREADY-PLAYING` 行）。
-探针判决：停着且 `Pitch=1.00` 的音效 `:Play()` → `PLAYED t=6.08` / `ENDED t=6.81`，
-**差 0.73 s = 片段长度**，hook 整条通。**23 个里有 15 个 `Pitch=0.00` 而 `Playing=true`** ——
-`Playing` 单看**不等于听得见**，这就是 `Pitch` 进属性列表的理由。
-**混音台也看**：7 个 `SoundGroup` 的 `Volume` 进属性监听（`SpecialSounds` 实测**已经是 0**）——
-`Playing` 为真而总线被调零，是这套东西最怕的那类错：**读数正确而结论相反**。
-代价 **+77 实例 / +235 属性**（30,219 / 235,553），逐项对得上。产出 `audio.txt` 时间线 +
-`audio_tally.txt` 快照（含 `audible by bus` 汇总）。**`Data/roomwatch*/inventory.txt` 七份
-逐字节相同（md5 `5ae9ab97`），已进 `.gitignore`** —— 盖的是同一个没变过的世界，`rooms.txt` 才是答案。
-**`QUESTIONS.md` 现在有一条待你拍板的：D11（这两个 SSS 实例留在发版里还是删）。**
+**Phase 53（2026-09-27）—— 卷帘门收在 `ControlRoom{L/M/R}Shutter`（向下 10.58 世界空间），
+外加一台只读的房间监视器**（`_tools/room_watch.luau`，43 根 / 30,142 实例 / 235,038 属性，
+产物 `rooms.txt` / `inventory.txt` / `summary.txt` / `changes.log` / `suppressed.txt`）。
+全部细节、run 1..15 的数字、音频 hook 的探针判决（`Pitch=0.00` 那 15 个、0.73 s 的片段）
+**已整段搬到 `PROGRESS.md` Phase 53 尾部**，标题是「Phase 53 的 §8 摘要原文」——
+逐字未改，只是换了个住处，因为这一节是跑动细节而 `CLAUDE.md` 每轮都要进上下文。
+本文件只留一句：**它只读、不写世界，抑制是「扣在手里不写」而不是「先写后擦」**。
+**它的两个实例已于 2026-09-27 从数据模型删除**（D11 答 B，理由见下 Phase 54）——
+`_tools/` 里那两份源码没丢，重新注入就回来。
 
-**当前唯一在跑的活是「原版游戏数据采集器」** —— 不是这个工程里的代码，而是一份
+**当前唯一在跑的活是「原版游戏的两份注入脚本」** —— 不是这个工程里的代码，而是
 注入到**原版游戏**（placeId `17596243941`）里、由 Solara V3 用 `loadstring` 执行的
-单文件脚本 `_tools/TRG_original_recorder.luau`。它**不依赖** `ReactorBackend` /
+单文件脚本：采集器 `_tools/TRG_original_recorder.luau` 和监视器
+`_tools/TRG_original_watch.luau`（后者见 Phase 54）。它们**不依赖** `ReactorBackend` /
 `Config` / `Engine`，只读实例状态；写文件时**只记有变化的键**。
+**两份都不按任何东西** —— 采集器 `r60` 起连「只观察不按」的那台驱动器也没有了（Phase 62）。
 用法看 `docs/RECORDER_HOWTO.md`；测试跑 `bash _tools/run_tests.sh`。
 
-**悬着的（2026-09-26 更正）：** ~~查清 `TempLabel` 的第二个写入者~~ —— 这条**早就不成立了**，
-`PROGRESS.md` Phase 24 的标题就是 `The TempLabel second writer  [DONE]`。
-~~O4 / O5~~ 当天也答了：**根 `PROGRESS.md` 算数**（`docs/airemake/` 留在磁盘上当参考，
-不再追加），**`ShutdownEndsShift = false` 留着**当「另一种配置」的文档（`docs/RECORDER_HOWTO.md`
-本来就写着它的两个独有信号）。**`QUESTIONS.md` 的「等你拍板」那节是空的** ——
-但「等你回答」那节现在有**一条 P1**（要不要再注入一次去抓冷启动那半场，见下）。
+**Phase 54（2026-09-27）—— 第二份注入原版的脚本：`_tools/TRG_original_watch.luau`。**
+起因是用户的一次更正：「**我说的整个控制室+核心腔室+音频监听是监听原游戏的，又不是现在的**」
+—— Phase 53 那台做在了 **AIRemake** 上，方向错了；目的也说明了：`你根本不会做开机`，
+所以产物要能回答**「开机到底做了什么」**，三个监控对象全部重新对准**原版**。
+**和 `room_watch.luau` 最大的结构差别：根不是写死的。** 原版的树我一次都没看过，
+写死根名 = 把猜测当事实，而猜错**是静默的**（根不存在 = 零行 = 和「没事发生」同形），
+所以它**先普查、再选根**（按实例数**从小到大**取到预算 80000 为止），
+并把**选择过程本身**写进 `rooms.txt`（谁进了、谁没进、**为什么**）。
+产物九份含 `audio.txt` / `error.txt`，热键 `RightAlt` 催 / `RightControl` 停，**只读**。
+**本机验过**：`watch_harness.luau` **45 PASS / 0 FAIL**、`--boom` **4 PASS / 0 FAIL**、
+`selftest_watch.py` **15 个变异 15 个按预期变红**；`bash _tools/run_tests.sh` 全绿。
+**它当时一次都没在原版里跑过**（2026-09-27 追加：用户说他那一轮 `watch` 和 `record` 都开了，
+**但盘上只有采集器的字节** —— `Data/originalwatch/` 不存在，而 `hello.txt` 是设计上
+第一个该出现的路径。所以「跑过」这件事**当时仍然没有字节支持**，
+两种解释在盘上同形，见 `PROGRESS.md` 57.10 / `QUESTIONS.md` **P8**。
+**2026-09-30 已被它自己的产物推翻**：Phase 61 那趟它有 11 份产物、没有 `error.txt` ——
+跑起来了，而且是**跑起来才看得见**的两个缺陷（hook 晚装 28 秒、`MaxQueue` 太小），修在 `w60`。）
+—— 预算够不够、选出的根对不对，**都是设计意图不是观测**，
+跑完**第一件事读 `rooms.txt`**。验的过程翻出四个错，其中三个只有变异测试看得见
+（`judged` 只写不读而文档在替它说话；删掉整个静默放行规则产物逐字节不变；
+`--dump` 判了两次所以静默不写文件）—— 细节 `PROGRESS.md` 54，取舍 `DECISIONS_2.md` **160..163**。
+**跑法**：`python -m http.server 8766 --bind 127.0.0.1 --directory _tools`，再在原版里
+`loadstring(game:HttpGet('http://127.0.0.1:8766/TRG_original_watch.luau'))()`；
+sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开局就响着的声音**永远不会**发
+`Played`（DECISIONS 157），晚注入等于把开盘那段让掉。
+**它和采集器可以同时注入**（全局变量、输出路径、热键三处都对过，见 54.6）——
+**但热键曾经撞过：两边都绑 `RightShift`，而采集器那边它是「封存并结束这一趟」。**
+监视器已让路到 **`RightAlt` = 立刻推文件**、`RightControl` = 停；
+**`RightShift` 现在只属于采集器**，别在跑的时候按它。harness 有一条检查
+（`the watcher does not steal the recorder's seal key`）守着不再撞回去 —— 45 PASS。
+**D11 已执行（2026-09-27）：** AIRemake 那边 Phase 53 的 `SSS.MCP_RoomWatch` +
+`MCP_RoomWatchRunner` **已删** —— 你答的原话是「不用吧，采集的是原游戏里面的」。
+删之前在 Studio 里把磁盘那两份**读回同一个 VM 逐字符比**（`IDENTICAL, 68907 chars` /
+`IDENTICAL, 462 chars`，**不是比长度**），并 grep 全 DataModel 确认没有第三方绑定；
+两个 MCP 探针照旧留着。代价分两栏写在 `PROGRESS.md` 54.7，取舍是 `DECISIONS_2` **165**。
 
-**2026-09-26 做了四件活，编号按做事的先后（mtime）而不是补号的顺序：Phase 45 拉杆反馈
-（12:51）、Phase 46 灯矩阵（13:59）、Phase 47 整理 Workspace 与工作文件夹（约 21:00）、
-Phase 48 采集器读文件 + 两处措辞修正（约 23:15）。**
-45/46 本来两边都没落，已按 **O4:A** 回填进 `PROGRESS.md`，对应取舍补进 `DECISIONS_2.md`
-**131..134**；整理那节因此从我先前写的 45 **改号为 47**。Phase 48 的取舍是 **135..137**。
+**Phase 55/56 —— 已搬到 `PROGRESS.md` 的历史，这里只留能直接用的那几句。**
+- **55**：GUI 采集（`g.<key>`）**只在客户端**存在；`GuiObject` 答 `Visible`、`LayerCollector`
+  答 `Enabled`，**问错的那个是 error 不是 nil**；实测轮询 **1.66 Hz**（标称 4 Hz，被**饿着**）；
+  第一热点**不是灯**而是 readout 走查（`found=1115`）。**187 个重复键** → `QUESTIONS.md` **P6**。
+- **56**：监视器有 `Pinned = {'Alarms'}` —— 上限 `PerRootBudget=30000` / `TotalBudget=80000`
+  对约 92,000 件的 Workspace **必然**耗尽，选根又是**从小到大**，而 pin **同时豁免两个上限**、
+  **不取代普查**。**8765 的 `--dir` 必须是 `Data`**。
+细节 `PROGRESS.md` 55/56，取舍 `DECISIONS_2.md` **166..172**。
 
-**Phase 48 —— 采集器第一份完整「冷启动 → Equinox → 熔毁」的文件，和它暴露的两处假话。**
-`Data/flow/original_260926-230049`（1357508 字节，完整 `## RECEIPT`，
-`postfails=0 spilled=0 dropped=0`）**抓全了 Equinox 整条链**：12:00 PM 触发
-（`INGAME_MANUAL` 114/148 原文「12PM marks the beginning of the Equinox Event」）→
-两个 CBL 掉到 10% → 压力 2542→1070 → `MAINFRAME CONNECTION LOST` →
-`s.MainframeMeltdown=true tempF=7978` 封存。顺手确认 **B2 已修**。
-改了两处**只改措辞、不删读数**：① `CLOCK` 事件在中途注入时会把「表盘绕回正午」说成
-「班次开始」—— 两句只隔 60 秒而 `m.temp` 那一刻 12865→12979 F，**两句都是假的**；
-现在按注入那一拍的状态（`clockStartedUp`）分开记。② 封存那句
-`the operator shut it down: s.MainframeMeltdown=true` 把机器的锅记在人头上；
-现在措辞跟旗标走。裁决名 `user-shut` **没动**。
-新增 `_tools/build_clock_test.py` + `_tools/selftest_clock_test.py`
-（3 个变异改坏，各自在**指定断言**上红，`clock: 10 PASS, 0 FAIL`）；
-采集器 126009 → **128612 字节**，无事件种类改名、无收据字段移动。
+**Phase 57 / 58 —— 已搬到 `PROGRESS.md` 的历史（18503 B / 11420 B），这里只留能直接用的那几句。**
+（本节原有全文已逐字存在于 `PROGRESS.md` 同名 Phase 里，压缩不是删记录。）
+- **57**：监视器的**记录窗口**（拉杆开、12:00 关）只挡「记录」不挡「观察」；
+  低温失速那一趟底下是**三处**（边界把「停堆又起来」塞进 UP → 新增 `RECOVER`；
+  兜底挂在**边**上于是穿过恢复继续数；`everRan` 门）；热端熔毁改读**温度**不借
+  `s.MainframeMeltdown`（机房旗标）。取舍 `DECISIONS_2` **173..179**。
+- **58**：`original_260927-123212` 的 `m.temp` 窗口内最低 **4316 F** —— 冷跳闸那臂
+  **一次没到过**，结束它的是 `SealDownSamples=40` 兜底 → **P7 是正确但无关的更正**；
+  三个脚本各带 build 标签；监视器零字节的嫌疑锁在**传输层**，`transport_probe.luau`
+  是「不花班次的第一步」（**request 族要请求表**，错传会让每个能用的传输都被报成坏的）。
+  取舍 **182..186**。
 
-**Phase 48 更正（2026-09-26 23:40）：** 上面那节原来写的是「**中途注入**」「**缺**冷启动
-半场」「`flow=false` 因为注入时核心已开着」—— **全错**，用户当场纠正过
-（`我就是先注入才开的核心啊`）。文件站在用户那边：`B 1 t=1.34` 三个 `s.Core.*` 全 0、
-风扇/冷却/CBL 全 0，`EVT2072–2079 CLICK StartUpLever` ×8 就是开机，
-`s.Core.TemperatureVal` 0→9420 爬了 96.6 s。**我错在把 `m.temp` 当成了堆芯温度** ——
-它是监视器标签，而监视器到 t≈99 都在读 `ERR F`：**监视器最瞎的时候正是堆芯最冷的时候**。
-`flow` 只能答「有没有见它掉下来」；**冷启动的一趟在结构上永远给不出 `flow=true`**。
-`EVT2017` 那句 `the core is up` 的**依据**（`q.up = q.clock > 0`）也是错的 ——
-表盘自由走，冷堆时 710→715 照走。另外「Equinox 把 CBL 打到 10%」这份文件**不支持**
-（同样的 25→10 在 t=188.71 / t=548.75 也出现过，没有 Equinox）。
+**Phase 61（2026-09-30）—— 三个注入脚本第一次真的在原版里跑起来了，窗口没开。**
+**这一趟第一次有字节支持「脚本真的跑过」**（以前「跑过」和「没注入」在盘上同形）：
+探针答出 `winner=http_request`（`request`/`http`/`getgenv` 也能用，`syn`/`fluxus`/`krnl` 不在），
+监视器 11 份产物**没有 `error.txt`**（71236 件 / 557548 属性普查完），采集器抓全整条开机链
+（`RoomLight → MonitorPower → Shutters → MonitorBoot → **StartUpLever** → HDEF-PowerLever`，
+然后 `CORE IGNITION IMMINENT`）。**但 `window.txt` 同时写着 `lever_hooked=true` 和
+`opened_at=not yet`。** 两个缺陷，都已修：① **开窗口的 hook 装晚了 28 秒** ——
+普查实测占 **48 秒**（第一行 `changes.log` 是 t=47.93）而拉杆 **t≈20 秒**按的，
+`attachWindow()` 在 `pcall(bootWalk)` **之后**；原注释那句「the census finishes in seconds」
+**被自己的产物否掉**。修：挪进 `Start()` **同步**装。② **`MaxQueue` 4000 比开机的峰值还小**
+→ `dropped=794`；机制是**复合**的：`flush()` 在窗口关着时**什么都不投**，
+而截断**每拍照跑**，所以**窗口关着 = 队列只进不出 = 上限吃队头** —— 而它**恰恰摧毁
+窗口失败那些趟的证据**。4000 → **20000**（那趟 46 秒 10439 行，一个十秒桶 6463 行）。
 
-**Phase 49 —— 温度是怎么算的。结构定死了，增益只到量级，公式拿不到。**
-① **`m.fluct` 就是那一 tick 的温度增量**（393 次 `m.temp` 变化里 391 次
-`temp(下一拍) − temp(这一拍) == m.fluct`，逐字节相等），所以 **`m.temp` 是它的累加**，
-tick ≈ **1.8 s**，**温度是积分器不是惯性环节**。
-② 拟合（391 tick）：`ΣcblPct` **+5.05/%**、冷却泵 **−58**、风扇 **−33**、
-**温度项 ≈ 0**（−0.0068 ± 0.0044），R² 0.33，残差 sd 146 F/tick —— **解释了漂移，没解释波动**。
-③ **拿不到的原因**：操作员每次动控制都是对温度的回应 → 回归量共线；增益**不可外推**
-（冷启动 CBL 300%，实测 +180 F/tick 而模型给 +1104，饱和）；回正项在固定设置内部互相矛盾 →
-**τ 定不下来**；噪声 lag-1 自相关 0.655，不是白噪声。细节与全部数字见 `PROGRESS.md` 49。
-④ **冷启动那半场一直在文件里，温度是一条线、不用拼**：`s.Core.TemperatureVal` 在 **0 F 上
-平了 88.5 s**，然后 **9.37 s** 从 510 爬到 **9420 F**（一阶趋近形状）。
-监视器那一路 `TempLabel` 和 `m.temp` **是同一个读数**（394 + 22 = 416，重合处数值相同）。
-**旧写的「0→9420 F / 96.6 s ≈ 98 F/s」和「103 F/s 同速」都作废**（分母里 88.5 s 是零；
-9420 之后那个值再没出现过，它是终点不是中途点）。**开机那 96 秒里配堆的是机器不是手**：
-t=13.39→90.48 共 **77 秒零 CLICK**，冷却三泵、三个 CBL 各在**同一个 poll 里一起跳**，
-六个风扇**等间隔按序**开 —— 操作员只投了启动杆（`StartUpLever` **×8**）。
+**Phase 62（2026-09-30）—— 采集器：driver 整个删掉，反应堆读数加一道核心闸。**
+你三条原话：`transport_probe.luau` **不变**；`TRG_original_recorder.luau`「**注入后立刻开始**
+（注意在核心完全开启前不要采集温度、压力等），并且**不需要什么driver，只需要seal**：
+SEAL的情况是 1：手动关机，2：核心自动关机如熔毁，温度过低等」；`TRG_original_watch.luau`
+「玩家按下开机按钮时开始监听所有控制室+腔室+警报+音频变化（**所有监视器的GUI也要！**），
+**时钟到达12PM时结束**」。
+- **① DRIVER 整段删除**（`DECISIONS_2` 202）。**删得下去的前提**是那条 hook 从来
+  **不在** DRIVER 段里：点击钩子遍历全世界 1019 个 `ClickDetector`，你按的每一个照旧全进文件。
+  `ShutdownEndsShift` / `pollDt` 各只有一个读者（都在 `driveStep` 里），一起走。
+  三个文件归档在 `_tools/_attic/driver/` —— 里面是**关于这台机器两个开关的测量**，不是活代码。
+- **② 核心闸（`COREGATE`）**：判据是**游戏自己的 `s.GameActive`**，不是温度
+  （温度的错在「开了但还没热」和「关了但还很热」，而这两个区间**正好就是开机和关机**）。
+  它**锁存**（关机后低温那臂还要读 `m.temp`，每拍重判会把温度掐在关机那一拍）；
+  它**扣住不写、不是过滤**（闸关着时那个键**根本不进 `last`**，否则闸开那一拍的值
+  正好等于开机前的值时会被判成「没变化」而永远不出现）—— 两种实现在那之前**逐字节相同**
+  （`DECISIONS_2` 203）。**故意不管** `t.*` 通用走查和设施面板：**开机流程本身在那里面**。
+- **③ 窗口的终点改成中午** —— `EndMins = 720`（半夜）**作废**（`DECISIONS_2` 201，
+  并撤回我上轮「720 是对的」那句）。**`EndMins` 这个名字替我回答了问题**：
+  一份配置项的名字如果替你回答了问题，那你读到的就不是测量。现在等的是
+  **11:59 AM → 12:00 PM 的交接**（表盘 1439 → 0），因为表盘在一个班次里单调，
+  正午边界是**下降**不是阈值 → `WrapDropMins = 60`（自身扫描实测 1089 ms，
+  一次六秒卡顿就把第一拍落在 12:06）+ `EndPolls = 2`。
+- **④ 新增闸的测试台**：`build_gate_test.py` + `selftest_gate_test.py`，
+  6 个变异各自红在指定检查上、**2 个 FOLLOW 必须留绿**（其中一个「闸默认开着」是
+  **结构性的盲点**：每场景开头 `reset()` 会清掉闩锁 —— 写下来 + 一行「变异体确实到了」
+  的断言，**变成已知的盲点而不是一个洞**，`DECISIONS_2` 205）。它翻出一个**真代码缺陷**
+  （`coreGateOpen` 不重取 `Stats`，文件夹晚到就永远打不开）和三处 harness 自身的错。
+- **`run_tests.sh` rc=0**（**133 条 ok**）：采集器解析、`gate 32 PASS`、watch 74+5+8+6+5+6+7、
+  探针 23、gate 变异 6/6+2、watch 变异 29/29、gui 10/10、end 3/3、flow 8/8。
+- **三个 md5（注入前核这个，别核时间）：** 采集器 **121202 / 2644 / `48f2c155b7d6342f07cafcfb4404e9e8`**（`r60`）、
+  监视器 **136927 / 2527 / `2d3d7da48db284e64f0321b5d226e605`**（`w60`）、
+  探针 **10752 / 217 / `5acde17d2bccfa65949c9a4b2bec9a90`**（未改）。
+  细节 `PROGRESS.md` 62，取舍 **201..205**。**`docs/RECORDER_HOWTO.md` 已按 `r60` 全文改过** ——
+  它以前教人按一个已经不存在的 `DRIVER: ON/OFF` 按钮（**散文说的谎和代码说的谎一样贵**）。
+- **下一趟两份都要重注**（61 那趟**跑的是** `r58` / `w58`；先前写的 `w59` 是**修完之后**的发货版，
+  不是那一趟的字节 —— 核产物第 2 行 `build=r58`、`alive.txt` 第 2 行 `build=w58`）。
 
-**Phase 50 —— 压力：一个风扇 = −60 PSI/tick（用户给的数，文件验过）。**
-用户主动给了常数 `一个风扇每tick降低60PSI`，当场拿文件验：**12 次风扇拨动 12 次方向全对**，
-中位 |Δ| = 58 PSI/tick；最干净的一段（cblPct=75、coolSum=0 按住不动，只拨 fan 1↔2 四趟）
-斜率**精确在 +58 和 −2 之间跳，差正好 60** —— **用户是对的**，fan=0 基线 +118 PSI/tick。
-**边界一并记下：线性只验到 3 个风扇**（fan=4 那个窗口是衰减瞬态，不是稳态斜率，
-`−30→−14` 朝 0 收敛）；**而且这条不能推广到冷却泵**（五次 coolSum 拨动的 Δ 是
-+0/+11/+4/−102/−4，没有常数）。
-**顺带：这条数从文件外面锁死了 tick** —— 用户说的「每 tick」和压力变化的间隔
-**1.79 s** 一致，和温度的 1.79 s 也一致，这是第一次有外部见证确认 tick ≈ 1.8 s。
+**悬着的还是那两件**（`QUESTIONS.md` 无新条目）：**P4:A 冷却泵 2/3 档**（要等注入）、
+**P6:A 的 187 键探针**（不叠在同一个注入里）。**信标补不上的那一格**：顶层代码在信标
+**之前**抛错时和「从没注入」在盘上逐字节一样 —— 补它要放到文件第一行，那时 `CONFIG` 还没读完，
+**代价大于收益，不做，且这条要一直写在这题的答案里**。
 
-**Phase 51 —— 上版本控制，推到 GitHub（`The-Reactor-Game-Continuation`）。**
-工作文件夹以前**从来没有 `.git`**。远端 public、MIT、原本只有 `LICENSE` / `README.md` /
-`reactor_telemetry.txt` 三个文件。本地初始提交 `3ed1dd4`，与 `origin/main` 的 `e299752`
-**无关历史合并**成 `3461509` 推上去，最终 **175 个文件**在版本控制里。
-**6527 MB → 9.04 MB**：`.gitignore` 排掉 **5986 MB** whisper 模型缓存、
-**426 MB** 原版拆包资产（zip 另超 100 MB 硬限）、**104 MB** 三个第三方 YouTube 视频、
-本地缓存。**排除清单不只是关于大小** —— 资产和视频都在限额以内，排掉是因为**不是我们的东西**。
-顺带把行尾钉成 LF（`.gitattributes` + `core.autocrlf=false`）：全局 autocrlf 会在 checkout 时
-改写每一份 `.md`，而这个工程的文档**按字节当工作**（`DECISIONS` 96）。
-**留了一条**：`Data/TRGWeb.luau` / `DataCollection.luau` / `Summary01.luau` 是原版源码的
-逐字副本，现在公开了 —— 见 `QUESTIONS.md` **P5**。
-**推送通道（同一天补的）：** `git push` 在这台机器上连不上 —— **`github.com:443` 21 s 超时**，
-但**同分钟 `api.github.com` 200 / 0.43 s**；两个域名是分开的。于是用
-`_tools/_attic/scratch/api_push.py` 走 Git Data API 把**同一棵树**写上去，动 ref 之前
-**断言服务器算出的 tree sha == 本地 `HEAD^{tree}`**（tree sha 是内容哈希，对上就是逐字节相同），
-写完再把 176 个 blob 读回来逐一比对，0 处不同。远端那笔是 **`1109d362`**、不是本地的
-`f1aadb6`（内容相同，作者被换成 GitHub 身份），所以**下一次 `git push` 会是 non-fast-forward** ——
-网络通时**先比 `^{tree}` 再 `git rebase origin/main`**：
-`reset --hard` 只在手上没有新提交时成立，**有本地提交时它会把你那笔吃掉**。
-（`github.com` 那个封锁是**间歇**的 —— 2026-09-27 它又能连了，推上去只是
-non-fast-forward 被拒。见 `PROGRESS.md` 51.7。）
+**Phase 59（2026-09-30）—— 拉杆的位移改成 tween。** 用户只问了拉杆（灯一个字没改）：
+`VisualFeedback.poseLever` 从一帧赋值改成 `TweenService:Create(...):Play()`，时长
+`Config.Visual.LeverTweenSeconds = 0.3`，**必须短于 `RefreshSeconds = 1`**（refresh 是签名门控的，
+下一次姿势到来时还在动的档位 = union 永远不会停的档位）。另有两条安全性质：先 `Cancel()`、
+重解析时沿用旧 `baseline` / `travel`。**动画故意留在服务端** —— 推到客户端
+= **两个写入者**，那条路已被撤过一次。细节 `PROGRESS.md` 59，取舍 **187..191**。
 
-**Phase 47 —— 整理 Workspace 与工作文件夹。**
-779 个已证惰性的散件进了 `Workspace.Geometry`（该夹 23 → **802**），19 个散落 `Sound` 进了
-`Workspace.Sounds`，根目录直接子物体 1802 → **999**，Part 总数 **91905 不变**，
-回滚记录是 `ServerStorage.OrganizeRollback20260926` 里**一个 197602 字节的 `StringValue`**。
-数字在 `baseline/organize_20260926.md`。
-**代价我记在这里：多删了 6 个东西** —— `CreepySounds` 的 6 个子物体跟着脚本一起没了、找不回来，
-理由和错在哪见 Phase 47 的 DISCLOSURE 段。
+**Phase 60（2026-09-30）—— 百叶窗的开关也 tween，外加 `start_services.bat`。**
+「也」是**门本身**（拉杆 59 已 tween）：`RoomShell.applyShutters` 从一帧落位 10.58 studs
+改成 0.6 s `Quad/Out`，**写入者没换**（`RoomShell` 本来就是它们的单一写入者）。
+`Config.Shell.ShutterTweenSeconds = 0.6`（不是 0.3：门走约 15 倍距离），
+**缓动不进 Config**，**创建前先 `Cancel()`**，开 = 关 **减**世界空间的 `(0,10.58,0)`。
+`src/ReactorBackend/` **七个模块全部 IN SYNC**。`start_services.bat` 起那两个服务。
+**Edit 模式下逐 tick 位移读不出平不平**（`Heartbeat` 成串投递）——用时间桶。
+细节 `PROGRESS.md` 60，取舍 **192..196**。
+
+**Phase 号按做事的先后（mtime）编，不按补号的顺序。** 2026-09-26 那四件活是 45（拉杆反馈）、
+46（灯矩阵）、47（整理 Workspace）、48（采集器读文件）；45/46 本来两边都没落，已按 **O4:A**
+回填，取舍 **131..137**，整理那节因此从我先前写的 45 **改号为 47**。
+
+**Phase 48/49/50/51 —— 已搬到 `PROGRESS.md` 的历史，这里只留能直接用的那几句。**
+（本节原有全文已逐字存在于 `PROGRESS.md` 同名 Phase 里，压缩只是让每轮进上下文的那份小下来，
+不是删记录。这条压缩本身也是 §0.0 那条规矩的一次执行。）
+- **48**：`Data/flow/original_260926-230049` 抓全了 Equinox 整条链（12:00 PM 触发 → 两个 CBL
+  掉到 10% → 压力 2542→1070 → `MAINFRAME CONNECTION LOST` → `tempF=7978` 封存）；
+  两处**只改措辞、不删读数**的措辞修正（中途注入的 `CLOCK`，和把机器的锅记在人头上的封存句）。
+  **48 更正：我一度把 `m.temp` 当成堆芯温度** —— 它是**监视器标签**，而监视器最瞎的时候
+  （读 `ERR F`）正是堆芯最冷的时候；**冷启动的一趟在结构上永远给不出 `flow=true`**。
+- **49**：**`m.fluct` 就是那一 tick 的温度增量**（391/393 逐字节相等）→ `m.temp` 是它的累加，
+  **温度是积分器不是惯性环节**，tick ≈ **1.8 s**。
+- **50**：**一个风扇 = −60 PSI/tick**（你给的数，文件验过：12 次拨动方向全对、中位 |Δ|=58，
+  最干净那段在 +58 和 −2 之间跳、差正好 60；fan=0 基线 +118）。**线性只验到 3 个风扇，
+  且不能推广到冷却泵。**
+- **51**：远端 public/MIT `The-Reactor-Game-Continuation`，**175 个文件**，**6527 MB → 9.04 MB**
+  （排掉的是**不是我们的东西**：whisper 缓存、原版拆包资产、三个第三方视频）；行尾钉 LF。
+  **推送**：`github.com:443` 是**间歇**不通，通时用 `_tools/_attic/scratch/api_push.py` 走
+  Git Data API，**动 ref 前断言服务器 tree sha == 本地 `HEAD^{tree}`**；
+  远端那笔 sha 与本地不同，所以 `git push` 会 non-fast-forward：**先比 `^{tree}` 再
+  `git rebase origin/main`，不要 `reset --hard`**（有本地提交时它会把那笔吃掉）。
+
+**Phase 47 —— 整理 Workspace 与工作文件夹。** 779 个已证惰性的散件进 `Workspace.Geometry`
+（23 → **802**），19 个散落 `Sound` 进 `Workspace.Sounds`，根目录直接子物体 1802 → **999**，
+**Part 总数 91905 不变**；回滚记录在 `ServerStorage.OrganizeRollback20260926`（一个 197602
+字节的 `StringValue`），数字见 `baseline/organize_20260926.md`。
+**代价：多删了 6 个东西** —— `CreepySounds` 的 6 个子物体跟着脚本一起没了、找不回来，
+理由和错在哪见 `PROGRESS.md` Phase 47 的 DISCLOSURE 段。
 
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒用户 Ctrl+S —— 旧版 §8 那句「改完提醒用户 Ctrl+S」已作废。

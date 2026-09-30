@@ -4,11 +4,34 @@ This project was inspired by a game on Roblox called 'The Reactor [Maintenance]'
 Since the original game is no longer supported, this project is meant to keep it going.
 
 It is developed against the original game as a **measurement target**, not by
-guesswork: `_tools/TRG_original_recorder.luau` is injected into the original place
-(placeId `17596243941`) through a Luau executor and writes a sample log of only the
-values that changed. The recordings under `Data/flow/` are what the constants in
-this repo were calibrated from, and `DECISIONS*.md` records what each number was
-derived from and what it is *not* good for.
+guesswork: single-file scripts under `_tools/` are injected into the original place
+(placeId `17596243941`) through a Luau executor, and each one writes its findings to a
+local sink rather than to the screen - the operator can start the game **once** per
+shift, so a result that only ever existed on screen is lost with the shift that produced
+it. `TRG_original_recorder.luau` writes a sample log of only the values that changed; it
+reads the player's own GUI as well as the world -- an object's own visible/enabled flag,
+and the text of the labels it finds -- and emits a periodic `PERF` line about what the
+reading costs, so that "the recorder is eating the frame" and "the client was already
+stalling" can be told apart. `TRG_original_watch.luau` is the wide one: a bounded census
+of the control room, the core chamber and the alarms, plus every monitor's GUI and every
+audio event, opened by the start-up lever and closed when the shift dial reaches noon.
+`transport_probe.luau` answers which of the executor's transports actually work, and
+costs an injection but no shift. All three need two local services, and
+`start_services.bat` in the repo root brings them up: the 8765 sink that receives
+their bytes into `Data/` without those bytes ever entering an AI's context, and the
+8766 file server they are fetched from. It opens two windows on purpose - each keeps
+its own log and closing one does not take the other down - and it warns if either
+port is already LISTENING, because a second copy binds nothing and dies, which
+otherwise looks exactly like a service that is up. **Nothing under `_tools/` presses
+a control.** The
+recorder carried an observer-only driver until 2026-09-30 and no longer does - the
+operator removed the requirement, and the code is kept in `_tools/_attic/driver/`
+together with the measurements it made about the facility's two switches. `bash
+_tools/run_tests.sh` gates what is left: six harnesses extracted from the shipped files,
+six mutation runs that prove each harness can fail, and a 5.1 parse of both whole files.
+The recordings under `Data/flow/` and
+`Data/originalwatch/` are what the constants in this repo were calibrated from, and
+`DECISIONS*.md` records what each number was derived from and what it is *not* good for.
 
 ---
 
@@ -28,14 +51,17 @@ GameCore/
   AlarmSystem/       AlarmController, AlarmMonitor
   EventSystem/       EventController (random incidents + Equinox)
   PlayerSystem/      PlayerController, ShiftSystem
-  PROGRESS / DECISIONS / DECISIONS_2 / README   (documentation modules)
+  PROGRESS / DECISIONS / DECISIONS_2 / README   (historical copies -- the disk .md is
+                     the record as of 2026-09-26, see below)
 
 DECISIONS IS TWO MODULES ON PURPOSE. ModuleScript.Source is capped at 200000 bytes by the engine,
 and in Phase 40 the record passed it - the write was refused outright rather than truncated. Entries
 1..74 stay in DECISIONS, under the name every existing reference already uses; 75.. onwards live in
 DECISIONS_2. The boundary is an ENTRY NUMBER, so it is a fact about the document rather than about
-its length on the day it was cut. The two disk mirrors DECISIONS.md and DECISIONS_2.md are copies of
-the two modules byte for byte. See DECISIONS 123.
+its length on the day it was cut. **The direction of that copy reversed on 2026-09-26:** mirroring
+back into Studio was retired, so DECISIONS.md and DECISIONS_2.md ARE the record and the modules
+inside GameCore are historical copies left behind when the mirroring stopped. See DECISIONS 123 and
+CLAUDE section 0.0.
 
 ## Conventions
 - Systems expose Initialize() and Update(dt) and are called with DOT syntax.
@@ -264,8 +290,16 @@ holds it; CBLSystem.GetBodyTemperature() exposes it; it never changes.
                while the Gravatron is healthy; if it fails the shafts go dead.
 
 ## Control feedback
-Pulling a lever physically rotates it to a detent derived from live state:
+Pulling a lever SLIDES it to a detent derived from live state - it does not rotate; the throw is a
+pure translation along the lever's own axis, and only its LeverUnion moves:
 CBL 1-5, P.E.A extraction 1-4, coolant pump 0-3, fans / E-VENT / start-up 2.
+The slide is tweened (0.3 s, Quad/Out, `Config.Visual.LeverTweenSeconds`) rather than snapping, so a
+click reads as answered. VisualFeedback on the server is the only writer of those CFrames; the
+client-side reflector was retired 2026-09-26 and is not the path to re-enable (DECISIONS_2 187).
+The three control-room shutters that lever commands are tweened for the same reason, by the module
+that already owns their CFrames (`RoomShell`): 10.58 studs over 0.6 s, Quad/Out,
+`Config.Shell.ShutterTweenSeconds`. Levers and panels share one easing vocabulary on purpose - a
+single control family should not read as two different games. RoomShell's half is SYSTEMS.md 2.12.
 Buttons flash their indicator lamp green on press, then settle to white (ready),
 red (unavailable/fault) or dark (spent).
 

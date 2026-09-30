@@ -2373,3 +2373,1044 @@
     is already claimed, the new arm is dead. When you add a bucket to a report, check who iterates
     the container it lives in. Both are one-line checks and neither can be done by reading the code
     you just wrote, because the code you just wrote is the thing that looks fine.
+
+160. WHEN YOU HAVE NEVER SEEN THE TREE, THE CENSUS HAS TO COME FIRST -- AND IT HAS TO SAY WHY
+     IT CHOSE WHAT IT CHOSE.
+    The room watcher for our own place takes five hardcoded roots, and that was right there: we
+    have looked at every part of that tree, so the paths are measurements. The watcher for the
+    ORIGINAL game cannot do that. Nobody here has seen its tree, and a hardcoded root list would
+    turn a guess into an assumption whose failure is silent -- a root that does not exist produces
+    zero lines, and "nothing happened" and "the path is misspelled" are the same output. That is
+    the shape of every failure this project has already paid for.
+
+    SO THE ROOT IS CHOSEN AT RUNTIME, AND THE CHOICE IS PART OF THE OUTPUT. The watcher walks the
+    candidate roots, enumerates them, takes them SMALLEST-FIRST until the instance budget runs out,
+    and writes rooms.txt listing which roots it took, which it skipped, the reason for each skip
+    ("over PerRootBudget (30000)"), and a one-level drill into every skipped root. Smallest-first
+    is deliberate: a 40,000-instance container would otherwise swallow the whole budget and the
+    interesting small rooms would never be watched. The reason string is not decoration -- without
+    it, a skipped root and a nonexistent root are indistinguishable in the artifact, which is the
+    same defect one level up from the one this entry is about.
+
+    VERIFIED IN THE HARNESS, NOT IN THE GAME. The fixture contains a 40,000-part Facility, and the
+    suite asserts both that the smaller roots were taken and that the giant is absent from the watch
+    -- so the budget rule is shown to be doing something, not just present. What is NOT verified is
+    whether 80,000 is the right number for the original, or whether the roots it picks up are the
+    control room and the chamber. The first thing to read after a run is rooms.txt, because it will
+    say so out loud instead of handing back a quiet, empty file.
+
+    HOW TO APPLY. When you are pointed at something you have never enumerated, spend the first pass
+    discovering the shape and writing down the rule you used to choose -- do not encode your guess
+    as a constant. And make the skip reason a string in the artifact: a filter that omits something
+    without recording that it omitted it is indistinguishable from a filter that found nothing.
+
+161. A WRITE-ONLY VARIABLE IS AN UNFALSIFIABLE CLAIM ABOUT THE OUTPUT.
+    This is DECISIONS 159 in the opposite direction. That entry was about a rule that could never be
+    REACHED; this one is about state that is written and never READ -- and it is worse, because a
+    dead branch at least has a reader that cannot get to it.
+
+    MEASURED. `judged` was declared at line 286, cleared at 723, assigned at 1181 and 1253, and read
+    nowhere in the file. Meanwhile suppressed.txt's own header said: "A key that IS in changes.log
+    was judged the other way: it went quiet long enough for its held lines to be written out, so
+    logging it is not a guess." The document described a judgement that nothing computed. Both the
+    sentence and the variable read perfectly well on their own.
+
+    WHAT MADE IT VISIBLE WAS MUTATION TESTING, AND ONLY THAT. Deleting the entire quiet-release rule
+    -- the thing that decides which keys are "judged discrete" -- changed NO artifact on disk except
+    wall-clock stamps. Every one of the 43 checks stayed green, because every one of them asked
+    "is this line in changes.log" and the answer was still yes: Watch.Report() calls drainHeld()
+    every 30 scans and flushes ANY ring still held, so a missing release only makes a line arrive
+    later, never absent. A stored value with no reader cannot be tested, and the claim it was
+    standing in for was therefore untestable too.
+
+    THE FIX WAS TO MAKE THE CLAIM REAL, NOT TO DELETE IT. judgedCount() now counts the keys released
+    on quiet AND not also ambient -- the `not ambient` half matters, because an ambient spinner that
+    pauses is still ambient and counting it would report "logged" about keys the reader cannot find
+    in changes.log. The number is printed in suppressed.txt, the sentence next to it is now true,
+    and the release rule finally has an observable.
+
+    HOW TO APPLY. For every variable, ask who reads it. A value that is only ever written is not
+    bookkeeping, it is a comment in the shape of code -- and if a document nearby refers to it, you
+    have two independent-looking things that are both wrong in the same direction. Mutation testing
+    is what finds this class: a mutation that changes nothing is not a wasted mutation, it is a
+    measurement of how much of the program is load-bearing.
+
+162. AN ASSERTION THAT HAS NEVER FAILED IS NOT EVIDENCE -- AND THE HALF THAT MATTERS IS THE ONE
+     THAT MUST STAY GREEN.
+    watch_harness.luau went 43/43 the first time it was ever executed. That result is worth exactly
+    nothing on its own: every check in it could have been `check('x', true)` and the output would
+    have been identical. So selftest_watch.py breaks the shipped watcher thirteen ways and requires
+    the matching check to be the one that turns red.
+
+    TWO RULES MAKE IT WORTH RUNNING. First, every mutation names a check that must STAY green as
+    well as one that must go red -- without that, a mutation which simply destroys the watcher
+    satisfies "the target check went red" while proving nothing about whether the check measures
+    the right thing. Second, every mutation's anchor string must occur EXACTLY ONCE in the source,
+    and a non-unique anchor is reported as a failure of the TEST rather than skipped. That rule is
+    not hygiene: an anchor that matched twice once wrote an entire function into the wrong block and
+    the module stopped exporting it, with no symptom until a pcall failed silently every tick.
+
+    IT ALSO CAUGHT TWO THINGS I DID NOT PLAN FOR. M1 (the quiet release never fires) was initially
+    NOT DETECTED -- and that finding, followed up, produced the entry above. And the ordered-release
+    mutation had no absolute invariant to assert against: "changes.log is non-decreasing in t=" is
+    NOT a property the watcher guarantees, since a line released at tick 31 can carry a tick as old
+    as 26 while a report drain at tick 30 has already written a stamp of 30. Asserting that anyway
+    would have been a check that is right about the fixture and wrong about the program. It is
+    asserted DIFFERENTIALLY instead -- the mutant's changes.log must differ from the baseline's once
+    wall-clock stamps are stripped -- which is always true when the sort is doing something and
+    never an invented invariant.
+
+    HOW TO APPLY. A test suite whose every run has been green is a hypothesis, not a result. Before
+    trusting it, break the subject on purpose, one property at a time, and check that the right
+    assertion is the one that objects -- and that the others stay quiet. When no honest invariant
+    exists for a property, compare against a baseline instead of writing down something that is
+    merely true here.
+
+163. A FLAG PARSED CORRECTLY AND TESTED AGAIN ELSEWHERE IS A FLAG THAT SILENTLY DOES NOTHING.
+    The harness sets DUMP = true when it sees --dump, and then, at the point of writing files, asks
+    `arg[1] == '--dump'` a second time. With a path argument -- `lua watch_harness.luau <mutant>
+    --dump` -- arg[1] is the path, so the second test is false and the dump writes nothing. No
+    error, no warning: an empty directory.
+
+    WHAT MADE IT DANGEROUS IS WHAT IT LOOKED LIKE. An empty output directory reads as "this mutant
+    produces no output", not as "the flag was ignored". It was found only because I wanted to diff a
+    mutant's artifacts against the baseline and the diff reported every single file as different --
+    which was the tool being right, since one side did not exist.
+
+    The fix is to test the parsed state (DUMP) and nowhere else, and to let the output directory be
+    named with --out=DIR so two runs can be compared without moving directories around.
+
+    HOW TO APPLY. Parse each option once, into a variable, and never re-derive it from the raw
+    argument list at the point of use -- the second derivation has a different notion of what the
+    arguments are, and it fails silently in exactly the cases where it is hardest to notice. And
+    when a tool produces "nothing", check whether it produced nothing or was never asked.
+
+164. TWO SCRIPTS, ONE SESSION, ONE SPENT ATTEMPT -- A SHARED HOTKEY IS NOT A SHARED
+     CONVENIENCE.
+    The watcher shipped binding RightShift to "write every file out now". TRG_original_
+    recorder.luau binds RightShift to SEAL -- it ends that recording and stops the collector.
+    Both scripts are meant to run side by side, injected into the same session, on an attempt
+    the operator has said can be made only ONCE. So the key an operator would press meaning
+    "flush the watcher" was the key that discards the recording, and the cost of the mistake
+    is the whole run.
+
+    NOTHING COULD HAVE CAUGHT THIS BUT READING BOTH FILES. The watcher's own suite cannot see
+    it: the key does nothing until a human presses it, and what it does then happens in the
+    OTHER script. The recorder's suite cannot see it either -- from inside that file, RightShift
+    is doing exactly what it was written to do. Every test on both sides is green in this
+    configuration. It is invisible at exactly the seam where two independently-correct programs
+    meet, which is the class of defect that no amount of testing one program can reach.
+
+    THE FIX IS THAT THE WATCHER MOVES, AND THE ASYMMETRY IS THE RULE. Its key is a convenience
+    -- press it if you want the files sooner than the next summary tick. The recorder's key is a
+    commitment -- press it and the attempt is over. When two functions want the same scarce
+    resource, the one whose claim is weaker yields, and that is a property of what each key
+    MEANS, not of which was written first.
+
+    A CHECK NOW GUARDS IT, and it is deliberately unusual: it reads the watcher's SOURCE and
+    fails if the string KeyCode.RightShift appears anywhere in it. That is not testing behaviour,
+    and it is the right instrument anyway -- the property is "this file does not claim this key",
+    which is a property of the text. A behavioural test would have to press a key and then go
+    look in a different program for the damage.
+
+    HOW TO APPLY. Before running two scripts against the same live session, compare their global
+    hotkeys, their global variables and their output paths -- the three places side-by-side
+    programs silently collide. When they do collide, decide which side yields by asking which
+    one's action is recoverable, and make that side move. And when a collision is found, leave a
+    check behind that would catch it returning: a comment explaining it is not a guard.
+
+165. HARMLESS IS NOT A REASON TO KEEP SOMETHING -- HAVING A READER IS.
+    The room watcher built in Phase 53 was reviewed on one axis: does it hurt? On that axis it
+    scored well. It writes nothing into the world (no assignment to any watched instance anywhere
+    in the file), it touches no gameplay, and its cost was MEASURED rather than guessed -- about
+    750 ms to build the index once per server start, 19 to 112 ms per one-second scan, a few POSTs
+    per second to a sink that is usually not running, and 1,521 signal connections that cost
+    nothing until a sound actually plays. Even the sink being down was tested: the loop kept
+    ticking and the backlog went out in one go when the sink came back.
+
+    THE REVIEW NEVER ASKED WHO READS IT. The question put to the operator was keep / delete /
+    keep-but-off, and all three options take the monitor's usefulness for granted -- they argue
+    only about what it costs to have it. The correction that opened Phase 54 changed the fact
+    underneath: the monitoring was always meant for the ORIGINAL game, and this place is not the
+    original game. Under that fact the AIRemake copy has no reader at all, so every number above,
+    however small, buys nothing. It was deleted, and the one-line reason was the whole argument:
+    what we are collecting lives in the other game.
+
+    DELETING IT REQUIRED PROVING TWO THINGS, AND BOTH WERE CHEAP.
+    First, that the copy on disk really is the copy that was deleted. Byte length is not identity
+    -- this project has already been bitten by two files of equal length and different content --
+    so the check was character by character, and it was run INSIDE Studio: the disk file was pulled
+    back through HTTP into the same VM as the instance and compared against Source directly. Both
+    came back identical (68907 and 462 characters). Comparing a hash computed outside the game
+    against a hash computed outside the game would have been a tautology of the kind this project
+    has a standing rule against.
+    Second, that nothing binds the name. A grep over every script in the DataModel had to return
+    only the file's own self-references, and it did. Note how close this is to the RS/SS rule: an
+    unreferenced thing and a thing whose only reference sits in a script that never runs are
+    indistinguishable if you do not ask where the reference lives.
+
+    THE COST IS WRITTEN DOWN AS TWO SEPARATE LISTS, because "it is gone" is not one fact. Lost: the
+    default-on capture in this place, and with it the ability to read what a running session did
+    there. Kept: both files in _tools with their install notes, the seven artifact runs, and every
+    number Phase 53 recorded. The replacement is the files themselves, which is what makes this a
+    move rather than a removal.
+
+    HOW TO APPLY. Establish that something has a reader BEFORE measuring what it costs -- a cost
+    measured against the wrong axis is precision without a purpose, and it will read as diligence.
+    When you remove something from the live place, make it reversible first: prove the disk copy is
+    identical character by character from inside the same VM, and prove nothing binds the name.
+    Then say plainly which half was lost and which half was kept, because a deletion reported as a
+    single fact hides exactly the part someone will come looking for.
+
+166. ASK THE ENGINE WHICH PROPERTY IT ANSWERS -- DO NOT DERIVE IT FROM THE CLASS NAME.
+    The player-GUI reader has to record, for every object on the player's screen, whether that
+    object is showing. There are two properties that mean "showing" and which one applies depends
+    on the class: a ScreenGui answers Enabled, a Frame answers Visible. The obvious implementation
+    is a class test -- IsA('LayerCollector') and Enabled or Visible -- and it was measured in
+    Studio before it was written, where the measurement said something the class test cannot use:
+    NOTHING ANSWERS BOTH, AND ASKING THE WRONG ONE IS AN ERROR, NOT A NIL.
+
+        LayerCollector (ScreenGui, SurfaceGui, BillboardGui, GuiMain)  Visible -> error,  Enabled -> reads
+        GuiObject (Frame, TextLabel, TextButton, TextBox, ImageLabel,
+                   ViewportFrame, CanvasGroup, ScrollingFrame)        Visible -> reads,  Enabled -> error
+
+    An error is the whole argument. A wrong guess that produced nil would cost one missing field in
+    one record. This one propagates: readGui raises, pollOnce raises, and the sample is not taken --
+    so the price of a wrong guess is not a bad reading, it is THE ENTIRE RUN, silently, in a script
+    that gets one shot. The class test is also correct-today-and-wrong-tomorrow: it encodes the
+    current class list in a form that fails silently the moment a class is added, which is the
+    failure shape this project already has a rule against.
+
+    So flagReaderFor probes instead: pcall each property once per object AT REBUILD TIME (not per
+    poll), keep the one that answers, and count -- not guess -- anything that answers neither. The
+    probe costs one pcall per new object; the poll that follows reads one property per record.
+
+    HOW TO APPLY. When the engine has two properties for one concept, the question "which class
+    takes which" is an empirical question and it is cheap to ask. Ask it, and write the answer down
+    with the class list you measured, because the day it changes you want a failing probe and not a
+    plausible-looking line of data. Being wrong about a property that returns nil costs a value;
+    being wrong about a property that raises costs everything after it in the same function.
+
+167. A COST MEASURED ON A MOCK IS A COST OF THE MOCK. COUNT THE PROBE INSTEAD.
+    The claim the GUI reader rests on is that it is cheap: one property read per record per poll, and
+    a rebuild only when the tree actually changed. The tempting way to test that is to time it. Timing
+    it would have measured the mock: the harness runs under stubbed instances with no engine behind
+    them, so the number returned would be a property of the stub, and it would have looked like
+    evidence.
+
+    So the mock counts instead. FLAG_READS is incremented inside the metatable arms for Visible and
+    Enabled -- the only two places a flag can be read from -- and the suite asserts the count:
+    one poll reads EXACTLY one flag per record, and a rebuild pays between one and two probes per
+    object. That is a statement about the shipped design, which is what was actually in question,
+    and it cannot drift when the mock gets faster.
+
+    HOW TO APPLY. Before timing anything, ask what the stopwatch is attached to. If the thing being
+    timed is a stub, a substitute, or a different machine, the measurement answers a question nobody
+    asked. Prefer counting the operation you claim to bound: a counter is exact, it survives being
+    ported, and it fails when the design changes rather than when the host does.
+
+168. ONE FACT, ONE WRITER -- SO THE GUI TEXT IS NOT READ HERE.
+    The feature asked for was "collect the player's GUI data", and the player's GUI is mostly text.
+    The recorder already has a machine for reading text: the readout walk, with its whitespace
+    normalisation, its per-instance and per-key guards, its chatter detection, and its NOISY and
+    ANIM verdicts. The new reader could have read the labels itself -- three lines -- and the file
+    would then contain two independent opinions about the same string, maintained by two pieces of
+    code, which is the exact shape of the double-write bug this project has ruled against before.
+
+    So the split is by namespace and it is deliberate: g.<key> holds an object's own flag and is
+    written only by the GUI reader; t.<key> and x.<key> hold a label's text and are written only by
+    the existing readout walk. The GUI reader's whole contribution to the text is to hand the labels
+    it found to the walk that already knows how to read them, and to record the ones it could not
+    take. Both halves were already tested separately, which is the payoff: the GUI suite tests flags
+    and membership, the readout suite tests text, and neither one has to be re-derived.
+
+    HOW TO APPLY. When a new subsystem needs a kind of value an existing subsystem already owns, give
+    it a namespace and route the value through the owner. A second reader of the same field is not
+    redundancy -- it is a second author, and the two will disagree eventually in a way that looks
+    like a discovery about the game.
+
+169. A HOTSPOT RANKING BUILT ON ANOTHER PLACE'S PART COUNTS IS PRECISION WITHOUT A PURPOSE.
+    Asked why the recorder was slow, this file produced a ranked list of the expensive walks and put
+    the lamp matrix first: roughly 1,000 NeonParts, ~8 allocations each, four times a second. Every
+    arithmetic step in that sentence was right. The 1,000 was wrong -- it is the count in the OTHER
+    place, the AIRemake rebuild, and the recorder does not run there.
+
+    The recorder's own output had the answer the whole time. It reports z.parts = 28 and z.systems =
+    20 for the lamp matrix and STATADD = 38 for the stats board, so both walks are negligible. What
+    is actually large is READOUTS found = 1115 -- about 1,115 labels walked per poll, roughly 4,600
+    reads and pattern matches a second -- and that is where the remaining cost is.
+
+    The error was not in the estimate, it was in the SOURCE OF THE ESTIMATE. A count taken from the
+    wrong place is not approximately right, it is a different number with the same units, and it is
+    more dangerous than no estimate at all because it reads as diligence.
+
+    HOW TO APPLY. An estimate about a specific running system must quote a number that system
+    reported, or a number measured from it -- never a number carried over from its analogue. This
+    place and the original game have the same architecture and different contents, and every cost
+    question is a question about contents. When the artefact itself publishes the counts, read the
+    file before ranking anything.
+
+170. A TEST-REPORT PARSER THAT READS ONE STREAM CANNOT TELL "RED" FROM "NEVER RAN".
+    The GUI mutation suite ran all ten mutations and reported, for every single one, that the mutant
+    "did not build -- the harness did not load". There was nothing wrong with any of the ten. The
+    harness writes its report to stderr and exits 1 when it goes red, and prints to stdout only when
+    it goes green, so a failing run leaves stdout empty -- and the parser read stdout. Every mutant
+    that was detected correctly was reported as a broken test.
+
+    What makes it worth writing down is which error it imitates: "did not run at all" is the one
+    failure that looks like a problem with the test rather than a problem with the subject, so the
+    natural response is to go and fix the harness -- which was already correct. The fix is one line,
+    parse both streams, and the guard is that the no-output-at-all branch has to say so in its own
+    words rather than returning an empty result that reads as success.
+
+    HOW TO APPLY. Any tool whose output is read by another tool must be read from every stream it can
+    use, and the empty case must be distinguishable from the negative case. This is the same rule as
+    the scripts that write their own death to a file: "quiet" and "dead" must not be the same
+    reading, and that applies to the harness reading the subject as much as to the subject reading
+    itself.
+
+171. A PIN IS A CLAIM ABOUT THE RUN, AND A NAME MAY ONLY BE PINNED ON EVIDENCE THAT IT EXISTS.
+    The watcher chose roots by discovery -- census Workspace, take the smallest first until the
+    budget runs out -- and `Pinned = {}` meant the whole run was a gamble on which roots the budget
+    would reach. That gamble is real and not hypothetical: TotalBudget is 80,000 against a Workspace
+    of roughly 92,000 instances, so the budget is going to run out somewhere, and whether it runs out
+    before or after any particular root is not something a one-shot injection should leave to luck.
+
+    The operator closed that hole himself by naming the path -- `game.Workspace.Alarms` -- and that
+    provenance is the entire reason the name is allowed in the list. Pinning is a claim that a name
+    exists; a name that does not exist has no effect at all, and no effect is exactly what success
+    looks like from the outside. A pin invented from a plausible guess would therefore be a silent
+    falsehood of the same species as the anchor that matched twice and the module that stopped
+    exporting a function: everything reads fine, and the one thing that is missing leaves no symptom.
+
+    What makes the pin honest is that it does not shortcut anything. The census still enumerates every
+    direct child, tree.txt still lists all of them, and rooms.txt prints the pinned names on their own
+    line, so the exemption is stated in the artefact rather than implied by it. The cost is one
+    2,334-instance root out of an 80,000 allowance.
+
+    HOW TO APPLY. Pin by name only names that someone who has read the target has stated, and make the
+    product say on its face which names were pinned -- an exemption that is not printed is
+    indistinguishable from a bug. When a branch has never executed because its input was always empty,
+    treat first execution as untested code and cover it before the one run that matters, not after.
+
+172. A PRODUCT THAT WRITES ITS OWN OUTPUT PATH MAKES A MISPLACED SINK A LIE, NOT A NUISANCE.
+    Both injected scripts print the command that starts their receiver in their header comments, and
+    that command names D:/rblxTRGproject/Data. The receiver that was actually running had been started
+    with a different --dir, so the previous run landed outside Data entirely -- a single file sitting
+    in a verify directory, in a place the artefact's own documentation says it will not be. Nothing
+    broke. No reader failed. The file was found, byte-identical, and moved.
+
+    It is worth writing down because of how quietly it would have gone wrong later: the sink root is
+    not a wire protocol, so no code depends on it, which is precisely why a mismatch produces no error
+    at any point. The only thing that would ever have noticed is a person looking for a file in the
+    directory the documentation promised -- and the documentation was the thing that was wrong.
+
+    HOW TO APPLY. When a program documents the path its output will appear at, that path is part of the
+    contract and a receiver pointed elsewhere makes the documentation false rather than merely
+    inconvenient. Before repointing one, measure that nothing reads the old location -- prose mentions
+    in a log are not dependencies, and the check is cheap. Compare the moved artefact by hash, not by
+    size, for the reason in 96.
+
+173. A RECORDING WINDOW GATES THE TIMELINE, NOT THE WATCH.
+
+    WHAT HAPPENED. The operator bounded the recording: it starts when he presses the start-up lever
+    and ends when the shift dial reads 12:00. The obvious reading -- "start looking at the lever" --
+    is the wrong one, and the difference decides whether a run with no press can be told apart from a
+    watcher that was never injected at all. The scan, the property watch, the counters, the ambient
+    judgement and the audio hooks all keep running while the window is shut. What is withheld is the
+    two TIMELINE files: changes.log and audio.txt. summary.txt, inventory.txt, audio_tally.txt,
+    health.txt and window.txt are NOT gated, and that is what makes the distinction readable -- the
+    state files answer "was anything watched at all" independently of whether anything was recorded.
+
+    WHY THE BASELINE IS WORTH THE SCANS IT COSTS. A watcher that only started looking at the lever
+    would have no baseline, so its first post-lever line would describe a move away from a value it
+    had never read -- a diff with a hole where the "before" should be. The withheld lines are also
+    counted rather than silently dropped, so "nothing happened before the lever" and "a lot happened
+    and was withheld" are two different files rather than the same blank one.
+
+    HOW TO APPLY. When a window is specified as "record from X to Y", decide explicitly which
+    artifacts it gates, and leave the state/diagnostic artifacts ungated on purpose. A gate applied to
+    everything turns "the event never occurred" into the same reading as "the observer was absent".
+
+174. PRE-WINDOW EVIDENCE WEARS TWO HATS, AND A COUNT THAT DENIES THE FILE BENEATH IT IS WORSE THAN NO
+     COUNT.
+
+    WHAT HAPPENED. Opening the window has to count the lines the rule withheld and then drop them.
+    The first version counted `#logLines` and cleared it. The harness then read a product that
+    contradicted itself: an OPEN marker stamped t=3 announcing "0 line(s) before this were withheld"
+    sitting directly above t=1 and t=2 lines that had leaked past it. The arithmetic was not merely
+    short -- it denied the evidence in the same file.
+
+    WHY. A key that is still MOVING when the lever goes down keeps its lines in a hold ring, not in
+    logLines; the quiet release writes them out several scans later, i.e. after the window opened. So
+    the pre-window evidence lives in two places and the count covered one of them. Counting and
+    dropping are also two separate acts, and the suite can now see either one fail alone: one mutation
+    removes the count, another counts but does not drop.
+
+    HOW TO APPLY. When you withhold evidence, enumerate every buffer it can be sitting in, not just
+    the one the writer touches first -- and make the count and the drop independently testable. If a
+    summary number can disagree with the artifact printed underneath it, a reader has no way to know
+    which of the two to believe.
+
+175. A STRING PROBE CANNOT SEE A LEAK THAT THE STAMP CAN.
+
+    WHAT HAPPENED. The check for "the withheld lines did not reach the timeline" searched
+    changes.log for `QUICK BOOT UP INITIALIZED`. It failed on a CORRECT file, because that same
+    string is the `from` value of a legitimate post-window line
+    (`TitleText.Text | QUICK BOOT UP INITIALIZED | REACTOR ONLINE`), and it also missed the real
+    leak -- the leaking lines were not that string at all. One probe, wrong in both directions,
+    which is the worst possible outcome for a check: a false alarm on the good case teaches you to
+    ignore it, and then it cannot protect the bad one.
+
+    WHY THE STAMP IS THE RIGHT INSTRUMENT. The property the window actually guarantees is causal, not
+    lexical: after the open, no recorded line is stamped before the OPEN marker. A value string may
+    legitimately appear on both sides of the boundary -- as a `from` and as a `to` -- so no string can
+    express the rule. A timestamp can, because it is the file's own statement of when each line
+    happened.
+
+    HOW TO APPLY. When a boundary is under test, assert the ordering invariant the boundary creates
+    rather than searching for text you associate with the wrong side of it. Choose the field that
+    cannot be quoted: here, the stamp, because the same name/value pair is expected on both sides.
+
+176. TWO IDENTICAL CODE PATHS NEED TWO WITNESSES.
+
+    WHAT HAPPENED. One mutation in the watcher's suite came back NOT DETECTED: dropping the sort from
+    the held-line release. The fixture had been extended with two interleaved rings specifically to
+    make a sort observable, and the differential still said the artifact was unchanged. The reason was
+    not the fixture. There are TWO `table.sort` calls with byte-identical bodies -- releaseQuiet's
+    `batch` and drainHeld's `pending` -- and the mutation anchored on the release one while the
+    fixture only fed the drain one, because lines still in a ring when the run ends are written by
+    drainHeld at Report time.
+
+    WHY THE FIRST WITNESS ALSO FAILED, ONE LEVEL DOWN. A release batch only forms when two keys share
+    a release SCAN, and the test is the strict `tick - last > QuietScans`. Two rings whose last moves
+    were one scan apart released one scan apart -- two batches of one key each, each already in order.
+    The product showed it plainly (`100, 102, 101, 103`: grouped by key), which is what a sort that
+    never saw both keys looks like. Equal last ticks is what merges them.
+
+    HOW TO APPLY. When a mutation comes back undetected, first ask whether the mutation and the
+    witness are about the same code path -- a duplicated body is a place where the answer can be no.
+    Then check that the witness satisfies the exact predicate the code uses, including its
+    strictness. A sort needs one drain with two interleaved keys, and "interleaved" is a claim about
+    the values, not about the intent.
+
+177. A BACKSTOP GATED ON AN EDGE KEEPS COUNTING THROUGH A RECOVERY.
+
+    WHAT HAPPENED. The down backstop ("the core read as stopped for 40 polls with no end signal")
+    was gated on `sawDown`, which is an EDGE: it stays set from the DOWN until something explicitly
+    clears it. So the counter kept counting while the core recovered, and fired on a core that was
+    demonstrably running. The operator's run is the measurement -- DOWN at t=549.73, back above the
+    line at t=567.57, sealed 0.33 s after the recorder had itself emitted the UP, for "having been
+    down 40 polls".
+
+    WHY IT IS WORSE THAN A WRONG NUMBER. It stole the ending from the settle path, so the receipt
+    named the backstop instead of the relight. A wrong CAUSE is worse than no cause: the receipt is
+    the one line a reader trusts when they are not going to re-derive the run, and it is now wrong in
+    a way that looks like a measurement.
+
+    HOW TO APPLY. A counter that represents "this is still true" must be gated on a LEVEL test of the
+    thing itself, not on an edge that records that it once became true -- and it must reset on the same
+    expression the rest of the code uses to decide the thing is over. Watch the reset's shape too:
+    "clear, then fall through to the increment" leaves the counter at 1 on a run-state poll, which is
+    an off-by-one in every later dwell.
+
+178. "TRIPPED DOWN" IS A CLAIM ABOUT A CORE THAT WAS UP.
+
+    WHAT HAPPENED. The cold-trip arm seals a run whose temperature sits under `LowTripF = 2000` F for
+    eight polls. A NEW SHIFT OPENS WITH THE CORE COLD -- the operator said so (A1) -- and a cold core
+    is below that line by definition, so a level test seals a file two seconds after inject with
+    nothing recorded in it. The `everRan` gate (the temperature has been at or above
+    `CoreThresholds[1]` at least once) now stands above every arm that can only be true of a core that
+    has run.
+
+    WHY THE HOT ARM DOES NOT NEED IT, AND WHAT IT NEEDS INSTEAD. A core that never ran cannot read
+    39000 F, so `everRan` distinguishes nothing at the hot end; there the dwell is what keeps the arm
+    honest -- one bad readout is not a verdict. And the hot arm reads the TEMPERATURE, not
+    `s.MainframeMeltdown`: that flag is the machine room's meltdown and says nothing about the core
+    (D9, measured when it went true at t=719.86 while the monitor read about 13000 F).
+
+    HOW TO APPLY. Before adding a threshold rule to a script that may be injected before the thing it
+    watches has started, ask whether the condition is true of a plant that has not started yet -- if
+    it is, the rule needs a history gate, not a lower threshold. Keep the history gate below only the
+    arms it can help; applying it to an arm that is already impossible on a cold plant is noise that
+    hides which line is doing the work.
+
+179. A RECOVERY IS NOT A SHUTDOWN, AND A BOUNDARY WITH TWO ENDINGS WILL ALWAYS MISREAD THE THIRD.
+
+    WHAT HAPPENED. The flow boundary that decides what a run's flow WAS had exactly two outcomes: the
+    core goes down (DOWN), and the core comes back WITH SOMETHING LIT SINCE THE DOWN (UP, then settle,
+    then seal). The operator's stall-and-rescue was neither -- the core dipped below the line and came
+    back with nothing lit in between -- so it fell into the UP path and a shift that never shut down
+    was recorded as a shutdown and a restart. His complaint was that the file said those words about
+    what was a stall.
+
+    WHY SILENCE WOULD HAVE BEEN THE WRONG FIX. The third state is now named and emitted as RECOVER,
+    which clears `sawDown`, emits no UP and does not arm the settle countdown. It is emitted rather
+    than swallowed because the earlier failure was not the wrong state -- it was the file SAYING the
+    wrong thing, and a boundary that goes quiet when it changes its mind leaves the reader holding the
+    last thing it said. The reset also means a second dip needs its own debounce; a recovery does not
+    pre-charge the next DOWN.
+
+    HOW TO APPLY. When a state machine has an outcome for "worse" and an outcome for "better because
+    something happened", check whether "better because nothing happened" exists -- recoveries are
+    usually the unmodelled one, and they are exactly what an operator reports as "I got it back".
+    Emit the transition rather than filtering it, and name it in the vocabulary the operator used.
+
+180. A FILE REMOVED FROM THE NEXT COMMIT IS STILL PUBLISHED, SO "WITHDRAW" IS NOT ONE OF THE OPTIONS.
+
+    WHAT HAPPENED. Three verbatim copies of the original game's own ModuleScripts (TRGWeb,
+    DataCollection, Summary01) live in Data/ and went out with the Phase 51 push to a public MIT
+    repository. The operator was asked whether to withdraw them and delegated the call back. Reading
+    the two options carefully changed the question: `git rm` removes them from the NEXT commit, while
+    the commit that is already pushed keeps them, and rewriting that history costs more risk than the
+    exposure it would undo. So the choice was never "keep or recall" -- it was "keep, or stop
+    publishing from here on", which is a much smaller thing than the question implied.
+
+    WHY KEEP. The repository's own README states that the project exists because the original is gone
+    and this is its continuation, and the copies are the evidence for that claim. DECISIONS and
+    QUESTIONS cite the three files in hundreds of places, so the "about one minute" cost quoted in
+    the question was wrong -- one minute covers `git rm`, not the reference sweep. And the operator
+    had already published the game's own telemetry file, which is the same judgement made earlier.
+
+    HOW TO APPLY. Before offering "remove it from the repository" as an option, check whether the
+    artifact has already been pushed. If it has, say so inside the question -- otherwise the option
+    reads as reversible to someone who cannot see the difference, and the answer gets given against a
+    false cost. A ledger that records the answer must also record that the history is not recovered,
+    or the next reader will believe a withdrawal happened.
+
+181. A DUPLICATED KEY IS A SYMPTOM, SO PROBE IT BEFORE DEDUPLICATING IT.
+
+    WHAT HAPPENED. The recorder's readout index holds 1115 records over 928 keys, so 187 keys carry
+    more than one record. The symptom is already visible one layer up: the per-poll animation guard
+    trips at 5, and it can only reach 5 because `st.thisPoll` is keyed by record key -- five records
+    on one key add five in a single poll. Twelve readouts are then marked dead for the rest of the
+    run, and the line left behind blames the game's animation.
+
+    WHY NOT JUST DEDUPLICATE. The two guards in buildReadouts (seenLabel by instance, seen[key] by
+    key) READ as airtight, and the file says they are not. Something about the key -- how it is
+    built, or which records collide on it -- is not understood yet, and a dedupe applied on top of an
+    unknown mechanism repairs the count while erasing the question. The duplicates may also be
+    intended, in which case dedupe silently changes a behaviour nobody asked to change.
+
+    HOW TO APPLY. When a count is wrong, ask whether the wrong count is the bug or the evidence of
+    one. Prefer the instrument that reports the mechanism over the edit that hides the number --
+    especially when the edit is cheap, because cheap edits to unexplained state are how a real
+    invariant gets destroyed. The probe must not change collection behaviour, so that the run it
+    rides on stays usable whether or not the probe has a conclusion.
+
+182. A CORRECTION IS NOT A FIX FOR THE SYMPTOM IT ARRIVED WITH.
+
+    WHAT HAPPENED. The operator reported a stall that sealed its own recording, and in the same
+    message corrected the cold-trip line from 2000 F to 1000 F. The two are unrelated. His capture
+    bottoms out at 4316 F -- never within 2300 F of either number -- and the arm that ended that run
+    is the 40-poll down backstop, which the receipt names outright. Applying the constant would have
+    looked like fixing the report.
+
+    WHY IT MATTERS. A constant moved while a symptom is open reads, afterwards, as an explanation of
+    that symptom. The next reader finds a changed number, a closed report and no way to see that the
+    backstop was the cause -- and the backstop is the thing that needs attention, because it fires
+    when the game has not said anything for 40 polls, which is a different failure from a cold core.
+
+    HOW TO APPLY. When a witness corrects a value in the same breath as reporting a fault, measure
+    whether the value could have produced that fault before changing it. If it could not, change the
+    value and say so where it lives -- the comment above Config.LowTripF carries the measurement,
+    not just the new number. Two changes in one message are two changes; keep them separable in
+    the record even when they arrive together.
+
+183. A HARNESS THAT COPIES A NUMBER CANNOT FOLLOW IT; ONLY ONE THAT READS IT CAN.
+
+    WHAT HAPPENED. build_end_test.py carried its own hand-typed copy of the recorder's Config, so
+    moving the cold-trip line would have left the dwell test measuring a line the recorder had
+    stopped using -- green, and about nothing. The fix extracts the numbers from the shipped
+    recorder by text (`__CONFIG__` + extract_config) and derives the fixtures from them, so the
+    suite has no opinion of its own to go stale.
+
+    WHY A MUTATION IS NEEDED FOR THIS ONE. Every other mutation in the end suite asserts that
+    breaking a guard turns the suite red. This failure is the opposite shape: the guard is fine and
+    the TEST is wrong, so it can only be caught by a change that must leave the suite GREEN while
+    moving the number it measures. That is what FOLLOW_MUTATIONS is: move LowTripF, require rc=0 AND
+    require the new number to appear in the generated states file. Without it, "the suite is
+    green" and "the suite is measuring the shipped line" are indistinguishable -- which is how the
+    typed copy survived as long as it did.
+
+    HOW TO APPLY. A test may copy a value only if the copy is itself asserted against the source at
+    run time. Otherwise read it. And when the property under test is "this test tracks that code",
+    the only mutation that can prove it is one that is required to stay green.
+
+184. A STUB THAT ACCEPTS ANYTHING IS NOT A TEST.
+
+    WHAT HAPPENED. The transport probe's first version handed every candidate `(url, body)`.
+    syn.request and its siblings take a request TABLE, so on a real executor every working
+    transport would have raised and been reported as broken -- the exact inversion of the question
+    the probe was injected to answer. The harness stayed green through it, because its stub was
+    `function(req) sentB[#sentB + 1] = req.Url ... end` and `('http://...').Url` resolves through
+    the string metatable to `string.Url` = nil, so `t[#t + 1] = nil` was a silent no-op that still
+    returned `{StatusCode = 200}`.
+
+    WHY IT IS SILENT IN BOTH DIRECTIONS. A permissive stub makes a wrong call look right; the
+    string metatable then makes the stub's own bookkeeping disappear rather than error. Two
+    independent silences, and the harness read green.
+
+    HOW TO APPLY. A stub standing in for an external API must assert the SHAPE of what it is given,
+    not only react to it -- record and check `type(req)`, and assert the fields the real callee
+    requires. "It accepted my arguments" is not evidence that the arguments were right. This is
+    DECISIONS 183 one layer out: the harness had no opinion about the calling convention, so it
+    could not have one that went stale or wrong.
+
+185. THE ABSENCE OF A FILE HAS AS MANY CAUSES AS THERE ARE WAYS TO DIE -- SO BRACKET THE LOAD.
+
+    WHAT HAPPENED. The watcher's first artifact, hello.txt, is posted from inside Watch.Start(),
+    which is the file's LAST statement. A whole shift produced no bytes at all, and "never injected",
+    "died at load", "died in the census" and "still censusing" are the same reading from the sink:
+    an empty directory. The operator can only start the reactor once, so that reading costs a shift
+    to re-take.
+
+    WHY THE OBVIOUS FIX IS NOT ENOUGH. Adding a beacon next to hello.txt does not help: both are
+    after the load, so they fail together. The beacon's value is entirely its POSITION. It now sits
+    before the registration, audio, census and Start code -- everything from line 673 to the end of
+    the file -- so the readings separate into: nothing at all (never ran as far as the beacon), only
+    the beacon (loaded, died in the module body), both (Start ran, and tree.txt/error.txt split what
+    is left).
+
+    HOW TO APPLY. When a reader must distinguish "did not happen" from "died before it could be
+    recorded", put the recorder of the event BEFORE the work, not beside the other records of it.
+    Then ask what the new artifact cannot see and state that limit in the artifact itself, rather
+    than letting the reader assume the bracket is complete.
+
+186. HEALTH BOOKKEEPING BELONGS TO THE CLOCK THAT PRODUCED IT.
+
+    WHAT HAPPENED. The load-time beacon deliberately does not go through post(). post() maintains
+    the sink outage counters in run-relative time, and the run's clock does not exist until Start
+    re-bases it -- startedAt is 0 until then. A beacon folded into that bookkeeping would measure
+    its outage from the wrong origin and write a large negative sink_down_total into the file the
+    operator reads hours later to decide what to repair.
+
+    WHY THIS IS NOT FUSSINESS. The beacon exists to make an absence readable. A beacon that corrupts
+    the health fields it is supposed to make readable is worse than no beacon, and the failure is
+    invisible: the field is present, plausible-looking in shape, and wrong in sign.
+
+    HOW TO APPLY. Before routing a new event through an existing accounting path, check which clock
+    that path's units are in and whether the clock exists yet at the new event's time. If it does
+    not, send it outside the accounting and say why -- and check that the failure you are bypassing
+    is still visible through the next event that does go through it.
+
+187. AN ANIMATION BELONGS TO THE WRITER THAT ALREADY OWNS THE VALUE.
+
+    WHAT HAPPENED. The lever throw moved from an instant CFrame assignment to a TweenService tween.
+    Two tempting places to put it already existed in this place: the library the user had just added
+    (ReplicatedStorage.Functions.Functions, with TweenModel / MultiTween / TweenModelAroundPivot) and
+    a tween relay predating it (ReplicatedStorage.TweeningEvent -> ReplicatedFirst
+    .ClientTweenReplicatedFirst, 12 lines). Both route the animation string to the CLIENT.
+
+    WHY BOTH WERE WRONG, ON TWO INDEPENDENT COUNTS. (1) VisualFeedback is the single writer of these
+    CFrames -- its own line 4 says so -- so animating them from the client makes two writers of one
+    value, and the failure is not cosmetic: this exact arrangement was already retired once, and
+    StarterPlayer.StarterPlayerScripts.VisualFeedback carries the recorded symptom in its header
+    ("SUPERSEDED 2026-09-26: disabled, not deleted." -- the C-Pump 3 lever sat at its authored CFrame
+    on the client while the server held it 1.6 studs along its throw, so a click moved nothing on
+    screen; "the client won, because a client write is not overwritten until the server next changes
+    that property"). (2) The library does not even work on these rigs: TweenModel errors on all 41
+    uniones, none of which has a PrimaryPart; TweenModelAroundPivot always falls through its own warn
+    path because PivotOffset is CFrame.new() on all 41, and its offset branch tears the rig apart
+    (door<->primary 11.358 -> 5.000 studs); its Part-as-model branch always errors.
+
+    HOW TO APPLY. An animation is a write, so hand it to whatever already owns that value and count
+    writers before counting conveniences. A helper library existing is not evidence that it applies
+    -- take the census the failure needs (PrimaryPart, PivotOffset) on the actual population, and
+    treat "it accepted my arguments" as no evidence at all (183).
+
+188. CANCEL BEFORE CREATE, BECAUSE TWO LIVE TWEENS RACE PER FRAME.
+
+    WHAT HAPPENED. TweenService does not serialize per property. Two tweens alive on one property both
+    write it every frame and the winner is decided per frame by ordering, not by which was requested
+    last. With a 0.3 s throw behind a 1 Hz signature-gated refresh, a second click or a refresh that
+    lands mid-flight produces exactly that state, and the union can come to rest on a detent nobody
+    asked for.
+
+    WHY CANCEL AND NOT PAUSE OR IGNORE. Cancel() leaves the part where it is, so the new tween starts
+    from the reached pose and the throw continues instead of snapping back to the last completed
+    detent. Measured on the real rig: interrupted at 41.8 % of travel, the step across the cancel is
+    0.000000 studs, and the union still landed bit-exact on the far stop at t = 13.498 s.
+
+    HOW TO APPLY. Store the live tween on the entry and Cancel() it before creating the next. Then
+    verify the seam, not just the endpoints -- "it ended on the right stop" is satisfied by a version
+    that visibly jumps.
+
+189. A LEVER'S BASELINE IS THE AUTHORED POSE, SO RE-RESOLVING MUST NOT RE-MEASURE IT.
+
+    WHAT HAPPENED. smallThrow(part) reads the throw's SIGN off the rig's own ClickPart sibling. That
+    measurement is only valid while the union is sitting on one of its two stops. A re-Initialize that
+    happens mid-throw would re-measure and take an in-between pose as the baseline.
+
+    WHY IT MUST NOT. The sign can invert, and after that every throw on that lever goes the wrong way
+    with no symptom at all: a lever that reaches the wrong detent is still a lever that moved, and the
+    console still lights. This module is self-healing by design (it re-Initializes when its tables are
+    cleared), so a mid-flight re-resolve is a reachable state, not a hypothetical one.
+
+    HOW TO APPLY. When the same instance is resolved again, carry over the old baseline and travel
+    instead of re-deriving them. Measured: the offset from the original baseline stayed -0.6578 where
+    a re-measure would have read 0.
+
+190. A MISSING CONFIG KEY MUST NOT TAKE THE MECHANISM DOWN, AND MUST SAY SO ONCE.
+
+    WHAT HAPPENED. The throw duration is read from Config.Visual.LeverTweenSeconds. A nil there either
+    throws out of TweenInfo.new or, if guarded by an early return, silently stops the levers moving --
+    and "the levers stopped" is the feature the user asked for.
+
+    WHY IT IS NOT HYPOTHETICAL. This is DECISIONS 0.15's failure exactly: a stale require in the
+    plugin VM handed back a Config table missing a key while the source on disk carried it, and the
+    error surfaced in a consumer three modules away. A timing knob is the wrong place for a hard
+    dependency.
+
+    HOW TO APPLY. Fall back to the module's own default, and warn ONCE (a per-frame warn is how a real
+    message becomes noise). Keep the warning about the knob: say the stops are unaffected, so the
+    reader does not go looking for a broke mechanism.
+
+191. A VERIFICATION THAT WRITES THE LIVE WORLD MUST BE ABLE TO PUT IT BACK.
+
+    WHAT HAPPENED. The first behavioural test of the tween called Initialize plus a quiet Refresh on
+    the live rig, and only then died -- on task.wait, which the rblx_execute_luau VM cannot yield on.
+    Both of those calls are writes: the whole 31-lamp module inventory had been repainted to the quiet
+    pose, and the test reported nothing, because the death came after the damage and the error
+    mentioned neither.
+
+    WHY IT IS EASY TO MISS. The failure is not the test failing; it is the test succeeding partway.
+    Nothing distinguishes "died before writing" from "died after writing" from outside, and the world
+    keeps the difference forever.
+
+    HOW TO APPLY. Before a live-world probe, record what the authored value of everything it may
+    touch is, and restore to THAT rather than to "unwound" -- then check the restore by reading the
+    values back (here: all 21 levers back to their authored CFrame, all 31 lamps matching the
+    authored histogram, zero mismatches). Undo is a global stack, so guard it too: re-measure the
+    sources it could have touched after each undo (38996 / 10350 -- unchanged) rather than trusting
+    Un/Redo's own account of what it did.
+
+192. A VERIFICATION MUST SNAPSHOT THE WHOLE WRITE SET, NOT JUST THE THING IT WATCHES.
+
+    WHAT HAPPENED. Verifying the shutter tween meant calling the shipped RoomShell.Refresh, which
+    writes four unrelated families: shutter CFrames, NeonPart colour/transparency, Light.Enabled,
+    and monitor ScreenGui.Enabled / Frame.Visible. Watching only the shutters would have been
+    enough to prove the tween worked, and would have left two facts unmeasured and the world
+    unrestored.
+
+    WHY IT IS EASY TO MISS. The interesting thing is the subject, and the rest of the write is
+    "obviously fine". But a controlled experiment needs its control: the first Refresh was sent the
+    state the world was ALREADY in, so if anything outside the shutters had moved, the run would
+    have been measuring two changes and attributing one of them. It moved nothing -- zero NeonPart
+    writes, zero GUI writes -- and that is what makes the three ticks after it a clean measurement
+    of the shutters alone.
+
+    HOW TO APPLY. Snapshot by WRITE SET, not by subject: enumerate what the entry point can touch
+    and record all of it, including the properties you have no interest in. The same snapshot then
+    answers two questions at once -- "did anything else move?" and "can I put it back?" -- and the
+    restore check is just the snapshot compared again (here: drift 0).
+
+193. EDIT-MODE HEARTBEAT DELIVERS IN BURSTS, SO PER-TICK DELTAS CANNOT MEASURE SMOOTHNESS.
+
+    WHAT HAPPENED. The first trace of the shutter tween showed 2.707 studs in 11.9 ms, i.e. 227
+    studs/s, against a Quad/Out peak of 35.3 studs/s -- 6.4x too fast, and at the worst possible
+    place: the first frames, where a jump is exactly what the change existed to remove.
+
+    WHY IT IS EASY TO MISS. Every individual number is plausible. dt is a real clock reading, dy is
+    a real position, the tick rate averages 60.5 Hz. What is wrong is the PAIRING. The tween
+    advances on the render step while the Heartbeat callback is delivered in bursts, so 111 of 121
+    callbacks saw |dy| < 0.005 and the movement piled into the few that did not. Total time and
+    total distance stay exactly right while the per-tick picture is pure aliasing.
+
+    HOW TO APPLY. Bin by TIME, not by tick: over 50 ms buckets the worst move was 1.934 studs
+    against an analytic 1.763 (and up to 3.53 across a bucket boundary), i.e. inside the honest
+    band. Then confirm the macro shape independently -- elapsed time to land (0.583 s of a
+    configured 0.6 s) and the fraction of travel at a known wall-clock moment (69.2% at 0.25 s,
+    which is Quad/Out at t = 0.267 s). Do not conclude "not smooth" from a per-tick delta, and do
+    not conclude "smooth" from a clean landing either. Measure the shape.
+
+194. ASK A GUIOBJECT FOR Visible AND A LAYERCOLLECTOR FOR Enabled. THE WRONG ONE IS AN ERROR.
+
+    WHAT HAPPENED. The snapshot loop did `d.Enabled` on every GuiObject and died on "Enabled is not
+    a valid member of Frame Workspace.MonitorsFacility...MainMonitorFrame". It aborted before the
+    first write, so nothing was damaged -- this time.
+
+    WHY IT IS EASY TO MISS. Enabled reads like a property every GUI thing has, and ScreenGui -- the
+    one instance everybody pictures -- does have it. It lives on LayerCollector, from which
+    GuiObject does NOT inherit; the two are siblings under GuiBase2d. Roblox raises rather than
+    returning nil, so a defensive `or true` does not save you, and the failure lands wherever the
+    loop happened to be standing.
+
+    HOW TO APPLY. Branch on the class instead of guessing one property for all: GuiObject answers
+    Visible, LayerCollector answers Enabled, and the two are read and restored separately. This is
+    the Phase 55 rule arriving from the other side; the standing form is "walk the tree and ask by
+    capability, never by name and never by remembered shape".
+
+195. A HASH THAT CANNOT SEE CONTENT IS NOT A CHECK.
+
+    WHAT HAPPENED. Checking whether a Studio edit had landed byte-for-byte with djb2, the first
+    version wrote `s.byte(i)` instead of `s:byte(i)`. In Lua those are the same call: `s.byte(i)`
+    is `string.byte(i)`, which hashes the INDEX'S OWN DIGITS and therefore varies with string
+    length and with nothing else. It reported MATCH, and the MATCH was meaningless.
+
+    WHY IT IS EASY TO MISS. It fails OPEN. Two unrelated strings of equal length hash equal, so the
+    check passes exactly when you want it to, and the only signal is that it never says no. Nothing
+    errors, nothing warns, and it is at its most convincing on the comparison you most want to
+    succeed.
+
+    HOW TO APPLY. Give every hash function a self-probe on the same call: hash two strings that
+    differ only in content and assert they differ (`djb2('abcdef') ~= djb2('abcdeg')` --
+    CONTENT-SENSITIVE). Until that probe has run, treat "the check passed" as a claim about the
+    check, not about the data. Same family as "never verify disk against disk" (95) and "compare
+    hashes, not byte counts" (183): a check that cannot fail is not evidence.
+
+196. src/ IS THE AUTHORITATIVE PREVIOUS VERSION. A ONE-OFF PULL CAN ONLY DISPROVE.
+
+    WHAT HAPPENED. Phase 59 needed the pre-edit Config to prove the new text was the old text plus
+    one 512-byte block. The reference used first was _tools/_pull/verify/Config.luau -- 8975 bytes,
+    863 short of the live module, because it was pulled on 2026-09-27 and Phase 58 had edited
+    Config since. The authoritative reference was src/ReactorBackend/Config.luau:
+    `git show HEAD:src/ReactorBackend/Config.luau` measures 9838 / 0x97f981b8, matching the strip
+    derivation exactly.
+
+    WHY IT IS EASY TO MISS. A file named Config.luau, in a directory named verify, written when it
+    was genuinely current, reads like a baseline. Its staleness is invisible from its contents --
+    it is a perfectly well-formed older Config. A pull directory is scratch: it records what the
+    live module WAS at one moment, which is not the same thing as what the previous VERSION was.
+
+    HOW TO APPLY. For "what did this look like before I changed it", use the version-controlled
+    mirror under src/ or git itself, because both carry the provenance that makes the claim
+    checkable. Keep one-off pulls for what they are good at -- disproving, by showing that the live
+    bytes differ from a remembered form. Rename stale copies so the staleness is in the FILENAME
+    (Config.pre-phase59.luau) and not in somebody's memory.
+
+    NOTE, 2026-09-30: the guard numbers quoted in 191 are the ones true when it was written. Config
+    is 10943 since Phase 60 -- read that pair as history, not as a current fingerprint.
+
+197. THE HOOK THAT OPENS THE RECORDING WINDOW MUST NOT WAIT FOR THE CENSUS.
+    It did, and the price was the whole power-up. `attachWindow()` sat after `pcall(bootWalk)` in
+    `Watch.Start()`, defended by a comment whose stated premise was "the census finishes in
+    seconds". The first real run measured that premise false by a factor of five: the census is
+    71236 instances / 557548 properties and its first `changes.log` line is stamped **t=47.93s**,
+    while the operator throws the lever at **t~20s** -- the recorder brackets `CLICK StartUpLever`
+    between `S 40 t=18.11` and `S 67 t=27.03`. The walk to the console the ordering was relying on
+    takes fifteen of those seconds, not forty.
+
+    The failure shape is what makes this worth a numbered entry. Nothing was broken: the path
+    resolved, the ClickDetector was found, `MouseClick:Connect` returned, and `window.txt` then
+    read `lever_hooked=true` **on the same page** as `opened_at=not yet why=(nothing has opened
+    it)`. That pair is also exactly what a typo in `LeverPath` produces. A correct hook that is
+    28 seconds late and a hook that was never made are one reading, and the operator can spend
+    that power-up once -- 「我没办法随便开关机，开机/关机只能一次」.
+
+    The hook is now taken synchronously in `Start()`, before the spawned walk, because it depends
+    on nothing the walk produces: `resolvePath` walks down from `workspace` with `FindFirstChild`
+    and never consults `ents`, the root selection, or the budgets.
+
+198. A QUEUE CAP APPLIED TO A QUEUE THAT IS NOT BEING DRAINED IS A SILENT DELETION.
+    `flush()` posts nothing while `windowState` is 'waiting' -- that is the recording window's
+    whole instruction -- but the `MaxQueue` truncation below it runs on every tick regardless. So
+    the two mechanisms compose into: while the window is shut, the queue grows and the cap eats
+    the front of it. The first real run reported `dropped=794` while its window never opened, and
+    those 794 lines are gone. The number is not a rounding error: the run produced 10439 lines in
+    46 seconds, **6463 of them in one 10-second bin** around the CBL firing, so a cap of 4000 is
+    smaller than a single power-up's peak and every such run loses its beginning.
+
+    Raised to 20000 (~4 MB at the observed 190 bytes per line). The general lesson is the one
+    worth keeping: a bound is only a bound if you know which quantity it is expected to be larger
+    than, and 4000 was chosen without ever measuring that quantity.
+
+    The two defects in 197 and 198 are coupled in the worst way -- the truncation only bites when
+    the window is shut, so it destroys evidence **exactly on the runs whose window failed**. Fixing
+    the hook removes the trigger; raising the cap removes the trap underneath it.
+
+199. [RETRACTED -- SEE 201] THE WATCHER'S 12:00 IS MIDNIGHT; THE RECORDER'S BOUNDARY IS NOON.
+    THEY ARE DIFFERENT EVENTS.
+    The operator settled this the other way on 2026-09-30: 「时钟到达12PM时结束」 makes 12:00 NOON,
+    and the watcher now closes on the 1439 -> 0 wrap. 201 states the correction and, more
+    usefully, why this entry was convincing while being wrong. Left in place rather than deleted
+    because the evidence it cites is correct and it is the reasoning over that evidence that
+    failed -- and because a retracted entry that still reads as authoritative is a trap.
+    I claimed `EndMins = 720` was wrong -- that the shift hands over at noon, so closing the
+    window at midnight ends the recording ten dial minutes into a twelve-hour shift. That was
+    wrong, and the evidence I used for it refutes it. `Stats.GameActive` is **false** through the
+    whole countdown and goes **true** within two dial minutes of 720 (t=98.47 in
+    `original_260926-230049`, t=153.58 in `260927-123212`), then stays true across noon and to the
+    end of that run. So midnight is the game's own "the shift has begun" and noon is the handover,
+    and the interval the operator asked to record -- 「按下开机拉杆开始记录，游戏时间到12：00结束记录」
+    -- is the one that ENDS when `GameActive` goes true. Every observed run was injected at 11:50PM
+    (q.clock=710), so the window is ten dial minutes, about two real minutes at the measured 12.3
+    real seconds per dial minute.
+
+    What made the wrong reading attractive: `260927-123212` continues to `q.clock=1130` (6:50AM)
+    long after 720 with no boundary event, which looks like proof that 720 is not a boundary. It is
+    proof that 720 is not a boundary **for the recorder**, which is a different script with a
+    different question. One file, two consumers, two boundaries -- and reading the recorder's
+    timeline as evidence about the watcher's window is the mistake.
+
+200. A WRONG ORDER CAN BE MODELLED AS A PREDICATE WHEN THE PREDICATE IS EMPTY EXACTLY WHEN THE
+     ORDER IS WRONG.
+    The mutation for 197 has to restore "the hook is taken after the census" without moving code,
+    because the mutation format is one string replace. It is expressed as `if #ents > 0 then
+    attachWindow() end`: `ents` is empty until the census registers its first instance, so the
+    predicate IS "after the census". The property that makes it a good mutation is that it leaves
+    every other scenario green -- the main run's census completes, so the only witness is the
+    `--boot` scenario, whose census throws. That is the right witness on the merits and not by
+    convenience: a hook that survives a census which never finishes provably did not depend on it.
+
+201. THE WATCHER'S 12:00 IS NOON, NOT MIDNIGHT -- ENTRY 199 IS RETRACTED.
+    The operator settled the ambiguity on 2026-09-30 in four words: 「何时结束？：时钟到达12PM时
+    结束」. 12PM is noon, so the recording window closes at the 11:59 AM -> 12:00 PM handover,
+    which the dial shows as 1439 -> 0 -- and entry 199's `EndMins = 720` (midnight) is wrong.
+
+    What 199 got RIGHT is the evidence, and that is the whole of why it was convincing.
+    `s.GameActive` really does go true within two dial minutes of 720 (t=98.47 in
+    `original_260926-230049`, t=153.58 in `260927-123212`) and really does stay true across noon
+    to the end of that run. The error was in reading that as the window's END. It is the window's
+    START: 720 is where the shift BEGINS -- the countdown ending and the core coming up -- and the
+    lever the operator opens the window with is thrown at 710, ten dial minutes before it. So the
+    window he asked for runs from the lever to the NEXT noon, about 730 dial minutes.
+
+    The shape of the mistake is worth more than the correction. `EndMins` is a name I CHOSE, and
+    it silently answered the question for me: a key called `EndMins` holding 720 reads as "the
+    minute the window ends", so a measurement showing that 720 is a START arrived already labelled
+    as an end. A config name that answers the question you are measuring is not documentation, it
+    is a conclusion with no evidence behind it.
+
+    The implementation that replaced it is a FALLING EDGE, not a threshold, and that is forced
+    rather than chosen. 12:00PM maps to 0 and the dial counts to 1439 before wrapping, so
+    `mins >= 0` is true on every scan of every run; a threshold cannot express the handover at
+    all. What is stored is the size of the fall that counts as it (`WrapDropMins = 60`), plus
+    `EndPolls = 2` so a single mis-parse cannot spend the one start-up the operator gets. The dial
+    is monotonic inside a shift, so the only fall it can produce is the 1439 -> 0 wrap itself; 60
+    rather than "the reading is under 5" is what survives a starved poll, since the live dial runs
+    at about one dial minute per real second and the watcher's own scan measured 1089 ms -- a
+    six-second stall lands the first post-wrap reading at 12:06 PM.
+
+202. THE DRIVER IS DELETED, AND THE REPLACEMENT WAS ALREADY IN THE FILE.
+    "不需要什么driver，只需要seal" removes a capability, which is what §1.4 rule 2 is about -- so
+    the question is what stands in its place, and the answer was found by reading before cutting:
+    the CLICK hook is NOT inside the DRIVER section. It walks every ClickDetector and
+    ProximityPrompt in the world (1019 of them) and records each by path. So the operator's own
+    presses still reach the file, and they reach it more completely than the driver's did -- the
+    driver pressed two switches, the hook records all of them. That read is the reason the
+    deletion was safe; it is not a note attached to it.
+
+    What went with the driver rather than being left behind: `ShutdownEndsShift` and `pollDt`.
+    Both had exactly one reader and it was inside `driveStep`. A config key with no reader is a
+    claim about behaviour that no longer exists, and this project has already paid for leaving one
+    in place (§0.13).
+
+    The three driver files are in `_tools/_attic/driver/`, not deleted. The scenarios in them are
+    measurements about this game's two switches -- how long the lever takes to arm, what a
+    shutdown does to a recording -- and if the driver is ever wanted back, that is the whole of
+    what is known. Archiving is not a compromise here: the capability is gone at the operator's
+    explicit instruction, and what is kept is knowledge about the game, which was never the thing
+    he asked to remove.
+
+    The cost is real and belongs on the record: a shift where nobody presses anything now produces
+    a file with no ignition in it. That is acceptable only because the file says so -- the CLICK
+    hook records the absence honestly (nothing, rather than a synthesised press), and the core
+    gate below means the file has no reactor readings either, so "the operator did not start it"
+    is a state the products can be read as, not a suspicion.
+
+203. HOLDING A VALUE AND FILTERING IT PRODUCE THE SAME BYTES UNTIL THEY DON'T.
+    The core gate must not write `Stats.Core` before the reactor is on. Two implementations of
+    that: hold it (never write it, never touch `last`) and filter it (write it into `last` so the
+    change detector knows the value, then decline to emit). They produce byte-identical output --
+    until the ignition poll carries a value EQUAL to the pre-boot one, at which point the filter
+    sees "no change" and the ignition is never reported at all.
+
+    That is not a corner case here, it is the common one. A cold core's temperature IS 0 and
+    `s.Core.PressureVal` sits at its resting value, so the first live sample after the gate opens
+    is a small number that can equal the thing being filtered against. The failure is silent,
+    plausible, one line long, and indistinguishable from a shift that simply started late.
+
+    So the difference has to be a CHECK, not a comment: G5 feeds the same reading on both sides of
+    the gate and requires it to be written, which only the hold implementation does. The general
+    rule this is an instance of -- when two implementations differ only on an input you have not
+    tried, the test is the input, not the reasoning.
+
+204. AN ANCHOR MUST NOT PIN WHAT THE CODE SAYS, ONLY WHERE IT IS.
+    Twice in one harness, and both times the symptom was "red, but not on the check that guards
+    the mutation". The gate builder anchored its slice on `local coreLive = false` and asserted
+    that exact token, so the mutation "the gate defaults to OPEN" made the BUILDER fail to build
+    -- and a builder refusing to build is not the harness catching anything. The mutation was
+    being credited to the wrong component, which is worse than not being caught at all: it reads
+    as evidence.
+
+    The fix is the same both times: anchor on the declaration (`local coreLive`), not on the
+    initial value. The tokens that guard against a short slice exist to prove the SLICE is
+    complete, not to pin the recorder's behaviour -- and pinning behaviour inside a test builder
+    makes the builder a second copy of the thing under test, which is the failure this project
+    keeps re-learning (see the end harness's `LowTripF` FOLLOW case, whose whole point is that a
+    typed copy of a number goes stale silently).
+
+    The general form: when a mutation goes red in the wrong place, THE PLACE is the finding. An
+    assertion that fails for an unrelated reason cannot be trusted to fail for its own -- and this
+    one had been quietly leaving two of the six mutations unevidenced.
+
+205. A HARNESS THAT CANNOT SEE A PROPERTY SHOULD SAY SO, NOT BE QUIET ABOUT IT.
+    `selftest_gate_test.py` carries one FOLLOW entry that is not a mutation at all: the gate
+    defaulting to OPEN. `reset()` clears the latch at the top of every scenario, so the initial
+    value is overwritten before any G-check runs and no check in the file can observe it. The
+    first reaction was to delete the mutation as untestable; the better one is to keep it, assert
+    that the suite stays GREEN, and assert that the mutant reached the harness (the generated
+    states file carries the new declaration).
+
+    Both halves matter. The green assertion is what proves the blindness is the HARNESS's and not
+    the runner's failure to apply the edit -- otherwise "it stayed green" is indistinguishable
+    from "the mutation never happened", which is the same shape as §0.15's missing-key table and
+    §0.17's stubbed `GetAsync`. And writing the blind spot down is how it stays a known one: the
+    next person to try this mutation finds the reason instead of a hole, and the thing that
+    actually covers it -- the shipped default and the diff -- is named.
+
+    This is the argument the end harness makes about its own FOLLOW class, and the one
+    `run_tests.sh` makes about every harness here: a suite that can only go red cannot be told
+    apart from one whose checks are all `true`.
+
+206. AN IGNORE PATTERN WRITTEN BY ANALOGY MATCHES NOTHING, SILENTLY.
+    `Data/originalwatch*/inventory.txt` was copied from `Data/roomwatch*/inventory.txt` and looks
+    correct. It matches nothing: the room watcher's roots sit one level under `Data/`, this one's
+    sit under `Data/originalwatch/<run>/`, and a gitignore pattern carries its own number of
+    slashes. The consequence is not an error, it is an 11,684,084-byte file in the index and a
+    `--stat` line reading 123,423 insertions, with nothing anywhere saying the rule did not fire.
+
+    Two habits fall out. The pattern is `Data/originalwatch*/**/inventory.txt`, and **the rule gets
+    verified by `git check-ignore -v <path>`, which echoes WHICH LINE matched** -- that output is
+    the difference between "the rule is written" and "the rule applies", and it is a command rather
+    than a reading of my own patch. The same distinction as DECISIONS 95 (a hash cannot verify
+    itself) and section 0.15 (a stale module hands you a table missing keys): in both cases the
+    artifact looks right and the failure is silent.
+
+    Note what this is NOT: the reason for ignoring the file is section 53.8's reason and it has not
+    changed -- nothing reads it back, and the derived answers are tracked. What was wrong was only
+    whether the rule reached the file. 53.8 also claimed byte-identity across the copies; that leg
+    is NOT available here, because there is one original-game run on disk, and the comment says so
+    instead of borrowing the argument.
+
+207. A MANIFEST THAT IS NEVER REGENERATED IS A CLAIM ABOUT THE PAST WEARING THE CLOTHES OF AN INDEX.
+    `_tools/_attic/MANIFEST.txt` was 84 entries against 105 files. It was honest when it was
+    written -- it records what the Phase-47 organisation moved where -- and then it stopped, while
+    files kept arriving. The entries it was missing include the three `driver/` files, which is
+    precisely the archive that section 1.4 clause 2 ("do not delete a feature without a
+    replacement") points a reader at.
+
+    It is now regenerated from the filesystem, sorted, with the date of generation in a three-line
+    header. The date is the real change: without it, "is this file current?" has no answer, and a
+    reader has to diff it against `find` to find out -- which is how it drifted 21 files without
+    anyone noticing. A generated index is only useful if it says when it was generated.
+
+    What did NOT change is that ignored machine state under `_attic/logs/` is excluded. That is the
+    same line the file already drew between "a thing the project did" and "a port on this machine".
+
+208. MEASURE THE HUNCH BEFORE ACTING ON IT, EVEN WHEN THE HUNCH IS THE WELL-KNOWN ONE.
+    `.gitattributes` pins `* text=auto eol=lf`, so `start_services.bat` checks out with LF endings
+    on Windows. That is a textbook batch-file breakage and I was about to add `*.bat eol=crlf`.
+    Instead I built two files of the same shape -- a `&&` controlled block, an `if (...)` block, and
+    a `goto` with a label -- one CRLF and one LF, and ran both through `cmd /c`.
+
+    Identical output on both, including the `goto`/label case. No exception was added. The
+    difference the exception would have made is zero, and it would have been a permanent
+    unexplained rule in a file whose other line exists to protect byte-exactness.
+
+    The lesson is not "LF batch files are fine" -- that was measured on ONE machine and ONE shape,
+    and the `goto`/label folklore is real elsewhere. The lesson is the order of operations: this
+    repo has already paid for a file whose bytes were argued about instead of checked. A hunch that
+    is cheap to test gets tested, and a negative result is recorded so the next reader does not
+    re-litigate it -- which is the same reason section 0.14 kept its two dead screenshot tools.
