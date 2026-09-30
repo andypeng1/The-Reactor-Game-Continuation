@@ -3414,3 +3414,42 @@
     repo has already paid for a file whose bytes were argued about instead of checked. A hunch that
     is cheap to test gets tested, and a negative result is recorded so the next reader does not
     re-litigate it -- which is the same reason section 0.14 kept its two dead screenshot tools.
+
+209. A NAMESPACE FILTER HIDES A PAGE MOVE, AND A REFRESH MUST NOT LOSE COVERAGE THE OLD ONE HAD.
+    Refreshing the wiki snapshot (`reactor.fandom.com`, the calibration source section 7 leans on)
+    with the puller's own filter -- `apnamespace=0`, `apfilterredir=nonredirects` -- returned 75
+    titles against the 2026-09-18 snapshot's 77. The delta is not decay. Three pages moved, all
+    three on 2026-09-22/23, all three confirmed through `list=logevents&letype=move`:
+
+      Power Extraction Assembly (P.E.A) -> Power Extraction Assembly   renamed, 2497 B identical
+      Shifts                            -> Category:Shifts             moved,   6126 B identical
+      Reactor Components                -> Category:Reactor Components moved,   285 -> 1955 B rewritten
+
+    The two that left namespace 0 are still on the wiki, with their text intact; they are simply no
+    longer in the namespace the filter walks. And that is the shape of the trap: a narrow filter is
+    not a diff. It answers "75" and you have to already know the number used to be 77 to notice --
+    the same silence as DECISIONS 206 (a rule that matches nothing) and section 0.15 (a stale table
+    with missing keys). The content did not disappear; the *view* of it did.
+
+    So the snapshot is now ns 0 union 14 -- 104 pages -- and the JSON records what the pull covered
+    (`namespaces`, `api`, `pulled`) so that the next reader is not asked to infer the scope from the
+    page count. The rule applied is: a refresh may not have LESS coverage than the snapshot it
+    replaces. That is why the two Category pages are in even though 27 of the 29 ns14 pages are wiki
+    machinery ("Pages with broken file links", "Hatnote templates with errors"). Bounded noise is
+    the price; silent loss of the shift-mechanics article is not payable at any price.
+
+    Coverage was checked against the backup, not asserted: every title in the 09-18 snapshot has a
+    home in the new one, and exactly two common pages changed text -- the AVB page, where an editor
+    deleted the words "poorly written" from "consult this poorly written formula" (no numbers, so
+    nothing our calibration rests on moves), and the front page, a cosmetic rewrite that also
+    REMOVED the standing notice that most of the wiki is old and outdated. The source did not get
+    better because it stopped saying that about itself.
+
+    Two things this entry deliberately does not claim. (1) The artifact cannot be produced by the
+    user's `TRGWikiPull.py` as written: that needs `requests`, which is not installed on this
+    machine (Python 3.14.7), and it walks ns 0 only. The pull was done through `urllib.request`
+    (stdlib, no install, no consent needed for a package). (2) The script was NOT edited to match,
+    even though the fix is one line (`apnamespace` -> `"0|14"`), because an edit to a tool that
+    cannot then be RUN is an unverified change -- the exact class of thing this log exists to
+    refuse. The divergence between artifact and tool is recorded instead, here and in the report,
+    and the one-line fix is the user's to take or leave.

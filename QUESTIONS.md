@@ -1124,3 +1124,18 @@ A1 说**新班次开局核心是冷的** —— 冷堆**按定义就在 2000 °F
   `unsupported` 这个裁决名，而它其实是个**兜底值不是结论**（`drive.on` 为真时也会闪）。
   纯显示，不影响任何读数含义，所以**没改**（改它要动代码，而这一轮不值得）。
   写在这里是因为**下次看到它别以为出错**。
+- **【2026-09-30 顺带】TRG-WIKI 快照刷新好了，范围从 ns0 扩成 ns0+ns14（多了 29 个
+  Category 页）。** 你那份 `D:\RobloxAssetsDownloader\TRGWikiPull.py` 只走 `apnamespace=0`，
+  而 wiki 在 2026-09-22/23 动过三次页面，**其中两次是搬进 Category 命名空间**：
+  `Shifts` → `Category:Shifts`（正文 6126 字节**逐字节没变**）、
+  `Reactor Components` → `Category:Reactor Components`（285 → 1955 字节，**被重写过**）、
+  外加 `Power Extraction Assembly (P.E.A)` 改名成 `Power Extraction Assembly`
+  （2497 字节**逐字节没变**）。**照原样拉 = 77 → 75**，而少掉的那两页里就有「班次」——
+  正是这个项目的题材。所以我按「刷新不许比上一份少东西」拉成 **104 页**
+  （旧那份备份在 `TRGWiki.json.260918.bak`），并在 JSON 里记了 `namespaces` / `pulled`。
+  **代价：29 个 ns14 页里大多数是 wiki 维护页**（「Pages with broken file links」这类）。
+  **想让你的主脚本产出同一份，把 `apnamespace` 写成 `"0|14"`（一行）—— 我没替你改**，
+  因为这机器上没有 `requests`（Python 3.14.7），改完我**跑不了**，
+  而**没跑过的改动是这一轮最不该留下的东西**。**你要是觉得 Category 页是噪音，说一声，一行退回。**
+  同一趟顺带量到的、跟校准有关的：**wiki 主页面把它自己那句「本站大量内容过时、不可靠」的
+  免责声明删掉了** —— 措辞变了，但资料来源的性质没变，别因此更信它。
