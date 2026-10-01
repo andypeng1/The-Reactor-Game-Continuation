@@ -3926,3 +3926,31 @@
      evidence available before a one-shot, non-repeatable shift in the original game (see the
      comment at the gui-mutations stage of run_tests.sh). A number from a contaminated run is
      not a weaker number; it is a wrong one that looks like a finding.
+
+235. A REFRESH MUST PRESERVE THE FIELDS IT DID NOT WRITE, EVEN WHEN IT CANNOT FIND A READER FOR THEM.
+
+     The TRG wiki snapshot carries seven top-level fields. The user's own TRGWikiPull.py writes
+     four of them. It does not write api, namespaces, or pulled -- so a refresh that copies that
+     script's output shape drops all three, which is what the first version of _tools/trgwiki_pull.py
+     did. The result was 0 differences in every page's content AND in every page's revision
+     timestamp, and a file 126 bytes smaller. Nothing in the page data could see it. See PROGRESS
+     Phase 69.
+
+     `namespaces: [0, 14]` is the reason this is an entry rather than a footnote. It is the only
+     record of WHY the pull walks two namespaces -- the decision that exists because apnamespace=0
+     silently drops any article the wiki has moved into Category (DECISIONS 209, measured when
+     Shifts became Category:Shifts). Lose the field and the next reader cannot distinguish a
+     faithful refresh from an ns0-only one, because an ns0-only file is otherwise perfectly clean.
+     The provenance of a decision and the decision itself are equally load-bearing when the failure
+     mode is silence.
+
+     The generalisation, which is the twin of the "compare hashes, not lengths" rule in CLAUDE.md
+     0.0: do not compare only the fields you believe matter. The check that would have caught this
+     was comparing the KEY SETS, not the values -- cheap, and it is the only check that notices a
+     field that is present in one file and absent in the other. Both rules fail the same way: the
+     thing you did not look at is the thing that changed.
+
+     Ordering matters too, and it is cheap to get right: back up BEFORE the first write, and skip
+     the backup when it already exists. A backup step that overwrites on every run hands you
+     "after" labelled as "before" on the second run -- which is exactly the run where you would be
+     trying to work out what the first one changed.

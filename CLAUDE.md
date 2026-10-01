@@ -360,7 +360,7 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 | TRGWeb | `ServerScriptService.Misc.TRGWeb` | **权威原型**，所有数值的来源 |
 | Summary01 | `ServerScriptService.Misc.Summary01` | 参考 |
 | DataCollection (+ `.Log`) | `ServerScriptService.Misc` | 参考 |
-| The Reactor Game Wiki | 外部 | 用户多次引用，校准依据 |
+| The Reactor Game Wiki | `_tools/trgwiki_pull.py` → `D:\RobloxAssetsDownloader\TRGWiki.json` | 拉 ns 0 **∪ 14** |
 
 **Wiki 关键结论：**
 - **不存在控制棒**（反复确认过）

@@ -6343,3 +6343,57 @@ Phase 59/60 那阵有人**手工拉过一部分**（RoomShell / VisualFeedback m
   **「我没改它」是推理，不是测量** —— 依据是 68.2 那 10 个 crc32 与 Phase 67 记的
   `BootPanel`/`Config` 状态一致，以及本轮对 Studio 的全部调用都是读。
 - **`.gitignore` 改动未提交**，与其它改动一起等用户。
+
+---
+
+## Phase 69（2026-10-01）—— 拉取 TRG-WIKI：104 页，**一个字节的正文都没变**
+
+用户的「拉去做了快点」= 刷新 `reactor.fandom.com` 的快照（**不是 git 仓库**，见 memory
+`trg-wiki-snapshot` / `DECISIONS_2` 209）。产物 `D:\RobloxAssetsDownloader\TRGWiki.json`。
+
+**结果：wiki 自 09-30 起没动。**
+
+| 量 | 值 |
+|---|---|
+| 页数 | **104**（ns 0 = **75**，ns 14 = **29**） |
+| 新增 / 删除 | **0 / 0** |
+| 正文改动 | **0** |
+| 修订时间戳改动 | **0** |
+| `pulled` | `2026-09-30T13:58:26Z` → `2026-10-01T12:14:54Z` |
+
+所以「拉一次」这次的产出是**一句负结论**：没有新东西要读。
+
+### 69.1 工具：`_tools/trgwiki_pull.py`（stdlib）
+
+用户自己那份 `D:\RobloxAssetsDownloader\TRGWikiPull.py` **没动**（它在另一个仓库里，
+memory 明确写了不许往那儿提交）。新工具放在**我们的**仓库里，两个理由：
+
+1. 那份顶部 `import requests`，而 `/c/Python314/python` **没装 requests**。
+   不为这个装包 —— 同样的 API 用 `urllib.request` 走通。**跑两次，rc=0。**
+2. **`apnamespace=0` 不是「全部页面」**（memory 209 的坑）：2026-09-22/23 wiki 把正文挪进了
+   Category 命名空间（`Shifts` → `Category:Shifts`，逐字节相同），所以忠实的 ns0-only 刷新会
+   **77 → 75 并静默丢掉班次机制那篇**。本工具拉 **ns 0 ∪ ns 14** 并**把差值打出来**。
+
+### 69.2 【坑】「内容相同」不等于「文件相同」——我第一版丢了三层元数据
+
+第一版照抄用户脚本的输出形状（`wiki` / `source` / `total_pages` / `pages`），写完一 diff：
+**正文 0 处不同、时间戳 0 处不同，但文件 207437 → 207311**。差在**顶层键**：
+
+```
+old keys = [api, namespaces, pages, pulled, source, total_pages, wiki]
+new keys = [pages, source, total_pages, wiki]          ← 丢了三个
+```
+
+**用户那份脚本根本不写这三个键** —— 所以 09-30 那份不是它产的，而**照抄它的形状就是删功能**
+（`CLAUDE.md` §1.4 #2）。补回后除 `pulled` 外**逐字段相同**、字节数也回到 207437。
+
+`namespaces: [0, 14]` 是关键那个：**它是「ns 0 ∪ 14」这个决定唯一的记录**。
+丢了它，下一个人看着一份干净的 JSON **分不出**「忠实的一次拉取」和「只拉了 ns0 的一次」——
+而那正是 209 记的那个坑。
+
+**教训（和 §0.0 那条是一对）：** §0.0 说「**别只比字节数**」（长度相同≠内容相同）；
+这条是它的对偶 ——「**别只比你以为重要的那几个字段**」。我比了 `content` 和 `timestamp`，
+两者都相同，就差点把「文件变了」判成「什么都没变」，而变的是**我没去看的那一层**。
+
+备份：`TRGWiki.json.261001.bak`（脚本自己写的；**已存在就跳过**，所以重跑不会把「拉取前」
+覆盖成「拉取后」）。重跑验证：`--no-write` 不需要，第二次跑 `added/removed` 仍为 0/0。
