@@ -114,6 +114,52 @@ echo "=== watch ==="
 "$LUA" _tools/watch_harness.luau --closewin
 echo "watch rc=$?"
 
+echo "=== watch slicing differential ==="
+# MaxBlockMs bounds the longest uninterrupted walk, so a census over ~92k instances
+# cannot freeze the client for its whole duration. That fix puts a clock-dependent
+# branch inside a fixture that drives its mutation timeline by COUNTING waits, and
+# the first version of it made this suite flaky -- the same unmodified watcher passed
+# and failed between runs, because how many yields landed before the lever depended
+# on machine load. The fixture no longer counts untimed yields (see the task.wait
+# comment in watch_harness.luau); this is the other half of that argument. A yield
+# budget is allowed to change WHEN the watcher works, never WHAT it records, and that
+# is measurable: run the shipped file, then a copy whose budget is forced to zero
+# (yield every SLICE_CHECK instances), and require the two logs to agree line for
+# line apart from the wall clock, which is the only column that may differ.
+SLICE0=_tools/_slice0.luau
+SLICEA=_tools/_slice_a
+SLICEB=_tools/_slice_b
+rm -rf "$SLICEA" "$SLICEB"
+# Anchor by construction and ASSERT it before substituting: MaxBlockMs is named in
+# several comments in the watcher, so a looser pattern could rewrite prose instead of
+# the config and still look green.
+SLICE_ANCHOR=$(grep -c '^    MaxBlockMs = 25,$' _tools/TRG_original_watch.luau)
+if [ "$SLICE_ANCHOR" != "1" ]; then
+    echo "slicing: FAIL -- the MaxBlockMs anchor matches $SLICE_ANCHOR line(s), not 1."
+    echo "         The budget was renamed or reformatted; update this sed before trusting it."
+    exit 1
+fi
+sed 's/^    MaxBlockMs = 25,$/    MaxBlockMs = 0,/' _tools/TRG_original_watch.luau > "$SLICE0"
+"$LUA" _tools/watch_harness.luau --out="$SLICEA" >/dev/null 2>&1
+"$LUA" _tools/watch_harness.luau "$SLICE0" --out="$SLICEB" >/dev/null 2>&1
+# The wall clock is the one column allowed to differ; it is the second field of every
+# changes.log line, between the run-relative t= and the first pipe.
+no_clock() { sed -E 's/ [0-9]{2}:[0-9]{2}:[0-9]{2} / TIME /' "$1"; }
+SLICE_LINES=$(wc -l < "$SLICEA/changes.log")
+if [ "$SLICE_LINES" -lt 5 ]; then
+    echo "slicing: FAIL -- the baseline log has only $SLICE_LINES line(s);"
+    echo "         two empty files are trivially identical and this test would prove nothing."
+    exit 1
+fi
+if diff <(no_clock "$SLICEA/changes.log") <(no_clock "$SLICEB/changes.log") > _tools/_slice.diff 2>&1; then
+    echo "slicing: PASS -- $SLICE_LINES log line(s) identical with the yield budget at 0"
+else
+    echo "slicing: FAIL -- what the watcher records depends on how the walk was sliced"
+    cat _tools/_slice.diff
+    exit 1
+fi
+rm -rf "$SLICEA" "$SLICEB" "$SLICE0" _tools/_slice.diff
+
 echo "=== watch mutations ==="
 python _tools/selftest_watch.py
 

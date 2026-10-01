@@ -3453,3 +3453,104 @@
     cannot then be RUN is an unverified change -- the exact class of thing this log exists to
     refuse. The divergence between artifact and tool is recorded instead, here and in the report,
     and the one-line fix is the user's to take or leave.
+
+210. A TIME-BASED BRANCH INSIDE A WAIT-COUNTED FIXTURE IS A COIN FLIP, AND SHOULD BE TREATED AS A
+     BUG IN THE FIXTURE, NOT IN THE SUBJECT.
+     `TRG_original_watch.luau` grew three sliced walks, each yielding once the current slice has run
+     `MaxBlockMs` of CPU, so a census over ~92k instances cannot freeze the client for its whole
+     duration. `watch_harness.luau` drives its mutation timeline by COUNTING `task.wait` calls --
+     `STEPS[waits]`, `waits` incremented in the shim -- so every yield the watcher makes is one step
+     of a timeline it was never meant to advance. The result was measured, not argued: the same
+     UNMODIFIED file reported 73 PASS / 1 FAIL three runs out of four, and 74 PASS / 0 FAIL the
+     fourth. The failing check moved with the load on the machine because whether `STEPS[3]` (the
+     lever) landed before or after the census depended on how many slices had actually yielded.
+
+     The isolation was three runs, and it is the whole of the evidence: `MaxBlockMs = 100000` (no
+     yields) -> 74/0, the shipped `25` -> flaky, `MaxBlockMs = 0` (a yield every 64 instances) ->
+     27/47. So the yields were the sole cause, and the fixture was the thing that was wrong.
+
+     Why the fixture and not the watcher: a fixture whose verdict depends on how fast the machine is
+     cannot tell a broken watcher from a busy one, and that is the one property a harness sells. The
+     watcher's behaviour is CORRECT on a slow machine and on a fast one -- it yields more or less,
+     which is what a time budget means. The fixture's assumption ("every `task.wait` is one step of
+     the shift") was never true, it had simply never been stressed.
+
+     The fix keys on the one difference that is real rather than incidental: the loop's cadence is
+     `task.wait(CONFIG.Interval)` and carries an argument, a slice's yield is `task.wait()` and does
+     not. Only the timed wait advances the timeline. Eight consecutive runs then reported 74/0, and
+     the harness prints `bare_waits=2`, so the ignored path is provably still being walked -- this is
+     "the fixture ignores it", not "it never happens".
+
+211. A TEST THAT A FIX CHANGED NOTHING ELSE MUST BE A MEASUREMENT, NOT AN ARGUMENT.
+     Saying "the fixture no longer counts yields" only restores determinism. It does not establish
+     the property that actually matters: that a yield budget changes WHEN the watcher works and not
+     WHAT it records. That one is cheap to measure and is now measured on every run of
+     `run_tests.sh`: run the shipped file, run a copy with `MaxBlockMs` forced to 0 (a yield every
+     `SLICE_CHECK` instances, the finest possible slicing), and require the two `changes.log` files
+     to be identical line for line once the wall-clock column is stripped. Result on the shipped
+     `w61`: 19 lines, identical.
+
+     Three guards are part of the test rather than of the runner, because each of them is a way this
+     test could pass while proving nothing. (1) The anchor is asserted UNIQUE before the
+     substitution -- `MaxBlockMs` is named in several comments, so a looser pattern could rewrite
+     prose and still leave a green run. (2) A baseline log of fewer than five lines fails the test:
+     two empty files are trivially identical. (3) The clock column is stripped rather than the
+     comparison being loosened -- the two runs are a second apart, and "they differ only by the
+     clock" is exactly the claim being made.
+
+     The wall clock is the one column a differential like this cannot avoid, and it is worth saying
+     which direction that cuts: the t= field is already run-relative, so the stripping removes the
+     ONE field that is a property of when the harness ran and not of what the watcher saw.
+
+212. A DERIVED NUMBER MUST SAY WHAT IT IS DERIVED FROM, AND THE COMMENT THAT SAID OTHERWISE WAS A BUG.
+     The health line's `duty` was documented as "the share of the wall clock -- scan plus the frame
+     waits inside it, plus the sleep". `scanMs` is `os.clock()`, which is CPU time and does not
+     advance while the walk is yielded, so the frame waits are NOT in it and the sentence described
+     a quantity nobody was computing. Corrected to say what it measures (the Lua work of the last
+     scan against the wall-clock period) and which way the error points (the true period is longer
+     than `scan_ms + Interval + sleep_ms` by exactly the frames handed back, so the real share is at
+     or BELOW the printed duty).
+
+     The direction matters more than the number. A reader asks "is my machine being eaten?" and the
+     safe direction for that question is to overstate, not to understate: printed <= target then
+     really <= target, and a run that prints high has earned a second look rather than a verdict.
+     The frames handed back are the game's -- that is what handing them back means -- so counting
+     them as a cost to the watcher would be counting the cure as the disease.
+
+     This is the same class as the `Interval` comment in the same file, falsified by the same run
+     ("the budget below is set to keep a scan near 300 ms" was calibrated on our own place, 30219
+     instances, and the original has 71587). Two comments in one file describing numbers that were
+     true somewhere else. The remedy is not more careful prose: it is that `w61` PRINTS
+     `scan_ms / sleep_ms / duty / yields`, so the next run's own artifacts decide whether the cure
+     worked, and no comment has to be trusted for it.
+
+213. THE SEAL BACKSTOP READS THE MONITOR LABEL, AND THE 2026-10-01 RUN IS THE FIRST TIME THAT
+     DIFFERENCE COULD BE SEEN. RECORDED, NOT CHANGED -- THE SEAL CRITERIA ARE THE OPERATOR'S.
+     `endReason()` takes `local t = last['m.temp']`, so the cold trip, the meltdown arm and the
+     40-poll backstop all read the MONITOR's temp label, not `s.Core.TemperatureVal`. That has been
+     true since the arms were written; what the 2026-10-01 capture adds is a case where the two
+     disagree in a way that decides the run.
+
+     `m.temp` reads 10659 at t=247.14 and 3659 at t=249.07 -- 7000 F in one poll -- and then does not
+     change once in the remaining 22 seconds. `s.Core.TemperatureVal` over the same window falls
+     monotonically from 10188 to 4911 and crosses the game's own 5600 F running line only at
+     S 521 / t=268.51 (5709 the poll before). The seal fires at S 531 / t=271.56 as `core read as
+     down for 40 polls with no end signal`. Ten polls separate the core's crossing from the seal;
+     the counter that had reached 40 was therefore fed by the monitor label from the poll it froze
+     on, not by the core. Stated as a counterfactual, which is the cleanest form of it: had the arm
+     read `s.Core`, `downPolls` would have been at 10 at t=271.56 and the run would not have ended
+     there. Neither of the operator's two stated criteria (he shut it down / it shut itself down) was
+     the trigger -- `GameActive` never went false, and `COREGATE` appears exactly once in the whole
+     file, on the way up.
+
+     What is NOT claimed: that the seal was wrong. The core really was cooling and 4911 F is below
+     the game's own lowest band, so a seal at that temperature may be correct. What is claimed is
+     narrower and checkable from the bytes: the run ended on the monitor's reading, ~19 seconds
+     before the core's own reading would have justified the same arm, and the monitor's reading was
+     frozen at the time. Whether the backstop should read the core instead is a change to the
+     operator's own seal rule, so it is a question (`QUESTIONS.md` P9), not an edit -- and it is
+     exactly the shape of thing section 1.4 forbids deciding on his behalf.
+
+     Kept beside the earlier correction in the same file (the `m.temp`-is-not-core-temperature note):
+     that one said the monitor is blindest when the core is coldest. This run says the same monitor
+     can also FREEZE, and that a rule which counts polls against it inherits the freeze.

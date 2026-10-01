@@ -150,7 +150,13 @@ local CONFIG = {
     -- 1439 to 0 -- instead of on a threshold at midnight, which was the wrong end of
     -- the shift; and the two monitor containers are pinned, so 「所有监视器的GUI也要！」
     -- is a guarantee instead of a near miss on the root budget.
-    Build = 'w60',
+    -- w61: the lag fix.  The first run to watch the whole original place measured
+    -- scan_ms=2197 against Interval=1 -- ~70% of the client -- and the operator
+    -- reported the game as unplayable.  Three walks now yield every MaxBlockMs of
+    -- solid work, and the loop sleeps until its share of the wall clock is at most
+    -- DutyTarget.  health.txt reports scan_ms / sleep_ms / duty / yields so the cure
+    -- is measurable on the machine that complained rather than asserted here.
+    Build = 'w61',
     -- The recorder's sink.  receive.py's --dir is Data/, so a name of
     -- 'originalwatch/<stamp>/rooms.txt' lands in Data/originalwatch/<stamp>/.
     Sink = 'http://127.0.0.1:8765/',
@@ -159,6 +165,47 @@ local CONFIG = {
     -- keep a scan near 300 ms -- a diagnostic that eats a third of a heartbeat is
     -- tolerable, one that eats all of it is a second game.
     Interval = 1,
+    -- ---- THE LAG FIX (2026-10-01) ----
+    -- The operator's report after the first run that watched the whole original
+    -- place: 「我注入之后游戏贼卡」.  The numbers behind it, from that run's own
+    -- health.txt: scan_ms=2197 for 71587 instances / 559942 properties, against
+    -- Interval=1 -- so the loop was asking for two and a fifth seconds of solid work
+    -- every three and a fifth seconds.  About 70% of the client went into this
+    -- watcher, and the recorder beside it measured ITSELF at cpu_pct=10.9, so the
+    -- split is not a guess about which half to fix.
+    --
+    -- The comment above Interval says the budget is "set to keep a scan near
+    -- 300 ms".  That was calibrated on OUR place (30219 instances / 235553
+    -- properties, 112 ms); the original has three times that and the same budget
+    -- admits 80000 of it.  The claim was not wrong when it was written, it was
+    -- wrong about this place -- which is why the two knobs below are measured
+    -- rather than chosen, and why health.txt reports what they actually did.
+    --
+    -- TWO KNOBS, because there are two different harms here and they need different
+    -- remedies.
+    --
+    -- MaxBlockMs bounds the LONGEST uninterrupted slice.  The scan yields to the
+    -- scheduler once the current slice has run this long, so input and rendering get
+    -- a frame: the 2.2 s freeze becomes ~90 short ones.  That is the harm the
+    -- operator feels as a stutter, and it costs wall time, because every yield waits
+    -- for a frame.  It is a time budget and not a count of instances on purpose: a
+    -- slice's cost depends on the machine and on the class mix, and the same file
+    -- also runs in the fixture, where a whole scan is under a millisecond.
+    --
+    -- DutyTarget caps the fraction of the wall clock the watcher may occupy at all.
+    -- Yielding alone CANNOT fix a 70% duty cycle -- the same two seconds of work
+    -- still has to happen, and spreading it over more frames spreads the hurt
+    -- rather than removing it.  So the loop sleeps until scan/(scan+sleep) is at
+    -- most this, derived from the measured scan rather than from a constant: a fixed
+    -- sleep is invisible on a small place and useless on one twice this size.
+    --
+    -- 0.30 leaves the game two thirds of the client.  The price is resolution and it
+    -- is paid in public: the measured period lands in health.txt as scan_ms,
+    -- sleep_ms, duty and yields, so the next run states what it cost instead of this
+    -- comment claiming it.  Raising DutyTarget buys resolution back and buys the
+    -- stutter with it; that trade is the operator's, not this file's.
+    MaxBlockMs = 25,
+    DutyTarget = 0.30,
     -- HttpService:PostAsync refuses a body over 1024 KB, so every artifact is
     -- split on line boundaries under this.  Line boundaries and not byte offsets:
     -- a split inside a UTF-8 sequence produces a file that is not the text sent.
@@ -456,6 +503,13 @@ local sinkDown = false
 local tick = 0
 local startedAt = 0
 local scanMs = 0
+-- How many times the scan handed the frame back during its last pass, and how long
+-- the loop then slept to keep its share of the clock under DutyTarget.  Both are
+-- reported in health.txt: the lag fix is a claim about this machine's numbers, and
+-- a claim that is not written down where the next run can be compared against it is
+-- the kind of claim this project has already paid for twice.
+local blockYields = 0
+local sleepMs = 0
 local movedKeys = 0
 local summaryDirty = false
 local lastTick = {}    -- j -> the tick this key last moved
@@ -1149,6 +1203,31 @@ function register(inst, group)
     report.classTotal[inst.ClassName] = (report.classTotal[inst.ClassName] or 0) + 1
 end
 
+-- ========== STAYING OUT OF THE GAME'S WAY ==========
+-- The scheduler half of the lag fix (the other half is the duty sleep in the main
+-- loop; the numbers are on MaxBlockMs).  Every long walk in this file calls this
+-- every SLICE_CHECK iterations: it returns nil while the current slice is still
+-- cheap, and the fresh clock after yielding for a frame when it is not.
+--
+-- A function rather than an inline test because all three walks need it and they
+-- need the same rule -- the census walk, the index build and the scan -- and three
+-- copies of a threshold is three places for the numbers to drift apart.  It takes
+-- the slice's start as an argument instead of remembering it, so a caller cannot
+-- hold a stale slice by forgetting to update it: the value it passes back in is the
+-- one it was handed.
+--
+-- SLICE_CHECK is 64 because the check itself costs an os.clock call and the thing
+-- it is guarding costs ~500 property reads -- 64 instances is about two
+-- milliseconds on the measured 3.9 microseconds per read, so the budget is honoured
+-- to within a frame of itself and the check is under 1% of the work it bounds.
+local SLICE_CHECK = 64
+local function breathe(sliceAt)
+    if (os.clock() - sliceAt) * 1000 < CONFIG.MaxBlockMs then return nil end
+    blockYields = blockYields + 1
+    task.wait()
+    return os.clock()
+end
+
 -- ========== DISCOVERY ==========
 -- The first thing that runs, and the reason this file can be pointed at a place
 -- nobody has dumped.  Two levels deep: every direct child of Workspace with its
@@ -1170,11 +1249,23 @@ local function census()
     -- not have surfaced until the census ran in the game -- after the operator had
     -- already thrown the lever, which is the one moment the run cannot be redone.
     local children = workspace:GetChildren()
+    -- Sliced like the scan, because this is the other long walk and it runs at the
+    -- worst possible moment: injection, while the operator is walking to the console
+    -- to throw the lever.  On the measured place the census is 48 s of solid work
+    -- (the first changes.log line of the run before last was at t=47.93), and a
+    -- frozen client for that minute is the same complaint as the per-scan freeze --
+    -- the operator cannot move while it happens.  No stamp here: the census writes
+    -- no timeline, so there is nothing for a slice boundary to be wrong about.
+    local sliceAt = os.clock()
     for _, c in ipairs(children) do
         local d = safeDescendants(c)
         local parts = 0
-        for _, x in ipairs(d) do
-            if x:IsA('BasePart') then parts = parts + 1 end
+        for i = 1, #d do
+            if d[i]:IsA('BasePart') then parts = parts + 1 end
+            if i % SLICE_CHECK == 0 then
+                local fresh = breathe(sliceAt)
+                if fresh ~= nil then sliceAt = fresh end
+            end
         end
         rows[#rows+1] = {node = c, name = c.Name, class = c.ClassName,
                          n = #d, parts = parts, kids = d}
@@ -1296,8 +1387,21 @@ local function buildIndex(rows, picked)
             count = r.n, parts = r.parts,
         }
         register(node, r.name)
-        for _, d in ipairs(r.kids) do
-            register(d, r.name)
+        -- The heaviest walk in the file per instance, because register() resolves a
+        -- class, picks the watched property list and builds a UNIQUE PATH STRING for
+        -- every instance.  It is also the walk that runs while the operator is still
+        -- moving: the census measured 48 s, and the lever hook is the only thing
+        -- that has to beat him to the console (it is installed synchronously in
+        -- Start, above), so everything here may be slow as long as it is not a
+        -- freeze.  Sliced for exactly that reason: slow is survivable, blocked is
+        -- not.
+        local sliceAt = os.clock()
+        for i = 1, #r.kids do
+            register(r.kids[i], r.name)
+            if i % SLICE_CHECK == 0 then
+                local fresh = breathe(sliceAt)
+                if fresh ~= nil then sliceAt = fresh end
+            end
         end
         -- Connected after the walk, never before: a connection made first would
         -- fire for every descendant during the walk and register each one twice,
@@ -1697,12 +1801,33 @@ end
 -- ========== THE SCAN ==========
 local function scan()
     local t0 = os.clock()
+    -- Per scan, not cumulative: the number a reader wants is what the LAST pass cost
+    -- and how many frames it took, since that is the pair the duty sleep is derived
+    -- from.  A cumulative count would only ever grow and would say nothing about the
+    -- scan being reported beside it.
+    blockYields = 0
     -- The clock is read once per scan, not once per change.  A single tick can move
     -- thousands of properties, and stamping each one separately would both cost a
     -- syscall each and report them as spread over a second in which they all moved
     -- together -- which reads as a timeline and is not one.
     local st = stamp()
+    -- The slice this scan is currently in, and its position in the walk.  The stamp
+    -- is re-taken after every yield, and that is not bookkeeping: the comment above
+    -- says the clock is read once per scan so that everything which moved together
+    -- carries one time.  A scan that now spans several frames would make that claim
+    -- false in the other direction -- changes seconds apart stamped as one instant --
+    -- so the unit of "together" becomes the slice, which is still the truth.
+    local sliceAt = os.clock()
+    local walked = 0
     for _, ent in ipairs(ents) do
+        walked = walked + 1
+        if walked % SLICE_CHECK == 0 then
+            local fresh = breathe(sliceAt)
+            if fresh ~= nil then
+                sliceAt = fresh
+                st = stamp()
+            end
+        end
         local inst = ent.inst
         -- Reading a property off a destroyed instance is fine; its Parent just
         -- goes nil.  Reported once and then the entry is retired, so a part that
@@ -2093,8 +2218,34 @@ local function health()
     out[#out+1] = string.format(
         'watched=%d props=%d moved=%d ambient=%d', #ents, totalProps, movedKeys,
         suppressedCount())
+    -- scan_ms / sleep_ms / duty / yields are the lag fix's own report, and they are
+    -- on this line rather than in a comment because the fix is a claim about a
+    -- MACHINE: 2197 ms against a 1 s interval was measured on the operator's, and
+    -- the only way to know whether the cure worked there is for the cured version to
+    -- print the same four numbers.
+    --
+    -- WHAT scan_ms MEASURES, because it is not the whole cycle and reading it as one
+    -- would make `duty` look like a wall-clock share when it is not.  scan_ms comes
+    -- from os.clock(), which is CPU time -- it does not advance while the walk is
+    -- yielded waiting for a frame.  So scan_ms is the Lua work in the last scan, and
+    -- the frames that work was spread across are NOT in it.  duty is therefore that
+    -- work against the wall-clock period, and it is the number to compare against
+    -- DutyTarget: too high means the loop could not afford to sleep as long as the
+    -- rule asked, which is a different failure from a scan that got slower.
+    --
+    -- The bias runs the safe way.  The true period is longer than
+    -- scan_ms + Interval + sleep_ms by the frames the walk handed back, so the real
+    -- share is at or below the printed duty -- a run that prints at or under the
+    -- target has not exceeded it, and a run that prints over has earned a second
+    -- look rather than a verdict.  The frames handed back are the game's, which is
+    -- the point of handing them back, so counting them as a cost to the watcher
+    -- would be counting the cure as the disease.
+    local periodMs = scanMs + CONFIG.Interval * 1000 + sleepMs
     out[#out+1] = string.format(
-        'queued=%d dropped=%d scan_ms=%.0f', #logLines, dropped, scanMs)
+        'queued=%d dropped=%d scan_ms=%.0f sleep_ms=%.0f duty=%.2f yields=%d (block_ms=%d target=%.2f)',
+        #logLines, dropped, scanMs, sleepMs,
+        periodMs > 0 and scanMs / periodMs or 0, blockYields,
+        CONFIG.MaxBlockMs, CONFIG.DutyTarget)
     out[#out+1] = string.format(
         'sink=%s%s', sinkDown and 'DOWN' or 'ok',
         sinkDown and string.format(' since t=%.2f', sinkSince or -1) or '')
@@ -2425,6 +2576,27 @@ function Watch.Start()
                 running = false
                 break
             end
+            -- THE DUTY CAP.  The other half of the lag fix, and the half that can be
+            -- derived rather than chosen (MaxBlockMs carries the measurement and the
+            -- reasoning).  Yielding inside the scan fixes the freeze; it cannot fix
+            -- the SHARE, because the same work still has to happen.
+            --
+            -- `scanMs` and not os.clock() around the call: scan() measures itself
+            -- from the clock, and it already accounts for the frames its own yields
+            -- spent waiting -- so the sleep is derived from what the pass actually
+            -- cost the game, which is the quantity the duty ratio is about.  A pass
+            -- that measured its own work without the yields would under-sleep by
+            -- exactly the amount it had already taken in frames.
+            --
+            -- Emitted only when it exceeds Interval, so the ordinary case (a small
+            -- place, a fast machine) is bit-for-bit the loop it was: the top of this
+            -- loop still waits Interval, and this adds the remainder.  That is also
+            -- what keeps the fixture honest, where a whole scan is under a
+            -- millisecond and this branch is never taken.
+            local work = scanMs / 1000
+            local idle = work * (1 - CONFIG.DutyTarget) / CONFIG.DutyTarget
+            sleepMs = idle > CONFIG.Interval and (idle - CONFIG.Interval) * 1000 or 0
+            if sleepMs > 0 then task.wait(sleepMs / 1000) end
             -- Bounded queues.  Audio needs its own bound: it is flushed every tick
             -- so it can only grow while the sink is down -- but "only while the
             -- sink is down" is exactly the case the queue exists for, and a sound

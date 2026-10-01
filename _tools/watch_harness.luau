@@ -460,8 +460,22 @@ _G.Instance = {new = function(class) return mk(class, 'New' .. class, nil) end}
 -- clock, so the fixture advances time from INSIDE task.wait: the mutations run
 -- between scans, which is the only way to drive a synchronous loop from outside
 -- it.  HARNESS_STOP unwinds the loop without being treated as a crash.
+--
+-- ONLY TIMED WAITS ADVANCE THE SHIFT.  A bare task.wait() -- a long walk breaking
+-- itself into slices so one census cannot freeze the client -- is not a step of the
+-- timeline and is deliberately not counted.  It used to be, and that made this
+-- fixture FLAKY: the sliced walks yield on a real clock, so how many bare waits fell
+-- before STEPS[3] (the lever) depended on machine load, and the same unmodified
+-- watcher passed and failed between runs.  A fixture whose verdict depends on how
+-- fast the machine is cannot tell a broken watcher from a busy one.
+--
+-- The property this rests on -- that slicing changes WHEN the watcher works but not
+-- WHAT it records -- is not asserted here; run_tests.sh measures it, by running the
+-- shipped file against a copy with MaxBlockMs forced to 0 and requiring the two
+-- change logs to agree line for line once the wall clock is stripped.
 local STEPS = {}
 local waits = 0
+local bareWaits = 0
 -- Past STEPS[60] with room for the quiet release and the final drain to settle.
 local WAIT_LIMIT = 120
 _G.task = {
@@ -472,6 +486,7 @@ _G.task = {
         end
     end,
     wait = function(t)
+        if t == nil then bareWaits = bareWaits + 1 return end
         waits = waits + 1
         tick()
         local step = STEPS[waits]
@@ -746,7 +761,8 @@ end
 
 print('')
 print('watch harness -- sink captured ' .. tostring(stamp))
-print(string.format('  scans=%d  status=%s', waits, tostring(Watch.Status()):sub(1, 110)))
+print(string.format('  scans=%d  bare_waits=%d  status=%s', waits, bareWaits,
+    tostring(Watch.Status()):sub(1, 110)))
 print('')
 
 local tree = get('tree.txt')

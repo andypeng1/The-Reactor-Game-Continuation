@@ -1,0 +1,966 @@
+t=0000030.52 12:52:38 | SoundBlocks        | SoundBlocks.ControlRoomSound.MonitorChime | ENDED     | bus=(none) | id=rbxassetid://3422389728 | vol=0.75 pitch=0.50 looped=false
+t=0000031.54 12:52:39 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000031.94 12:52:39 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000034.60 12:52:42 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000035.00 12:52:42 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000037.73 12:52:45 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000037.83 12:52:45 | Consoles           | Consoles.MainReactorConsole.SoundBlock.ReadySound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://473122639 | vol=1.00 pitch=1.00 looped=false
+t=0000038.15 12:52:45 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000038.49 12:52:46 | Consoles           | Consoles.MainReactorConsole.SoundBlock.ReadySound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://473122639 | vol=1.00 pitch=1.00 looped=false
+t=0000039.56 12:52:47 | Consoles           | Consoles.MainReactorConsole.StartUpBigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000039.84 12:52:47 | Consoles           | Consoles.MainReactorConsole.SoundBlock.ReadySound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://473122639 | vol=1.00 pitch=1.00 looped=false
+t=0000040.47 12:52:48 | Consoles           | Consoles.MainReactorConsole.SoundBlock.ReadySound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://473122639 | vol=1.00 pitch=1.00 looped=false
+t=0000041.28 12:52:48 | Consoles           | Consoles.MainReactorConsole.StartUpBigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000041.30 12:52:48 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000041.77 12:52:49 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000041.92 12:52:49 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000043.66 12:52:51 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000043.87 12:52:51 | Lights             | Lights.ChamberLights.UpperChamberLights.Light1.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000043.87 12:52:51 | Lights             | Lights.ChamberLights.ChamberVentLights.Light1.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000043.87 12:52:51 | Lights             | Lights.ChamberLights.ChamberVentLights.Light2.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000043.97 12:52:51 | Lights             | Lights.ChamberLights.ChamberVentLights.Light3.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000043.98 12:52:51 | Lights             | Lights.ChamberLights.ChamberVentLights.Light4.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000044.06 12:52:51 | Lights             | Lights.ChamberLights.ChamberVentLights.Light5.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000044.06 12:52:51 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000044.19 12:52:51 | Lights             | Lights.ChamberLights.ChamberVentLights.Light6.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000044.20 12:52:51 | Lights             | Lights.ChamberLights.UpperChamberLights.Light2.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000044.20 12:52:51 | Lights             | Lights.ChamberLights.ChamberVentLights.Light7.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.04 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light8.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.05 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light9.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.05 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light10.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.06 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light11.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.06 12:52:52 | Lights             | Lights.ChamberLights.UpperChamberLights.Light3.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000045.06 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light12.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.06 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light13.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.07 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light14.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.07 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light15.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.07 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light16.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.07 12:52:52 | Lights             | Lights.ChamberLights.UpperChamberLights.Light4.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000045.08 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light17.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.08 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light18.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.08 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light19.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.08 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light20.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.08 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light21.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.08 12:52:52 | Lights             | Lights.ChamberLights.UpperChamberLights.Light5.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000045.09 12:52:52 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000045.09 12:52:52 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000045.18 12:52:52 | Lights             | Lights.ChamberLights.ChamberVentLights.Light24.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000045.39 12:52:52 | Lights             | Lights.ChamberLights.UpperChamberLights.Light6.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000047.01 12:52:54 | Lights             | Lights.ChamberLights.ChamberVentLights.Light4.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.01 12:52:54 | Lights             | Lights.ChamberLights.ChamberVentLights.Light3.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.01 12:52:54 | Lights             | Lights.ChamberLights.ChamberVentLights.Light2.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.01 12:52:54 | Lights             | Lights.ChamberLights.ChamberVentLights.Light1.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.05 12:52:54 | Lights             | Lights.ChamberLights.ChamberVentLights.Light5.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.12 12:52:54 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000047.14 12:52:54 | Lights             | Lights.ChamberLights.ChamberVentLights.Light7.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.14 12:52:54 | Lights             | Lights.ChamberLights.ChamberVentLights.Light6.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.26 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.26 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #2 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.26 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #3 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.26 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #4 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.26 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #5 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.26 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #6 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.27 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #7 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.27 12:52:54 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #8 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000047.53 12:52:55 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000047.82 12:52:55 | Lights             | Lights.ChamberLights.UpperChamberLights.Light1.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000047.99 12:52:55 | Lights             | Lights.ChamberLights.ChamberVentLights.Light10.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.99 12:52:55 | Lights             | Lights.ChamberLights.ChamberVentLights.Light9.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000047.99 12:52:55 | Lights             | Lights.ChamberLights.ChamberVentLights.Light8.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light24.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light23.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light22.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light21.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light20.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light19.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light18.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light17.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light16.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light15.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light14.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light13.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light12.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.ChamberVentLights.Light11.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000048.91 12:52:56 | Lights             | Lights.ChamberLights.UpperChamberLights.Light2.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000048.91 12:52:56 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000048.96 12:52:56 | Audio              | MovingParts.ReactorClamps1.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000049.00 12:52:56 | Lights             | Lights.ChamberLights.UpperChamberLights.Light5.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000049.00 12:52:56 | Lights             | Lights.ChamberLights.UpperChamberLights.Light4.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000049.00 12:52:56 | Lights             | Lights.ChamberLights.UpperChamberLights.Light3.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000049.32 12:52:56 | Lights             | Lights.ChamberLights.UpperChamberLights.Light6.LargeLightFlicker | ENDED     | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000049.71 12:52:57 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000051.38 12:52:58 | Audio              | MovingParts.ReactorClamps2.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000052.32 12:52:59 | Audio              | MovingParts.ReactorClamps3.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000052.75 12:53:00 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000053.12 12:53:00 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000054.44 12:53:02 | Audio              | MovingParts.ReactorClamps4.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000056.11 12:53:03 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000056.14 12:53:03 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000056.14 12:53:03 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000056.34 12:53:03 | Audio              | MovingParts.ReactorClamps5.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000056.48 12:53:04 | Sounds             | Sounds.Effects.External.TypewriterEnd | PLAYED    | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000058.15 12:53:05 | Sounds             | Sounds.Effects.External.TypewriterEnd | ENDED     | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000058.38 12:53:05 | Audio              | MovingParts.ReactorClamps6.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000058.70 12:53:06 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000059.04 12:53:06 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000060.22 12:53:07 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000060.23 12:53:07 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000062.28 12:53:09 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000062.32 12:53:09 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000064.37 12:53:11 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000064.37 12:53:11 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000064.73 12:53:12 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000065.11 12:53:12 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000066.72 12:53:14 | Audio              | MovingParts.ReactorClamps2.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000067.15 12:53:14 | Sounds             | Sounds.Effects.External.TypewriterEnd | PLAYED    | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000067.26 12:53:14 | Sounds             | Sounds.Effects.External.TypewriterEndBell | PLAYED    | bus=(none) | id=rbxassetid://9125557416 | vol=2.00 pitch=1.00 looped=false
+t=0000068.34 12:53:15 | Sounds             | Sounds.Effects.External.TypewriterEnd | ENDED     | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000068.34 12:53:15 | Audio              | MovingParts.ReactorClamps3.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #2 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #3 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #4 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #5 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #6 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #7 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #8 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #9 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #10 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #11 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #12 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #13 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #14 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #15 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000068.63 12:53:16 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #16 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000070.44 12:53:18 | Audio              | MovingParts.ReactorClamps4.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000070.88 12:53:18 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000071.26 12:53:18 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000072.60 12:53:20 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.HydraulicSound | PLAYED    | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000072.60 12:53:20 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.HydraulicSound | PLAYED    | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000072.60 12:53:20 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.HydraulicSound #2 | PLAYED    | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000072.60 12:53:20 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.HydraulicSound | PLAYED    | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000072.60 12:53:20 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.HydraulicSound | PLAYED    | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000072.60 12:53:20 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.HydraulicSound #3 | PLAYED    | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000072.73 12:53:20 | CRC3               | CRC3.CoolantDoor.Union.CoolantDoorSound | ENDED     | bus=(none) | id=rbxassetid://429505244 | vol=1.25 pitch=2.00 looped=false
+t=0000072.73 12:53:20 | CRC2               | CRC2.CoolantDoor.Union.CoolantDoorSound | ENDED     | bus=(none) | id=rbxassetid://429505244 | vol=1.25 pitch=2.00 looped=false
+t=0000072.73 12:53:20 | CRC1               | CRC1.CoolantDoor.Union.CoolantDoorSound | ENDED     | bus=(none) | id=rbxassetid://429505244 | vol=1.25 pitch=2.00 looped=false
+t=0000072.73 12:53:20 | Audio              | MovingParts.ReactorClamps5.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000073.82 12:53:21 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000073.83 12:53:21 | Audio              | MovingParts.ReactorClamps6.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000074.19 12:53:21 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000075.53 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000075.53 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000075.53 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #2 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000075.53 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000075.53 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000075.53 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #3 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000075.56 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.HydraulicSound #2 | ENDED     | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000075.56 12:53:23 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.HydraulicSound | ENDED     | bus=(none) | id=rbxassetid://9114853666 | vol=0.60 pitch=1.50 looped=false
+t=0000075.87 12:53:23 | Sounds             | Sounds.Effects.External.TypewriterEndBell | ENDED     | bus=(none) | id=rbxassetid://9125557416 | vol=2.00 pitch=1.00 looped=false
+t=0000077.50 12:53:25 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000077.53 12:53:25 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #2 | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000077.53 12:53:25 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.Hiss | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000077.87 12:53:25 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000079.48 12:53:27 | Consoles           | Consoles.ElectricGridConsole.ExtractionLever.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000079.94 12:53:27 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000080.32 12:53:27 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000083.40 12:53:31 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000083.43 12:53:31 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000085.97 12:53:33 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000086.36 12:53:33 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000087.87 12:53:35 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.DeepScan | PLAYED    | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000087.87 12:53:35 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan | PLAYED    | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000087.87 12:53:35 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan #2 | PLAYED    | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000087.87 12:53:35 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.DeepScan | PLAYED    | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000087.87 12:53:35 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.DeepScan | PLAYED    | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000087.87 12:53:35 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan #3 | PLAYED    | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000088.89 12:53:36 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000090.01 12:53:37 | Monitors           | Monitors.ForecastControlRoomMonitor.Screen.Beep | PLAYED    | bus=(none) | id=rbxassetid://9119541054 | vol=0.50 pitch=0.50 looped=false
+t=0000092.18 12:53:39 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000092.57 12:53:40 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000094.91 12:53:42 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000095.24 12:53:42 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000096.27 12:53:43 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000096.27 12:53:43 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000096.27 12:53:43 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #2 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000096.27 12:53:43 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000096.27 12:53:43 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.Hiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000096.27 12:53:43 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #3 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000097.84 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.DeepScan | ENDED     | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000097.84 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan | ENDED     | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000097.84 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan #2 | ENDED     | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000097.84 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.DeepScan | ENDED     | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000097.84 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.DeepScan | ENDED     | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000097.84 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan #3 | ENDED     | bus=(none) | id=rbxassetid://18645041346 | vol=0.90 pitch=1.00 looped=false
+t=0000097.91 12:53:45 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000098.34 12:53:45 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000098.39 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #3 | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000098.39 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.Hiss | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000098.39 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000098.39 12:53:45 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.Hiss | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000098.46 12:53:46 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.Hiss | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000098.46 12:53:46 | Audio              | MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #2 | ENDED     | bus=(none) | id=rbxassetid://7768888198 | vol=0.50 pitch=0.75 looped=false
+t=0000099.65 12:53:47 | Monitors           | Monitors.ForecastControlRoomMonitor.Screen.TimelineComplete | PLAYED    | bus=(none) | id=rbxassetid://601149073 | vol=2.50 pitch=0.50 looped=false
+t=0000101.87 12:53:49 | Monitors           | Monitors.ForecastControlRoomMonitor.Screen.TimelineComplete | ENDED     | bus=(none) | id=rbxassetid://601149073 | vol=2.50 pitch=0.50 looped=false
+t=0000103.98 12:53:51 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000104.32 12:53:51 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000104.72 12:53:52 | Core               | Core.CORE.CBLStartUpSound | PLAYED    | bus=(none) | id=rbxassetid://1843025175 | vol=1.75 pitch=1.00 looped=false
+t=0000106.95 12:53:54 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000108.11 12:53:55 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000110.17 12:53:57 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000110.17 12:53:57 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000110.17 12:53:57 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000110.18 12:53:57 | Sounds             | Sounds.Effects.Destruction.FacilityGroaning1 | PLAYED    | bus=(none) | id=rbxassetid://9118068879 | vol=3.00 pitch=1.00 looped=true
+t=0000110.19 12:53:57 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000110.20 12:53:57 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000112.75 12:54:00 | Core               | Core.CORE.CBLStartUpSound | STOPPED   | bus=(none) | id=rbxassetid://1843025175 | vol=1.75 pitch=1.00 looped=false
+t=0000113.04 12:54:00 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000114.77 12:54:02 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000114.77 12:54:02 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000114.77 12:54:02 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #2 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #3 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #4 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #5 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #6 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #7 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000117.78 12:54:05 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #8 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000119.11 12:54:06 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000120.90 12:54:08 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000122.92 12:54:10 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000122.96 12:54:10 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000122.96 12:54:10 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000122.96 12:54:10 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000122.96 12:54:10 | Core               | Core.CORE.CBLFireSound | PLAYED    | bus=(none) | id=rbxassetid://1843025175 | vol=2.00 pitch=1.00 looped=false
+t=0000123.32 12:54:10 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000123.88 12:54:11 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.LargeLever.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000123.88 12:54:11 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.LargeLever.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000123.88 12:54:11 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.LargeLever.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000125.04 12:54:12 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000125.37 12:54:12 | CRC3               | CRC3.Coolant.CoolantSound | ENDED     | bus=(none) | id=rbxassetid://9120549564 | vol=0.00 pitch=1.00 looped=false
+t=0000125.37 12:54:12 | CRC2               | CRC2.Coolant.CoolantSound | ENDED     | bus=(none) | id=rbxassetid://9120549564 | vol=0.00 pitch=1.00 looped=false
+t=0000125.37 12:54:12 | CRC1               | CRC1.Coolant.CoolantSound | ENDED     | bus=(none) | id=rbxassetid://9120549564 | vol=0.00 pitch=1.00 looped=false
+t=0000125.41 12:54:13 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000127.27 12:54:14 | Audio              | MovingParts.CenterField.Shatter2 | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://18667300461 | vol=2.25 pitch=0.90 looped=false
+t=0000127.28 12:54:14 | Audio              | MovingParts.CenterField.DestabilizedField | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://8737370145 | vol=0.25 pitch=1.50 looped=true
+t=0000127.28 12:54:14 | Sounds             | Sounds.Effects.Environment.Ringing | PLAYED    | bus=(none) | id=rbxassetid://9069161602 | vol=1.00 pitch=1.00 looped=false
+t=0000127.28 12:54:14 | Sounds             | Sounds.Effects.Destruction.FacilityGroaning1 | STOPPED   | bus=(none) | id=rbxassetid://9118068879 | vol=3.00 pitch=1.00 looped=true
+t=0000128.02 12:54:15 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000128.33 12:54:15 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000129.96 12:54:17 | Core               | Core.CORE.IgnitonExplosion | PLAYED    | bus=(none) | id=rbxassetid://8067356918 | vol=1.00 pitch=1.00 looped=false
+t=0000129.96 12:54:17 | Core               | Core.CORE.ProtoCoreLoop | PLAYED    | bus=(none) | id=rbxassetid://9064807398 | vol=1.25 pitch=0.75 looped=true
+t=0000129.96 12:54:17 | SoundBlocks        | SoundBlocks.ControlRoomSound.MonitorFlash | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://8426701399 | vol=0.50 pitch=1.00 looped=false
+t=0000129.97 12:54:17 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark14.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000129.97 12:54:17 | Sounds             | Sounds.Effects.Destruction.FacilityGroaning2 | PLAYED    | bus=(none) | id=rbxassetid://9118069484 | vol=4.00 pitch=1.00 looped=true
+t=0000131.17 12:54:18 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark10.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000131.17 12:54:18 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark2.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000131.36 12:54:18 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark4.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000131.66 12:54:19 | Sounds             | Sounds.Effects.Environment.Ringing | ENDED     | bus=(none) | id=rbxassetid://9069161602 | vol=1.00 pitch=1.00 looped=false
+t=0000131.82 12:54:19 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark8.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000131.82 12:54:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark18.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000131.83 12:54:19 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark11.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000131.83 12:54:19 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark10.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000131.86 12:54:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark2.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000131.94 12:54:19 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark4.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000132.03 12:54:19 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark5.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000132.03 12:54:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark4.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000132.18 12:54:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.MonitorFlash | ENDED     | bus=ControlRoomSounds | id=rbxassetid://8426701399 | vol=0.50 pitch=1.00 looped=false
+t=0000133.21 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark15.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.22 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark16.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.23 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark18.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.24 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark6.SparkSound | PLAYED    | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.26 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark6.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.26 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark16.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.26 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark15.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.26 12:54:20 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark5.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000133.26 12:54:20 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark11.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000133.26 12:54:20 | SoundBlocks        | SoundBlocks.MainframeSoundBlock.Spark8.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.30 pitch=1.00 looped=false
+t=0000133.38 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark4.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000133.38 12:54:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.Spark18.SparkSound | ENDED     | bus=(none) | id=rbxassetid://473438819 | vol=0.20 pitch=1.00 looped=false
+t=0000134.07 12:54:21 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000135.56 12:54:23 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000135.56 12:54:23 | Core               | Core.CORE.CBLFireSound | ENDED     | bus=(none) | id=rbxassetid://1843025175 | vol=2.00 pitch=1.00 looped=false
+t=0000137.72 12:54:25 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000138.14 12:54:25 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000139.82 12:54:27 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000139.82 12:54:27 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000140.12 12:54:27 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000140.53 12:54:28 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000142.17 12:54:29 | Core               | Core.CORE.ProtoCoreExplosion | PLAYED    | bus=EnvironmentSounds | id=rbxassetid://9114363548 | vol=1.50 pitch=0.75 looped=false
+t=0000142.24 12:54:29 | Core               | Core.CORE.IgnitonExplosion | ENDED     | bus=(none) | id=rbxassetid://8067356918 | vol=0.00 pitch=1.00 looped=false
+t=0000142.42 12:54:30 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | ENDED     | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000142.42 12:54:30 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | ENDED     | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000142.47 12:54:30 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000142.47 12:54:30 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000143.11 12:54:30 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000143.20 12:54:30 | SoundBlocks        | SoundBlocks.ControlRoomSound.MonitorError | STOPPED   | bus=(none) | id=rbxassetid://9113894671 | vol=2.00 pitch=1.00 looped=false
+t=0000143.56 12:54:31 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000144.78 12:54:32 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | ENDED     | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000144.78 12:54:32 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | ENDED     | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000145.93 12:54:33 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000145.93 12:54:33 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000145.96 12:54:33 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000146.16 12:54:33 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000146.46 12:54:34 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000146.78 12:54:34 | Sounds             | Sounds.Effects.External.TypewriterEnd | PLAYED    | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000148.14 12:54:35 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000148.14 12:54:35 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000148.19 12:54:35 | Core               | Core.CORE.ProtoCoreExplosion | ENDED     | bus=EnvironmentSounds | id=rbxassetid://9114363548 | vol=1.50 pitch=0.75 looped=false
+t=0000149.13 12:54:36 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000151.13 12:54:38 | Sounds             | Sounds.Effects.Destruction.FacilityGroaning2 | STOPPED   | bus=(none) | id=rbxassetid://9118069484 | vol=4.00 pitch=1.00 looped=true
+t=0000151.26 12:54:38 | SoundBlocks        | SoundBlocks.CRC3SoundBlock.ISEFissureSpawn | PLAYED    | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000151.26 12:54:38 | Audio              | MovingParts.CoolantPipes.PipeSpawnbox2.ISEParticlePart.SoftSteamSound | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000152.52 12:54:40 | Sounds             | Sounds.Effects.External.HourNoticeSound | PLAYED    | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000152.53 12:54:40 | Audio              | MovingParts.CenterField.DestabilizedField | STOPPED   | bus=ControlRoomSounds | id=rbxassetid://8737370145 | vol=0.00 pitch=1.50 looped=true
+t=0000152.54 12:54:40 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000152.57 12:54:40 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | ENDED     | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000152.57 12:54:40 | Alarms             | Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | ENDED     | bus=ControlRoomSounds | id=rbxassetid://6925598641 | vol=0.50 pitch=2.00 looped=false
+t=0000152.74 12:54:40 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000152.95 12:54:40 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000153.29 12:54:40 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000155.02 12:54:42 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000155.06 12:54:42 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000155.07 12:54:42 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000155.17 12:54:42 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000155.48 12:54:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000155.61 12:54:43 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000156.60 12:54:44 | Sounds             | Sounds.Effects.External.HourNoticeSound | ENDED     | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000156.76 12:54:44 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000158.19 12:54:45 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000158.20 12:54:45 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000158.32 12:54:45 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000158.34 12:54:45 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000158.73 12:54:46 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000158.79 12:54:46 | Sounds             | Sounds.Effects.External.TypewriterEnd | PLAYED    | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000158.81 12:54:46 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000158.86 12:54:46 | Sounds             | Sounds.Effects.External.TypewriterEndBell | PLAYED    | bus=(none) | id=rbxassetid://9125557416 | vol=2.00 pitch=1.00 looped=false
+t=0000160.48 12:54:48 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000160.53 12:54:48 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000160.53 12:54:48 | SoundBlocks        | SoundBlocks.CRC3SoundBlock.ISEFissureSpawn | ENDED     | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000160.66 12:54:48 | Sounds             | Sounds.Effects.External.TypewriterEnd | ENDED     | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000160.98 12:54:48 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000161.19 12:54:48 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000161.51 12:54:49 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000161.61 12:54:49 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000162.69 12:54:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000163.31 12:54:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000164.88 12:54:52 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000165.09 12:54:52 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000165.30 12:54:52 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000165.58 12:54:53 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000165.60 12:54:53 | Consoles           | Consoles.ElectricGridConsole.ExtractionLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000166.89 12:54:54 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000166.90 12:54:54 | Consoles           | Consoles.ElectricGridConsole.ExtractionLever.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000167.50 12:54:55 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000167.51 12:54:55 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000167.51 12:54:55 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000167.51 12:54:55 | Sounds             | Sounds.Effects.External.TypewriterEndBell | ENDED     | bus=(none) | id=rbxassetid://9125557416 | vol=2.00 pitch=1.00 looped=false
+t=0000168.61 12:54:56 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000169.15 12:54:56 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000170.24 12:54:57 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000170.42 12:54:58 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000170.64 12:54:58 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000171.68 12:54:59 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000171.89 12:54:59 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000172.11 12:54:59 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000172.60 12:55:00 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000173.84 12:55:01 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000173.97 12:55:01 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000173.98 12:55:01 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000174.22 12:55:01 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000174.48 12:55:02 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000176.07 12:55:03 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000176.14 12:55:03 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000176.19 12:55:03 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000176.57 12:55:04 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000176.64 12:55:04 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000178.12 12:55:05 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000178.43 12:55:06 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000180.03 12:55:07 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000180.04 12:55:07 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000180.07 12:55:07 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000180.07 12:55:07 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.LargeLever.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000180.51 12:55:08 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000180.54 12:55:08 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.PressureButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000180.54 12:55:08 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000180.94 12:55:08 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000182.30 12:55:09 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000182.67 12:55:10 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000182.72 12:55:10 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000183.15 12:55:10 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000184.40 12:55:12 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.PressureButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000184.40 12:55:12 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000184.46 12:55:12 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000184.58 12:55:12 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000184.96 12:55:12 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000185.12 12:55:12 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.PressureButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000186.27 12:55:13 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000186.28 12:55:13 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #4 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #2 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #3 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #2 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #3 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #4 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #2 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #3 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #4 | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000186.42 12:55:14 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000186.92 12:55:14 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000187.20 12:55:14 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.PressureButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000187.20 12:55:14 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000188.40 12:55:16 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.PressureButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000188.55 12:55:16 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000188.57 12:55:16 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000188.57 12:55:16 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000188.95 12:55:16 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000189.03 12:55:16 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000191.30 12:55:18 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000191.30 12:55:18 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000191.35 12:55:18 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000191.56 12:55:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000191.78 12:55:19 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000192.07 12:55:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000193.39 12:55:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000193.90 12:55:21 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000193.99 12:55:21 | Consoles           | Consoles.ThermalConsole.CFLever6.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000194.40 12:55:21 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000194.43 12:55:22 | Consoles           | Consoles.ThermalConsole.CFLever6.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000194.79 12:55:22 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000196.16 12:55:23 | Consoles           | Consoles.ThermalConsole.CFLever5.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000196.21 12:55:23 | SoundBlocks        | SoundBlocks.CRC1SoundBlock.ISEFissureSpawn | PLAYED    | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000196.21 12:55:23 | Audio              | MovingParts.CoolantPipes.PipeSpawnbox3.ISEParticlePart.SoftSteamSound | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000196.53 12:55:24 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000196.63 12:55:24 | Consoles           | Consoles.ThermalConsole.CFLever5.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000196.84 12:55:24 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000198.25 12:55:25 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000198.32 12:55:25 | SoundBlocks        | SoundBlocks.CRC3SoundBlock.ISEFissureSpawn | ENDED     | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000198.68 12:55:26 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000198.69 12:55:26 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000199.16 12:55:26 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000200.37 12:55:27 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000200.37 12:55:27 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000200.77 12:55:28 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000200.92 12:55:28 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000202.47 12:55:30 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000202.97 12:55:30 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000203.40 12:55:30 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000204.48 12:55:32 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000204.96 12:55:32 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000205.05 12:55:32 | SoundBlocks        | SoundBlocks.CRC1SoundBlock.ISEFissureSpawn | ENDED     | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000206.51 12:55:34 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000206.61 12:55:34 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000206.99 12:55:34 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000206.99 12:55:34 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000207.45 12:55:35 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000209.25 12:55:36 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000209.45 12:55:37 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000210.60 12:55:38 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000210.60 12:55:38 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000211.01 12:55:38 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000211.49 12:55:39 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000212.79 12:55:40 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000212.79 12:55:40 | Sounds             | Sounds.Effects.External.HourNoticeSound | PLAYED    | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000212.80 12:55:40 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000213.16 12:55:40 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000213.31 12:55:40 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000215.51 12:55:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000215.57 12:55:43 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000215.91 12:55:43 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000215.98 12:55:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000216.26 12:55:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000216.75 12:55:44 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000216.84 12:55:44 | Sounds             | Sounds.Effects.External.HourNoticeSound | ENDED     | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000218.06 12:55:45 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000218.48 12:55:46 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000218.54 12:55:46 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000218.68 12:55:46 | SoundBlocks        | SoundBlocks.CRC2SoundBlock.ISEFissureSpawn | PLAYED    | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000218.68 12:55:46 | Audio              | MovingParts.CoolantPipes.PipeSpawnbox5.ISEParticlePart.SoftSteamSound | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000218.88 12:55:46 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000219.76 12:55:47 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000221.47 12:55:49 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000221.57 12:55:49 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000221.87 12:55:49 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000223.31 12:55:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000223.78 12:55:51 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000225.39 12:55:52 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000225.41 12:55:53 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000225.80 12:55:53 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000225.91 12:55:53 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000227.44 12:55:55 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000227.46 12:55:55 | Audio              | MovingParts.CoolantPipes.PipeSpawnbox3.ISEParticlePart.SoftSteamSound | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000227.46 12:55:55 | Audio              | MovingParts.CoolantPipes.PipeSpawnbox3.ISEParticlePart.MidSteamSound | PLAYED    | bus=(none) | id=rbxassetid://5057582133 | vol=2.00 pitch=0.75 looped=true
+t=0000227.46 12:55:55 | SoundBlocks        | SoundBlocks.CRC1SoundBlock.ISEFissureSpawn | PLAYED    | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000227.52 12:55:55 | SoundBlocks        | SoundBlocks.CRC2SoundBlock.ISEFissureSpawn | ENDED     | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000227.55 12:55:55 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000227.64 12:55:55 | Consoles           | Consoles.ThermalConsole.CoolantControl3.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000227.93 12:55:55 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000227.98 12:55:55 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000229.67 12:55:57 | Consoles           | Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000229.73 12:55:57 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000230.22 12:55:57 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000230.36 12:55:57 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000230.55 12:55:58 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000230.63 12:55:58 | Consoles           | Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000232.08 12:55:59 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000232.61 12:56:00 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000234.57 12:56:02 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000235.09 12:56:02 | SoundBlocks        | SoundBlocks.CRC1SoundBlock.ISEFissureSpawn | ENDED     | bus=(none) | id=rbxassetid://9125667565 | vol=2.50 pitch=2.00 looped=false
+t=0000236.31 12:56:03 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000236.58 12:56:04 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000236.82 12:56:04 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000236.98 12:56:04 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000238.35 12:56:05 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000238.41 12:56:06 | Consoles           | Consoles.ThermalConsole.SoundBlock.AlarmPumpMalfunction | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://15827782589 | vol=0.50 pitch=1.00 looped=true
+t=0000238.41 12:56:06 | SoundBlocks        | SoundBlocks.CRC2SoundBlock.BackgroundMalfunction | PLAYED    | bus=(none) | id=rbxassetid://245537790 | vol=0.50 pitch=1.00 looped=false
+t=0000238.41 12:56:06 | CRC2               | CRC2.Coolant.CoolantSound | PLAYED    | bus=(none) | id=rbxassetid://9120549564 | vol=0.50 pitch=1.00 looped=false
+t=0000238.41 12:56:06 | CRC2               | CRC2.MalfunctionALARM.MainAlarmPart.ProcessorMalfunctionAlarm | PLAYED    | bus=AlarmSounds | id=rbxassetid://344440918 | vol=1.00 pitch=1.50 looped=true
+t=0000238.41 12:56:06 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000238.89 12:56:06 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever1.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000238.89 12:56:06 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever2.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000238.89 12:56:06 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000239.18 12:56:06 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000241.13 12:56:08 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000241.20 12:56:08 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000241.20 12:56:08 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000241.20 12:56:08 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever2.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000241.20 12:56:08 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever1.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000241.20 12:56:08 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000241.22 12:56:08 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000241.27 12:56:08 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000241.76 12:56:09 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000242.40 12:56:10 | Core               | Core.CORE.CoolantFailiureSound | ENDED     | bus=EnvironmentSounds | id=rbxassetid://9117876720 | vol=2.00 pitch=1.00 looped=false
+t=0000242.53 12:56:10 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000242.75 12:56:10 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000243.23 12:56:10 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000243.25 12:56:10 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000244.47 12:56:12 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000244.66 12:56:12 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever1.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.04 12:56:13 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000246.07 12:56:13 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000246.07 12:56:13 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever1.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.07 12:56:13 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000246.20 12:56:13 | Consoles           | Consoles.ElectricGridConsole.ExtractionLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.20 12:56:13 | Consoles           | Consoles.ThermalConsole.CoolantControl1.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #4 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss #4 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #2 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss #2 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #3 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss #3 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Consoles           | Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #2 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss #2 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #3 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss #3 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #4 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss #4 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Consoles           | Consoles.ThermalConsole.CoolantControl3.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #2 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss #2 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #3 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss #3 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #4 | STOPPED   | bus=(none) | id=rbxassetid://5057582133 | vol=1.75 pitch=1.00 looped=true
+t=0000246.20 12:56:13 | Audio              | MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss #4 | PLAYED    | bus=(none) | id=rbxassetid://7768888198 | vol=1.00 pitch=1.00 looped=false
+t=0000246.21 12:56:13 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000246.28 12:56:13 | CRC2               | CRC2.CoolantDoor.Union.CoolantDoorSound | PLAYED    | bus=(none) | id=rbxassetid://429505244 | vol=1.25 pitch=2.00 looped=false
+t=0000246.28 12:56:13 | CRC2               | CRC2.ProcessorInteriorSoundBlock.ProcessorOn | PLAYED    | bus=(none) | id=rbxassetid://7128664795 | vol=3.00 pitch=1.00 looped=false
+t=0000246.28 12:56:13 | CRC2               | CRC2.MalfunctionALARM.MainAlarmPart.ProcessorMalfunctionAlarm | STOPPED   | bus=AlarmSounds | id=rbxassetid://344440918 | vol=1.00 pitch=1.50 looped=true
+t=0000246.28 12:56:13 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever1.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.28 12:56:13 | CRC2               | CRC2.ProcessorInterior.CalibrationConsole.PECLever2.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000246.28 12:56:13 | Consoles           | Consoles.ThermalConsole.SoundBlock.AlarmPumpMalfunction | STOPPED   | bus=ControlRoomSounds | id=rbxassetid://15827782589 | vol=0.50 pitch=1.00 looped=true
+t=0000246.70 12:56:14 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000248.60 12:56:16 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000248.80 12:56:16 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000249.01 12:56:16 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000251.10 12:56:18 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000251.52 12:56:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000251.59 12:56:19 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000252.95 12:56:20 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000253.14 12:56:20 | Sounds             | Sounds.Effects.External.TypewriterEnd | PLAYED    | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000253.31 12:56:20 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000253.37 12:56:20 | CRC2               | CRC2.ProcessorInteriorSoundBlock.ProcessorOn | ENDED     | bus=(none) | id=rbxassetid://7128664795 | vol=3.00 pitch=1.00 looped=false
+t=0000253.75 12:56:21 | Sounds             | Sounds.Effects.External.TypewriterEnd | ENDED     | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000253.79 12:56:21 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000253.92 12:56:21 | SoundBlocks        | SoundBlocks.CRC1SoundBlock.CoolantPipeSFX | STOPPED   | bus=EnvironmentSounds | id=rbxassetid://2701089871 | vol=2.50 pitch=0.88 looped=true
+t=0000253.92 12:56:21 | SoundBlocks        | SoundBlocks.CRC2SoundBlock.CoolantPipeSFX | STOPPED   | bus=EnvironmentSounds | id=rbxassetid://2701089871 | vol=2.50 pitch=0.88 looped=true
+t=0000253.92 12:56:21 | SoundBlocks        | SoundBlocks.CRC3SoundBlock.CoolantPipeSFX | STOPPED   | bus=EnvironmentSounds | id=rbxassetid://2701089871 | vol=2.50 pitch=0.88 looped=true
+t=0000255.19 12:56:22 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000255.22 12:56:22 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000255.22 12:56:22 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000255.24 12:56:22 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000255.28 12:56:22 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000255.33 12:56:22 | Consoles           | Consoles.ThermalConsole.CFLever4.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000255.78 12:56:23 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000255.81 12:56:23 | Consoles           | Consoles.ThermalConsole.CFLever4.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000257.67 12:56:25 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000257.85 12:56:25 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000258.08 12:56:25 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000259.64 12:56:27 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000259.65 12:56:27 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000259.77 12:56:27 | Consoles           | Consoles.ThermalConsole.CoolantControl3.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000259.77 12:56:27 | Consoles           | Consoles.ThermalConsole.CoolantControl3.OffButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000260.07 12:56:27 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000260.14 12:56:27 | Consoles           | Consoles.ThermalConsole.CoolantControl3.OffButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000260.33 12:56:27 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000260.62 12:56:28 | Consoles           | Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000260.62 12:56:28 | Consoles           | Consoles.ThermalConsole.CoolantControl2.OffButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000261.79 12:56:29 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000261.87 12:56:29 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000261.88 12:56:29 | Consoles           | Consoles.ThermalConsole.CoolantControl2.OffButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000261.88 12:56:29 | Consoles           | Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000261.88 12:56:29 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000261.88 12:56:29 | Consoles           | Consoles.ThermalConsole.CoolantControl3.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000261.88 12:56:29 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000261.90 12:56:29 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000262.17 12:56:29 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000262.32 12:56:29 | Sounds             | Sounds.Effects.External.TypewriterEnd | PLAYED    | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000262.38 12:56:29 | Sounds             | Sounds.Effects.External.TypewriterEndBell | PLAYED    | bus=(none) | id=rbxassetid://9125557416 | vol=2.00 pitch=1.00 looped=false
+t=0000262.68 12:56:30 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000262.96 12:56:30 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000263.04 12:56:30 | Sounds             | Sounds.Effects.External.TypewriterEnd | ENDED     | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000264.27 12:56:31 | Consoles           | Consoles.ThermalConsole.CoolantControl1.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000264.27 12:56:31 | Consoles           | Consoles.ThermalConsole.CoolantControl1.OffButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000264.33 12:56:31 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000264.34 12:56:31 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000264.34 12:56:31 | Consoles           | Consoles.ThermalConsole.CoolantControl1.OffButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000265.01 12:56:32 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000265.27 12:56:32 | Consoles           | Consoles.ThermalConsole.CoolantControl1.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000266.68 12:56:34 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000267.59 12:56:35 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000267.61 12:56:35 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000267.61 12:56:35 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000269.16 12:56:36 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000269.67 12:56:37 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000269.74 12:56:37 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000269.95 12:56:37 | Sounds             | Sounds.Effects.External.TypewriterEndBell | ENDED     | bus=(none) | id=rbxassetid://9125557416 | vol=2.00 pitch=1.00 looped=false
+t=0000270.07 12:56:37 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0000270.16 12:56:37 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000270.97 12:56:38 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000271.48 12:56:39 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000273.44 12:56:41 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000273.44 12:56:41 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000273.47 12:56:41 | Sounds             | Sounds.Effects.External.HourNoticeSound | PLAYED    | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000273.81 12:56:41 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000273.95 12:56:41 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000275.51 12:56:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000275.77 12:56:43 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000275.99 12:56:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000276.19 12:56:43 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000276.29 12:56:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000277.85 12:56:45 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000277.85 12:56:45 | Sounds             | Sounds.Effects.External.HourNoticeSound | ENDED     | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000277.99 12:56:45 | Consoles           | Consoles.ElectricGridConsole.ExtractionLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000278.06 12:56:45 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000278.58 12:56:46 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000278.83 12:56:46 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000280.15 12:56:47 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000280.16 12:56:47 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000280.16 12:56:47 | Consoles           | Consoles.ElectricGridConsole.ExtractionLever.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000280.63 12:56:48 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000282.46 12:56:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000282.47 12:56:50 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000282.84 12:56:50 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000282.97 12:56:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000283.33 12:56:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000284.79 12:56:52 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000285.07 12:56:52 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000285.18 12:56:52 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000285.57 12:56:53 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000286.87 12:56:54 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000287.36 12:56:54 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000288.83 12:56:56 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000288.97 12:56:56 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000289.24 12:56:56 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000289.46 12:56:57 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000291.20 12:56:58 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000291.23 12:56:58 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000291.58 12:56:59 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000291.71 12:56:59 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000293.91 12:57:01 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000294.03 12:57:01 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000294.03 12:57:01 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000294.14 12:57:01 | Consoles           | Consoles.ThermalConsole.CFLever6.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000294.40 12:57:02 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000294.42 12:57:02 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000294.66 12:57:02 | Consoles           | Consoles.ThermalConsole.CFLever6.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000295.70 12:57:03 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000296.19 12:57:03 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000296.85 12:57:04 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000297.26 12:57:04 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000298.36 12:57:05 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000298.89 12:57:06 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000299.22 12:57:06 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000300.97 12:57:08 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000301.48 12:57:09 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000302.58 12:57:10 | CRC2               | CRC2.Coolant.CoolantSound | ENDED     | bus=(none) | id=rbxassetid://9120549564 | vol=0.00 pitch=1.00 looped=false
+t=0000302.74 12:57:10 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000302.91 12:57:10 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000303.23 12:57:10 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000303.33 12:57:10 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000305.19 12:57:12 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000306.88 12:57:14 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000306.96 12:57:14 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000307.27 12:57:14 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000307.46 12:57:15 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000309.11 12:57:16 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000309.16 12:57:16 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000309.17 12:57:16 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000309.60 12:57:17 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000309.80 12:57:17 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000311.62 12:57:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000311.63 12:57:19 | Consoles           | Consoles.ThermalConsole.CoolantControl3.OnButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000311.98 12:57:19 | Consoles           | Consoles.ThermalConsole.CoolantControl3.OnButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000311.99 12:57:19 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000312.10 12:57:19 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000312.42 12:57:19 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000313.82 12:57:21 | Consoles           | Consoles.ThermalConsole.CoolantControl2.OnButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000313.92 12:57:21 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000314.12 12:57:21 | Consoles           | Consoles.ThermalConsole.CoolantControl2.OnButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000314.40 12:57:21 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000316.10 12:57:23 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000316.16 12:57:23 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000316.22 12:57:23 | Consoles           | Consoles.ThermalConsole.CoolantControl1.OnButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000316.52 12:57:24 | Consoles           | Consoles.ThermalConsole.CoolantControl1.OnButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000316.52 12:57:24 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000316.67 12:57:24 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000316.87 12:57:24 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000319.03 12:57:26 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000319.11 12:57:26 | Consoles           | Consoles.ThermalConsole.CoolantControl1.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000319.52 12:57:27 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000320.00 12:57:27 | Consoles           | Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000320.10 12:57:27 | Consoles           | Consoles.ThermalConsole.CoolantControl1.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000320.38 12:57:27 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000320.88 12:57:28 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000320.96 12:57:28 | Consoles           | Consoles.ThermalConsole.CoolantControl3.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000320.96 12:57:28 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000321.02 12:57:28 | Consoles           | Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000321.36 12:57:28 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000321.96 12:57:29 | Consoles           | Consoles.ThermalConsole.CoolantControl3.BigLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000322.14 12:57:29 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000324.00 12:57:31 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000324.01 12:57:31 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000324.41 12:57:32 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000324.51 12:57:32 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000326.34 12:57:33 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000326.81 12:57:34 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000327.02 12:57:34 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000328.78 12:57:36 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000329.07 12:57:36 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000329.27 12:57:36 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000331.01 12:57:38 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000331.50 12:57:39 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000333.31 12:57:40 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000333.33 12:57:40 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000333.34 12:57:40 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000333.69 12:57:41 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000333.81 12:57:41 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000333.92 12:57:41 | Sounds             | Sounds.Effects.External.HourNoticeSound | PLAYED    | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000335.50 12:57:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000336.00 12:57:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000336.05 12:57:43 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000336.29 12:57:43 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000337.72 12:57:45 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000337.72 12:57:45 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000337.86 12:57:45 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.LargeLever.BigLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://9125626211 | vol=0.75 pitch=2.00 looped=false
+t=0000337.96 12:57:45 | Sounds             | Sounds.Effects.External.HourNoticeSound | ENDED     | bus=(none) | id=rbxassetid://1837834188 | vol=1.50 pitch=1.00 looped=false
+t=0000338.02 12:57:45 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000338.55 12:57:46 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000340.37 12:57:47 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.PressureButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000340.37 12:57:47 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000340.64 12:57:48 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000341.10 12:57:48 | Consoles           | Consoles.CBLaserConsole.CBL1Systems.PressureButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000343.05 12:57:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000343.34 12:57:50 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000343.45 12:57:51 | Consoles           | Consoles.CBLaserConsole.CBL2Systems.PressureButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000343.45 12:57:51 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000345.95 12:57:53 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000345.96 12:57:53 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000346.01 12:57:53 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000346.45 12:57:54 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000346.86 12:57:54 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000347.35 12:57:54 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000347.47 12:57:55 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000347.69 12:57:55 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.PressureButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000347.69 12:57:55 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000348.10 12:57:55 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000348.42 12:57:56 | Consoles           | Consoles.CBLaserConsole.CBL3Systems.PressureButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=0.50 looped=false
+t=0000348.54 12:57:56 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000348.63 12:57:56 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000349.14 12:57:56 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000351.14 12:57:58 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000351.57 12:57:59 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000351.57 12:57:59 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000351.74 12:57:59 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000352.15 12:57:59 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000353.94 12:58:01 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000354.12 12:58:01 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000354.43 12:58:02 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000354.52 12:58:02 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000356.07 12:58:03 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000356.58 12:58:04 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000358.28 12:58:05 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000358.37 12:58:05 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | PLAYED    | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000358.38 12:58:05 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000358.43 12:58:06 | Consoles           | Consoles.ThermalConsole.CFLever6.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000358.71 12:58:06 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000358.87 12:58:06 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000358.92 12:58:06 | Consoles           | Consoles.ThermalConsole.CFLever6.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000360.57 12:58:08 | Core               | Core.CORE.DestabilizationSound | PLAYED    | bus=(none) | id=rbxassetid://1146698075 | vol=2.25 pitch=0.50 looped=false
+t=0000360.60 12:58:08 | Sounds             | Sounds.Effects.External.Shake1 | PLAYED    | bus=(none) | id=rbxassetid://9088415423 | vol=3.00 pitch=0.50 looped=false
+t=0000360.60 12:58:08 | Consoles           | Consoles.MainReactorConsole.SoundBlock.AlarmFluctuation | STOPPED   | bus=(none) | id=(none) | vol=0.70 pitch=1.00 looped=true
+t=0000360.60 12:58:08 | Consoles           | Consoles.MainReactorConsole.SoundBlock.AlarmStall | STOPPED   | bus=(none) | id=(none) | vol=1.50 pitch=0.50 looped=true
+t=0000360.60 12:58:08 | Consoles           | Consoles.CBLaserConsole.SoundBlock.AlarmCBLMalfunction | STOPPED   | bus=(none) | id=(none) | vol=1.00 pitch=2.50 looped=true
+t=0000360.70 12:58:08 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000361.02 12:58:08 | SoundBlocks        | SoundBlocks.ControlRoomSound.UpdateSound | ENDED     | bus=ControlRoomSounds | id=rbxassetid://9113085665 | vol=1.50 pitch=2.00 looped=false
+t=0000361.06 12:58:08 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000362.98 12:58:10 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000363.00 12:58:10 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000363.18 12:58:10 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000363.58 12:58:11 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000365.18 12:58:12 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000365.19 12:58:12 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000365.81 12:58:13 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000365.82 12:58:13 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000365.82 12:58:13 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | PLAYED    | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000366.16 12:58:13 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000368.06 12:58:15 | Sounds             | Sounds.Effects.External.Shake1 | ENDED     | bus=(none) | id=rbxassetid://9088415423 | vol=3.00 pitch=0.50 looped=false
+t=0000368.76 12:58:16 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000368.76 12:58:16 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000368.76 12:58:16 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | STOPPED   | bus=(none) | id=rbxassetid://8158946093 | vol=1.00 pitch=1.00 looped=true
+t=0000370.44 12:58:18 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000373.80 12:58:21 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000373.81 12:58:21 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000373.84 12:58:21 | Core               | Core.CORE.DestabilizationSound | ENDED     | bus=(none) | id=rbxassetid://1146698075 | vol=2.25 pitch=0.50 looped=false
+t=0000375.25 12:58:22 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000375.66 12:58:23 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #2 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #3 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #4 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #5 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #6 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #7 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Alarms             | Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #8 | PLAYED    | bus=(none) | id=rbxassetid://7455920914 | vol=1.00 pitch=1.00 looped=true
+t=0000375.84 12:58:23 | Audio              | MovingParts.ReactorClamps1.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000376.84 12:58:24 | Audio              | MovingParts.ReactorClamps2.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000377.80 12:58:25 | Audio              | MovingParts.ReactorClamps3.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000379.52 12:58:27 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000379.60 12:58:27 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000379.86 12:58:27 | Audio              | MovingParts.ReactorClamps5.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000379.87 12:58:27 | Sounds             | Sounds.Effects.External.TypewriterEnd | PLAYED    | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000380.51 12:58:28 | Sounds             | Sounds.Effects.External.TypewriterEnd | ENDED     | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000382.31 12:58:29 | Audio              | MovingParts.ReactorClamps6.Base.SoundPart.ClampMovement | PLAYED    | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000382.37 12:58:29 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000382.38 12:58:29 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000382.43 12:58:30 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000382.59 12:58:30 | PowerExtractionAssembly | PowerExtractionAssembly.CentralNeon.AmbientPEASound | STOPPED   | bus=(none) | id=(none) | vol=0.50 pitch=1.25 looped=true
+t=0000382.89 12:58:30 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000385.63 12:58:33 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000385.70 12:58:33 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000385.70 12:58:33 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000388.13 12:58:35 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000388.17 12:58:35 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000388.17 12:58:35 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000388.17 12:58:35 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #2 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #3 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #4 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #5 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #6 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #7 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #8 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #9 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #10 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #11 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #12 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #13 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #14 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #15 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000388.48 12:58:36 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #16 | PLAYED    | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #2 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #3 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #4 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #5 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #6 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #7 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #8 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #9 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #10 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #11 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #12 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #13 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #14 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #15 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.48 12:58:38 | Alarms             | Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #16 | STOPPED   | bus=AlarmSounds | id=rbxassetid://207705931 | vol=0.70 pitch=1.00 looped=true
+t=0000390.52 12:58:38 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000390.53 12:58:38 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000390.53 12:58:38 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000390.54 12:58:38 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000391.20 12:58:38 | Audio              | MovingParts.ReactorClamps1.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000393.02 12:58:40 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000393.03 12:58:40 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000393.22 12:58:40 | Audio              | MovingParts.ReactorClamps3.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000393.28 12:58:40 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000393.67 12:58:41 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000393.89 12:58:41 | CRC3               | CRC3.CoolantDoor.Union.CoolantDoorSound | ENDED     | bus=(none) | id=rbxassetid://429505244 | vol=1.25 pitch=2.00 looped=false
+t=0000393.89 12:58:41 | CRC2               | CRC2.CoolantDoor.Union.CoolantDoorSound | ENDED     | bus=(none) | id=rbxassetid://429505244 | vol=1.25 pitch=2.00 looped=false
+t=0000393.89 12:58:41 | CRC1               | CRC1.CoolantDoor.Union.CoolantDoorSound | ENDED     | bus=(none) | id=rbxassetid://429505244 | vol=1.25 pitch=2.00 looped=false
+t=0000395.51 12:58:43 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000395.52 12:58:43 | Sounds             | Sounds.Effects.External.Typewriter | PLAYED    | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000395.59 12:58:43 | Audio              | MovingParts.ReactorClamps5.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000395.59 12:58:43 | Audio              | MovingParts.ReactorClamps4.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000395.64 12:58:43 | Consoles           | Consoles.ALTReactorConsole.ControlRoomSystems.ShuttersLever.LeverUnion.LeverSound | PLAYED    | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000396.15 12:58:43 | Audio              | MovingParts.ReactorClamps6.Base.SoundPart.ClampMovement | ENDED     | bus=(none) | id=rbxassetid://9114583242 | vol=1.50 pitch=1.00 looped=false
+t=0000396.20 12:58:43 | Consoles           | Consoles.ALTReactorConsole.ControlRoomSystems.ShuttersLever.LeverUnion.LeverSound | ENDED     | bus=Interactables | id=rbxassetid://209530691 | vol=0.50 pitch=1.00 looped=false
+t=0000396.29 12:58:43 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000396.48 12:58:44 | Sounds             | Sounds.Effects.External.TypewriterEndBell | PLAYED    | bus=(none) | id=rbxassetid://9125557416 | vol=2.00 pitch=1.00 looped=false
+t=0000396.71 12:58:44 | Part               | Part.ShieldFormation | ENDED     | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false
+t=0000396.89 12:58:44 | Audio              | MovingParts.ControlRoomLShutter.Frame.DoorSound | PLAYED    | bus=(none) | id=rbxassetid://429505244 | vol=0.75 pitch=1.00 looped=false
+t=0000397.04 12:58:44 | Sounds             | Sounds.Effects.External.Typewriter | ENDED     | bus=(none) | id=rbxassetid://9120299506 | vol=0.50 pitch=1.00 looped=false
+t=0000397.14 12:58:44 | Sounds             | Sounds.Effects.External.TypewriterEnd | ENDED     | bus=(none) | id=rbxassetid://9120300134 | vol=1.00 pitch=1.00 looped=false
+t=0000397.41 12:58:45 | Audio              | MovingParts.ControlRoomRShutter.Frame.DoorSound | PLAYED    | bus=(none) | id=rbxassetid://429505244 | vol=0.75 pitch=1.00 looped=false
+t=0000397.41 12:58:45 | Lights             | Lights.ChamberLights.UpperChamberLights.Light1.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000397.41 12:58:45 | Lights             | Lights.ChamberLights.ChamberVentLights.Light1.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000397.41 12:58:45 | Lights             | Lights.ChamberLights.ChamberVentLights.Light2.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.80 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light3.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.81 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light4.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.82 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light5.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.83 12:58:46 | Lights             | Lights.ChamberLights.UpperChamberLights.Light2.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000398.83 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light6.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.84 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light7.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.84 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light8.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.85 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light9.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.85 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light10.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.86 12:58:46 | Lights             | Lights.ChamberLights.UpperChamberLights.Light3.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000398.86 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light11.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.87 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light12.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.87 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light13.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.88 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light14.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.92 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light15.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.92 12:58:46 | Lights             | Lights.ChamberLights.UpperChamberLights.Light4.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000398.93 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light16.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.94 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light17.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.95 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light18.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.96 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light19.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.96 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light20.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.96 12:58:46 | Lights             | Lights.ChamberLights.UpperChamberLights.Light5.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000398.97 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light21.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.97 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light22.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.98 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light23.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.98 12:58:46 | Lights             | Lights.ChamberLights.ChamberVentLights.Light24.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=1.00 looped=false
+t=0000398.99 12:58:46 | Lights             | Lights.ChamberLights.UpperChamberLights.Light6.LargeLightFlicker | PLAYED    | bus=(none) | id=rbxassetid://156221488 | vol=0.25 pitch=0.75 looped=false
+t=0000399.31 12:58:46 | Part               | Part.ShieldFormation | PLAYED    | bus=(none) | id=rbxassetid://5243826810 | vol=1.00 pitch=0.75 looped=false

@@ -5449,3 +5449,154 @@ Windows 上**会以 LF 检出**。这是经典的批处理坏法，我准备加�
 - `_tools/_attic/MANIFEST.txt` **落后了 21 个文件**（其中就有 driver 那三个，
   也就是 §1.4 第 2 条要指向的那份存档），已按文件系统重新生成成**排序索引 + 生成日期**，
   让「它还准不准」这件事**从文件本身读得出来**。取舍 **207**。
+
+## Phase 64（2026-10-01）—— 「注入之后游戏贼卡」：监视器让帧 + 份额上限（`w61`）  [DONE — 本机验过，原版还没跑]
+
+用户原话一句：「**哦对了还有个问题我注入之后游戏贼卡，解决一下**」。改的是**监视器**，
+采集器（`r60`）**一个字节没动** —— 下面第 64.1 节就是「为什么是它」。
+
+### 64.1 先定位，不先改：卡的是监视器，不是采集器
+
+两个脚本**各自测了自己**，所以这一条不需要推理：
+
+| 来源 | 自报 | 读法 |
+|---|---|---|
+| `Data/originalwatch/261001-125207/health.txt` | `scan_ms=2197`，`watched=71587 props=559942`，`Interval=1` | 一次扫描 2.2 秒，循环每 1 秒就要下一次 —— **一个周期 3.2 秒里有 2.2 秒是它的**，约 **70% 的客户端** |
+| `Data/flow/original_261001-125206` 的 `PERF` 行 | `cpu_pct=10.9 worst_ms=885.1` | 采集器占 **11%**，最坏单拍 0.9 秒 |
+
+**这两个数不是估计，是两台脚本在同一趟里各自量的。** 所以「贼卡」的绝大多数在监视器上。
+
+还有一条**被自己的产物否掉的注释**，一起在 `w61` 里改掉了：`Interval` 上面原本写着
+「the budget below is set to keep a scan near 300 ms」。那句话是按**我们自己的 place**
+标的（30219 件 / 235553 属性，112 ms）；原版是三倍大（71587 / 559942），同一个预算
+放进来就是 2197 ms。**注释没有错，错在它是关于另一个 place 的** —— 而原版才是它要跑的地方。
+
+### 64.2 两个旋钮，因为这是两种伤
+
+- **`MaxBlockMs = 25`** —— 让帧。普查 / 扫描 / 建索引**三条**长走查每 25 ms 让一帧，
+  2.2 秒的冻结变成 ~90 个短块。**每让一帧要等一个 frame**，所以这是拿墙上时间换响应性。
+- **`DutyTarget = 0.30`** —— 份额上限。**光让帧治不了 70%**：那两秒的活还是两秒，
+  摊到更多帧上只是把疼摊开。所以循环按**实测的** `scan_ms` 反推该睡多久
+  （`idle = work * (1 - target) / target`），把自己压到 30% 以下。
+
+`health.txt` 因此多报四个数：`scan_ms / sleep_ms / duty / yields`。
+**"the census finishes in seconds" 那句话的现代版本就是这四个数** —— 修没修好由下一趟的产物说。
+
+### 64.3 【翻出来的事】时间型让帧，把 harness 变成抛硬币
+
+`w61` 改完第一次跑 `bash _tools/run_tests.sh`：**`watch: 73 PASS, 1 FAIL`**，
+红的是 `the pre-lever lines were withheld and counted`（`withheld_before_open=0`）。
+
+按 §0.13 的纪律先量块深度再改：把 `MaxBlockMs` 分别设成 `100000` 和 `0` 重跑 ——
+`100000` 回到 **74/0**，`0` 掉到 **27/47**。所以让帧**是**唯一的原因，但**不是**唯一的表现：
+同一份**未改动**的 `w61` 连跑四次，**3 红 1 绿**。
+
+**根因**：`watch_harness.luau` 用**数 `task.wait` 的次数**来驱动它的变异时间线
+（`STEPS[waits]`，`waits` 每被调一次加一）。`breathe()` 让的每一帧都是一次 `task.wait`，
+于是「拉杆那一下（`STEPS[3]`）落在普查之前还是之后」取决于**这一趟有多少次让帧真的触发**
+—— 而那是**机器负载**的函数。**一份判取决于机器快慢的 fixture，分不清「脚本坏了」和「机器忙」。**
+
+**修法**（`watch_harness.luau`）：**只有带参数的 `task.wait` 才推进时间线。**
+循环的节奏是 `task.wait(CONFIG.Interval)`（带参数），让帧是 `task.wait()`（无参数）——
+**无参数的那次不是这趟班次的一步**。修完连跑 **8 次，8 次都是 74/0**，
+且 `bare_waits=2` 说明**被忽略的那条路确实被走到了**（不是「没触发所以没麻烦」）。
+
+### 64.4 让帧只许改「什么时候」，不许改「记了什么」—— 这条是量出来的，不是断言的
+
+上面那半句只是「让 fixture 不再被它影响」。真正要守的性质是另一条，而且它是**可测的**：
+
+`run_tests.sh` 新增 **`=== watch slicing differential ===`**：跑**发货的那份**，
+再跑一份**把 `MaxBlockMs` 强制成 0** 的副本（每 64 个实例让一帧，最碎的切法），
+要求两份 `changes.log` **除墙上时钟那一列外逐字节相同**。
+
+结果：**`slicing: PASS -- 19 log line(s) identical with the yield budget at 0`**。
+
+三条纪律写进了这段脚本本身：① 替换前**先断言锚点唯一**（`MaxBlockMs` 在好几条注释里
+出现过，宽松的模式会改散文而不改配置还看着是绿的）；② 基线日志**少于 5 行就判失败**
+—— 两个空文件当然逐字节相同，那种绿什么都没证明；③ 时钟列**是**允许不同的那一列，
+所以剥掉它再比，而不是放宽成「差不多」。
+
+### 64.5 【翻出来的事】注释里一句关于 `duty` 的假话
+
+`duty` 原来注释成「the share of the wall clock -- scan plus the frame waits inside it, plus the sleep」。
+**`scanMs` 来自 `os.clock()`，那是 CPU 时间，让帧等的那一帧根本不进它。**
+所以照原话读会把 `duty` 读成墙上份额，而它不是。已改成：它是**最后一次扫描的 Lua 工作量**
+对**墙上周期**的比，**并且指出偏差的方向** —— 真实周期比 `scan_ms + Interval + sleep_ms`
+更长（多出的正是让出去的那些帧），所以**真实份额在打印值之下**：打印 ≤ 目标 = 确实没超，
+打印 > 目标 = 值得再看一眼，而不是判决。
+
+### 64.6 上一趟（`261001-125206` / `261001-125207`）的读数
+
+这一趟的产物是这一轮修复的**依据**，也是两份新东西第一次跑在真班次里：
+
+**① 你按了两次开机，游戏只认第二次 —— 盘上的字节说的是同一件事。**
+`EVT3163 CLICK StartUpLever` → 提示词翻成 `MASTER SHUTDOWN SWITCH` → **立刻翻回**
+`MASTER START-UP SWITCH`，描述是 `Will beep green after proper control room boot-up.`
+→ `EVT3167 CLICK StartUpLever` → `EVT3169 ... SUBSPACE REACTOR START-UP SEQUENCE INITIATED`。
+**第一下按在「控制室还没 boot 完」上，被游戏退回了；序列是第二下起的。** 你说的没错。
+
+**但监视器的窗口是在第一下开的**（`window.txt`：`opened_at=29.73 why=the start-up lever was clicked at ...`）。
+它的判据是「那个 `ClickDetector` 被点了」，**分不出被接受的那一下和被退回的那一下**。
+两下相隔约 1.5 秒、中间没有可观测事件，所以这一趟没有任何实际损失 ——
+**记下来是因为它不是这一趟才有**：窗口开早一点点，对「开机链完整」这个用途是安全的，
+对「从开机那一刻起逐拍记录」是**差 1.5 秒**。
+
+**② 这一趟在第 2 分钟就封存了，而且不是你那两条判据干的。**
+`S 531 t=271.56` → `EVT3707 SEAL core read as down for 40 polls with no end signal`，
+`q.clock=838`（表盘 838 分 = 开机后 12:01 AM → **1:58 AM**，也就是这一趟只走到班次的第 2 小时，
+**没到过 12:00 PM**）。`GameActive` 全程没有由真变假（`COREGATE=1`，只有开机那一条）。
+
+**底下是这么一回事**：`endReason()` 里 `local t = last['m.temp']` ——
+**这条兜底读的是监视器标签，不是 `s.Core.TemperatureVal`**。而这一趟：
+
+| | |
+|---|---|
+| `m.temp` | `t=247.14` 还是 **10659**，`t=249.07` 变成 **3659**（一拍掉 7000 F），**此后 22 秒再没变过一次** |
+| `s.Core.TemperatureVal` | 同一窗口里从 10188 单调降到 4911，**中间没有一步跳到过 5600 以下，直到 `t≈268`** |
+| 兜底怎么数的 | `m.temp` 从 `t=249.07` 起就 < 5600 → 到 `t=271.56` 恰好 40 拍 |
+
+**所以封存是监视器标签冻结/抄错值的那一刻起算的，比堆芯自己的读数越过那条线早了约 19 秒。**
+这不是我这一轮要改的东西（封存判据是**你定的**），但它是一条**只跑真班次才看得见**的事实，
+记在 `QUESTIONS.md` **P9** 里等你拍板。温度掉到 4911 是真的（堆芯确实在冷），
+所以「该不该封」不是黑白 —— **是「该由哪个读数说了算」**。
+
+把这句话说到能用：**`downPolls` 那一刻只有 10**（`s.Core` 是 `t=268.51` 才过的线），
+**40 的计数只可能来自监视器标签** —— 换读数，这条兜底在 `t=271.56` 根本不会响。
+
+**③ 探针这一趟也跑了，答案是老答案。** `Data/probe/261001-125206/summary.txt`：
+`winner=http_request`，`http_request` / `request` / `http` / `getgenv` 四条 `works=true status 200`，
+`syn` / `fluxus` / `krnl` 不在这台执行器里，`httpservice` 是 `Blocked function`。
+**和 Phase 61 那次逐项一致** —— 所以「这一趟会不会零字节」这个问题，在这一趟之前就已经不是问题了。
+（`httpget` 那行 `invalid argument #1 to 'HttpGet' (string expected, got nil)` 是**探针自己**的
+调用形状问题，不是通道坏了：`request` 族要传请求表，这一条 `docs/RECORDER_HOWTO.md` 里写着。）
+
+### 64.7 【翻出来的事】`start_services.bat` 被截掉了尾巴，已还原
+
+会话开始时 `git status` 里 `M start_services.bat`，diff 是把结尾的 `pause` 整个删掉、
+最后一行还不带换行（`endlocal` 直接顶到 EOF）。**这不是有意改的**，也不是卡顿修复需要的，
+所以 `git checkout -- start_services.bat` 还原成提交里的那份（`endlocal` + `pause`）。
+`pause` 在这里不是装饰：两个服务是 `start` 起来的，批处理本身跑完就退出，
+没有 `pause` 那个窗口会一闪而过。
+
+### 64.8 本轮的验证
+
+- `bash _tools/run_tests.sh` **rc=0**，跑的**就是提交进去的那份字节**（`147930 / 2699`）。
+- `watch: 74 PASS, 0 FAIL`（`w60` 也是 74/0 —— **没有因为修卡顿丢掉一条覆盖**），
+  `watch(boom) 5/0`、`watch(boot) 8/0`、`watch(nolever) 6/0`、`watch(nopath) 5/0`、
+  `watch(nowindow) 6/0`、`watch(closewin) 7/0`。
+- **新增** `slicing: PASS -- 19 log line(s) identical with the yield budget at 0`。
+- `watch mutations: 29 of 29 detected, shipped file untouched (md5 32bba692e0e078f416789972aecd192a)`。
+- 其余各族 rc=0：`transport_probe 23/0`、`end 24 assertions`、`flow 26 checks`、
+  `gate 32 assertions`、`gui 39 checks`。
+- **六个 `_tools/_*.luau` 实验文件已删**（`_w60_check` / `_h60` / `_w61_noslice` / `_h61n` /
+  `_w61_zero` / `_h61z`）—— 它们是「让帧是不是唯一原因」那次隔离测量的工具，
+  结论已经在 64.3 里，工具没有再留的理由。
+- **`w61` 还没在原版里跑过。** 这一轮的证据全部是本机的：fixture、差分、变异。
+  真正的判决是下一趟 `health.txt` 里那四个数。
+
+### 64.9 三个 md5（注入前核这个，别核时间）
+
+采集器 **121202 / 2644 / `48f2c155b7d6342f07cafcfb4404e9e8`（`r60`，未改）**、
+监视器 **147930 / 2699 / `32bba692e0e078f416789972aecd192a`（`w61`，**改过**）**、
+探针 **10752 / 217 / `5acde17d2bccfa65949c9a4b2bec9a90`（未改）**。
+**下一趟两份都要重注**：`r60` 字节没变，但监视器换成 `w61`。

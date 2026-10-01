@@ -1,0 +1,8 @@
+# the watcher was injected and is starting its census (build w60)
+build=w60
+transport=http_request
+prefix=originalwatch/261001-125207/
+sink=http://127.0.0.1:8765/
+t=t=0000000.00 12:52:07
+hotkeys=RightAlt writes every file out now; RightControl stops
+note=tree.txt is written after the census finishes.  If this is the only file you have, the watcher was injected but never finished starting -- read error.txt for a start-up death, and give the census longer before assuming either.

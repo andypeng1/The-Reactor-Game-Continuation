@@ -415,20 +415,18 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 跑完**第一件事读 `rooms.txt`**。验的过程翻出四个错，其中三个只有变异测试看得见
 （`judged` 只写不读而文档在替它说话；删掉整个静默放行规则产物逐字节不变；
 `--dump` 判了两次所以静默不写文件）—— 细节 `PROGRESS.md` 54，取舍 `DECISIONS_2.md` **160..163**。
-**跑法**：`python -m http.server 8766 --bind 127.0.0.1 --directory _tools`，再在原版里
-`loadstring(game:HttpGet('http://127.0.0.1:8766/TRG_original_watch.luau'))()`；
-sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开局就响着的声音**永远不会**发
-`Played`（DECISIONS 157），晚注入等于把开盘那段让掉。
+**跑法**（全文见 `docs/RECORDER_HOWTO.md`）：起 8766，在原版里 `loadstring(game:HttpGet(...))`
+那份监视器；sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开局就响着的声音
+**永远不会**发 `Played`（DECISIONS 157），晚注入等于把开盘那段让掉。
 **它和采集器可以同时注入**（全局变量、输出路径、热键三处都对过，见 54.6）——
 **但热键曾经撞过：两边都绑 `RightShift`，而采集器那边它是「封存并结束这一趟」。**
 监视器已让路到 **`RightAlt` = 立刻推文件**、`RightControl` = 停；
 **`RightShift` 现在只属于采集器**，别在跑的时候按它。harness 有一条检查
 （`the watcher does not steal the recorder's seal key`）守着不再撞回去 —— 45 PASS。
 **D11 已执行（2026-09-27）：** AIRemake 那边 Phase 53 的 `SSS.MCP_RoomWatch` +
-`MCP_RoomWatchRunner` **已删** —— 你答的原话是「不用吧，采集的是原游戏里面的」。
-删之前在 Studio 里把磁盘那两份**读回同一个 VM 逐字符比**（`IDENTICAL, 68907 chars` /
-`IDENTICAL, 462 chars`，**不是比长度**），并 grep 全 DataModel 确认没有第三方绑定；
-两个 MCP 探针照旧留着。代价分两栏写在 `PROGRESS.md` 54.7，取舍是 `DECISIONS_2` **165**。
+`MCP_RoomWatchRunner` **已删**（你原话「不用吧，采集的是原游戏里面的」）；两个 MCP 探针留着。
+删前把磁盘那两份读回同一个 VM **逐字符**比过、并 grep 全 DataModel 确认无第三方绑定。
+细节 `PROGRESS.md` 54.7，取舍 `DECISIONS_2` **165**。
 
 **Phase 55/56 —— 已搬到 `PROGRESS.md` 的历史，这里只留能直接用的那几句。**
 - **55**：GUI 采集（`g.<key>`）**只在客户端**存在；`GuiObject` 答 `Visible`、`LayerCollector`
@@ -451,19 +449,18 @@ sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开�
   是「不花班次的第一步」（**request 族要请求表**，错传会让每个能用的传输都被报成坏的）。
   取舍 **182..186**。
 
-**Phase 61（2026-09-30）—— 三个注入脚本第一次真的在原版里跑起来了，窗口没开。**
+**Phase 61（2026-09-30）—— 三个注入脚本第一次真的在原版里跑起来了（窗口没开）。**
 **这一趟第一次有字节支持「脚本真的跑过」**（以前「跑过」和「没注入」在盘上同形）：
 探针答出 `winner=http_request`（`request`/`http`/`getgenv` 也能用，`syn`/`fluxus`/`krnl` 不在），
 监视器 11 份产物**没有 `error.txt`**（71236 件 / 557548 属性普查完），采集器抓全整条开机链
 （`RoomLight → MonitorPower → Shutters → MonitorBoot → **StartUpLever** → HDEF-PowerLever`，
 然后 `CORE IGNITION IMMINENT`）。**但 `window.txt` 同时写着 `lever_hooked=true` 和
-`opened_at=not yet`。** 两个缺陷，都已修：① **开窗口的 hook 装晚了 28 秒** ——
-普查实测占 **48 秒**（第一行 `changes.log` 是 t=47.93）而拉杆 **t≈20 秒**按的，
-`attachWindow()` 在 `pcall(bootWalk)` **之后**；原注释那句「the census finishes in seconds」
-**被自己的产物否掉**。修：挪进 `Start()` **同步**装。② **`MaxQueue` 4000 比开机的峰值还小**
-→ `dropped=794`；机制是**复合**的：`flush()` 在窗口关着时**什么都不投**，
-而截断**每拍照跑**，所以**窗口关着 = 队列只进不出 = 上限吃队头** —— 而它**恰恰摧毁
-窗口失败那些趟的证据**。4000 → **20000**（那趟 46 秒 10439 行，一个十秒桶 6463 行）。
+`opened_at=not yet`** —— 两个缺陷，都已修：① **开窗口的 hook 装晚了 28 秒**（普查实测占
+**48 秒**，而拉杆 **t≈20 秒**按的；`attachWindow()` 在 `pcall(bootWalk)` **之后**，
+原注释「the census finishes in seconds」**被自己的产物否掉**）→ 挪进 `Start()` 同步装；
+② **`MaxQueue` 4000 < 开机峰值** → `dropped=794`（`flush()` 在窗口关着时什么都不投，
+而截断每拍照跑 → **窗口关着 = 队列只进不出 = 上限吃队头**，**恰恰摧毁窗口失败那些趟的证据**）
+→ 4000 → **20000**。
 
 **Phase 62（2026-09-30）—— 采集器：driver 整个删掉，反应堆读数加一道核心闸。**
 你三条原话：`transport_probe.luau` **不变**；`TRG_original_recorder.luau`「**注入后立刻开始**
@@ -471,56 +468,62 @@ sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开�
 SEAL的情况是 1：手动关机，2：核心自动关机如熔毁，温度过低等」；`TRG_original_watch.luau`
 「玩家按下开机按钮时开始监听所有控制室+腔室+警报+音频变化（**所有监视器的GUI也要！**），
 **时钟到达12PM时结束**」。
-- **① DRIVER 整段删除**（`DECISIONS_2` 202）。**删得下去的前提**是那条 hook 从来
-  **不在** DRIVER 段里：点击钩子遍历全世界 1019 个 `ClickDetector`，你按的每一个照旧全进文件。
+- **① DRIVER 整段删除**（`DECISIONS_2` 202）。**删得下去的前提**是那条 hook 从来**不在**
+  DRIVER 段里：点击钩子遍历全世界 1019 个 `ClickDetector`，你按的每一个照旧全进文件；
   `ShutdownEndsShift` / `pollDt` 各只有一个读者（都在 `driveStep` 里），一起走。
-  三个文件归档在 `_tools/_attic/driver/` —— 里面是**关于这台机器两个开关的测量**，不是活代码。
-- **② 核心闸（`COREGATE`）**：判据是**游戏自己的 `s.GameActive`**，不是温度
-  （温度的错在「开了但还没热」和「关了但还很热」，而这两个区间**正好就是开机和关机**）。
-  它**锁存**（关机后低温那臂还要读 `m.temp`，每拍重判会把温度掐在关机那一拍）；
-  它**扣住不写、不是过滤**（闸关着时那个键**根本不进 `last`**，否则闸开那一拍的值
-  正好等于开机前的值时会被判成「没变化」而永远不出现）—— 两种实现在那之前**逐字节相同**
-  （`DECISIONS_2` 203）。**故意不管** `t.*` 通用走查和设施面板：**开机流程本身在那里面**。
-- **③ 窗口的终点改成中午** —— `EndMins = 720`（半夜）**作废**（`DECISIONS_2` 201，
-  并撤回我上轮「720 是对的」那句）。**`EndMins` 这个名字替我回答了问题**：
-  一份配置项的名字如果替你回答了问题，那你读到的就不是测量。现在等的是
-  **11:59 AM → 12:00 PM 的交接**（表盘 1439 → 0），因为表盘在一个班次里单调，
-  正午边界是**下降**不是阈值 → `WrapDropMins = 60`（自身扫描实测 1089 ms，
-  一次六秒卡顿就把第一拍落在 12:06）+ `EndPolls = 2`。
-- **④ 新增闸的测试台**：`build_gate_test.py` + `selftest_gate_test.py`，
-  6 个变异各自红在指定检查上、**2 个 FOLLOW 必须留绿**（其中一个「闸默认开着」是
-  **结构性的盲点**：每场景开头 `reset()` 会清掉闩锁 —— 写下来 + 一行「变异体确实到了」
-  的断言，**变成已知的盲点而不是一个洞**，`DECISIONS_2` 205）。它翻出一个**真代码缺陷**
-  （`coreGateOpen` 不重取 `Stats`，文件夹晚到就永远打不开）和三处 harness 自身的错。
+  三个文件归档在 `_tools/_attic/driver/`（是**关于这台机器两个开关的测量**，不是活代码）。
+- **② 核心闸（`COREGATE`）**：判据是**游戏自己的 `s.GameActive`**，不是温度（温度的错在
+  「开了但还没热」和「关了但还很热」，而这两个区间**正好就是开机和关机**）。它**锁存**
+  （关机后低温那臂还要读 `m.temp`，每拍重判会把温度掐在关机那一拍）；它**扣住不写、
+  不是过滤**（闸关着时那个键**根本不进 `last`**，否则闸开那一拍的值正好等于开机前的值时
+  会被判成「没变化」而永远不出现）。**故意不管** `t.*` 通用走查和设施面板：**开机流程本身
+  在那里面**。`DECISIONS_2` 203 记了这两种实现在那之前**逐字节相同**。
+- **③ 窗口的终点改成中午** —— `EndMins = 720`（半夜）**作废**（`DECISIONS_2` 201）。
+  **`EndMins` 这个名字替我回答了问题**：配置项的名字替你回答了问题，那你读到的就不是测量。
+  现在等的是 **11:59 AM → 12:00 PM 的交接**（表盘 1439 → 0，一个班次里单调，正午是
+  **下降**不是阈值）→ `WrapDropMins = 60` + `EndPolls = 2`。
+- **④ 闸的测试台**：`build_gate_test.py` + `selftest_gate_test.py`，6 个变异各自红在指定检查上、
+  **2 个 FOLLOW 必须留绿**（「闸默认开着」是**结构性盲点**：每场景开头 `reset()` 会清闩锁 ——
+  写下来 + 一行断言，**变成已知的盲点而不是一个洞**，`DECISIONS_2` 205）。它翻出一个
+  **真代码缺陷**（`coreGateOpen` 不重取 `Stats`，文件夹晚到就永远打不开）和三处 harness 的错。
 - **`run_tests.sh` rc=0**（**133 条 ok**）：采集器解析、`gate 32 PASS`、watch 74+5+8+6+5+6+7、
   探针 23、gate 变异 6/6+2、watch 变异 29/29、gui 10/10、end 3/3、flow 8/8。
 - **三个 md5（注入前核这个，别核时间）：** 采集器 **121202 / 2644 / `48f2c155b7d6342f07cafcfb4404e9e8`**（`r60`）、
-  监视器 **136927 / 2527 / `2d3d7da48db284e64f0321b5d226e605`**（`w60`）、
+  监视器 **147930 / 2699 / `32bba692e0e078f416789972aecd192a`**（`w61`，Phase 64 的卡顿修复）、
   探针 **10752 / 217 / `5acde17d2bccfa65949c9a4b2bec9a90`**（未改）。
-  细节 `PROGRESS.md` 62，取舍 **201..205**。**`docs/RECORDER_HOWTO.md` 已按 `r60` 全文改过** ——
-  它以前教人按一个已经不存在的 `DRIVER: ON/OFF` 按钮（**散文说的谎和代码说的谎一样贵**）。
-- **下一趟两份都要重注**（61 那趟**跑的是** `r58` / `w58`；先前写的 `w59` 是**修完之后**的发货版，
-  不是那一趟的字节 —— 核产物第 2 行 `build=r58`、`alive.txt` 第 2 行 `build=w58`）。
+  细节 `PROGRESS.md` 62，取舍 **201..205**。**`docs/RECORDER_HOWTO.md` 已按 `r60` 全文改过**
+  （它以前教人按一个已不存在的 `DRIVER: ON/OFF` 按钮 —— **散文说的谎和代码说的谎一样贵**）。
+- **上一趟（`261001-125206`/`-125207`）跑的是 `r60` / `w60`** —— 采集器 `build=r60` 就在
+  `Data/flow/original_261001-125206` 第 1 行。**下一次两份都要重注**：`r60` 字节没变，
+  监视器换成 `w61`。
 
 **悬着的还是那两件**（`QUESTIONS.md` 无新条目）：**P4:A 冷却泵 2/3 档**（要等注入）、
 **P6:A 的 187 键探针**（不叠在同一个注入里）。**信标补不上的那一格**：顶层代码在信标
 **之前**抛错时和「从没注入」在盘上逐字节一样 —— 补它要放到文件第一行，那时 `CONFIG` 还没读完，
 **代价大于收益，不做，且这条要一直写在这题的答案里**。
 
-**Phase 59（2026-09-30）—— 拉杆的位移改成 tween。** 用户只问了拉杆（灯一个字没改）：
-`VisualFeedback.poseLever` 从一帧赋值改成 `TweenService:Create(...):Play()`，时长
-`Config.Visual.LeverTweenSeconds = 0.3`，**必须短于 `RefreshSeconds = 1`**（refresh 是签名门控的，
-下一次姿势到来时还在动的档位 = union 永远不会停的档位）。另有两条安全性质：先 `Cancel()`、
-重解析时沿用旧 `baseline` / `travel`。**动画故意留在服务端** —— 推到客户端
-= **两个写入者**，那条路已被撤过一次。细节 `PROGRESS.md` 59，取舍 **187..191**。
+**Phase 64（2026-10-01）—— 「注入之后游戏贼卡」的修复：监视器让帧 + 份额上限（`w61`）。**
+定位不用猜：上一趟**监视器自报** `scan_ms=2197`（71587 件 / 559942 属性）配 `Interval=1`
+≈ **70% 的客户端**，而采集器自报 `cpu_pct=10.9` —— **卡的是监视器**。
+两个旋钮：`MaxBlockMs = 25`（三条长走查每 25 ms 让一帧，2.2 s 冻结 → ~90 个短块）、
+`DutyTarget = 0.30`（按实测 `scan_ms` 反推该睡多久）。`health.txt` 多报
+`scan_ms / sleep_ms / duty / yields` —— **修没修好由下一趟产物说，不由注释说**。
+**测试台的坑（会复发）**：时间型让帧让「按 `task.wait` 计数驱动时间线」的 harness **变成抛硬币**
+（同一份未改动的文件 3 红 1 绿）→ 只让**带参数的 wait** 推进时间线，再加一条**差分测试**
+（`MaxBlockMs` 强制 0 vs 发货值，`changes.log` 除时钟列外逐字节相同）。细节 `PROGRESS.md` 64，
+取舍 **210..213**。
 
-**Phase 60（2026-09-30）—— 百叶窗的开关也 tween，外加 `start_services.bat`。**
-「也」是**门本身**（拉杆 59 已 tween）：`RoomShell.applyShutters` 从一帧落位 10.58 studs
-改成 0.6 s `Quad/Out`，**写入者没换**（`RoomShell` 本来就是它们的单一写入者）。
-`Config.Shell.ShutterTweenSeconds = 0.6`（不是 0.3：门走约 15 倍距离），
-**缓动不进 Config**，**创建前先 `Cancel()`**，开 = 关 **减**世界空间的 `(0,10.58,0)`。
-`src/ReactorBackend/` **七个模块全部 IN SYNC**。`start_services.bat` 起那两个服务。
-**Edit 模式下逐 tick 位移读不出平不平**（`Heartbeat` 成串投递）——用时间桶。
+**Phase 59/60（2026-09-30）—— 两样会动的东西都改成 tween（拉杆、百叶窗门）。**
+已搬到 `PROGRESS.md`，这里只留能直接用的那几句：
+- **59 拉杆**：`VisualFeedback.poseLever` 一帧赋值 → `TweenService`，`LeverTweenSeconds = 0.3`，
+  **必须短于 `RefreshSeconds = 1`**（refresh 是签名门控的，下一次姿势到来时还在动的档位
+  = union 永远不会停的档位）；先 `Cancel()`；重解析沿用旧 `baseline` / `travel`。
+  **动画故意留在服务端** —— 推到客户端 = **两个写入者**，那条路已被撤过一次。
+- **60 门**：`RoomShell.applyShutters` 一帧落位 10.58 studs → 0.6 s `Quad/Out`，
+  **写入者没换**；`ShutterTweenSeconds = 0.6`（不是 0.3：门走约 15 倍距离），
+  **缓动不进 Config**，开 = 关 **减**世界空间的 `(0,10.58,0)`；`start_services.bat` 起两个服务。
+- **量法**：**Edit 模式下逐 tick 位移读不出平不平**（`Heartbeat` 成串投递）—— 用时间桶。
+  取舍 **187..196**。
 细节 `PROGRESS.md` 60，取舍 **192..196**。
 
 **Phase 号按做事的先后（mtime）编，不按补号的顺序。** 2026-09-26 那四件活是 45（拉杆反馈）、

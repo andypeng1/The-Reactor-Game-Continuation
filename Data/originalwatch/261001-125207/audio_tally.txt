@@ -1,0 +1,277 @@
+# 1392 Sound(s) hooked; 4176 hook(s) attached, 0 refused; 1189 play/stop/end event(s) seen
+# 271 of them have been audible; 0 play(s) were caught by the poll and NOT by a hook
+# 69 were ALREADY playing when the watcher attached -- a hook cannot see those, and
+# their asset and bus were read off the instance instead of off a Played event
+# audible by bus: (none)=163  EnvironmentSounds=48  Interactables=26  AlarmSounds=17  ControlRoomSounds=8  (unknown)=5  MESSounds=3  MusicSounds=1
+
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #10 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #11 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #12 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #13 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #14 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #15 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #16 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #2 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #3 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #4 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #5 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #6 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #7 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #8 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm #9 | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm | plays=2 stops=2 ends=0 | bus=AlarmSounds | id=rbxassetid://207705931 | last t=0000390.48 12:58:38
+Alarms             Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren #2 | plays=5 stops=0 ends=3 | bus=ControlRoomSounds | id=rbxassetid://6925598641 | last t=0000152.57 12:54:40
+Alarms             Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren | plays=5 stops=0 ends=3 | bus=ControlRoomSounds | id=rbxassetid://6925598641 | last t=0000152.57 12:54:40
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #2 | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #3 | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #4 | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #5 | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #6 | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #7 | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound #8 | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Alarms             Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound | plays=3 stops=0 ends=0 | bus=(none) | id=rbxassetid://7455920914 | last t=0000375.84 12:58:23
+Audio              MovingParts.Airlocks.ControlRoomAirlock.AirlockEffectBlock.HumSound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://8578320252 | last t=0000004.27 12:52:11
+Audio              MovingParts.Airlocks.ControlRoomAirlock.AirlockEffectBlock.VentSound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9065011501 | last t=0000004.27 12:52:11
+Audio              MovingParts.CenterField.DestabilizedField | plays=1 stops=1 ends=0 | bus=ControlRoomSounds | id=rbxassetid://8737370145 | last t=0000152.53 12:54:40
+Audio              MovingParts.CenterField.Shatter2 | plays=1 stops=0 ends=1 | bus=ControlRoomSounds | id=rbxassetid://18667300461 | last t=0000131.11 12:54:18
+Audio              MovingParts.ChamberFan1.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000004.20 12:52:11
+Audio              MovingParts.ChamberFan2.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000004.20 12:52:11
+Audio              MovingParts.ChamberFan3.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000004.20 12:52:11
+Audio              MovingParts.ChamberFan4.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000004.20 12:52:11
+Audio              MovingParts.ChamberFan5.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000004.19 12:52:11
+Audio              MovingParts.ChamberFan6.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000004.29 12:52:11
+Audio              MovingParts.ControlRoomLShutter.Frame.DoorSound | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://429505244 | last t=0000396.89 12:58:44
+Audio              MovingParts.ControlRoomMShutter.Frame.DoorSound | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://429505244 | last t=0000396.39 12:58:44
+Audio              MovingParts.ControlRoomRShutter.Frame.DoorSound | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://429505244 | last t=0000397.41 12:58:45
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss #2 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss #3 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss #4 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.RepairHiss | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #2 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #3 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound #4 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part1.SoftBurst.SoftSteamSound | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss #2 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss #3 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss #4 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.RepairHiss | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #2 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #3 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound #4 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part2.SoftBurst.SoftSteamSound | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss #2 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss #3 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss #4 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.RepairHiss | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7768888198 | last t=0000248.32 12:56:15
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #2 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #3 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound #4 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantParticleParts.Part3.SoftBurst.SoftSteamSound | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000246.20 12:56:13
+Audio              MovingParts.CoolantPipes.PipeSpawnbox2.ISEParticlePart.MidSteamSound | plays=1 stops=0 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000190.62 12:55:18
+Audio              MovingParts.CoolantPipes.PipeSpawnbox2.ISEParticlePart.SoftSteamSound | plays=0 stops=1 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://5057582133 | last t=0000190.62 12:55:18
+Audio              MovingParts.CoolantPipes.PipeSpawnbox3.ISEParticlePart.MidSteamSound | plays=1 stops=0 ends=0 | bus=(none) | id=rbxassetid://5057582133 | last t=0000227.46 12:55:55
+Audio              MovingParts.CoolantPipes.PipeSpawnbox3.ISEParticlePart.SoftSteamSound | plays=0 stops=1 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://5057582133 | last t=0000227.46 12:55:55
+Audio              MovingParts.CoolantPipes.PipeSpawnbox5.ISEParticlePart.SoftSteamSound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://5057582133 | last t=0000218.68 12:55:46
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan #2 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://18645041346 | last t=0000097.84 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan #3 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://18645041346 | last t=0000097.84 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.DeepScan | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://18645041346 | last t=0000097.84 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #2 | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://7768888198 | last t=0000098.46 12:53:46
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss #3 | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://7768888198 | last t=0000098.39 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.Hiss | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://7768888198 | last t=0000098.39 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.HydraulicSound #2 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9114853666 | last t=0000075.56 12:53:23
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.HydraulicSound #3 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9114853666 | last t=0000075.53 12:53:23
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna.FrontPiece.StructureDetail.MainFrame.HydraulicSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9114853666 | last t=0000075.53 12:53:23
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.DeepScan | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://18645041346 | last t=0000097.84 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.Hiss | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://7768888198 | last t=0000098.46 12:53:46
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna1.FrontPiece.StructureDetail.MainFrame.HydraulicSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9114853666 | last t=0000075.56 12:53:23
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.DeepScan | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://18645041346 | last t=0000097.84 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.Hiss | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://7768888198 | last t=0000098.39 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna2.FrontPiece.StructureDetail.MainFrame.HydraulicSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9114853666 | last t=0000075.53 12:53:23
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.DeepScan | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://18645041346 | last t=0000097.84 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.Hiss | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://7768888198 | last t=0000098.39 12:53:45
+Audio              MovingParts.CoreAntenna.SpecialCoreAntenna3.FrontPiece.StructureDetail.MainFrame.HydraulicSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9114853666 | last t=0000075.53 12:53:23
+Audio              MovingParts.LoungeInteriorFan.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000004.29 12:52:11
+Audio              MovingParts.MESUnits.Unit1.MES.Torso.ClickPart.MESPowerCore | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://9116390179 | last t=0000004.25 12:52:11
+Audio              MovingParts.MESUnits.Unit2.MES.Torso.ClickPart.MESPowerCore | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=MESSounds | id=rbxassetid://9116390179 | last t=0000004.25 12:52:11
+Audio              MovingParts.MESUnits.Unit3.MES.Torso.ClickPart.MESPowerCore | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=MESSounds | id=rbxassetid://9116390179 | last t=0000004.26 12:52:11
+Audio              MovingParts.MESUnits.Unit4.MES.Torso.ClickPart.MESPowerCore | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=MESSounds | id=rbxassetid://9116390179 | last t=0000004.26 12:52:11
+Audio              MovingParts.ReactorClamps1.Base.SoundPart.ClampMovement | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9114583242 | last t=0000391.20 12:58:38
+Audio              MovingParts.ReactorClamps2.Base.SoundPart.ClampMovement | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9114583242 | last t=0000393.05 12:58:40
+Audio              MovingParts.ReactorClamps3.Base.SoundPart.ClampMovement | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9114583242 | last t=0000393.22 12:58:40
+Audio              MovingParts.ReactorClamps4.Base.SoundPart.ClampMovement | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9114583242 | last t=0000395.59 12:58:43
+Audio              MovingParts.ReactorClamps5.Base.SoundPart.ClampMovement | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9114583242 | last t=0000395.59 12:58:43
+Audio              MovingParts.ReactorClamps6.Base.SoundPart.ClampMovement | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9114583242 | last t=0000396.15 12:58:43
+Audio              ReplicatedStorage.CulledParts.LowerRMSector.LowerRMRoom.Model.Model.ShaftAmbientPart.ShaftAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000004.70 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX #2 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000004.65 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX #3 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000004.66 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX #4 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000004.66 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX #5 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000004.66 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX #6 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000004.66 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000004.65 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.ShaftRailing.ShaftAmbientPart.ShaftAmbience #2 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000004.59 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.ShaftRailing.ShaftAmbientPart.ShaftAmbience #3 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000004.59 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.ShaftRailing.ShaftAmbientPart.ShaftAmbience #4 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000004.59 12:52:12
+Audio              ReplicatedStorage.CulledParts.Mainframe.ShaftRailing.ShaftAmbientPart.ShaftAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000004.59 12:52:12
+Audio              ReplicatedStorage.CulledParts.ReactorLounge.Model.Model.Model.Vent.Meshes/AThing.VentSFX #2 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000004.87 12:52:12
+Audio              ReplicatedStorage.CulledParts.ReactorLounge.Model.Model.Model.Vent.Meshes/AThing.VentSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000004.86 12:52:12
+CRC1               CRC1.Coolant.CoolantSound | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://9120549564 | last t=0000390.58 12:58:38
+CRC1               CRC1.CoolantDoor.Union.CoolantDoorSound | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://429505244 | last t=0000393.89 12:58:41
+CRC1               CRC1.SoundPart.CoolantRegulatorAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://187544064 | last t=0000002.89 12:52:10
+CRC1               CRC1.SoundPart2.CoolantRegulatorAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://187544064 | last t=0000002.89 12:52:10
+CRC2               CRC2.Coolant.CoolantSound | plays=3 stops=0 ends=2 | bus=(none) | id=rbxassetid://9120549564 | last t=0000390.58 12:58:38
+CRC2               CRC2.CoolantDoor.Union.CoolantDoorSound | plays=3 stops=0 ends=3 | bus=(none) | id=rbxassetid://429505244 | last t=0000393.89 12:58:41
+CRC2               CRC2.MalfunctionALARM.MainAlarmPart.ProcessorMalfunctionAlarm | plays=1 stops=1 ends=0 | bus=AlarmSounds | id=rbxassetid://344440918 | last t=0000246.28 12:56:13
+CRC2               CRC2.ProcessorInterior.CalibrationConsole.PECLever1.LeverUnion.LeverSound | plays=3 stops=0 ends=3 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000248.32 12:56:15
+CRC2               CRC2.ProcessorInterior.CalibrationConsole.PECLever2.LeverUnion.LeverSound | plays=2 stops=0 ends=2 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000248.32 12:56:15
+CRC2               CRC2.ProcessorInteriorSoundBlock.ProcessorOn | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://7128664795 | last t=0000253.37 12:56:20
+CRC2               CRC2.SoundPart.CoolantRegulatorAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://187544064 | last t=0000002.78 12:52:10
+CRC2               CRC2.SoundPart2.CoolantRegulatorAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://187544064 | last t=0000002.78 12:52:10
+CRC3               CRC3.Coolant.CoolantSound | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://9120549564 | last t=0000390.58 12:58:38
+CRC3               CRC3.CoolantDoor.Union.CoolantDoorSound | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://429505244 | last t=0000393.89 12:58:41
+CRC3               CRC3.SoundPart.CoolantRegulatorAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://187544064 | last t=0000002.66 12:52:10
+CRC3               CRC3.SoundPart2.CoolantRegulatorAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://187544064 | last t=0000002.66 12:52:10
+ChamberCoolantPipe1 ChamberCoolantPipe1.CoolantBlock.CoolantBlockUnion.CoolantVentSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000000.83 12:52:08
+ChamberCoolantPipe2 ChamberCoolantPipe2.CoolantBlock.CoolantBlockUnion.CoolantVentSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000000.83 12:52:08
+ChamberCoolantPipe3 ChamberCoolantPipe3.CoolantBlock.CoolantBlockUnion.CoolantVentSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000000.84 12:52:08
+Consoles           Consoles.ALTReactorConsole.ControlRoomSystems.MonitorPowerButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000012.82 12:52:20
+Consoles           Consoles.ALTReactorConsole.ControlRoomSystems.RoomLightButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000011.99 12:52:19
+Consoles           Consoles.ALTReactorConsole.ControlRoomSystems.ShuttersLever.LeverUnion.LeverSound | plays=2 stops=0 ends=2 | bus=Interactables | id=rbxassetid://209530691 | last t=0000396.20 12:58:43
+Consoles           Consoles.CBLaserConsole.CBL1Systems.LargeLever.BigLever.LeverUnion.LeverSound | plays=3 stops=0 ends=3 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000340.17 12:57:47
+Consoles           Consoles.CBLaserConsole.CBL1Systems.PressureButton.ClickPart.ButtonSound | plays=2 stops=0 ends=2 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000341.10 12:57:48
+Consoles           Consoles.CBLaserConsole.CBL2Systems.LargeLever.BigLever.LeverUnion.LeverSound | plays=4 stops=0 ends=4 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000335.38 12:57:42
+Consoles           Consoles.CBLaserConsole.CBL2Systems.PressureButton.ClickPart.ButtonSound | plays=2 stops=0 ends=2 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000345.05 12:57:52
+Consoles           Consoles.CBLaserConsole.CBL3Systems.LargeLever.BigLever.LeverUnion.LeverSound | plays=3 stops=0 ends=3 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000330.98 12:57:38
+Consoles           Consoles.CBLaserConsole.CBL3Systems.PressureButton.ClickPart.ButtonSound | plays=2 stops=0 ends=2 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000348.42 12:57:56
+Consoles           Consoles.CBLaserConsole.SoundBlock.AlarmCBLMalfunction | plays=0 stops=1 ends=0 | bus=(unknown) | id=(none) | last t=0000360.60 12:58:08
+Consoles           Consoles.ElectricGridConsole.ExtractionLever.BigLever.LeverUnion.LeverSound | plays=4 stops=0 ends=4 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000280.16 12:56:47
+Consoles           Consoles.HDEFGenerator.Glass.AmbientHDEFGen | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://1477617411 | last t=0000003.40 12:52:10
+Consoles           Consoles.MainReactorConsole.MonitorBootButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000020.29 12:52:27
+Consoles           Consoles.MainReactorConsole.SoundBlock.AlarmFluctuation | plays=0 stops=1 ends=0 | bus=(unknown) | id=(none) | last t=0000360.60 12:58:08
+Consoles           Consoles.MainReactorConsole.SoundBlock.AlarmStall | plays=0 stops=1 ends=0 | bus=(unknown) | id=(none) | last t=0000360.60 12:58:08
+Consoles           Consoles.MainReactorConsole.SoundBlock.ReadySound | plays=2 stops=0 ends=2 | bus=ControlRoomSounds | id=rbxassetid://473122639 | last t=0000040.47 12:52:48
+Consoles           Consoles.MainReactorConsole.StartUpBigLever.LeverUnion.LeverSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000041.28 12:52:48
+Consoles           Consoles.ThermalConsole.CFLever4.LeverUnion.LeverSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://209530691 | last t=0000255.81 12:56:23
+Consoles           Consoles.ThermalConsole.CFLever5.LeverUnion.LeverSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://209530691 | last t=0000196.63 12:55:24
+Consoles           Consoles.ThermalConsole.CFLever6.LeverUnion.LeverSound | plays=3 stops=0 ends=3 | bus=Interactables | id=rbxassetid://209530691 | last t=0000358.92 12:58:06
+Consoles           Consoles.ThermalConsole.CoolantControl1.BigLever.LeverUnion.LeverSound | plays=4 stops=0 ends=4 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000320.10 12:57:27
+Consoles           Consoles.ThermalConsole.CoolantControl1.OffButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000264.34 12:56:31
+Consoles           Consoles.ThermalConsole.CoolantControl1.OnButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000316.52 12:57:24
+Consoles           Consoles.ThermalConsole.CoolantControl2.BigLever.LeverUnion.LeverSound | plays=4 stops=0 ends=4 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000321.02 12:57:28
+Consoles           Consoles.ThermalConsole.CoolantControl2.OffButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000261.88 12:56:29
+Consoles           Consoles.ThermalConsole.CoolantControl2.OnButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000314.12 12:57:21
+Consoles           Consoles.ThermalConsole.CoolantControl3.BigLever.LeverUnion.LeverSound | plays=4 stops=0 ends=4 | bus=Interactables | id=rbxassetid://9125626211 | last t=0000321.96 12:57:29
+Consoles           Consoles.ThermalConsole.CoolantControl3.OffButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000260.14 12:56:27
+Consoles           Consoles.ThermalConsole.CoolantControl3.OnButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000311.98 12:57:19
+Consoles           Consoles.ThermalConsole.SoundBlock.AlarmPumpMalfunction | plays=1 stops=1 ends=0 | bus=ControlRoomSounds | id=rbxassetid://15827782589 | last t=0000246.28 12:56:13
+Core               Core.CORE.CBLFireSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://1843025175 | last t=0000135.56 12:54:23
+Core               Core.CORE.CBLStartUpSound | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://1843025175 | last t=0000112.75 12:54:00
+Core               Core.CORE.CoolantFailiureSound | plays=1 stops=0 ends=1 | bus=EnvironmentSounds | id=rbxassetid://9117876720 | last t=0000242.40 12:56:10
+Core               Core.CORE.DestabilizationSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://1146698075 | last t=0000373.84 12:58:21
+Core               Core.CORE.IgnitonExplosion | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://8067356918 | last t=0000142.24 12:54:29
+Core               Core.CORE.Model.Modified_Energy_Sound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://13331862090 | last t=0000001.28 12:52:08
+Core               Core.CORE.Modified_Energy_Sound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://13331862090 | last t=0000001.28 12:52:08
+Core               Core.CORE.ProtoCoreExplosion | plays=1 stops=0 ends=1 | bus=EnvironmentSounds | id=rbxassetid://9114363548 | last t=0000148.19 12:54:35
+Core               Core.CORE.ProtoCoreLoop | plays=1 stops=0 ends=0 | bus=(none) | id=rbxassetid://9064807398 | last t=0000129.96 12:54:17
+GravatronUnit      GravatronUnit.CenterPart.LiftRunning | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9062616055 | last t=0000001.91 12:52:09
+GravatronUnit      GravatronUnit.CenterPart.ReactorAltSound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://167115397 | last t=0000001.91 12:52:09
+GravatronUnit      GravatronUnit.SpinnyThing.EndSpinnyPart.SoundPart.AmbientMove | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9105868334 | last t=0000001.88 12:52:09
+GravatronUnit      GravatronUnit.SpinnyThing.EndSpinnyPart2.SoundPart.AmbientMove | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9105868334 | last t=0000001.87 12:52:09
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #10 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #11 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #2 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #3 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #4 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #5 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #6 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #7 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #8 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience #9 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000003.00 12:52:10
+Lights             Lights.ChamberLights.ChamberVentLights.Light1.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000397.41 12:58:45
+Lights             Lights.ChamberLights.ChamberVentLights.Light10.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.85 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light11.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.86 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light12.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.87 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light13.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.87 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light14.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.88 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light15.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.92 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light16.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.93 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light17.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.94 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light18.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.95 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light19.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.96 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light2.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000397.41 12:58:45
+Lights             Lights.ChamberLights.ChamberVentLights.Light20.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.96 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light21.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.97 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light22.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.97 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light23.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.98 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light24.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.98 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light3.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.80 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light4.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.81 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light5.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.82 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light6.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.83 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light7.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.84 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light8.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.84 12:58:46
+Lights             Lights.ChamberLights.ChamberVentLights.Light9.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.85 12:58:46
+Lights             Lights.ChamberLights.UpperChamberLights.Light1.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000397.41 12:58:45
+Lights             Lights.ChamberLights.UpperChamberLights.Light2.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.83 12:58:46
+Lights             Lights.ChamberLights.UpperChamberLights.Light3.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.86 12:58:46
+Lights             Lights.ChamberLights.UpperChamberLights.Light4.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.92 12:58:46
+Lights             Lights.ChamberLights.UpperChamberLights.Light5.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.96 12:58:46
+Lights             Lights.ChamberLights.UpperChamberLights.Light6.LargeLightFlicker | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://156221488 | last t=0000398.99 12:58:46
+METU               METU.ECCModule.ECCReceptacle1.ECCWallNeon.ECCAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://379557765 | last t=0000002.19 12:52:09
+METU               METU.ECCModule.ECCReceptacle2.ECCWallNeon.ECCAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://379557765 | last t=0000002.15 12:52:09
+METU               METU.ProcessorModule.VentParticle.Air Vent Sound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://9065011501 | last t=0000002.14 12:52:09
+METU               METU.ProcessorModule.VentParticle.WeirdGenerator | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://317898809 | last t=0000002.14 12:52:09
+Monitors           Monitors.ForecastControlRoomMonitor.Screen.Beep | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9119541054 | last t=0000094.21 12:53:41
+Monitors           Monitors.ForecastControlRoomMonitor.Screen.TimelineComplete | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://601149073 | last t=0000101.87 12:53:49
+Part               Part.Alarm | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://344440918 | last t=0000000.77 12:52:08
+Part               Part.ShieldFormation | plays=133 stops=0 ends=131 | bus=(none) | id=rbxassetid://5243826810 | last t=0000399.31 12:58:46
+PowerExtractionAssembly PowerExtractionAssembly.CentralNeon.AmbientPEASound | plays=0 stops=1 ends=0 | bus=(unknown) | id=(none) | last t=0000382.59 12:58:30
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.AmbientHum | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2884910274 | last t=0000003.94 12:52:11
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX | plays=4 stops=4 ends=0 | bus=(none) | id=rbxassetid://8158946093 | last t=0000368.76 12:58:16
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.AmbientHum | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2884910274 | last t=0000003.78 12:52:11
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX | plays=4 stops=4 ends=0 | bus=(none) | id=rbxassetid://8158946093 | last t=0000368.76 12:58:16
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.AmbientHum | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2884910274 | last t=0000003.46 12:52:11
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX | plays=4 stops=4 ends=0 | bus=(none) | id=rbxassetid://8158946093 | last t=0000368.76 12:58:16
+SoundBlocks        SoundBlocks.CRC1SoundBlock.CoolantPipeSFX | plays=0 stops=1 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2701089871 | last t=0000253.92 12:56:21
+SoundBlocks        SoundBlocks.CRC1SoundBlock.ISEFissureSpawn | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9125667565 | last t=0000235.09 12:56:02
+SoundBlocks        SoundBlocks.CRC2SoundBlock.BackgroundMalfunction | plays=1 stops=0 ends=0 | bus=(none) | id=rbxassetid://245537790 | last t=0000238.41 12:56:06
+SoundBlocks        SoundBlocks.CRC2SoundBlock.CoolantPipeSFX | plays=0 stops=1 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2701089871 | last t=0000253.92 12:56:21
+SoundBlocks        SoundBlocks.CRC2SoundBlock.ISEFissureSpawn | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9125667565 | last t=0000227.52 12:55:55
+SoundBlocks        SoundBlocks.CRC3SoundBlock.CoolantPipeSFX | plays=0 stops=1 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2701089871 | last t=0000253.92 12:56:21
+SoundBlocks        SoundBlocks.CRC3SoundBlock.ISEFissureSpawn | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://9125667565 | last t=0000198.32 12:55:25
+SoundBlocks        SoundBlocks.ControlRoomSound.ControlRoomBootUp | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://6489155210 | last t=0000025.71 12:52:33
+SoundBlocks        SoundBlocks.ControlRoomSound.MonitorChime | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://3422389728 | last t=0000030.52 12:52:38
+SoundBlocks        SoundBlocks.ControlRoomSound.MonitorError | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://9113894671 | last t=0000143.20 12:54:30
+SoundBlocks        SoundBlocks.ControlRoomSound.MonitorFlash | plays=1 stops=0 ends=1 | bus=ControlRoomSounds | id=rbxassetid://8426701399 | last t=0000132.18 12:54:19
+SoundBlocks        SoundBlocks.ControlRoomSound.MonitorPower | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9113880662 | last t=0000023.03 12:52:30
+SoundBlocks        SoundBlocks.ControlRoomSound.Spark15.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.26 12:54:20
+SoundBlocks        SoundBlocks.ControlRoomSound.Spark16.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.26 12:54:20
+SoundBlocks        SoundBlocks.ControlRoomSound.Spark18.SparkSound | plays=2 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.38 12:54:20
+SoundBlocks        SoundBlocks.ControlRoomSound.Spark2.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.86 12:54:19
+SoundBlocks        SoundBlocks.ControlRoomSound.Spark4.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.38 12:54:20
+SoundBlocks        SoundBlocks.ControlRoomSound.Spark6.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.26 12:54:20
+SoundBlocks        SoundBlocks.ControlRoomSound.Spark7.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+SoundBlocks        SoundBlocks.ControlRoomSound.UpdateSound | plays=118 stops=0 ends=116 | bus=ControlRoomSounds | id=rbxassetid://9113085665 | last t=0000361.02 12:58:08
+SoundBlocks        SoundBlocks.MainframeSoundBlock.MainframeAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://4799902395 | last t=0000001.24 12:52:08
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark10.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.83 12:54:19
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark11.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.26 12:54:20
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark12.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark13.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark14.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark15.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark16.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark2.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark4.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.94 12:54:19
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark5.SparkSound | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.26 12:54:20
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark8.SparkSound | plays=2 stops=0 ends=2 | bus=(none) | id=rbxassetid://473438819 | last t=0000133.26 12:54:20
+SoundBlocks        SoundBlocks.MainframeSoundBlock.Spark9.SparkSound | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://473438819 | last t=0000131.11 12:54:18
+Sounds             Sounds.Effects.Destruction.FacilityGroaning1 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://9118068879 | last t=0000127.28 12:54:14
+Sounds             Sounds.Effects.Destruction.FacilityGroaning2 | plays=1 stops=1 ends=0 | bus=(none) | id=rbxassetid://9118069484 | last t=0000151.13 12:54:38
+Sounds             Sounds.Effects.Environment.Ringing | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9069161602 | last t=0000131.66 12:54:19
+Sounds             Sounds.Effects.External.HourNoticeSound | plays=4 stops=0 ends=4 | bus=(none) | id=rbxassetid://1837834188 | last t=0000337.96 12:57:45
+Sounds             Sounds.Effects.External.Shake1 | plays=1 stops=0 ends=1 | bus=(none) | id=rbxassetid://9088415423 | last t=0000368.06 12:58:15
+Sounds             Sounds.Effects.External.Typewriter | plays=32 stops=0 ends=32 | bus=(none) | id=rbxassetid://9120299506 | last t=0000397.04 12:58:44
+Sounds             Sounds.Effects.External.TypewriterEnd | plays=8 stops=0 ends=8 | bus=(none) | id=rbxassetid://9120300134 | last t=0000397.14 12:58:44
+Sounds             Sounds.Effects.External.TypewriterEndBell | plays=4 stops=0 ends=3 | bus=(none) | id=rbxassetid://9125557416 | last t=0000396.48 12:58:44
+SpeakerPart        SpeakerPart.Hydraulic Mess | plays=0 stops=0 ends=1 | bus=(unknown) | id=(none) | last t=0000270.07 12:56:37
+SpeakerPart        SpeakerPart.New Store | plays=0 stops=0 ends=1 [ALREADY PLAYING AT t=0] | bus=MusicSounds | id=rbxassetid://1835711635 | last t=0000075.53 12:53:23

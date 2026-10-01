@@ -1,0 +1,8 @@
+# transport_probe: getgenv delivered this file, so it WORKS
+name=getgenv
+kind=post
+present=true
+works=true
+detail=posted
+place=17596243941
+executor=Solara
