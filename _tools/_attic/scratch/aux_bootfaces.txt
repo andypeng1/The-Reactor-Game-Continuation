@@ -1,0 +1,48 @@
+t0 (first record in FILE order) == 69719
+
+=== which monitors were WRITTEN per face, and when ===
+BootFrame          on 3 monitor(s)
+    MainControlRoom n=203    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+    PowerControlRoom n=203    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+    ThermalControlRoom n=203    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+PreStartupFrame    on 7 monitor(s)
+    AlertsControlRoom n=2      [14, 21]
+    ForecastControlRoom n=2      [14, 21]
+    LogControlRoom n=2      [14, 21]
+    MainControlRoom n=2      [14, 21]
+    PowerControlRoom n=2      [14, 21]
+    QuotaControlRoom n=2      [14, 21]
+    ThermalControlRoom n=2      [14, 21]
+MainMonitorFrame   on 7 monitor(s)
+    AlertsControlRoom n=2687   [21, 22, 22, 22, 22, 23, 23, 23, 24, 24, 24, 24]
+    ForecastControlRoom n=7      [21, 52, 58, 67, 74, 109, 154]
+    LogControlRoom n=3      [21, 109, 154]
+    MainControlRoom n=9      [21, 109, 109, 109, 109, 109, 109, 109, 154]
+    PowerControlRoom n=6      [21, 84, 84, 84, 109, 154]
+    QuotaControlRoom n=3      [21, 109, 154]
+    ThermalControlRoom n=4      [21, 58, 109, 154]
+ErrorFrame         on 7 monitor(s)
+    AlertsControlRoom n=2      [109, 153]
+    ForecastControlRoom n=2      [109, 153]
+    LogControlRoom n=2      [109, 153]
+    MainControlRoom n=2      [109, 153]
+    PowerControlRoom n=2      [109, 153]
+    QuotaControlRoom n=2      [109, 153]
+    ThermalControlRoom n=2      [109, 153]
+
+=== first non-numeric Text write per (face, monitor) ===
+  BootFrame        MainControlRoom [(153, 'QUICK BOOT UP INITIALIZED')]
+  BootFrame        PowerControlRoom [(153, 'QUICK BOOT UP INITIALIZED')]
+  BootFrame        ThermalControlRoom [(153, 'QUICK BOOT UP INITIALIZED')]
+  ErrorFrame       AlertsControlRoom [(109, 'MAINFRAME CONNECTION LOST')]
+  ErrorFrame       ForecastControlRoom [(109, 'MAINFRAME CONNECTION LOST')]
+  ErrorFrame       LogControlRoom [(109, 'MAINFRAME CONNECTION LOST')]
+  ErrorFrame       MainControlRoom [(109, 'POSSIBLE CRASH DETECTED, SYSTEM REPAIR IN PROGRESS. IF THIS IS A REOCCURRING ISSUE, PLEASE CONTACT SYSTEMS MAINTENANCE PERSONNEL. [ABSOLUTE SERVICE DENIAL - 03]')]
+  ErrorFrame       PowerControlRoom [(109, 'POSSIBLE CRASH DETECTED, SYSTEM REPAIR IN PROGRESS. IF THIS IS A REOCCURRING ISSUE, PLEASE CONTACT SYSTEMS MAINTENANCE PERSONNEL. [ABSOLUTE SERVICE DENIAL - 03]')]
+  ErrorFrame       QuotaControlRoom [(109, 'MAINFRAME CONNECTION LOST')]
+  ErrorFrame       ThermalControlRoom [(109, 'POSSIBLE CRASH DETECTED, SYSTEM REPAIR IN PROGRESS. IF THIS IS A REOCCURRING ISSUE, PLEASE CONTACT SYSTEMS MAINTENANCE PERSONNEL. [ABSOLUTE SERVICE DENIAL - 03]')]
+  MainMonitorFrame ForecastControlRoom [(67, 'PROCESSING DEEPSCAN TELEMETRY'), (71, 'ANOMALY DETECTED, MARGIN ~12:00 AM')]
+  MainMonitorFrame MainControlRoom [(58, '11 R'), (58, '13 R'), (58, '15 R')]
+  MainMonitorFrame PowerControlRoom [(84, '147 F'), (84, '147 F'), (84, '147 F')]
+  MainMonitorFrame QuotaControlRoom [(49, '11:51 PM'), (61, '11:52 PM'), (84, '11:53 PM')]
+  MainMonitorFrame ThermalControlRoom [(61, 'ON'), (61, 'ON'), (62, 'ON')]

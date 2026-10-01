@@ -98,3 +98,19 @@ _tools/_watch_mutant.luau
 __pycache__/
 _tools/_recorder_mutant.luau
 _tools/_gui_mutant_states.luau
+
+# --- the user's own auxiliary reference dumps (Data/auxcollection/).  Handed to
+#     me to read, not produced by the project: 180 MB in ONE file, which is over
+#     GitHub's 100 MB hard file limit, so an accidental `git add -A` would be
+#     rejected on push rather than merely bloating the repo.  The FINDINGS live
+#     in PROGRESS.md Phase 66 and in the three analysers under
+#     _tools/_attic/scratch/; the raw dump is not needed to reproduce them. ---
+Data/auxcollection/
+
+# --- the Studio -> disk landing zone for the code-of-record refresh.  Files
+#     arrive here over the localhost sink (see _tools/receive.py) and are then
+#     verified by CRC-32 against the manifest Studio pushed alongside them, and
+#     only THEN copied into src/.  This is a staging area, so it is scratch: the
+#     authority is src/ (git-backed), never this.  Keeping it is useful -- it is
+#     the evidence that the copy into src/ was byte-exact. ---
+Data/reflect/

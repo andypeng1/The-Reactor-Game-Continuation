@@ -5600,3 +5600,746 @@ Windows 上**会以 LF 检出**。这是经典的批处理坏法，我准备加�
 监视器 **147930 / 2699 / `32bba692e0e078f416789972aecd192a`（`w61`，**改过**）**、
 探针 **10752 / 217 / `5acde17d2bccfa65949c9a4b2bec9a90`（未改）**。
 **下一趟两份都要重注**：`r60` 字节没变，但监视器换成 `w61`。
+
+### 64.10 开机流程的时间线（起因：用户问「开机流程懂了吗」）
+
+两次会话对照，同一个采集器、同一套钩子：
+
+| | `260926-230049`（09-26 深夜） | `261001-125206`（10-01） |
+|---|---|---|
+| 控制室四键 | `RoomLight` / `MonitorPower` / `Shutters` / `MonitorBoot` | **同样四个，同序** |
+| HDEF | **`CLICK HDEF-PowerLever` 有** | **没有** |
+| 主开关 | `StartUpLever` × **8**（一次连击里） | × **2**，相隔 2.58 s，**第一次被弹回** |
+| 注入时刻 | t=0 就抓在 `RoomLight` 之前 | t=0 注入，第一次点击在 t=9.42 |
+
+10-01 那趟的完整时间线（`t` 是采集器自己的钟，注入 = 0）：
+
+```
+ 0.00  （普查）DRM 屏上已挂着两条 NOTICE：
+       NOTICE: ACTIVATE THE HDEF GENERATOR TO PREVENT POTENTIAL CONTROL ROOM RADIATION
+       FLIP MASTER SWITCH TO START-UP POSITION
+       s.HDEF.IntegrityVal = 12（不是 0）
+ 9.42  CLICK RoomLight → MonitorPower → Shutters → MonitorBoot
+24.12  悬停主开关 PromptText=MASTER START-UP SWITCH / "Will beep green after proper control room boot-up."
+28.62  CLICK StartUpLever #1 → 提示词翻成 MASTER SHUTDOWN SWITCH，**零条日志**
+31.20  提示词已回到 MASTER START-UP SWITCH → CLICK StartUpLever #2 → 链开始
+31.20  [ALERT] SUBSPACE REACTOR START-UP SEQUENCE INITIATED
+31.20  [WARN] ALL PERSONNEL ARE TO VACATE THE CHAMBER IMMEDIATELY
+31.20  [WARN] ACTIVATING POWER EXTRACTION ASSEMBLY
+61.25  PRIMING ISOTOPE E COOLANT NETWORK
+71.02  CALIBRATING REACTOR SENSOR NETWORK / E-VENT STRUCTURES PRIMED
+71.02  [WARN] SUBSPACE RIFT ACTIVE, RADIATION WARNING
+84.16  PRIMING CHAMBER ATMOSPHERIC REGULATORY SYSTEM
+84.45  [WARN] INITIATING DEEP SCAN PROCEDURE
+93.19  DEEP SCAN PROCEDURE COMPLETED
+107.03 [ALERT] PRIMING ALL COMBUSTION LASERS
+109.12 M.E.T.U DIAGNOSTICS ACCEPTABLE
+119.65 [ALERT] ALL SYSTEMS READY, CORE IGNITION IMMINENT
+119.65 [WARN] ELECTROMAGNETIC ANOMALIES DETECTED / ANOMALY PROCEDURE OVERRIDEN BY PRIORITIZED DIRECTIVE
+125.89 [ALERT] COMBUSTION LASERS FIRING
+142.34 [ALERT] START-UP COMPLETED
+142.34 [WARN] COMPLETE MAINFRAME CRASH DETECTED
+145.46 [WARN] MAINFRAME OPERATIONAL CAPACITY MAY BE REDUCED IN FUTURE ACTIVATIONS
+145.46 [WARN] MULTIPLE ELECTROMAGNETIC ABNORMALITIES DETECTED
+145.46 PLEASE REFER TO [DIGITAL REACTOR MANUAL] FOR FURTHER INSTRUCTIONS
+150.99 COREGATE s.GameActive=true
+```
+
+**「开机」是三段，不是一段：**
+
+1. **手**（0–31 s）：四个控制台按钮，加主开关那一下。**只有被接受的那一下就够** ——
+   `260926-230049` 那趟连按 8 次也只起来一条链。
+2. **机器**（31.20–142.34 s，**111.1 秒**）：**全自动，一条点击都没有**。
+   日志面板是这段时间唯一的外部可见进展。
+3. **闸**（142.34–150.99 s）：原版自己喊 `START-UP COMPLETED` 之后 **8.65 秒**，
+   `s.GameActive` 才翻真。
+
+**两个脚本分别挂在第 2 段和第 3 段的缝上：**
+
+- 采集器 `COREGATE` 判 `s.GameActive` → **t=150.99**。判据是「核心真的开了」而不是
+  「按钮被按了」，正是用户那条「核心完全开启前不要采集温度、压力等」。
+- 监视器记录窗口判 `ClickDetector` → `opened_at=29.73`，**开在第一次（被弹回的）按上**。
+  按字面要求（「玩家按下开机按钮时开始监听」）这是对的；代价是窗口比「算数的那一下」
+  早约 **1.5 s**，而且那 1.5 s 里什么都没发生（28.62 到 31.20 之间零事件）。
+
+**没验的，别当成结论：**
+
+- **主开关的确切放行条件。** 能确定的只有：提示词自己写着 "Will beep green after proper
+  control room boot-up."，28.62 那一下被弹回（提示词在同一采样里翻成 `MASTER SHUTDOWN SWITCH`，
+  下一次采样已经回到 `MASTER START-UP SWITCH` —— 扳过去又弹回来），31.20 那一下被接受。
+  **服务端的谓词在原版里，读不到**，「控制室启动完成」是提示词的说法，不是我验过的判据。
+- **HDEF 那一腿。** 10-01 这趟 35 次点击里**没有** `HDEF-PowerLever`，09-26 那趟有；
+  而 `s.HDEF.IntegrityVal` 在注入普查时**已经是 12**（不是 0），随后 139→151 s 从 12 涨到 99。
+  **两种解释在字节上同形**：要么注入前就已经扳过了，要么它不必须手扳。
+  能确定的只有一件：**这一趟的 `HDEF.IntegrityVal` 不是从 0 起步的。**
+  **不问用户** —— 它不改变任何一行代码，记下来就够（§1.4 第 4 条不是「什么都去问」）。
+- `COMPLETE MAINFRAME CRASH DETECTED` 与「HDEF 没扳」**有没有因果 —— 查了，没有**。
+  （这一条我先写错了一次才去数，记在这里以免再犯：我当时的理由是「那趟也崩」，凭印象写的。）
+
+| 那趟 | `HDEF-PowerLever` 点击数 | `COMPLETE MAINFRAME CRASH` | `COMPUTATIONAL BENCHMARKS` |
+|---|---|---|---|
+| `260926-230049` | 2 | **0** | 7 |
+| `260927-111843` | 2 | **3** | 0 |
+| `260930-200834` | 1 | 0 | 4 |
+| `261001-125206` | **0** | 4 | 0 |
+
+  **扳了 HDEF 的趟照样崩**（`260927-111843`），所以 HDEF 不是这条的分水岭。
+  四趟分成两类的是**另外两个标记**：`COMPUTATIONAL BENCHMARKS UNSATISFIED` 只出现在
+  `260926` / `260930` 那两趟，`COMPLETE MAINFRAME CRASH` 只出现在 `260927` / `261001`
+  那两趟 —— 而 `MAINFRAME OPERATIONAL CAPACITY MAY BE REDUCED IN FUTURE ACTIVATIONS`
+  这句话自己就在说这是**重复开机**的代价，所以更可能的解释是「这是本 session 的第几次开机」，
+  **但这一层我没验，不作为结论**。它属于原版剧情脚本，不影响本工程任何一行代码，不再追。
+
+---
+
+## Phase 65（2026-10-01）—— AIRemake 的开机：把占位符换成量出来的 16 步链，给 `engine.events` 第一个真读者  [DONE — 本机验过；收尾时 Studio 被我自己的脚手架卡死，见 65.7]
+
+用户原话一句：「**那你现在在STUDIO里面做**」——落点是 remake（`The Reactor : AIRemake`，
+placeId `83752844701736`），不是原版注入那边。起因是他更早那句「你根本不会做开机」。
+
+**做之前 remake 的开机长什么样。**`Config.Shift` 自己写着
+「Durations below are reconstruction presentation defaults, not measured rules」，
+`BootSeconds=3, StartupSeconds=8, ShutdownSeconds=5`；`Engine:Step` 的 `Starting` 支
+在 `phaseTime>=8` 之后做三件事，**整场开机只写一行日志**：`self:Log('INFO','Reactor online')`。
+而原版那边量到的是一条 **113 秒、16 行**的分级消息链。
+
+**还有一条同类旧账。**`engine.events` 全 DataModel **没有任何读者** —— 唯一提到它的
+`MCP_FlowCollector` 读的是它**自己 new 出来的**私有 engine。`Engine:Log` 一直在往空气里写。
+这是 Phase 54 的 `judged` 同一类：**只写不读，而文档在替它说话。**
+
+### 65.1 这条链怎么量出来的（可复现）
+
+**出处**：`Data/flow/original_*` 那些趟里，recorder 会把整个 `SYSTEM LOGS` 面板倒出来
+（专用别名 `log.panel`），链就在那里面。**复现一条命令**：
+
+```
+/c/Python314/python _tools/_attic/scratch/startup_chain.py
+```
+
+这一轮把这个脚本从「只逐趟列行」扩成**把中位数表自己算出来**，因为 `Config` 的注释里
+要写「reproducible from」那个文件 —— **注释说什么，文件就得真能做什么**（DECISIONS 212）。
+过程中修了两处：
+
+- **「链头」不是第一行。** 每趟的第一个不同行都是 `E INITIATED` —— 那是**存档里
+  `TemplateLogFrame3.TextLabel` 的残字**（更早一次 session 的 `…SEQUENCE INITIATED`
+  滚掉后剩下的尾巴），不是这一趟的开机。锚点改取 `SEQUENCE INITIATED` 那一行，
+  比它早的一律丢弃。**这行残字本身就是证据**：这条链当初确实是经那几格渲染的。
+- **主干 = 出现在 ≥4/5 趟里的行。** 两个变体各 3/5、点火之后的运行期消息也 3/5，
+  **cut 底下有一条看得见的 4→3 的沟**，不是手挑的终止符。不到 5 是因为最后两行
+  在没跑完链的 `260930-200834` 里根本不存在。
+
+**结果：主干 16 行**（`n` = 出现的趟数；文本带游戏自己的 `<b>` 标记，见下）：
+
+| # | 消息（前缀省略 `<b>`） | 中位偏移 | n | hold |
+|---|---|---|---|---|
+| 1 | `[ALERT] SUBSPACE REACTOR START-UP SEQUENCE INITIATED` | 0.0 | 5 | 0 |
+| 2 | `[WARN] ALL PERSONNEL ARE TO VACATE THE CHAMBER IMMEDIATELY` | 0.0 | 5 | 0 |
+| 3 | `[WARN] ACTIVATING POWER EXTRACTION ASSEMBLY` | 0.0 | 5 | 0 |
+| 4 | `PRIMING ISOTOPE E COOLANT NETWORK` | 29.4 | 5 | 29.4 |
+| 5 | `[WARN] SUBSPACE RIFT ACTIVE, RADIATION WARNING` | 33.4 | 5 | 4.0 |
+| 6 | `CALIBRATING REACTOR SENSOR NETWORK` | 33.4 | 5 | 0 |
+| 7 | `E-VENT STRUCTURES PRIMED` | 33.4 | 5 | 0 |
+| 8 | `PRIMING CHAMBER ATMOSPHERIC REGULATORY SYSTEM` | 45.1 | 5 | 11.7 |
+| 9 | `[WARN] INITIATING DEEP SCAN PROCEDURE` | 46.6 | 5 | 1.5 |
+| 10 | `DEEP SCAN PROCEDURE COMPLETED` | 55.4 | 5 | 8.8 |
+| 11 | `[ALERT] PRIMING ALL COMBUSTION LASERS` | 69.6 | 5 | 14.2 |
+| 12 | `M.E.T.U DIAGNOSTICS ACCEPTABLE` | 71.2 | 5 | 1.5 |
+| 13 | `[ALERT] ALL SYSTEMS READY, CORE IGNITION IMMINENT` | 82.2 | 5 | 11.1 |
+| 14 | `[ALERT] COMBUSTION LASERS FIRING` | 82.2 | 5 | 0 |
+| 15 | `[ALERT] START-UP COMPLETED` | 109.5 | 4 | 27.2 |
+| 16 | `PLEASE REFER TO [DIGITAL REACTOR MANUAL] FOR FURTHER INSTRUCTIONS` | 113.4 | 4 | 4.0 |
+
+**两个估计量互校。**hold 之和 **113.4 s**；四趟自己的端到端总时长是
+**91.4 / 112.6 / 114.3 / 151.7**，中位 **113.44**。一个是「中位之差的和」，
+一个是「和的中位」—— 两条路各自走，**差 0.04 秒**。
+
+**逐趟矩阵**（脚本也打它；中位数只有底下那层散布撑着，而散布很宽）：
+
+```
+  message                                             230049     111843     123212     200834     125206
+   1 SUBSPACE REACTOR START-UP SEQUENCE INITIATED        0.0        0.0        0.0        0.0        0.0
+   2 ALL PERSONNEL ARE TO VACATE THE CHAMBER IMMEDIATELY 11.4        0.0        0.0        8.9        0.0
+   3 ACTIVATING POWER EXTRACTION ASSEMBLY               11.4        0.0        0.0        8.9        0.0
+   4 PRIMING ISOTOPE E COOLANT NETWORK                  29.4       66.5       23.6       26.5       30.0
+   5 SUBSPACE RIFT ACTIVE, RADIATION WARNING            33.4       85.9       32.7       30.4       39.8
+   6 CALIBRATING REACTOR SENSOR NETWORK                 33.4       76.3       32.7       30.4       39.8
+   7 E-VENT STRUCTURES PRIMED                           33.4       76.3       32.7       30.4       39.8
+   8 PRIMING CHAMBER ATMOSPHERIC REGULATORY SYSTEM      35.9       85.9       45.1       30.4       53.0
+   9 INITIATING DEEP SCAN PROCEDURE                     36.5       90.4       46.6       33.8       53.2
+  10 DEEP SCAN PROCEDURE COMPLETED                      45.0       99.0       55.4       47.4       62.0
+  11 PRIMING ALL COMBUSTION LASERS                      58.0      114.5       69.6       58.3       75.8
+  12 M.E.T.U DIAGNOSTICS ACCEPTABLE                     60.6      119.2       71.2       58.3       77.9
+  13 ALL SYSTEMS READY, CORE IGNITION IMMINENT          71.1      119.2       82.2       68.0       88.5
+  14 COMBUSTION LASERS FIRING                           71.1      125.1       82.2       68.0       94.7
+  15 START-UP COMPLETED                                 86.3      146.5      107.8          -      111.1
+  16 PLEASE REFER TO [DIGITAL REACTOR MANUAL]…          91.4      151.7      112.6          -      114.3
+```
+
+**散布是这条链最重要的性质：最短 91.4、最长 151.7，同一台机器同一套消息。**
+所以 **`StartupSeconds` 不能是一个常数** —— 把 8 改成 111 就是把一趟的运行时间
+当成机器的规则，正是 §0.0 反复警告的那种错。能带的只有**逐段 hold**。
+
+### 65.2 两处量化，写下来免得下一个人当成精确测量
+
+- **时间戳是轮询量化的。** recorder 只在**有变化**时写盘，一条安静段可以十几秒
+  没有一次轮询，所以**间隔只在组与组之间可靠**，组内不可靠。
+- **组内顺序不可观测。** 同一拍出现的几行（第 5/6/7、第 13/14）在 dump 里是
+  **按字符串排过序的**（recorder 的 `snapshot()` 收集完 `table.sort`，见 65.3），
+  「先 `CALIBRATING` 还是先 `E-VENT`」**不在字节里**。`Config` 表里同组内的先后
+  **是任意的**，能保证的只有它们落在同一秒。第 5/6/7 组就是例证：
+  四趟三者同拍，唯独 `260927-111843` 那趟 `SUBSPACE RIFT` 比另两行晚 9.6 秒，
+  中位数把三者并了回去。
+
+### 65.3 面板：为什么是四行
+
+原版面板 `Monitors.LogControlRoomMonitor` → `Screen.MonitorUI.MainMonitorFrame`
+（`TitleText = "SYSTEM LOGS"`、一个空的 `LogsFrame`、三个 `TemplateLogFrame1/2/3`）。
+**remake 里同名实例已经在了**，而且带着原版存档时的残字（`TemplateLogFrame3.TextLabel`
+= `E INITIATED`）。三个模板 `Visible=false`、`Size={1,0},{0,60}`、`RichText=true`、
+`TextScaled/TextWrapped=true`，**只在 `TextLabel.TextColor3` 上不同**：
+`0.667,1,1`（青）/ `1,0.667,0`（橙）/ `1,0.306,0.306`（红）—— 这是一张**严重度色键**。
+
+**行数取四**：`LogsFrame` 是 340×365，`UIListLayout` 的 `Padding` 是 `{0,20}`，
+行高 60 → **365/(60+20) = 4.56 → 四行**。另外 `panel_growth.py` 在
+`original_260926-230049` 里数到过**一次性 27 行**（重复消息洪水），说明原版这块
+是**无上限增长的**；remake 取四行是**按几何容量取**，不是照抄那个 27 ——
+要的是「屏幕放得下几行」而不是「某一趟洪水时挤了几行」。
+
+**`RichText=true` 决定了消息文本要连 `<b>` 一起存。** 不是装饰、不是抓取artifact，
+是 payload。所以 `StartupSteps[i].text` 里那对 `<b></b>` 是**照抄原版**。
+
+### 65.4 变体：不实现，写进注释备案
+
+| 分支 | 出现在 | 行 |
+|---|---|---|
+| A | `260926-230049`、`260930-200834` | `EXCESSIVE ENERGY FLUCTUATION EVENT DETECTED`、`COMPUTATIONAL BENCHMARKS UNSATISFIED`、`TESSERACT MAINFRAME OVERCLOCK INITIATED`、`QPU DEGREDATION ESTIMATED AT 250% FROM STANDARD RATE` |
+| B | `260927-*`、`261001-125206` | `ELECTROMAGNETIC ANOMALIES DETECTED`、`ANOMALY PROCEDURE OVERRIDEN BY PRIORITIZED DIRECTIVE`，尾部另有 `COMPLETE MAINFRAME CRASH DETECTED` + `MAINFRAME OPERATIONAL CAPACITY MAY BE REDUCED IN FUTURE ACTIVATIONS` |
+
+**分支条件没量出来**（早先已知与 HDEF 无关，四趟表已否掉那个因果）。
+尾部那几行描述的是**永久损失**（原文 "IN FUTURE ACTIVATIONS"），那是**玩法机制**，
+§1.4 第一条禁止我在没被要求的情况下去动它。**只实现五趟共有的主干。**
+
+### 65.5 改动四处
+
+1. **`Config.Shift.StartupSteps`（新）** —— 16 条 `{hold, kind, text}`，就是上表。
+   `kind` 与文本里的 `<b>` 前缀**分开存**：文本是 payload，`kind` 是给
+   「想按严重度上色/过滤、但不想解析一行富文本」的读者用的。
+2. **`Config.Shift.StartupSeconds`** —— **没删，改成派生**：文件尾一个循环把它算成
+   hold 之和（实测读到 **113.4**）。删除它的读者只有 `Engine:Step` 一处，
+   但留一个**由表算出来的**值比留一个**人写的**值安全：表改了它跟着动，
+   不会出现「表 113 秒、常数 8 秒」那种两个真相。**注释跟着改** ——
+   旧注释说 hold 是「per-gap medians and sum to 96.5」，而旧表其实**不是**中位差
+   （24 写在中位差 29.4 的位置、16.5 写在 27.2 的位置），**旧注释是一句假话**。
+   这一轮重算把它抓出来了，表与注释一起改。
+3. **`Engine`** —— `state` 增加 `startupStep` / `startupHold`；`Engine:AdvanceStartup()`
+   按表推进，**跨过的每一拍都发日志**（掉一拍就等于玩家看见机器「解释不了地做了一件事」）；
+   `Running` 由**走完链**进入，不再由 `phaseTime>=StartupSeconds` 进入；
+   第 3 条那条「三件事」（赋 `StartupTemperature/Pressure`、点亮 CBL、`phase='Running'`）
+   **落在最后一条消息的同一拍**。`Command('start')` 里同步调一次 `AdvanceStartup()`，
+   让三条 `hold=0` 的消息在**扳开关那一拍**就出去。
+   **单一写入者没变**：`phase` 仍只有 `Engine` 写，新状态全在 `Engine` 内部。
+4. **`LogPanel`（新模块）+ `Runtime` 挂上** —— `LogPanel.Refresh(engine)` 取
+   `engine.events` 里**最新的四条**可显示事件（`SHOWN = {ALERT, WARN, ERROR, INFO}`，
+   **`CONTROL` 故意排除**：`Engine:Command` 每条被接受的指令都会写一条 `CONTROL`，
+   那是审计不是给玩家看的），按 `kind` 选模板色，**clone 进 `LogsFrame`**，
+   `Visible=true`、`LayoutOrder` 升序。`Runtime` 在**三处**调它：初始化（31 行）、
+   `ControlBinder` 的 publish 回调（38 行，在 `StateBridge.Publish` 之前）、
+   以及 Heartbeat 块里（55 行，在 `RefreshSeconds=1` 的累加器内）。
+
+   **为什么不写进模板本身**：模板是**原版美术的一部分**（`Visible=false`、
+   三格各自的文字是存档残字），改它就是改世界。**clone 是唯一不动原件的写法**，
+   每次刷新**先销毁旧 clone 再建新的**，所以退出时 `LogsFrame` 回到
+   「只有一个 `UIListLayout`」的原样。
+
+### 65.6 验证（§4.4）
+
+**A. 引擎走链 —— 在 Edit 插件的活 VM 里，喂假时钟跑完整条链。**
+（`require` 缓存按 §0.15 处理：`Config` 与 `Engine` 各 `Clone()` 一份到临时 Folder 再 require。）
+
+先把话说清楚：**开机开关不是随便就能扳的**，`Command('start')` 的守卫是
+`phase=='Ready' and booted and monitorPower and shuttersOpen`，
+所以脚手架必须先 `monitor_power → shutters → boot`，再把时钟走到 `Ready`（`BootSeconds=3`）。
+
+结果（改表**之后**那一趟）：
+
+| 断言 | 结果 |
+|---|---|
+| A1 条数 = `#StartupSteps` | PASS（16） |
+| A2 逐条文本相等 | PASS |
+| A3 逐条 `kind` 相等 | PASS |
+| A4 翻 `Running` 的时刻 = hold 之和 | PASS（**113.4**） |
+| A4b 和 = 独立字面量 113.4 | PASS |
+| A4c 和落在实测包络 86.3..146.5 内 | PASS |
+| A5 最后一条之前不翻 `Running` | PASS |
+| A6 翻的那一拍 temp/press = `StartupTemperature/Pressure` | **FAIL** |
+
+**A6 的红是我断言写严了，不是代码错。** 走完链的那一次 `Step` **在同一条 `Step` 里
+继续跑了一拍 `Running` 物理**，所以读回来是 `9435.62 / 4990.72` 而不是 `9420 / 5000`
+—— 而**被替换掉的旧代码形状完全一样**（`phase='Running'` 也是在 `Step` 里设完就往下走），
+所以这不是这一轮引入的行为。**要证明「常数是被读的、不是被内联的」，正确做法是
+喂一个哨兵值**（把 `Sim.StartupTemperature` 设成 12345 看核心是不是在 12345 附近起来）
+—— 那条**没跑完**，见 65.7。
+
+**变异测试**（Phase 62 的纪律）：`startupStep < 1`（第一条就翻 `Running`）→
+A1/A2/A3/A4 **红**；`hold[4] = -24`（链缩短）→ **A4b/A4c 红**；最后一条 hold 5→60 →
+**A4b/A4c 红**；删掉第 16 条 → **A4b 红**。
+
+**一个必须写下来的盲点**：**交换两条 hold 而总和不变**（例如 4/5 两条），
+**全部断言仍然 PASS**。理由是结构性的：轮询量化过的采集**给不出逐条消息的时间戳**，
+所以任何「总和不变、内部重排」的改动都不可验。这不是断言写得不够，是**证据里没有那个信息**。
+
+**一条被翻出来的自指**：A4 最初写成「翻的时刻 >= `StartupSeconds` - 0.2」，
+而 `StartupSeconds` 是**从同一张表算出来的** —— 拿表跟表自己比，
+任何 hold 改动都跟着动，和 DECISIONS 95 那条同义反复一模一样。
+`hold[4] = -24` 那趟**A1–A5 全绿**就是它漏的。**A4b/A4c 是为此加的**，
+比的是**独立转录的字面量**和**实测包络**。
+
+**B. 面板 —— 读实例状态（§0.2）。** 4/4 PASS：最新四条、颜色跟着 `kind`、
+`CONTROL` 被滤掉、模板三格的 `Text` 与 `Visible` **一个字没动**、
+`LogsFrame` 退出时回到 1 个子物体。变异「取最旧四条」→ **红**。
+
+**A6 的替代 —— 哨兵（Studio 重启后补跑，2026-10-01）。** A6 那条（比 `9435.62` 与 `9420`）
+**测不出「常数是被读的还是被内联的」**，因为被内联时**两边会因为同一拍物理偏移同样的量**。
+能分辨的是**哨兵**：把 `Sim.StartupTemperature` 改成 `12345`、`Sim.StartupPressure` 改成 `678`，
+看翻转处读到什么。为了躲开物理污染，**直接调 `AdvanceStartup`**（`startupStep` 拨到最后一条、
+`startupHold` 设成 1e6）：它赋完 `temperature/pressure` 就返回，**中间不放任何一拍物理**，
+所以比较可以**精确相等**，不是约等。
+
+补跑结果 **13 PASS / 0 FAIL**：A0 预备（`monitor_power→shutters→boot`→`Ready`）、A1 文本 16/16、
+A2 `kind`、A3 和 113.4、A4 翻转时刻 **113.40**、A5 第 16 条之前不翻 `Running`（`msgsAtFlip=16`）、
+A6 翻的那拍 `phase=='Running' and failure==nil`；B1 真值 `9420/5000`、**B2 哨兵 `12345/678`**；
+C1 `Reset` 换新表、C2 游标清零、C3 回 `Cold`/`shift=2`、**C4 旧表仍是孤儿**（`Running` vs 活表 `Cold`）。
+
+**变异（每条新断言配一个必须变红的）—— 只活在那一通调用里的临时克隆，跑完即毁：**
+
+| 变异 | 结果 |
+|---|---|
+| 第 88 行 `c.Sim.StartupTemperature` → 字面量 `9420` | **B2 红**（哨兵读到 `9420/678`）；**B1 仍绿** |
+| `Reset` 把 `startupHold` 播成 99 | **C2 红** |
+| `Reset` 改成 `self.state = self.state or {…}`（不换表） | **C1 红、C4 红** |
+
+第一行是**关键差分**：把值写死之后，**比真值那条（B1）照样绿**，只有**哨兵那条（B2）**变红。
+这正是 B1 这一类断言测不到的 —— 和 DECISIONS 95 的同义反复是同一张脸的另一半：
+**拿表和它自己比测不出内联，拿哨兵去比才测得出**（取舍 **225**）。
+
+**面板（重启后只读复查）**：`LogsFrame` **340x365**、`UIListLayout` padding offset **20**、
+**子物体 0 个**（被杀掉的那趟没留下克隆）；三个模板 `Visible=false`、340x60、
+颜色 `170,255,255` / `255,170,0` / `255,78,78` —— 与 65.3 的推断**逐项相等**；
+`TemplateLogFrame3` 里那句陈旧的 `E INITIATED` **原封未动**（模块承诺不碰模板，成立）。
+
+### 65.7 Studio 卡死：我的脚手架把自己的参考弄陈旧了
+
+跑哨兵那条时，我写了：
+
+```lua
+local S2 = eng2.state          -- 表 A
+...
+eng2:Reset(1)                  -- eng2.state 换成表 B，S2 仍指表 A
+while S2.phase ~= 'Ready' do eng2:Step(0.1) end   -- 永远读表 A 的 'Starting'
+```
+
+**`Engine:Reset` 整个替换 `state` 表**（这是它故意的：让每个服务重取引用），
+于是 `S2` 是一张**再也不会变的旧表**，那个 `while` **永不退出**，而且
+**`Engine:Step` 不让帧** —— 官方插件的线程被占死，此后**每一个** MCP 调用
+（连 `return 'alive'`）都超时。**数据模型没坏**（那段代码只动插件 VM 里的一张私有表），
+自动保存开着（§0.9），但 Studio 得**重启**。
+
+**这是 §0.2 那条教训的反面**：那条说「不要读模块状态，要读实例状态」；
+这条说**手里握着的那个表引用会过期**。两条同一个根：**状态换了容器，引用得重取**。
+**`Engine:Reset` 换整张表是设计，不是事故** —— 事故是我把引用缓存了。
+
+**重启后的收尾（2026-10-01 已做）：** `ServerScriptService.ClaudeBench65` **自己没了** ——
+卡死前那次没被保存下来，所以「重启后要删」这条**自动结清**。但重启后普查发现**另一个**
+脚手架 `ServerScriptService.PanelProbe`（装着 `Engine` / `LogPanel` 两份 clone）**存下来了**，
+已删。删前**逐字符**比过：`Engine` `17703/17703` 相同、`LogPanel` `6924/6924` 相同，
+且 grep 全 DataModel **没有任何脚本提到 `PanelProbe`**（`Runtime` require 的是
+`ReactorBackend.LogPanel`，第 14 行），所以删掉不丢东西。**它不是工程的一部分，重建一次就有。**
+
+### 65.8 没做的、没验的（别当成结论）
+
+- **`BootSeconds` 没量到，所以 `BootFrame` 没动。** 10-01 那趟从 MONITOR BOOT 到
+  被接受的扳开关是 **21.8 s**，09-26 那趟却 **≤11 s**，两趟互相矛盾。
+  `BootFrame`（`TitleText1..6` = `STANDARD BOOT UP INITIALIZED` … `RESUMING NORMAL OPERATION`）
+  是 `RoomShell` 按 phase 切 `Visible` 的**已有静态美术**，工作正常。**没量到就不假装量到。**
+- **世界侧的逐段效果不做。** 原版那 110 秒里玩家能看到的**只有这块日志面板**（已量到），
+  所以补上面板 = 补上「能看到的开机」；但这**不等于**补上了 E-VENT 真排气、激光真打。
+- **`s.GameActive` 的 8.65 s 偏移只记录不改。** 原版是 `START-UP COMPLETED` 之后
+  8.65 s 才翻真（142.34 → 150.99），而 remake 的 `StateBridge` 现在把 `Starting`
+  也算作 active。这是全链里**唯一一处 remake 与原版结构性不同**的地方，
+  改它会动 `GameActive` 的语义而读者未知。**要改是独立一步。**
+- **`E INITIATED` 的生命周期没管。** 那是存档残字；remake 的模板里它**还在**
+  （我只写 clone，不碰模板）。它会不会在某个 phase 下被显示出来，没查。
+- **`MaxCatchupSteps=10` 可能让面板跳过中间行。** 一次卡顿超过 10 拍，`Update`
+  就只推进 10 拍，中间那些消息**在 `Step` 里照发**（`AdvanceStartup` 的表驱动保证
+  不漏），但**面板每秒只重画一次**，所以一帧里跨过好几条时，玩家看到的是**最新的四条**，
+  中间的可能一眼都没出现。**原版有没有这个问题，没量。**
+- ~~**A6 的哨兵证明没跑完**~~ —— **2026-10-01 重启后补跑完：13 PASS / 0 FAIL**，见 65.6。
+  补跑时那条纪律写进了 harness：**每个循环带上限**，并且**任何地方都不缓存 `state`**。
+
+### 65.9 数字
+
+| 量 | 值 |
+|---|---|
+| 主干 | **16 行**，出现在 ≥4/5 趟 |
+| hold 之和 | **113.4 s** |
+| 四趟端到端总时长 | 91.4 / 112.6 / 114.3 / 151.7，中位 **113.44** |
+| 面板可见行数 | **4**（365/(60+20)） |
+| 洪水时实测最大行数 | 27（`original_260926-230049`） |
+| 引擎断言（改动当轮） | 7 PASS / 1 FAIL（A6，断言写严，见 65.6） |
+| 引擎断言（重启后补跑） | **13 PASS / 0 FAIL**；3 个变异各自红在指定断言上 |
+| 面板断言 | 4/4 PASS；变异「取最旧四条」→ 红；重启后只读复查一致 |
+| 世界侧残留 | 0（`PanelProbe` 已删；被杀那趟的克隆没存下来） |
+
+## Phase 66（2026-10-01）—— 用户丢进来的 180 MB 辅助资料：原版监视器的逐属性写日志  [DONE — 读完了；这份资料**不在**仓库里，见 66.8]
+
+### 66.1 这是什么
+
+`Data/auxcollection/startup/ScreenChanges.txt` —— **179,788,590 字节 / 1,162,737 行**，UTF-8，
+每一行是**一次属性写入**：
+
+```
+Time:[HH:MM:SS]<-O:[Workspace.Monitors.X.Screen.MonitorUI.…]<-C:[Property]<-V:[value]
+```
+
+**1,162,737 行全部解析成功（unparsed 0）。** 只有 **7 个根**，全是
+`Workspace.Monitors.*ControlRoomMonitor`；共 **274 条不同路径**。
+
+| 属性 | 次数 | 占比 |
+|---|---|---|
+| Position | 604,715 | 52.0% |
+| Size | 550,832 | 47.4% |
+| Visible | 3,356 | 0.29% |
+| Text | 2,376 | 0.20% |
+| BackgroundTransparency | 736 | |
+| CanvasPosition | 452 | |
+| Rotation | 270 | |
+
+**94.7% 的行是一条 glitch 动画**：7 个 `GlitchEffect.GlitchFrame`，各约 157,4xx 次
+Position+Size。第二大类是 6 张功率曲线（`CBL1..3Frame.GraphImageLabel` ×7970、
+`FanFrame` ×7899、`CoreDiagramFrame.GraphFrame1/2` ×7899）。**真正「看得见」的写入只有几千条**，
+其余是每帧重画的动画 —— 所以「1.16 M 行」听起来像一个大发现，其实里面能读的是 0.2%。
+
+### 66.2 两个必须先说破的坑
+
+1. **文件顺序不是时间顺序。** 头部统计会给出 `first 19:21:59 / last 19:23:49 / span 110`，
+   但后段明明有 t=153/154。原因是**文件里恰好有一次向后跳**（写入端先冲了尾部缓冲、再冲中段）：
+   时间戳爬 0..38 → 跳到 149..158 → 再回到 48..110。**按 `Time:` 排序后真实跨度是 158 s**，
+   中间两段静默：39..47（9 s）、111..148（38 s）。**任何读这个文件的工具都必须先排序** ——
+   我先写的那个分析器就报了 `span 110`，而它自己的输出里躺着 t=153。
+2. **它是「固定后代集合」的监视器** —— 运行期**新建**的实例它看不见。所以
+   **SYSTEM LOGS 面板那四行不在这个文件里**（那正是 Phase 65 的 `LogPanel` 克隆出来的东西）。
+   7 台监视器里，`LogControlRoomMonitor` 整个文件只有 **1 条 Text 写入**（t=109 的 `DescLabel`）。
+
+### 66.3 它记下的那张「脸」
+
+| t | 事件 |
+|---|---|
+| 0 | `BootIcon.Size={0,294},{0,294}`；`BootFrame.LogFrame`/`DiagnosticFrame` 的 `BackgroundTransparency` 从 0.876 起淡入 |
+| 0–5 | `DiagnosticFrame.ScrollingFrame.TextLabel1..45` **逐个** `Visible=true`（滚动揭示，不是轮流闪烁） |
+| 1,1,2,3,3,5 | `LogFrame.TitleText1..6` 逐个 `Visible=true`；**t=5–6 全部 `false`**（显示完就收） |
+| 8 | `BootFrame.CompanyLogo` Visible —— **只在 Main / Thermal / Power 三台上** |
+| 14 | `PreStartupFrame` Visible=true —— **7 台全部** |
+| 21 | `PreStartupFrame` false、`MainMonitorFrame` true —— 7 台全部（**开机到主界面 ≈ 21 s**） |
+| 49/61/84/92/98/104/106/153/155 | `Quota…TimeLabel`：11:51 → 11:52 → 11:53 → 11:54 → 11:55 → 11:56 → 11:57 → 11:58 → **11:59 PM** |
+| 52–74 | `Forecast…AnnouncementFrame` 闪现两轮 |
+| 58 | 热端 `FanFrame.GraphImageLabel` 上线；`Main.ReadingsFrame.RadiationLabel` 从 `2 R` 起爬 |
+| 61–63 | 6 个 `FanFrameN.StatusLabel = "ON"` |
+| 67 / 71 | `AnnouncementText` = `PROCESSING DEEPSCAN TELEMETRY` → `ANOMALY DETECTED, MARGIN ~12:00 AM` |
+| 84 | CBL1..3 `StateLabel = "POWERING"`；`GraphImageLabel` 上线 |
+| 102 | CBL1..3 `StateLabel = "FIRING"` |
+| **109** | `ErrorFrame.Frame.DescLabel = "MAINFRAME CONNECTION LOST"`（4 台）；`ErrorFrame.Frame.InfoLabel = "POSSIBLE CRASH DETECTED, SYSTEM REPAIR IN PROGRESS. IF THIS IS A REOCCURRING ISSUE, PLEASE"`（3 台 = Main/Thermal/Power）；`MainMonitorFrame` **7 台全 false**、`ErrorFrame` **7 台全 true** |
+| 152 | CBL1..3 `StateLabel = "ACTIVE"` |
+| 153 | `BootFrame.LogFrame.TitleText1 = "QUICK BOOT UP INITIALIZED"`；`ErrorFrame` 7 台全 false |
+| 154 | `MainMonitorFrame` 7 台全 true；`TitleText1..6` 又 Visible 一轮再收 |
+| 157 | `ReadingsFrame.FluctuationLabel = "127 F"` |
+
+### 66.4 它给 Phase 65 补上的那两格
+
+**(a) `Booting` / `Ready` 两段的时长第一次有数。** `RoomShell.faceFor` 的映射是
+`Booting → BootFrame`、`Ready → PreStartupFrame`、`Starting/Running → MainMonitorFrame`。
+实测 **BootFrame 段 ≈ 14 s（0→14）＋ PreStartupFrame 段 ≈ 7 s（14→21）＝ 21 s**，
+与 10-01 那趟的 **21.8 s** 互相印证。
+
+**(b) 「quick boot」是**同一次会话里的第二趟**，不是标准开机的替代品。** t=153 的
+`QUICK BOOT UP INITIALIZED`（Phase 65 备注里 `COMPLETE MAINFRAME CRASH DETECTED` 正是同族尾行）：
+153 关 ErrorFrame，154 就回 MainMonitorFrame，1~2 秒。
+**2026-10-01 更正：** 下面那句「短的那趟很可能是 quick boot」**当初的理由是错的** ——
+它当时不知道 t=0 是按钮，所以把「这趟是 quick boot」当成了备选解释；而用户随后证明
+**这一趟 t=0 起就是完整的 standard startup**，quick boot 是在它**之后**、由崩溃引出的恢复趟
+（`MAINFRAME CONNECTION LOST` 在 t=109）。所以 quick boot 不是「另一种开机」，
+而是**崩溃后的快速恢复**：09-26 那趟短，仍然**只是猜测**，理由从「可能是另一种开机」
+换成了「可能是撞上过一次崩溃」——**依旧没量到**，依旧不许据此改 `BootSeconds`。
+
+**(c) 帧序列与 `RoomShell.faceFor` 逐段吻合** —— 这是**第二条独立通道**对同一件事的验证：
+Boot→PreStartup→Main→Error→Main，四段与 `faceFor` 的 phase 分支一一对应；
+`BootFrame` 只长在 3 台上，与 `if mon.boot then` 及 RoomShell 头注「五台小监视器没有诊断屏」一致。
+
+### 66.5 它**没有**验到什么（必须分开写）
+
+- **`StartupSteps` 那 16 条消息不在这个文件里**（运行期克隆的行，见 66.2）。所以这份资料
+  **既不能证实也不能否证** Phase 65 的表 —— 它走的是另一条通道，测的不是同一个对象。
+  **「独立验证」只有在两次测的是同一个东西时才算数。**
+- **没有世界侧**（部件、光照、音效）—— 只有 `Workspace.Monitors.*` 的 GUI 属性。
+- ~~**t=0 之前的开场没抓到**~~ —— **本条写错了，2026-10-01 由用户纠正，见 Phase 67.1。**
+  真实的结论分两半：`TitleText2..6` 只有 `Visible` 写入、**没有 Text 写入**，说明它们的文本是
+  **静态美术**（这一半对，与 Phase 65 的判断一致）；但「抓取开始时就已在开机中」是**反的** ——
+  t=0 正是 `MonitorBootButton` 被按下的那一刻，这一趟**从头就是完整的 standard startup**。
+  会话顺序：(a) `TitleText1` 在**整个标准开机窗口里一次 Text 写入都没有**，而 remake 里这个
+  label 的静态初值就是 `STANDARD BOOT UP INITIALIZED` —— **没被写过的那个默认值本身就是「standard」**；
+  (b) `QUICK BOOT UP INITIALIZED` 这个字符串在同一份文件里、t=153 才出现。两件事同时成立时，
+  「抓取开始得太晚」就被排除了。
+- `InfoLabel` 断在 `…ISSUE, PLEASE` —— 是 label 定宽截断，不是消息真的到此为止。
+
+### 66.6 为什么能断定这是原版
+
+四条独立证据（对 remake 的活会话跑的 grep）：
+
+1. `MAINFRAME CONNECTION LOST` —— 脚本里 **无匹配**；
+2. `DescLabel` —— **无匹配**；
+3. `QUICK BOOT UP` —— **无匹配**；
+4. 全 DataModel 减 SS，`ReadingsFrame|TempLabel|StateLabel|AnnouncementText` —— **hits = 0**。
+
+反过来量到一件**新事实**：remake 的 7 台监视器一共有 **487 个 TextLabel、其中 485 个非空** ——
+全是**静态美术**（`AlertFrame1..27` 的 `RECT ACTIVATION` / `SUBSPACE FIELD ACTIVE` / …、
+`SmallLogo` 的 `SYNTHESIS MANUFACTURING CO.`、`ShutdownFrame` 的两行说明…）。
+整个 `ReactorBackend` 里**只有一处** `.Text =` 写入：`LogPanel:127`。
+**所以 Phase 65 补上的那一块面板，至今仍是 remake 监视器上唯一会动的文字。**
+
+（旁证：`ServerStorage.Data.DataCollection` **读**监视器 label —— `label.Text`、
+`s.Text == "ON"`、`textLabel.Text` —— 但它住在 SS 里，而 SS 的脚本永远不跑（§0.12），
+所以它是一份**存在、但永不动**的读者。这条与 §0.12 那三条推论同源。）
+
+### 66.7 数字
+
+| 量 | 值 |
+|---|---|
+| 文件 | 179,788,590 B / 1,162,737 行 / unparsed **0** |
+| 真实跨度 | **158 s**（文件头自称 110 s，是顺序 artifact） |
+| 根 | 7（全是 `Workspace.Monitors.*ControlRoomMonitor`） |
+| 不同路径 | 274 |
+| Position+Size 占比 | **99.4%** |
+| 单条 glitch 动画 | ≈157,4xx 次 × 7 台 |
+| 非空 TextLabel（remake 7 台） | **485 / 487** |
+| `ReactorBackend` 里的 `.Text =` 写入点 | **1**（`LogPanel:127`） |
+| 标准开机（Boot→Main） | **21 s**（= 0→14 加 14→21） |
+| quick boot（Error→Main） | **1~2 s** |
+
+### 66.8 产物与那条 180 MB
+
+`_tools/_attic/scratch/` 下三个流式、ASCII-only 分析器 + 三份产物：
+`aux_screenchanges.py` → `aux_report.txt`、`aux_timeline.py` → `aux_timeline.txt`、
+`aux_narrative.py` → `aux_narrative.txt`（3408 行，**排序后才报**）。**都只读，不碰工程。**
+
+**那 180 MB 不许进仓库。** 它是用户丢在工作目录里的资料，不是工程产物；而且**单文件 180 MB
+超过 GitHub 的 100 MB 硬上限** —— 一次误 `git add -A` 不是「仓库变大」，是**推不上去**。
+`.gitignore` 已加一段挡住 `Data/auxcollection/`，理由写在注释里。
+
+### 66.9 没做的
+
+- 没把这 158 s 与世界侧对齐（这份资料里没有世界）。
+- 没去追 `11:51 PM → 11:59 PM` 那九次时钟写入的**速率**是正常班次还是加速测试场 ——
+  文件里只有 label 文本，推不出班次表；**记下来，不当结论**。
+
+
+---
+
+## Phase 67（2026-10-01）—— 开机屏：用户给出的「直接证据」变成 remake 里会动的那 14 秒  [DONE — 本机验过，逐秒对上捕获]
+
+### 67.1 证据是谁给的、它证明了什么
+
+用户原话：**「是standard startup我用脚本跑出来的」**，附了一段 Luau，并说
+**「这个可作为直接证据作为开机的屏幕」**。脚本保存为
+`_tools/_attic/scratch/aux_boot_hook.luau`（**逐字保留，不改成可运行的**——
+它是证据，证明的是**连接目标**和**闭包体**，不是外面那圈 operator 自己的 harness）。
+
+```lua
+local ClickDetector = workspace:WaitForChild("Consoles", 60)
+    and workspace.Consoles:WaitForChild("MainReactorConsole", 60)
+    and workspace.Consoles.MainReactorConsole:WaitForChild("MonitorBootButton", 60)
+    and workspace.Consoles.MainReactorConsole.MonitorBootButton:WaitForChild("ClickPart", 60)
+    and workspace.Consoles.MainReactorConsole.MonitorBootButton.ClickPart:WaitForChild("ClickDetector", 60)
+...
+ClickDetector.MouseClick:Connect(function()
+    StartRecording()
+    WatchTimeLabel()
+end)
+```
+
+**它把 t=0 钉死了**：`ScreenChanges.txt` 的 t=0 就是
+`workspace.Consoles.MainReactorConsole.MonitorBootButton.ClickPart.ClickDetector.MouseClick`，
+也就是真正的开机按钮的那一拍 —— 不是「抓取开始时碰巧已经在开机」。三条推论：
+
+1. 这一趟是 **standard startup**，不是 quick boot；
+2. t=0 **就是** `Cold → Booting` 的翻转点，所以那份捕获**两端都夹住了同一个事件**，
+   开机时长第一次是**测**出来的，不是推的；
+3. **§66.5 里「抓取开始时就已在开机中」是错的，已在原地划掉并更正**（新证据改写旧结论，
+   旧结论留在原处不删，只标注作废 —— 与 §0.0 的一贯做法一致）。
+
+一条独立旁证：`LogFrame.TitleText1` 在**整个标准开机窗口里一次 Text 写入都没有**，
+而 remake 里这个 label 的静态初值正是 `STANDARD BOOT UP INITIALIZED`。
+**没被写过的那个默认值本身就是「standard」**；`QUICK BOOT UP INITIALIZED` 是同一个
+label 在 t=153 才被写进去的。两条同时成立，「抓取开始太晚」被排除。
+
+### 67.2 量到的那张时间表（t = 按下 MONITOR BOOT 之后的秒）
+
+诊断滚动屏 `DiagnosticFrame.ScrollingFrame.TextLabel1..45` 是**逐段揭示**的，不是一次全出：
+
+| t | 诊断标签（累计可见） | `LogFrame.TitleText` | `CompanyLogo` |
+|---|---|---|---|
+| 0 | 1–8 | — | 0 |
+| 1 | 1–25 | 1–2 | 0 |
+| 2 | 1–27 | 1–3 | 0 |
+| 3 | 1–43 | 1–5 | 0 |
+| 4 | 1–45 | 1–5 | 0 |
+| 5–13 | **全部收起** | **只剩 6** | 0（t≥8 起为 1） |
+
+`BootFrame` 只在 **Main / Thermal / Power 三台**上，另四台没有 —— 与 remake 里
+`RoomShell`「五台小监视器没有诊断屏」的结构一致。remake 实测同样是
+`Main/Power/Thermal +boot`、其余四台 `-boot`：**这一条是量出来的巧合，不是照着原版摆的**。
+
+### 67.3 改了什么
+
+| # | 位置 | 改动 |
+|---|---|---|
+| ① | `SSS.ReactorBackend.Config.Shift` | `BootSeconds` 3 → **14**，并换掉那条自认占位的注释 |
+| ② | `SSS.ReactorBackend.Config.Shell` | 新增 `BootScreen.Reveals`：**7 条**，就是 67.2 那张表 |
+| ③ | `SSS.ReactorBackend.BootPanel` | **新模块**（~200 行）：按 `state.phaseTime` 把那张表施加到真实 label 的 `Visible` 上 |
+| ④ | `SSS.ReactorBackend.Runtime` | `require` + `Initialize` + 初刷；publish 回调与 Heartbeat 各加一次 `Refresh` |
+
+**`BootSeconds = 14` 的来由**：它在 t=8 之后就不再有内容（`CompanyLogo` 是最后一条），
+而 t=14 `PreStartupFrame` 在**七台**上出现。3 是自认的 presentation default；
+先前两次估的（10-01 flow 趟 21.8 s、09-26 ≤11 s）**量的都不是这一段** ——
+它们量的是「MONITOR BOOT → 主拉杆被接受」，而主拉杆还要 `booted AND monitorPower AND
+shuttersOpen`，中间夹着玩家走位。
+
+**只建模可见性，不建模曲线。** 那份捕获里 `Position`/`Size`/`Rotation`/`CanvasPosition`
+占 99.7%，但它是**按变化才写**的（一秒内最多一次采样），**够说「什么时候动了」，
+不够说「沿着哪条曲线动的」**。所以 `BootPanel` **故意不做**任何位移/缩放/滚动动画：
+「一行行在对的秒数出现、但不动」比「按一条谁也没量过的曲线缓动」**是更小的谎**。
+（布尔值活得过采样，曲线活不过 —— 这就是分界线。）
+
+### 67.4 怎么验的（§4.4）
+
+**两边是两个互不相见的产物，比的是同一台机器。**
+
+- **期望侧**：`_tools/_attic/scratch/aux_expect.py` 直接从 180 MB 原始行**重放** `Visible` 写入，
+  产出 `aux_expect.txt`。它**没有见过 remake 的代码**。
+  （重放里唯一有歧义的一格：同一秒内同一个 label 同时出现 `false` 和 `true` 写入 ——
+  那是「先全隐藏、再单独显示一个」的写法，而**文件顺序在一秒之内也不可靠**。
+  文件顺序恰好把 `false` 放在后面，照它读会把日志框从 t=5 一直空白到 153。
+  同一对写入在 t=154 的 quick boot 里又出现一次、且那次结束时**一定是显示的**，
+  所以 `true` 是这里的读法。**没有 show-then-hide 的样本；真出现时这条规则会读错，
+  所以它被写下来而不是被假设。**）
+- **实测侧**：`rblx_execute_luau`（官方工具，`datamodel_type:"Edit"`，§0.17 通道）
+  用**克隆**的真 `Config`/`Engine`/`BootPanel`（§0.15：过期的 require 递过来的是少键的表）
+  喂**假时钟**跑满整个 `Booting`，每一步之后读**真实部件**的 `Visible`（§0.2：读实例，不读模块）。
+- **对照**：`aux_compare.py`，**14/14 秒全部相等，0 处不符**。
+- **变异测试**（不能变红的检查不是证据）：
+  - 去掉 t=5 那条的 `clearDiagnostic` → **t=5..13 全部变红**（诊断屏该收没收）；
+  - `BootSeconds` 14 → 20 → **t=14..22 全部变红**（翻相位的时刻跟着走）。
+  两个变异都被抓到。索引不是用眼睛数的（at=5 是**第 6 条**，不是第 5 条），
+  是**搜出来**的 —— 「按位置读表」正是这一轮要抓的那类错。
+- **收尾**：跑完把 `phase` 复位并刷一次，确认**驱动过的那 49 个 label 全部回到隐藏**，
+  临时 Folder 销毁 ——**世界恢复原样**。
+- **回归**：`bash _tools/run_tests.sh` 仍 rc=0。
+
+### 67.5 **没有**验到的（必须分开写）
+
+- **没在真 playtest 里看过一眼。** 验证走的是「假时钟 + 读实例」，不是「真人按一下按钮」。
+  能证明的是**面板在正确的秒数变成正确的样子**，不是「玩家看到它了」。
+- **没验世界侧**：原版那 14 秒里 E-VENT 排气、激光打火、音效，remake 一概没有。
+  本轮只把**屏幕上看得见的那块**补上。
+- **t=14 之后那一格捕获仲裁不了**：原版**从没写过 `BootFrame.Visible`**
+  （它是**层层叠**，不是切来切去），所以捕获说不出原版在 `Ready` 那一刻是把开机屏
+  **收起来**还是**盖在下层**。remake 的 `RoomShell.applyMonitors` 是**先全部收**再放选中的那张。
+  这是**换屏方式**的差别，不是**屏上内容**的差别，**记为未测**、不计入「相符」（见 `aux_compare.py` 末尾）。
+- **t=5 那条「全收」在捕获里没有任何解释**：为什么诊断屏在第 5 秒整屏收起、日志框只剩第 6 行，
+  文件里没有对应的一句话。**照实保留，没有抹平成更好看的形状。**
+
+### 67.6 数字
+
+| 量 | 值 |
+|---|---|
+| 捕获里 `BootFrame` 后代路径 | **57** |
+| remake 里被驱动的 label | **51** = 45 诊断 + 6 标题（数量由表里的**区间**推出，不另写一个计数常量） |
+| 揭示条目 | **7** |
+| `BootSeconds` | **14**（原 3） |
+| 对上捕获的秒 | **14 / 14**，0 不符 |
+| 变异 | **2 / 2 变红** |
+| 开机屏长在哪几台 | **3 / 7**（Main / Thermal / Power），与捕获一致 |
+| 开机屏出现前的 `authored-visible` | **0** |
+
+
+---
+
+## Phase 68（2026-10-01）—— 把「有 git 背书的那份代码」追平，以及「同时跑两遍测试」教我的事
+
+Phase 67 收尾时按 §0.0 去核 `bash _tools/run_tests.sh`，**第一次读到的是红的**
+（`watch mutations: 17 of 29 detected`，另一次 `25 of 29`），而 Phase 67.4 里我**已经写下了**
+「回归 rc=0」。那条断言是**先写后验**的 —— 按 §1.4 第 4/5 条，这一节先把这件事说清楚。
+
+### 68.1 那两次红不是回归，是**我自己把同一套测试跑了两遍**
+
+背景任务那次和前台那次**同时在跑**。`_tools/selftest_watch.py` 用的是**两个写死的路径**：
+
+```python
+MUTANT = os.path.join(ROOT, "_tools", "_watch_mutant.luau")   # 唯一一份变异体
+mutdir = os.path.join(ROOT, "_tools", "_mut_out")             # 唯一一个输出目录
+...
+shutil.rmtree(os.path.join(ROOT, "_tools", "_mut_out"), ignore_errors=True)  # 收尾时删掉
+```
+
+两遍互相覆盖变异体、互相 `rmtree` 对方的产物目录 → 变异体的产物**凭空消失** →
+报成「NOT DETECTED」（其中一条更准确：`the mutant did not run at all`）。
+换句话说，**它不报错，它报成「这条纪律没被守住」** —— 一个只在并发时出现的假阳性。
+
+- 单独跑一遍：**`watch mutations: 29 of 29 detected`**，全 495 行输出，**rc=0**。
+- 同时跑两遍：17/29 与 25/29，两次**给出不同的数字**（这本身就是「被污染」的指纹 ——
+  一个确定性的 harness 不可能两次给自己不同的答案）。
+- 其中**背景那一遍退出码是 0**：污染可以让 rc 也失去意义。
+- `shipped file untouched (md5 32bba692e0e078f416789972aecd192a)` 在**两遍里都印着** ——
+  所以「发货文件没被动过」这条保护**在污染下依然成立**，被破坏的只有**判决**。
+
+**结论：`run_tests.sh` 不是并发安全的，跑之前确认没有第二份在跑。** 判据不是它的 rc，
+是它的 `N of M detected` 那一行。
+
+### 68.2 `src/ReactorBackend/` 追平（漂了 3 个 Phase）
+
+PROGRESS 4766-4769 把 `src/` 定为**有 git 背书的那份「上一版正文」**，但它是**旧的** ——
+Phase 59/62/65/67 改的都是 Studio 里的活模块，`src/` 停在 `c816196`。
+
+做法（§0.17 的通道 + memory 里那条「字节不进上下文」）：
+
+1. Studio（官方 `rblx_execute_luau`，`Edit`）把 10 个实例的 `Source` **POST** 到
+   `http://127.0.0.1:8765/reflect/<磁盘名>`（sink `_tools/receive.py` 本来就在跑，不重启）。
+2. 同一段脚本**自带 CRC-32**，把 `<磁盘名> <字节数> <crc32>` 也 POST 成 `__manifest.txt`。
+3. 本机算出收到的每个文件的 CRC-32，与 manifest 比 —— **0 处不符**。
+4. **比过之后**才 `cp` 进 `src/`，然后再比一遍 —— **10/10 逐位相同**。
+
+按 §0.0 那条老规矩，**全程比哈希、不比字节数**；字节数只用来**发现**谁可能变了。
+
+| 磁盘 | Studio 实例 | 磁盘旧 | Studio | 判 |
+|---|---|---|---|---|
+| `Config.luau` | `SSS.ReactorBackend.Config` | 10943 | 21693 | **改了 +10750** |
+| `Engine.luau` | `…Engine` | 15612 | 17703 | **改了 +2091** |
+| `Runtime.server.luau` | `…Runtime` [Script] | 4108 | 4991 | **改了 +883** |
+| `LogPanel.luau` | `…LogPanel` | — | 6924 | **新增** |
+| `BootPanel.luau` | `…BootPanel` | — | 13873 | **新增** |
+| `StateBridge.luau` / `ControlBinder.luau` / `VisualFeedback.luau` / `RoomShell.luau` / `VisualFeedback.client.luau` | 同名 | — | — | **逐字节相同** |
+
+那 5 份「相同」有意义：它们说明漂移**不是**「整份镜像都没人管」，而是
+Phase 59/60 那阵有人**手工拉过一部分**（RoomShell / VisualFeedback mtime 是 09-30），
+而之后新写的模块**没有进过镜像**。**半新半旧比全旧更难认** —— 这正是要查一次的原因。
+
+命名约定从对照表里读出来：`ModuleScript → <Name>.luau`；`Script → <Name>.server.luau`
+（`Runtime`）；`LocalScript → <Name>.client.luau`（`StarterPlayerScripts.VisualFeedback`）。
+`Data/reflect/` 是这次的中转区，已进 `.gitignore` —— **权威是 `src/`，不是它**。
+
+### 68.3 本轮**没有**做的事
+
+- **没有 commit**（用户没让）。
+- **没有重跑 Phase 67 的逐秒对照** —— 它验的是 Studio 里的活模块，而本轮**一个字节都没改**
+  Studio 侧（只读 `Source` + POST），所以那份 14/14 仍然成立，不需要重测。
+  **「我没改它」是推理，不是测量** —— 依据是 68.2 那 10 个 crc32 与 Phase 67 记的
+  `BootPanel`/`Config` 状态一致，以及本轮对 Studio 的全部调用都是读。
+- **`.gitignore` 改动未提交**，与其它改动一起等用户。

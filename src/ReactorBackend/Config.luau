@@ -23,9 +23,111 @@ local Config = {
         ExtractionFraction=0.25, QuotaDivisor=60,
         StressPerLevel=4, StressOutputDivisor=500, StressPumpRelief=1.5,
         StressPassiveRelief=6, StressPressureBonus=2},
+    -- ShutdownSeconds below is still an unmoved presentation default.
+    -- BootSeconds no longer is; see its own note.
     Shift = {Quotas={512,1024,3072}, ShutdownLimit=17000,
-        -- Durations below are reconstruction presentation defaults, not measured rules.
-        BootSeconds=3, StartupSeconds=8, ShutdownSeconds=5},
+        -- MEASURED 2026-10-01, and the first time this number has been measured
+        -- at all. Source: the operator's own boot-screen capture,
+        -- Data/auxcollection/startup/ScreenChanges.txt, whose provenance --
+        -- which click its t=0 actually is -- is written down in
+        -- _tools/_attic/scratch/aux_boot_hook.luau.
+        --
+        -- t=0 in that file is the MONITOR BOOT BUTTON's
+        -- ClickDetector.MouseClick, i.e. exactly the transition this phase
+        -- machine calls Cold -> Booting, so the window is bounded at both ends
+        -- by the same event the engine uses and no player latency is inside it.
+        -- BootFrame's last content lands at t=8; its successor face,
+        -- PreStartupFrame, is written Visible at t=14 on all seven monitors.
+        -- The boot is therefore 14 s.
+        --
+        -- It was 3, a number this file used to admit was presentation rather
+        -- than measurement. Two earlier attempts to measure it disagreed -- a
+        -- 10-01 flow run read 21.8 s from MONITOR BOOT to the master lever
+        -- being accepted, a 09-26 run read at most 11 -- and both were
+        -- measuring a different span: the master lever requires s.booted AND
+        -- s.monitorPower AND s.shuttersOpen, so that interval carries the
+        -- player's own walk to the lever. The capture removes the player from
+        -- the measurement rather than trying to subtract them afterwards.
+        BootSeconds=14, ShutdownSeconds=5,
+        -- The start-up is a staged message chain, not a duration. Every capture in
+        -- Data/flow/original_* emits these messages in this order; only the pace
+        -- varies, so this is a list of HOLDS (seconds since the previous message),
+        -- not a timeline -- an absolute-offset table would bake one run's head
+        -- into every later step.
+        --
+        -- These holds ARE the per-message medians, differenced. For each message
+        -- the offset from SEQUENCE INITIATED was taken in every run that carried
+        -- it, the median of those offsets was formed, and the hold is the step from
+        -- one median to the next. They sum to 113.4 s, and that is also the median
+        -- of the four complete runs' own totals (91.4 / 151.7 / 112.6 / 114.3 to
+        -- the last line; median 113.45) -- two estimators that were derived
+        -- separately and agree, rather than one tuned to the other. Totals measured
+        -- to START-UP COMPLETED alone are 86.3 / 107.8 / 111.1 / 146.5.
+        --
+        -- Both sets are over FOUR runs, not five. 260930-200834 stopped at
+        -- COMBUSTION LASERS FIRING and never reached the end of the chain, and
+        -- 260926-183529 was injected after a start-up had already run, so it has no
+        -- chain at all. A first pass at this table carried holds that were NOT
+        -- these medians (24 where the median step is 29.4, 16.5 where it is 27.2)
+        -- under a comment claiming they were; reprocessing the captures found it.
+        -- The numbers are reproducible from _tools/_attic/scratch/startup_chain.py,
+        -- and PROGRESS.md Phase 65 carries the per-message table.
+        --
+        -- The timestamps those medians come from are POLL-QUANTISED. The recorder
+        -- writes a poll only when something changed, so one quiet stretch in the
+        -- 10-01 run went 19.3 s with no poll at all and the per-message spacing
+        -- inside a group is not recoverable. These are good to a couple of
+        -- seconds and are not presented as exact. Derivation, the per-run table
+        -- and the deltas this was reduced from: PROGRESS.md Phase 65.
+        --
+        -- The captures carry two message variants (EXCESSIVE ENERGY FLUCTUATION /
+        -- COMPUTATIONAL BENCHMARKS UNSATISFIED / TESSERACT MAINFRAME OVERCLOCK on
+        -- one side, ELECTROMAGNETIC ANOMALIES DETECTED / ANOMALY PROCEDURE
+        -- OVERRIDEN on the other, plus a COMPLETE MAINFRAME CRASH tail). Neither
+        -- is modelled: the branch between them was never measured, and the crash
+        -- tail describes permanent damage ("IN FUTURE ACTIVATIONS"), which is a
+        -- mechanic -- CLAUDE.md 1.4 #1. Only the trunk every run shares is here.
+        --
+        -- The text carries the game's own <b>[ALERT]</b> / <b>[WARN]</b> markup
+        -- because the panel that renders it is RichText: the markup was recorded
+        -- as payload, not decoration. kind is separate metadata for anything that
+        -- wants to colour or filter a line without parsing one.
+        StartupSteps = {
+            {hold=0,    kind='ALERT', text='<b>[ALERT]</b> - SUBSPACE REACTOR START-UP SEQUENCE INITIATED'},
+            {hold=0,    kind='WARN',  text='<b>[WARN]</b> - ALL PERSONNEL ARE TO VACATE THE CHAMBER IMMEDIATELY'},
+            {hold=0,    kind='WARN',  text='<b>[WARN]</b> - ACTIVATING POWER EXTRACTION ASSEMBLY'},
+            {hold=29.4, kind='INFO',  text='PRIMING ISOTOPE E COOLANT NETWORK'},
+            {hold=4,    kind='INFO',  text='CALIBRATING REACTOR SENSOR NETWORK'},
+            {hold=0,    kind='INFO',  text='E-VENT STRUCTURES PRIMED'},
+            {hold=0,    kind='WARN',  text='<b>[WARN]</b> - SUBSPACE RIFT ACTIVE, RADIATION WARNING'},
+            {hold=11.7, kind='INFO',  text='PRIMING CHAMBER ATMOSPHERIC REGULATORY SYSTEM'},
+            {hold=1.5,  kind='WARN',  text='<b>[WARN]</b> - INITIATING DEEP SCAN PROCEDURE'},
+            {hold=8.8,  kind='INFO',  text='DEEP SCAN PROCEDURE COMPLETED'},
+            {hold=14.2, kind='ALERT', text='<b>[ALERT]</b> - PRIMING ALL COMBUSTION LASERS'},
+            {hold=1.5,  kind='INFO',  text='M.E.T.U DIAGNOSTICS ACCEPTABLE'},
+            {hold=11.1, kind='ALERT', text='<b>[ALERT]</b> - ALL SYSTEMS READY, CORE IGNITION IMMINENT'},
+            {hold=0,    kind='ALERT', text='<b>[ALERT]</b> - COMBUSTION LASERS FIRING'},
+            {hold=27.2, kind='ALERT', text='<b>[ALERT]</b> - START-UP COMPLETED'},
+            -- Not an invention and not a variant: every capture that reached
+            -- START-UP COMPLETED carries this one line a few seconds later --
+            -- +5.1, +5.2, +4.8 and +3.2 s in the four runs that got this far -- and
+            -- it lives in the game's own shipped telemetry log
+            -- (ServerStorage.Data.DataCollection.Log), which is where the string
+            -- was confirmed to be the game's rather than the panel's. An earlier
+            -- pass ended the trunk at START-UP COMPLETED and dropped it, which is
+            -- exactly the kind of omission a hand-copied table makes. It is a STEP,
+            -- not a message sent after the chain: the original still counts itself
+            -- not-yet-active for 8.65 s past START-UP COMPLETED, and this line
+            -- arrives inside that window. PROGRESS.md Phase 65 has the deltas.
+            {hold=4,    kind='INFO',  text='PLEASE REFER TO [DIGITAL REACTOR MANUAL] FOR FURTHER INSTRUCTIONS'},
+        },
+        -- DERIVED, never declared -- overwritten with the sum of the holds below
+        -- so the two can never drift apart. It survives the removal of the old
+        -- hand-written constant only because MCP_FlowCollector's phase trace still
+        -- prints it; Engine no longer reads it, because the chain ends the phase
+        -- now, not a clock. The zero here is a placeholder that the loop replaces,
+        -- so it is not a second source of truth for anything.
+        StartupSeconds=0},
     Vent = {AtmosphereDrop=3000, Cooldown=26, EmergencyDrop=7000},
     Grav = {ChargeSeconds=6, WindowSeconds=1.5, FailureDamage=80,
         -- Damage amounts are explicit reconstruction defaults pending calibration.
@@ -154,6 +256,61 @@ local Config = {
         -- the place's own healthy green, reused for the same reason it is
         -- reused everywhere else.
         MonitorPowerOff = Color3.fromRGB(255,0,0),
+        -- The boot screen's reveal schedule, measured the same way and from the
+        -- same capture as Shift.BootSeconds. Every entry below is a write the
+        -- capture actually contains, at the second it contains it. BootFrame's
+        -- ScrollingFrame holds 45 authored lines and they arrive 8 / 17 / 2 /
+        -- 15 / 2 at a time over t=0..4; the LogFrame's six titles accumulate
+        -- over t=1..5; the CompanyLogo is switched on at t=8.
+        --
+        -- Only VISIBILITY is modelled, and the limit is worth stating because
+        -- it looks like an omission otherwise. The capture also carries
+        -- Position, Size, Rotation and CanvasPosition churn on these same
+        -- frames -- the diagnostic block grows, the log block grows, the logo
+        -- spins in -- and none of that is reconstructible from it: the watcher
+        -- writes a poll only when a value CHANGED, so what survives is about
+        -- one sample per touched second. That is enough to say when something
+        -- moved and not enough to say along which curve. The reveals below are
+        -- booleans, and a boolean that flipped is the same fact however often
+        -- it was sampled.
+        --
+        -- The same limit cuts the other way once, and it is recorded rather
+        -- than smoothed over: the capture cannot distinguish a label authored
+        -- hidden and then revealed from one authored visible and never touched.
+        -- The remake's 45 are authored hidden, so this table drives them.
+        -- Author them visible and this schedule silently becomes a schedule of
+        -- hiding -- BootPanel measures that once at Initialize and says so,
+        -- rather than letting it be a hole nobody can see.
+        BootScreen = {
+            -- at = WHOLE SECONDS after the boot began. A reveal is due AT its
+            -- `at`, not after it, so the t=0 block is on screen in the same
+            -- tick the boot switch is thrown rather than one tick later.
+            --
+            -- The two label blocks are addressed by each label's OWN number,
+            -- never by sibling order: the ScrollingFrame's children are not in
+            -- numeric order in the tree.
+            Reveals = {
+                {at=0, diagnostic={1, 8}},
+                {at=1, diagnostic={9, 25}, log={1, 2}},
+                {at=2, diagnostic={26, 27}, log={3, 3}},
+                {at=3, diagnostic={28, 43}, log={4, 5}},
+                {at=4, diagnostic={44, 45}},
+                -- The odd entry, and the bytes are the only reason it is here:
+                -- at t=5 every diagnostic line and the first five log titles
+                -- are switched OFF, and TitleText6 -- the only one not yet
+                -- shown -- is switched on. Nothing in the capture says why. It
+                -- is kept as measured rather than smoothed into a shape that
+                -- would read better and match worse.
+                {at=5, clearDiagnostic=true, clearLog={1, 5}, log={6, 6}},
+                {at=8, companyLogo=true},
+            },
+        },
     },
 }
+
+-- The start-up chain's total, kept as one number for the phase trace.
+local startupSeconds = 0
+for _, step in ipairs(Config.Shift.StartupSteps) do startupSeconds += step.hold end
+Config.Shift.StartupSeconds = startupSeconds
+
 return Config

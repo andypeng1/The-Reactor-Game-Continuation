@@ -32,6 +32,11 @@ function Engine:Reset(shift)
     -- Replace the entire state, forcing every service to fetch the current reference.
     self.state = {
         time=0, phase='Cold', phaseTime=0, shift=shift, elapsed=0,
+        -- The start-up chain's cursor. It lives in state rather than on the engine
+        -- so Engine:Reset clears it with everything else: a shift reset midway
+        -- through a start-up must not resume the old chain at the step it had
+        -- reached, and Reset replaces this whole table for exactly that reason.
+        startupStep=0, startupHold=0,
         energy=0, quota=c.Shift.Quotas[shift], accumulator=0, failure=nil,
         -- lights was true. It is false because the cold state is authored dark in
         -- two independent places and lit in none: the place saves
@@ -54,6 +59,37 @@ function Engine:Reset(shift)
         grav={phase='Idle', charge=0, damage=0, wakes=0}, equinox=false,
     }
     self:Log('INFO', 'Shift ' .. shift .. ' ready for control room boot')
+end
+
+-- Walks Config.Shift.StartupSteps, which is a list of holds rather than a
+-- timeline. The cursor advances as far as the accumulated hold allows and every
+-- step crossed is logged, so a late frame emits the whole backlog in order
+-- instead of jumping to the newest: the log panel is the only progress the
+-- player gets during a start-up, and a dropped line reads as a machine that did
+-- something unexplained.
+function Engine:AdvanceStartup()
+    local s, c = self.state, self.config
+    local steps = c.Shift.StartupSteps
+    while s.startupStep < #steps do
+        local step = steps[s.startupStep + 1]
+        if step.hold > s.startupHold then break end
+        s.startupHold -= step.hold
+        s.startupStep += 1
+        self:Log(step.kind, step.text)
+    end
+    if s.startupStep < #steps then return end
+    -- Running is entered by FINISHING THE CHAIN, not by a clock of its own. The
+    -- code this replaces compared phaseTime against a single StartupSeconds
+    -- constant, which is the exact shape of bug this change exists to remove: a
+    -- duration chosen at the keyboard rather than measured off the machine. The
+    -- CBLs and the start-up temperature land on that same step as the last
+    -- message for the same reason -- the log panel finishing and the reactor
+    -- coming up are one event, not two that happen to be close together.
+    s.temperature = c.Sim.StartupTemperature
+    s.pressure = c.Sim.StartupPressure
+    s.phase = 'Running'
+    s.phaseTime = 0
+    for _, device in ipairs(s.cbl) do device.active = not device.fault end
 end
 
 function Engine:Fail(reason)
@@ -96,7 +132,12 @@ function Engine:Command(action, index, value)
         s.phase='Booting'; s.phaseTime=0
     elseif action=='start' then
         if s.phase~='Ready' or not s.booted or not s.monitorPower or not s.shuttersOpen then return false,'Complete control room boot first' end
-        s.phase='Starting'; s.phaseTime=0
+        s.phase='Starting'; s.phaseTime=0; s.startupStep=0; s.startupHold=0
+        -- Emitted here rather than waiting for the next Step, so the three
+        -- hold=0 messages go out on the tick the switch is thrown. A start-up
+        -- whose first line arrives up to RefreshSeconds later reads as a switch
+        -- that did nothing, which is precisely the complaint this is answering.
+        self:AdvanceStartup()
     elseif action=='shutdown' then
         if s.phase~='Running' then return false,'Reactor is not running' end
         if s.energy<s.quota then return false,'Energy quota not yet met' end
@@ -176,11 +217,9 @@ function Engine:Step(dt)
     s.time+=dt; s.phaseTime+=dt
     if s.phase=='Booting' and s.phaseTime>=c.Shift.BootSeconds then
         s.booted=true; s.phase='Ready'; s.phaseTime=0; self:Log('INFO','Control room ready')
-    elseif s.phase=='Starting' and s.phaseTime>=c.Shift.StartupSeconds then
-        s.temperature=c.Sim.StartupTemperature; s.pressure=c.Sim.StartupPressure
-        s.phase='Running'; s.phaseTime=0
-        for _, device in ipairs(s.cbl) do device.active=not device.fault end
-        self:Log('INFO','Reactor online')
+    elseif s.phase=='Starting' then
+        s.startupHold+=dt
+        self:AdvanceStartup()
     elseif s.phase=='Stopping' and s.phaseTime>=c.Shift.ShutdownSeconds then
         s.phase='Report'; s.phaseTime=0; s.output=0; self:Log('INFO','Quota achieved and reactor shut down safely')
     end

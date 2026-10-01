@@ -3554,3 +3554,375 @@
      Kept beside the earlier correction in the same file (the `m.temp`-is-not-core-temperature note):
      that one said the monitor is blindest when the core is coldest. This run says the same monitor
      can also FREEZE, and that a rule which counts polls against it inherits the freeze.
+
+214. THE START-UP IS A LIST OF HOLDS, NOT A DURATION AND NOT A TIMELINE. THE SUM IS DERIVED FROM
+     THE TABLE RATHER THAN TYPED BESIDE IT.
+     The remake's start-up used to be `StartupSeconds=8` and one log line. The original's is a
+     16-message chain whose total is not a constant: 91.4 / 112.6 / 114.3 / 151.7 s across the four
+     runs that finished it. Replacing 8 with 111 would have swapped a number chosen at the keyboard
+     for a number chosen off one run's clock -- the same error, better dressed. So the shipped table
+     is HOLDS: seconds from the previous message, not an absolute offset. An absolute-offset table
+     would bake one run's head into every later step and would have to be regenerated whenever the
+     captures are added to.
+
+     `StartupSeconds` itself was NOT deleted, which is a change from the approved plan. It is now
+     computed at the foot of the file by summing the holds, so it can never disagree with the table.
+     The plan's argument for deleting it (it has one reader, `Engine:Step`, which the table
+     replaces) is still true; what changed is the realisation that leaving a DERIVED value in place
+     is strictly safer than leaving a HAND-TYPED one, because the failure mode it removes is two
+     sources of truth for one duration. That is the thing the whole phase is about, so deleting the
+     field would have been the one place the phase contradicted itself.
+
+     Two estimators were run independently and agree to 0.04 s: the sum of the per-message median
+     gaps is 113.4, and the median of the four runs' own end-to-end totals is 113.44. Neither was
+     fitted to the other -- the totals were never fed into the medians. Agreement here is evidence
+     in a way that a single derivation is not, which is why the script now prints both.
+
+215. THE OLD `StartupSeconds` COMMENT WAS FALSE, AND RE-DERIVING THE CAPTURES IS WHAT FOUND IT.
+     RECORDED BECAUSE A COMMENT THAT DESCRIBES A DERIVATION IT DID NOT PERFORM IS THE CLASS OF BUG
+     THIS PROJECT KEEPS MEETING.
+     The first pass at this table carried the comment "the holds below are the per-gap medians
+     across those runs and sum to 96.5". Both halves were wrong. The holds were not the medians --
+     24 sat where the median gap is 29.4 and 16.5 where it is 27.2 -- and the true sum is 113.4, not
+     96.5. Nobody could have caught this by reading the table, because the table is a plausible
+     start-up either way and 96.5 is a plausible sum for it. It surfaced only when
+     `_tools/_attic/scratch/startup_chain.py` was extended to compute the medians instead of
+     printing per-run chains, i.e. when the claim was made to produce its own number.
+
+     This is DECISIONS 212 arriving again in a different file: there, two comments in the watcher
+     described numbers that had been calibrated somewhere else. The remedy is the same and is not
+     more careful prose -- the number has to be produced by the same run that prints it. The
+     Config comment now names the script and the script now prints the table, so the next person
+     can check the claim rather than believe it.
+
+     The general lesson, stated so it can be applied without this phase's context: when a table is
+     transcribed by hand from a derivation, the derivation must be re-run before the comment about
+     it is written, because a hand-copied table is exactly where a number and its description drift
+     apart -- and drift silently, since both halves stay individually self-consistent.
+
+216. THE PANEL WRITES CLONES INTO `LogsFrame`; IT NEVER WRITES THE TEMPLATES.
+     `TemplateLogFrame1/2/3` are the original's own saved objects: `Visible=false`, carrying the
+     archive's leftover text (`TemplateLogFrame3.TextLabel` reads `E INITIATED`, the truncated tail
+     of an earlier session's SEQUENCE INITIATED). Writing into them would have been fewer moving
+     parts and would have destroyed the evidence that this chain was ever rendered through these
+     three frames -- which is the single most useful thing the place's saved state tells us about
+     the panel. So `LogPanel.Refresh` clones the template that matches the event's kind, parents the
+     clone to `LogsFrame`, sets `Visible` and `LayoutOrder`, and destroys the previous tick's clones
+     first. On exit `LogsFrame` is back to one child (its `UIListLayout`), which is how it was found.
+
+     Two consequences worth having on the record. First, the row colours are a SEVERITY KEY read off
+     the templates rather than invented: the three differ only in `TextLabel.TextColor3` --
+     0.667,1,1 cyan / 1,0.667,0 orange / 1,0.306,0.306 red -- so the panel's palette is the
+     original's, not a choice. Second, `RichText=true` on those labels is what proves the
+     `<b>[ALERT]</b>` markup in the captured text is payload rather than a scraping artifact, and is
+     why `StartupSteps[i].text` carries the markup verbatim while `kind` is stored separately for
+     readers that want to colour or filter without parsing a rich-text string.
+
+217. FOUR ROWS, FROM THE FRAME'S OWN GEOMETRY -- NOT FROM THE FLOOD'S 27.
+     `LogsFrame` is 340x365 with a `UIListLayout` of `Padding={0,20}` against 60-pixel templates:
+     365/(60+20) = 4.56, so four rows fit and a fifth does not. A separate capture
+     (`original_260926-230049`, via `panel_growth.py`) shows the original holding 27 rows at once
+     during a duplicate-message flood, which means the original's list is unbounded -- it grows and
+     lets the frame clip. That number is real but it is not the answer to "how many should the
+     remake show": it is a property of one pathological run, while the geometry is a property of the
+     panel. Shipping 27 would have been transcribing an accident.
+
+     What is NOT claimed: that the original scrolls, clips, or retires rows at four. The captures
+     cannot say -- see 218 -- and the remake makes no attempt to reproduce the original's overflow
+     behaviour, only its visible capacity.
+
+218. ROW ORDER AND INTRA-GROUP ORDER ARE NOT IN THE BYTES, AND ARE NOT PRETENDED TO BE.
+     The recorder's `snapshot()` collects every TextLabel under the root, writes `Name=Text` for
+     each and then `table.sort()`s the result. A `log.panel` dump is therefore ALPHABETISED: it
+     carries which rows are on the glass but not where they sit, and any tool that reads row
+     position out of a dump is reading the sort. `_tools/_attic/scratch/panel_dumps.py` exists
+     because the opposite was assumed; its header now records that the premise was wrong.
+
+     The same property makes INTRA-GROUP order unobservable in the start-up table. Messages that
+     land on the same poll (rows 5/6/7, rows 13/14) appear in the dump in string order, so
+     "CALIBRATING before E-VENT" is not measured data. The shipped table's order within such a
+     group is arbitrary, and the comment says so. What IS measured is that the group shares a
+     timestamp -- and even that is a median: in `260927-111843` the SUBSPACE RIFT line is 9.6 s
+     later than the two it is tied with in the other four runs, which the median smooths away.
+
+219. `CONTROL` IS DELIBERATELY OFF THE PANEL. `Engine:Command` logs one `CONTROL` event for every
+     accepted command, so the player's own switch throws are in `engine.events` alongside the
+     machine's messages. `LogPanel`'s `SHOWN = {ALERT, WARN, ERROR, INFO}` excludes `CONTROL`, so
+     the panel shows what the reactor said, not what the operator did. That is a judgement about
+     what the panel is FOR, not a claim about the original (which cannot be checked -- see 218).
+     The events are not filtered at the source: `engine.events` keeps every kind, and the exclusion
+     is one table in the one consumer, so a future reader that wants the audit trail still has it.
+
+220. NO NEW `Stats` FLAG FOR THE START-UP STEP. The four existing flags (`Lights`, `MonitorPower`,
+     `ShuttersOpen`, `Booted`) currently have no readers, and adding a fifth unread one would deepen
+     the same hole this phase exists to close -- `engine.events` had no reader either. The
+     observable surface is the panel's four labels, which are read by the same technique the
+     project already requires (read the instance, not the module -- CLAUDE.md 0.2) and have the
+     additional virtue of being what the player actually sees. A number nobody reads is not
+     instrumentation.
+
+221. THE TWO MESSAGE VARIANTS ARE NOT MODELLED, AND THE REASON IS SECTION 1.4, NOT EFFORT.
+     The captures split into two status-message sets (EXCESSIVE ENERGY FLUCTUATION / COMPUTATIONAL
+     BENCHMARKS UNSATISFIED / TESSERACT MAINFRAME OVERCLOCK / QPU DEGREDATION on one side,
+     ELECTROMAGNETIC ANOMALIES / ANOMALY PROCEDURE OVERRIDEN on the other), plus a
+     COMPLETE MAINFRAME CRASH tail in three of the five runs. The branch condition between them was
+     never measured. The tail additionally describes permanent loss -- its own text says
+     "IN FUTURE ACTIVATIONS" -- which is a gameplay mechanic, and section 1.4's first rule forbids
+     changing gameplay mechanics. Both halves of that (unknown condition, forbidden subject) point
+     the same way, so the trunk is what ships and the variants are recorded in Config's comment.
+
+     A corollary that is easy to miss: the quorum test that separates the trunk (present in >=4 of
+     5 runs) from the variants (<=3) has a visible gap under it -- 4 versus 3, with 35 rows below
+     the cut. That gap is what makes the rule checkable rather than a hand-picked end marker.
+
+222. ASSERTION A4 WAS A TAUTOLOGY, AND IT WAS FOUND BY A MUTANT THAT SHOULD HAVE GONE RED AND DID
+     NOT. `StartupSeconds` is computed FROM `StartupSteps`, so the original A4 -- "the flip happens
+     at or after `StartupSeconds - 0.2`" -- was comparing the table against a value derived from
+     that same table. Every hold mutation moved both sides together. With `hold[4] = -24` the chain
+     shortened to 48.5 s and A1 through A5 all still passed. This is DECISIONS 95 in a new place:
+     the earlier version was a hash computed from disk used to verify disk.
+
+     The fix is A4b and A4c: A4b compares the sum against an independently transcribed literal
+     (113.4), and A4c checks it falls inside the envelope the captures actually span (86.3..146.5).
+     Neither can move when the table moves. The lesson is narrower than "write better assertions":
+     a derived value is not an independent check on its own derivation, and a test suite that passes
+     on the wrong table is indistinguishable from one that passes on the right table -- which is
+     exactly why the mutant mattered more than the green.
+
+223. SWAPPING TWO INTERIOR HOLDS IS A BLIND SPOT THAT THIS EVIDENCE CANNOT CLOSE. STATED, NOT
+     FIXED.
+     If two holds are exchanged so the total is unchanged (4/5, for instance), every assertion stays
+     green. The cause is structural, not a gap in the test suite: the captures are poll-quantised
+     -- the recorder writes only on change, and one quiet stretch in the 2026-10-01 run went 19.3 s
+     with no poll at all -- so PER-MESSAGE TIMESTAMPS DO NOT EXIST at the resolution the claim would
+     need. There is no evidence to assert against, and manufacturing one (a synthetic timeline
+     checked against itself) would be tautology 222 again wearing a different hat.
+
+     The right response is to write it down as a known blind spot rather than to paper over it, the
+     same way Phase 62's harness recorded that "the gate defaults open" was structurally invisible.
+     A blind spot that is written down is a known limit; the same blind spot left unstated reads as
+     coverage.
+
+224. `Engine:Reset` REPLACES THE STATE TABLE ON PURPOSE -- AND CACHING THE OLD ONE FROZE STUDIO.
+     `Reset` builds an entirely new `state` table rather than clearing the fields of the current
+     one, precisely so that every system fetches the current reference instead of holding a stale
+     copy. The verification harness then did the thing the design exists to prevent: it took
+     `local S = engine.state` once, called `Reset`, and waited on `S.phase` -- a table that
+     `Reset` had already orphaned. The wait never terminated, `Engine:Step` does not yield, and the
+     plugin's thread stopped answering every subsequent call including `return 'alive'`. Studio had
+     to be restarted. No a-priori reason was violated by the design; the harness cached a reference
+     across a documented replacement.
+
+     This is CLAUDE.md 0.2's rule arriving from the other side. That rule says: do not read module
+     state, read instance state, because the command bar's `require` hands back a fresh and empty
+     module. The failure here is the same root -- state changed containers and the reference was
+     not re-fetched -- but it reaches the opposite conclusion about where to look, which is why it
+     is recorded separately: "read the instance" is not a rule about instances, it is a rule about
+     not trusting a reference across a boundary where it can be replaced.
+
+     Cleanup owed after the restart was `ServerScriptService.ClaudeBench65`, the temporary Folder the
+     harness builds to hold cloned `Config`/`Engine` (CLAUDE.md 0.15, the stale-require workaround).
+     It turned out not to be owed: the Folder had never been saved, so the restart settled it by
+     itself -- a second reminder that a killed Studio discards everything the session did not
+     commit. The restart did surface a DIFFERENT leftover that an earlier session HAD saved,
+     `ServerScriptService.PanelProbe`, holding clones of `Engine` and `LogPanel`. That one was
+     deleted after a character-by-character check (`Engine` 17703/17703 identical, `LogPanel`
+     6924/6924 identical) and a whole-DataModel grep confirming no script named it: `Runtime` line
+     14 requires `ReactorBackend.LogPanel`, the shipped module. Clones are cheap to rebuild; a
+     stale one that nothing names is only a thing to re-explain later.
+
+225. A SENTINEL IS THE ONLY ASSERTION AN INLINED CONSTANT CANNOT PASS.
+     Assertion A6 wanted to prove that `Engine:AdvanceStartup` READS `c.Sim.StartupTemperature`
+     rather than inlining `9420`. It compared the temperature at the flip against the config value
+     and failed by 15.6, because the `Step` that finishes the chain runs one tick of Running physics
+     in the same call -- exactly as the code this replaced did. The failure was the assertion's
+     fault, but relaxing the tolerance would have made it useless: with a hardcoded 9420 the same
+     drift appears, so a read and an inline land in the same place and no tolerance separates them.
+
+     What separates them is a sentinel. Set `Sim.StartupTemperature` to 12345 and the read reports
+     12345 while the inline still reports 9420. The mutant run shows the shape plainly: with line 88
+     replaced by the literal, the config-comparison assertion (B1) stayed GREEN -- it compares 9420
+     against the config's own 9420 -- and only the sentinel assertion (B2) turned red. B1 is a value
+     check; B2 is a provenance check, and only provenance distinguishes a read from an inline.
+     Assertions that compare a value to its own source are DECISIONS 95's tautology seen from the
+     other end, and take the same remedy: bring in something the code under test could not have
+     produced itself.
+
+     Two practical consequences. To compare EXACTLY rather than approximately, prove it by calling
+     `AdvanceStartup` directly with the cursor parked on the last step and `startupHold` set past
+     the remaining holds: it assigns temperature and pressure and returns, so no physics tick
+     intervenes and `==` is available. And the whole re-run was written with two harness rules that
+     came out of DECISIONS 224 -- EVERY loop carries an iteration bound, and nothing caches
+     `state` -- which is what made it safe to run in the same plugin VM that had just been wedged.
+
+226. "AN INDEPENDENT MEASUREMENT" ONLY COUNTS IF IT MEASURES THE SAME OBJECT.
+     The user's 180 MB `Data/auxcollection/startup/ScreenChanges.txt` is a real, independent channel:
+     1,162,737 per-property GUI writes on the seven `Workspace.Monitors.*` screens of the ORIGINAL,
+     captured by something that is not my recorder. It was tempting to read it as corroboration of
+     Phase 65's 16-step `StartupSteps` chain. It is not, and it cannot be: that file is a
+     FIXED-DESCENDANT-SET watcher, and the log-panel rows are instances `LogPanel` creates at run
+     time. A clone that did not exist when the watcher enumerated its set is invisible to it. The
+     whole file contains exactly ONE `Text` write under `LogControlRoomMonitor` -- the ErrorFrame
+     DescLabel at t=109 -- and zero of the sixteen messages.
+
+     The corroboration it DOES give is real but narrower, and it is worth being precise about which:
+     the face sequence (Boot -> PreStartup -> Main -> Error -> Main, 0/14/21/109/154 s) matches
+     `RoomShell.faceFor`'s phase branches segment for segment, and `BootFrame` existing on only
+     three of the seven matches `if mon.boot then`. So it validates the thing it can see and says
+     nothing about the thing it cannot. Reporting the first as if it were the second would be the
+     same shape as DECISIONS 91 (counting SS references as live) and DECISIONS 223 (a blind spot
+     stated as a result): the instrument's field of view is part of the finding.
+
+227. FILE ORDER IS NOT TIME ORDER, AND A HEADER STATISTIC IS THE EASIEST PLACE TO BE WRONG.
+     `aux_screenchanges.py`'s summary line said `first 19:21:59 / last 19:23:49 / span 110`,
+     while entries later in its own output carried t=153 and t=154. The writer flushed its tail
+     buffer before its middle one: timestamps climb 0..38, jump to 149..158, then resume at 48..110.
+     Exactly ONE backward jump, which is what makes it a delivery artifact rather than two sessions.
+     Sorted by the `Time:` stamp the real span is 158 s, with silences at 39..47 and 111..148.
+
+     The remedy is structural, not a patch: `aux_narrative.py` sorts before it reports, and the
+     header statistics belong to the sorted stream, never to the file. This is the same failure
+     family as the byte-count-vs-hash rule in section 0.0 -- a cheap summary statistic that agrees
+     with itself and disagrees with the data. Note also where it bites: the number would have been
+     WRONG AND PLAUSIBLE. 110 s sits right next to Phase 65's ~113 s, so the mistake would have
+     read as a confirmation.
+
+228. "QUICK BOOT UP INITIALIZED" RESOLVES PHASE 65'S BOOT-DURATION CONTRADICTION, AND THE ANSWER
+     IS THAT THERE ARE TWO BOOTS.
+     Phase 65 recorded a conflict it could not settle: one run was 21.8 s from MONITOR BOOT to an
+     accepted lever throw, another was 11 s or less. The aux capture shows both numbers in one
+     file. Its opening presentation -- BootFrame 0..13 s, `PreStartupFrame` at 14, `MainMonitorFrame`
+     at 21 -- is a 21 s standard boot. Its tail is something else: at 153 s `BootFrame.LogFrame.
+     TitleText1` is overwritten with `QUICK BOOT UP INITIALIZED`, the seven ErrorFrames go false,
+     and by 154 the MainMonitorFrames are back. That is a 1-2 s recovery pass, and the string itself
+     is proof the machine had booted before.
+
+     So the short run was most likely a quick boot, not a faster standard one. Two cautions, both of
+     which belong in the record rather than in a footnote. First: this is an explanation, not a
+     measurement -- the frame timeline of the 09-26 run was never broken out, so the assignment is
+     inference. Second: it does not license changing `Config.Shift.BootSeconds`. What is now measured
+     is that the standard boot's PRESENTATION is 14 s of BootFrame plus 7 s of PreStartupFrame; the
+     config value is a phase duration the engine drives, and equating the two would be Phase 65's
+     own error (a run's wall-clock read as the machine's rule) with the sign flipped.
+
+     CORRECTED 2026-10-01 (Phase 67.1). The operator produced the hook that generated the capture and
+     said outright that it is a standard startup, which puts t=0 at the MonitorBootButton click. So
+     the quick boot at t=153 is not an alternative to the standard boot -- it happens AFTER one, as
+     the recovery pass that follows MAINFRAME CONNECTION LOST at t=109. The conclusion above survives
+     (the 09-26 run was still probably a quick boot) but its REASON changes: not "there are two kinds
+     of boot", rather "that run probably hit a crash and took the recovery pass". The caution in the
+     last paragraph is therefore unchanged and now more pointed -- this is still inference, and the
+     09-26 frame timeline still has never been broken out.
+
+229. A USER-SUPPLIED 180 MB DUMP IS NOT A PROJECT ARTIFACT, AND THE REASON TO IGNORE IT IS NOT SIZE.
+     `Data/auxcollection/` is data the user handed me to read. It now sits under a `.gitignore`
+     rule with the reasoning written next to it, because the obvious reason -- "it is big" -- is the
+     weakest true one. The one that decides it is that a single file of 179,788,590 bytes is over
+     GitHub's 100 MB hard file limit, so an accidental `git add -A` is not a repository that grows,
+     it is a `git push` that fails at the end of a long session with the commit already made. The
+     findings are what is worth keeping, and they are reproducible from the three analysers under
+     `_tools/_attic/scratch/` plus PROGRESS.md Phase 66; the dump itself is not needed to re-derive
+     any of them. Note the asymmetry with the ripped-asset entries already in that file: those are
+     ignored for copyright, this one for reproducibility and a hard limit. Same rule, different
+     reason, and the reason is what the next person needs.
+
+230. THE PROVENANCE OF A MEASUREMENT IS PART OF THE MEASUREMENT, AND ITS ABSENCE IS NOT NEUTRAL.
+     `ScreenChanges.txt` had been read for two phases as a log of the monitor being exercised by
+     somebody. Every conclusion drawn from it carried a hidden hedge -- PROGRESS 66.5 wrote "the
+     opening before t=0 was not captured", which is not an observation about the machine but an
+     inference about the recorder, and a wrong one: t=0 is the MonitorBootButton click. The file did
+     not change. What changed is that its producer said what he had done.
+
+     The rule: when a capture arrives with no stated provenance, the unknowns are not "extra
+     caution", they are UNKNOWN VALUES, and any claim that depends on them is a guess that will be
+     written down as a finding. The cheap fix -- ask, or read the hook that made it -- was available
+     the whole time and was not taken for two phases. Note the asymmetry that made the wrong reading
+     survive: "the capture starts mid-boot" is consistent with the file, and so is "the capture
+     starts at the button". Two explanations fitting one file is exactly the shape of every
+     false-negative in CLAUDE.md 0.17, and the tiebreaker is never more analysis of the same bytes.
+
+     Corollary, applied here: the correction is left in place with the old claim struck through
+     rather than deleted. The next person needs to know which conclusions were standing on the bad
+     inference, and a silently rewritten paragraph hides exactly that.
+
+231. MODEL THE BOOLEANS. DO NOT RECONSTRUCT THE CURVES.
+     The boot screen's reveal is 0.3% of the capture; the other 99.7% is Position/Size/Rotation/
+     CanvasPosition churn, re-drawn every frame. The temptation is to treat that 99.7% as a richer
+     measurement than the 0.3% and rebuild the animations faithfully. It is the opposite: the watcher
+     writes a value only when it CHANGED, so the dense properties are sampled at most once a second
+     and the sparse ones are exactly reproducible.
+
+     A boolean survives that sampling intact -- a label is up or down, and one sample per second
+     captures a reveal that lasts seconds. An eased position does not: a second of a curve sampled
+     once is a fact about one instant, not about the path. Rebuilding an ease from those samples
+     means inventing the shape between them and then presenting the result as measured, which is a
+     worse error than having no animation at all.
+
+     So `BootPanel` drives `Visible` and nothing else. A screen that reveals the right lines at the
+     right seconds and does not grow them is a smaller lie than one that eases them along a curve
+     nobody measured. The test for which properties fall on which side of the line is not
+     "how many samples" but "does sampling lose the thing being claimed".
+
+232. THE BOOT SCREEN NEEDED A WRITER THAT RoomShell IS STRUCTURALLY UNABLE TO BE.
+     RoomShell owns which monitor face is showing: it writes `frame.Visible` once per phase change,
+     gated on a signature of `lights|monitorPower|booted|phase|shuttersOpen`. The boot screen needs a
+     write every second INSIDE one phase, during which that whole signature is constant -- Booting
+     for 14 s with nothing else moving. Putting the reveal in RoomShell would mean either widening
+     its gate to include something that changes every second (breaking the property that makes it
+     cheap) or letting it write unconditionally (breaking the gate's meaning for every other face).
+
+     BootPanel is a second writer that does not collide: RoomShell writes `BootFrame.Visible` and
+     BootPanel writes `.Visible` on labels INSIDE that frame. Disjoint properties, so the
+     single-writer rule holds -- and the disjointness is the reason the module may exist at all,
+     not a happy accident to be verified later. Both modules being signature-gated separately is
+     also what keeps the cost at zero on the other 99.99% of ticks: two string compares.
+
+     The initial `Refresh` is called on the command path as well as in the heartbeat, because
+     ControlBinder publishes on the same tick the button is clicked. Without it t=0 shows the
+     pre-click screen -- caught by the verification rig, which is why t=0 is a row in it.
+
+233. A "CODE OF RECORD WITH GIT BEHIND IT" IS ONLY WORTH WHAT ITS FRESHNESS IS, SO CHECK IT BY HASH.
+
+     PROGRESS 4766-4769 named src/ReactorBackend/ the authority for "what the previous version
+     said". By 2026-10-01 that authority was four phases behind the live modules, and the worst
+     part was the shape of the staleness: five of ten files were byte-identical and three were
+     not, and two did not exist at all. A mirror that is uniformly old announces itself; a mirror
+     that is half-refreshed does not, because the file you happen to open may be current.
+
+     So the refresh ran through the Studio -> disk channel (POST each Source to the sink, plus a
+     manifest of `<name> <bytes> <crc32>` computed by the same script), the two sides were
+     compared by CRC-32, and only then were the bytes copied into src/ -- and then hashed again.
+     Two reasons for the double check rather than one: the copy is the step that can silently
+     corrupt, and a check that runs before it cannot speak about it.
+
+     Lengths were used to FIND the candidates and never to confirm them, which is the same rule
+     CLAUDE.md 0.0 has carried since the mirror era. Equal length is not a match; this round it
+     happened to be right five times out of five, and that is exactly why relying on it would
+     have been a coincidence rather than a method.
+
+     What this does NOT license: treating the refresh as a licence to stop checking later. The
+     mirror has no writer. Every future phase that edits a live module orphans it again, and the
+     only thing that will notice is a person deciding to look. The honest long-term fix is a
+     writer, and this entry is the record that the first four phases of drift happened with
+     nobody looking.
+
+234. A TEST HARNESS THAT IS NOT CONCURRENCY-SAFE FAILS AS A LIE, NOT AS AN ERROR.
+
+     selftest_watch.py reuses one fixed mutant path (_tools/_watch_mutant.luau) and one fixed
+     output directory (_tools/_mut_out), and rmtree's that directory at the end. Running the
+     suite twice at once therefore makes each run delete the other's evidence, and the result is
+     not a crash: it is "NOT DETECTED" on mutants that are known good -- the harness reporting
+     that a discipline is not being enforced. One of the two interleaved runs exited 0 while
+     printing 17 of 29.
+
+     Two fingerprints make this recognisable rather than mysterious, and both are worth keeping:
+     the two runs printed DIFFERENT counts (17 and 25) for one deterministic suite, which no
+     honest run can do; and the protection line "shipped file untouched" printed in BOTH, which
+     shows the corruption is confined to the verdict and does not touch the artifact under test.
+     So the rule is: judge the suite by its "N of M detected" line, not by its exit code, and
+     treat two different counts from one file as proof of interference rather than noise.
+
+     This matters more here than in an ordinary repo because these mutation runs are the only
+     evidence available before a one-shot, non-repeatable shift in the original game (see the
+     comment at the gui-mutations stage of run_tests.sh). A number from a contaminated run is
+     not a weaker number; it is a wrong one that looks like a finding.

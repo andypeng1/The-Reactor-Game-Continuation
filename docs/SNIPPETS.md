@@ -567,3 +567,125 @@ end
 > 121 个回调里 **111 个** `|Δy| < 0.005`。**换成 50 ms 时间桶**（最大 1.934，
 > 解析上限 1.763）才读得出形状。细节与判据见 `DECISIONS_2` 193 / `PROGRESS` 60.3。
 
+### 5.12 把事件流画进原场面板：**clone 模板，绝不写模板** ★ Phase 65
+
+`SSS.ReactorBackend.LogPanel` 只有一个出口。**原件（源码）是真相**，这里是形状与理由。
+
+```lua
+local MONITOR    = 'LogControlRoomMonitor'
+local MAIN_FRAME = 'MainMonitorFrame'
+local LIST_FRAME = 'LogsFrame'
+local ROWS       = 4          -- 365 / (60 + 20)：帧高除以模板高加 UIListLayout 的 Padding
+
+-- CONTROL 不在里面：Engine:Command 每条被接受的指令都记一条，那是审计不是机器说的话。
+local SHOWN = {ALERT = true, WARN = true, ERROR = true, INFO = true}
+
+-- 严重度 -> 模板。颜色不在代码里，在模板自己的 TextLabel.TextColor3 上：
+-- 青 0.667,1,1 / 橙 1,0.667,0 / 红 1,0.306,0.306。
+local TEMPLATE_BY_KIND = {
+    INFO  = 'TemplateLogFrame1', WARN = 'TemplateLogFrame2',
+    ALERT = 'TemplateLogFrame3', ERROR = 'TemplateLogFrame3',
+}
+
+-- 取**最新**四条，保持旧在前、新在后。倒着走 + insert(1, ...) 是刻意的：
+-- 正着走再 table.remove 会把「最新」写成「最旧」，而那是最不容易看出来的错法。
+local wanted = {}
+for index = #events, 1, -1 do
+    local event = events[index]
+    if SHOWN[event.kind] then
+        table.insert(wanted, 1, {kind = event.kind, text = event.message})
+        if #wanted == ROWS then break end
+    end
+end
+
+-- 先拆上一批 clone，再建这一批。模板一个字都不动。
+```
+
+**四条纪律**（每条都对应一次真事）：
+
+1. **clone 模板，不写模板。** 模板是原版美术的一部分，`TemplateLogFrame3.TextLabel`
+   上那句 `E INITIATED` 是「这条链当初确实经这三格渲染过」的**唯一物证**。写进去就毁了。
+   `Visible=false` 的三个模板留在原地，退出时 `LogsFrame` 回到只有一个 `UIListLayout`。
+2. **颜色读模板，不要在代码里列一遍。** 三个模板只差 `TextColor3`，那说明色键是
+   **原版设计的**；在 Lua 里再写一份就是两个真相。
+3. **取最新、不是最旧**，而且**要有断言盯着**。变异「取最旧四条」必须把测试打红 ——
+   拿 `events` 的前四条，代码照样跑、面板照样有字、颜色照样对。
+4. **`CONTROL` 的排除放在消费端，不放在源头。** `engine.events` 照旧记全部 kind，
+   过滤是这张表；将来想要审计轨迹的读者还在。
+
+**驱动一次开机（验证用，Phase 65 实测过）**：`start` 不是随便能扳的，守卫是
+`phase=='Ready' and booted and monitorPower and shuttersOpen`，所以顺序必须是
+
+```lua
+engine:Command('monitor_power'); engine:Command('shutters')
+engine:Command('lights');        engine:Command('boot')
+-- 走到 Ready（BootSeconds = 14 s，Phase 67 量的）之后才：
+engine:Command('start')
+```
+
+> **⚠️ 别把 `engine.state` 存进 local。** `Engine:Reset` **整张表替换** `state`
+> （故意的：逼每个服务重取引用）。缓存旧表再等它变，那个 `while` **永不退出**，
+> 而 `Engine:Step` **不让帧** —— 官方插件的线程会占死，之后**每一个** MCP 调用超时。
+> 2026-10-01 我这么写了一次，Studio 得重启。见 `DECISIONS_2` 224。
+
+
+### 5.13 把「一句一帧」的捕获变成会动的界面：**只建模布尔** ★ Phase 67
+
+原版开机屏的揭示节奏是从一份**按变化才写**的逐属性捕获里复原的。可复用的不是那张表，
+是**怎么判断一个属性能不能从这种捕获里重建**。
+
+```lua
+-- Config.Shell.BootScreen —— 只存「什么时候该看见什么」，不存任何运动
+Reveals = {
+    {at=0, diagnostic={1, 8}},
+    {at=1, diagnostic={9, 25}, log={1, 2}},
+    {at=2, diagnostic={26, 27}, log={3, 3}},
+    {at=3, diagnostic={28, 43}, log={4, 5}},
+    {at=4, diagnostic={44, 45}},
+    {at=5, clearDiagnostic=true, clearLog={1, 5}, log={6, 6}},
+    {at=8, companyLogo=true},
+},
+```
+
+```lua
+-- BootPanel.Refresh —— 相位内按秒走表，签名门只认「第几步」
+function BootPanel.Refresh(state, config)
+    local schedule = config.Shell.BootScreen
+    local booting = state.phase == 'Booting'
+    local step = booting and stepFor(state.phaseTime, schedule) or 0
+    local signature = booting and ('Booting:' .. step) or 'idle'
+    if signature == lastSignature then return end
+    lastSignature = signature
+    local diagnostic, log, logo = wanted(step, schedule)
+    for _, mon in ipairs(monitors) do
+        if mon.boot.Parent then
+            for n, label in pairs(mon.diagnostic) do label.Visible = diagnostic[n] == true end
+            for n, label in pairs(mon.log) do label.Visible = log[n] == true end
+            if mon.companyLogo then mon.companyLogo.Visible = logo end
+        end
+    end
+end
+```
+
+四条会复发的判断：
+
+1. **「按变化才写」的捕获里，密集属性比稀疏属性更不可信，不是更可信。**
+   这份捕获 99.7% 的行是 `Position`/`Size`，但那是一秒最多一次的采样。
+   **布尔活得过采样，曲线活不过。** 判据不是「采了多少次」，而是
+   **「采样之后，我还知不知道我在断言什么」**。
+2. **要不要重建运动，是要单独做的决定，不是「顺手一起还原」。**
+   不做动画 = 一行行在对的秒出现但不动；硬做 = 在采样之间**发明**曲线再当测量结果。
+   **前者是更小的谎。**
+3. **一条 `false` 和一条 `true` 落在同一秒里，是「先全隐藏、再单独显示一个」。**
+   而**文件顺序在一秒之内也不可靠** —— 照文件顺序读会把日志框空白 145 秒（本文件里真发生过）。
+   判读法：**同一对写入在一段里出现两次、其中一次有确定的终态**，用那次定这个模式。
+   **没有 `show-then-hide` 样本；真出现时这条规则会读错，所以它必须被写下来，不能被假设。**
+4. **验证要拿两个互不相见的产物比。** 「拿模块比它自己读的那张表」是同义反复
+   （`DECISIONS` 95 的老问题）。这里：**期望侧**从 180 MB 原始行重放，
+   **实测侧**喂假时钟跑真模块再读**真部件**（§0.2），两侧在 `aux_compare.py` 里对。
+   **再配两个变异**（去掉 `clearDiagnostic`、改 `BootSeconds`），两个都得变红 ——
+   **不能变红的检查不是证据。**
+
+> **⚠️ t=0 那一格也得进测试。** `ControlBinder` 的 publish 回调**与点击同拍**，
+> 所以命令路径上也要 `Refresh` 一次。少了它，t=0 报的是**按之前**的屏 —— 而它长得
+> 和「按了但没反应」一模一样。我的验证台就是这么红了一次才发现的。

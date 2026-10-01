@@ -1,0 +1,64 @@
+=== BootFrame reveal schedule, MainControlRoomMonitor, t = seconds after the MonitorBootButton click ===
+
+-- every BootFrame descendant that was ever made visible, with the second it happened
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel1     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel2     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel3     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel4     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel5     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel6     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel7     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=0    .DiagnosticFrame.ScrollingFrame.TextLabel8     all-toggles=[(0, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel10    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel11    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel12    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel13    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel14    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel15    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel16    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel17    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel18    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel19    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel20    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel21    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel22    all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel23    all-toggles=[(1, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel24    all-toggles=[(1, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel25    all-toggles=[(1, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=1    .DiagnosticFrame.ScrollingFrame.TextLabel9     all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .LogFrame.TitleText1                           all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=1    .LogFrame.TitleText2                           all-toggles=[(1, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=2    .DiagnosticFrame.ScrollingFrame.TextLabel26    all-toggles=[(2, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=2    .DiagnosticFrame.ScrollingFrame.TextLabel27    all-toggles=[(2, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=2    .LogFrame.TitleText3                           all-toggles=[(2, 'true'), (5, 'false'), (153, 'true'), (154, 'false')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel28    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel29    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel30    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel31    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel32    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel33    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel34    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel35    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel36    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel37    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel38    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel39    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel40    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel41    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel42    all-toggles=[(3, 'true'), (5, 'false')]
+  t=3    .DiagnosticFrame.ScrollingFrame.TextLabel43    all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .LogFrame.TitleText4                           all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=3    .LogFrame.TitleText5                           all-toggles=[(3, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=4    .DiagnosticFrame.ScrollingFrame.TextLabel44    all-toggles=[(4, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=4    .DiagnosticFrame.ScrollingFrame.TextLabel45    all-toggles=[(4, 'true'), (5, 'false'), (154, 'false'), (154, 'true')]
+  t=5    .LogFrame.TitleText6                           all-toggles=[(5, 'false'), (5, 'true'), (154, 'false'), (154, 'true')]
+  t=8    .CompanyLogo                                   all-toggles=[(8, 'true')]
+
+-- grouped by second (what the screen shows when)
+  t=0      8  .DiagnosticFrame.ScrollingFrame.TextLabel1, .DiagnosticFrame.ScrollingFrame.TextLabel2, .DiagnosticFrame.ScrollingFrame.TextLabel3, .DiagnosticFrame.ScrollingFrame.TextLabel4, .DiagnosticFrame.ScrollingFrame.TextLabel5, .DiagnosticFrame.ScrollingFrame.TextLabel6 ...
+  t=1     19  .DiagnosticFrame.ScrollingFrame.TextLabel10, .DiagnosticFrame.ScrollingFrame.TextLabel11, .DiagnosticFrame.ScrollingFrame.TextLabel12, .DiagnosticFrame.ScrollingFrame.TextLabel13, .DiagnosticFrame.ScrollingFrame.TextLabel14, .DiagnosticFrame.ScrollingFrame.TextLabel15 ...
+  t=2      3  .DiagnosticFrame.ScrollingFrame.TextLabel26, .DiagnosticFrame.ScrollingFrame.TextLabel27, .LogFrame.TitleText3
+  t=3     18  .DiagnosticFrame.ScrollingFrame.TextLabel28, .DiagnosticFrame.ScrollingFrame.TextLabel29, .DiagnosticFrame.ScrollingFrame.TextLabel30, .DiagnosticFrame.ScrollingFrame.TextLabel31, .DiagnosticFrame.ScrollingFrame.TextLabel32, .DiagnosticFrame.ScrollingFrame.TextLabel33 ...
+  t=4      2  .DiagnosticFrame.ScrollingFrame.TextLabel44, .DiagnosticFrame.ScrollingFrame.TextLabel45
+  t=5      1  .LogFrame.TitleText6
+  t=8      1  .CompanyLogo

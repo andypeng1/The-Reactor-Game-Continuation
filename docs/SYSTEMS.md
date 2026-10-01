@@ -447,4 +447,76 @@ Workspace 根本没有 `ControlRoom` 容器，玩家所在的房间就是 `CullF
 如果它活着，它就是一个逐 `Heartbeat` 写 `LeverUnion.CFrame` 的第二写入者，
 会把服务端那个 tween **逐帧按回去**（Phase 59 之前它真的赢过，见 `PROGRESS` 59.2）。
 
+### 2.13 `LogPanel` —— 开机消息链的第一个真读者（2026-10-01，Phase 65）
+
+`SSS.ReactorBackend.LogPanel`，**只有一个出口**：`LogPanel.Refresh(engine)`。
+
+**它补的是一个「只写不读」的洞。**`Engine:Log` 从写下第一天起就在往
+`engine.events` 里记事件，而**全 DataModel 没有任何读者** —— 唯一提到它的
+`MCP_FlowCollector` 读的是它**自己 new 出来的**私有 engine。所以整条开机链
+（Phase 65 量到的 16 条消息）此前**写进了空气**。
+
+| 项 | 值 |
+|---|---|
+| 写进哪个容器 | `Monitors.LogControlRoomMonitor.Screen.MonitorUI.MainMonitorFrame.LogsFrame` |
+| 一次显示几行 | **4**（`365 / (60 + 20)` —— `LogsFrame` 的高度除模板高度加 `UIListLayout` 的 `Padding`） |
+| 哪些事件上台 | `SHOWN = {ALERT, WARN, ERROR, INFO}`，**取最新四条** |
+| 哪些不上台 | `CONTROL` —— `Engine:Command` 每条被接受的指令都记一条，那是**审计**不是机器说的话 |
+| 颜色从哪来 | **模板自己的** `TextLabel.TextColor3`：青 `0.667,1,1` / 橙 `1,0.667,0` / 红 `1,0.306,0.306` |
+| 写哪些实例 | **clone**（`Visible=true`、`LayoutOrder` 升序），每次刷新**先销毁上一批** |
+| **不**碰的东西 | `TemplateLogFrame1/2/3` 本身 —— 它们的 `Visible=false`、`Text` 是原版存档残字 |
+
+**为什么是 clone 而不是直接写模板**：模板是**原版美术的一部分**，
+其中 `TemplateLogFrame3.TextLabel` 上那句残字 `E INITIATED` 是**这条链当初确实
+经这三格渲染过的唯一物证**。写进去就把它毁了。clone 的代价是每拍重建几个实例，
+收益是退出时 `LogsFrame` 回到「只有一个 `UIListLayout`」的原样。
+
+**`RichText = true` 决定的另一件事**：捕获里那些 `<b>[ALERT]</b> - …` 是**真 payload**，
+不是抓取 artifact，所以 `Config.Shift.StartupSteps[i].text` **连标记一起存**，
+`kind` 另存一份给不想解析富文本的读者。
+
+**由谁调**（`SSS.ReactorBackend.Runtime`，三处）：
+初始化（第 31 行）、`ControlBinder` 的 publish 回调（第 38 行，在 `StateBridge.Publish` 之前）、
+以及 `Heartbeat` 块里（第 55 行，在 `RefreshSeconds = 1` 的累加器**内**，
+**不在**签名门后面 —— 事件流不是状态，签名对它是错的工具）。
+
+**没做的**：`MaxCatchupSteps = 10` 意味着一次卡顿超过 10 拍时，`AdvanceStartup`
+照发不误（表驱动，不漏），但面板**每秒只重画一次**，所以玩家看到的是**最新的四条**，
+中间的可能一眼都没出现。原版有没有这个问题没量（`PROGRESS` 65.8）。
+
+### 2.14 `BootPanel` —— 开机屏那 14 秒里唯一会动的东西（2026-10-01，Phase 67）
+
+`SSS.ReactorBackend.BootPanel`，**只有一个出口**：`BootPanel.Refresh(state, config)`
+（外加一次 `BootPanel.Initialize(config)`）。
+
+**它补的是另一个「只写不读」同族的洞，这次是「摆了但永不出现」。**
+remake 的 `BootFrame` 上那 45 个诊断 `TextLabel`、6 个 `TitleText`、1 个 `CompanyLogo`
+**全部存盘为 `Visible=false`，而全 DataModel 没有任何东西会把它们放出来** ——
+`RoomShell` 只切**整张脸**的 `Visible`，不动脸里面的东西。所以开机屏此前是**静止美术**。
+
+| 项 | 值 |
+|---|---|
+| 数据源 | `Config.Shell.BootScreen.Reveals` —— **7 条**，`{at=秒, diagnostic={a,b}, log={a,b}, clearDiagnostic, clearLog, companyLogo}` |
+| 长在哪几台 | **3 / 7**（Main / Thermal / Power）—— 与捕获里 `BootFrame` 只写这 3 台一致 |
+| 驱动的属性 | 只有 `Visible`，**51 个 label**（45 诊断 + 6 标题）+ `CompanyLogo` |
+| 相位门 | 只在 `state.phase == 'Booting'` 时按 `state.phaseTime` 走表；离开相位 → 全部收起 |
+| 签名门 | `'Booting:<step>'` / `'idle'` —— 与 `RoomShell` 各自独立 |
+| **不**碰的东西 | 任何 `Position`/`Size`/`Rotation`/`CanvasPosition` |
+
+**为什么不做动画**：捕获里那 99.7% 的位移行是**按变化才写**的，一秒最多一个采样 ——
+够说「什么时候动了」，不够说「沿着哪条曲线动」。**布尔活得过采样，曲线活不过。**
+重建一条曲线 = 在采样之间**发明**形状再拿它当测量结果，那比不做动画更糟
+（`DECISIONS_2` **231**）。
+
+**单一写入者没破**：`RoomShell` 写 `BootFrame.Visible`，`BootPanel` 写**那张脸里面**
+label 的 `Visible`。属性不相交 —— 这是它能成为第二个写入者的**理由**，不是事后补的验证
+（`DECISIONS_2` **232**）。
+
+**旧基线 `BootSeconds` 3 → 14**：t=8 之后屏上再无新内容，t=14 时 `PreStartupFrame`
+在**七台**上出现。3 是自认的 presentation default；先前两次估的 21.8 s / ≤11 s
+量的都是「MONITOR BOOT → 主拉杆被接受」，中间夹着玩家走位，**不是这一段**。
+
+**验证**：`aux_expect.py`（从捕获重放）对 `aux_compare.py`（读真部件）**14/14 秒全等**，
+两个变异各在预期的秒数段变红；跑完标签全部回到隐藏、临时件销毁
+（`PROGRESS.md` 67.4）。**没在真 playtest 里看过一眼**，也没验世界侧（67.5）。
 
