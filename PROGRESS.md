@@ -6503,6 +6503,31 @@ new keys = [pages, source, total_pages, wiki]          ← 丢了三个
 **还有三项没变成观测**（`GeometrySkip` 的粒度、预算切点、`MaxPendingLines` 的余量），
 见 71.5。
 
+**`t0` 存在本身就是「注入早于按下」的证据**（2026-10-02 澄清）：采集器是**按下才 `arm()`**、
+才做普查建基线，所以按之前的静止画面**构造上不产生行**；晚注入的趟会缺 `t0`
+（`hello.txt` 那句 note 说的就是这件事）。`boot.txt` 有 `t0=13:31:01`、第一行数据也在
+`13:31:01`，两者同秒不是巧合，是设计。
+
+### 71.1.1 这份产物里有什么（按 `Workspace.Monitors.<X>.Screen` 分组，5155 数据行）
+
+| 子树 | 行数 | 主要内容 |
+|---|---|---|
+| `AlertsControlRoomMonitor` | **1936** | `AlertFrame1..9` 的 `Visible`（1924 行）逐格显隐 |
+| `PowerControlRoomMonitor` | 1373 | CBL 图 + `TempLabel` |
+| `MainControlRoomMonitor` | 1113 | `RadiationLabel` 55 / `HDEFLabel` 43 / `TempLabel` 36 / `PressureLabel` 36 / `OutputLabel` 34 |
+| `ThermalControlRoomMonitor` | 540 | 风扇图 |
+| `LogControlRoomMonitor` | 116 | **只有透明度**，见 71.3 |
+| `Forecast` / `Quota` | 55 / 22 | |
+
+属性分布：`Visible` 2257 / `Position` 2142 / **`Text` 280** / `Size` 111 / `ImageColor3` 104 /
+`BackgroundTransparency` 102 / `CanvasPosition` 61。**`Text` 那 280 行全部落在别的 label 上**
+（读数、表盘），而整份文件里 `ALERT` / `IGNITION` / `COMBUSTION` / `PRIMING` / `SEQUENCE`
+**一个字符串都没有** —— 开机链念出来的那串消息**只**走日志面板那三格，
+所以 71.3 丢的不是一部分旁白，是**全部**旁白。这也是这份产物值得留下的原因：
+它是**唯一**一份（`GeometrySkip` 生效后）干净的 4 Hz 开机屏样本 —— 5155 行里
+`.GlitchEffect` **零条**，而 `Test.lua` 那 1,162,737 行里 **99.4%** 就是它；
+**能读的比例从 0.2% 变成 100%**。
+
 ### 71.2 缺陷一：`wrap` 规则在班次的**开盘**处封存
 
 `b1` 的时钟规则是「`12:00 PM` 封存；`12:00 AM` **且已经离开过开盘值**也封存」。
