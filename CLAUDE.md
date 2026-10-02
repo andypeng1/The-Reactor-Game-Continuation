@@ -228,6 +228,20 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 **规矩：所有 Studio → Studio 的源码搬运，走官方 `rblx_execute_luau`。**
 （`HttpService:PostAsync` 在两边**都**能用，所以 Studio → 磁盘的读回不受影响。）
 
+**2026-10-02 补齐反方向：`require` 工程模块只有插件 VM 能用。** 官方 `rblx_execute_luau`
+跑在 Studio 自带助手的沙箱里，`SSS.ReactorBackend` 整条文件夹带着
+`Capabilities = LoadUnownedAsset (and 3 more)`，于是**三种写法全被拒** ——
+`Clone()` 到临时 Folder（§0.15 的现成解法）、克隆进 `ReactorBackend` 自己、直接
+`require(backend.Config)`，报错分别是
+`cannot reparent 'Config' to '…__StartupDemo' since '…__StartupDemo' has additional values for the Capabilities property`、
+`… '…ReactorBackend' has additional values …`、
+`cannot require 'Config' since 'Config' has additional values …`。
+**三句话都指向「目标」，没有一句指向「沙箱」**（和第 225 行那条
+`ProtectedString expected, got nil` 同一张脸）。所以：**要在活 VM 里 `require` + 驱动
+`ReactorBackend`，走第三方 `mcp__robloxstudio__execute_luau`**（它允许 `Clone()` 到临时
+Folder 再 require）。**两条通道各管一半** —— 一条的失败是关于那一条的，不是关于代码的；
+**撞上 `Capabilities` 直接换通道，不要改写法**（这条花了三次调用）。取舍 **249**。
+
 **顺带**：`rblx_start_stop_play(is_start=true)` 之后，官方工具的 `Edit` 数据模型就没了
 （`Edit datamodel is not available in Play mode`），所以**推源码的顺序是：停 → 推 → 起**。
 
@@ -410,6 +424,20 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 `b3` = **45200 / 941 / `172416deb2073c9d22417a47833687ef`**，**它自己还没在原版跑过**
 （跑完第一件事：`grep -c TemplateLogFrame` 看是不是从 3 涨到几十）。细节 `PROGRESS.md` 71/72，
 取舍 **243..248**；`docs/BOOT_HOWTO.md` §1.2/§1.3/§6/§8 已按实测重写。
+
+**Phase 73（2026-10-02）—— 你问「那你开机能写吗」，答案在 remake 里，两半都当场跑了一遍。**
+**开机链** = `Config.Shift.StartupSteps`（**16 条** hold 表，和 **113.4 s**）+ `LogPanel`
+（`engine.events` 的第一个真读者）；**开机屏** = `Config.Shell.BootScreen.Reveals`（**7 条**）
++ `BootPanel`（**14 s**）。这一轮只**驱动**它们、读实例、写盘，没改代码。当场数字：
+`boot → Ready at 14 s`、`Running at t=114 s`、逐条比对 **16/16 mismatches=0**、
+面板画出**最新四条**（3 红 `TemplateLogFrame3` + 1 青 `TemplateLogFrame1`）；
+开机屏 t=0..13 的可见集合与 7 条 reveals **逐条对上**（含 t=5 那条「清空 diag + 只亮 log 6」的怪条目），
+t=14 翻 `Ready` 时整屏收掉（那是 `RoomShell` 换脸）。**`BootFrame` 只在 3/7 台**控制室监视器上
+（`Main` / `Power` / `Thermal`），且它在**主控室**监视器上、**不在**日志监视器上。
+世界逐位还原（`LogsFrame` 1→1，`BootFrame` 下 authored-visible 69→69，靠**快照写回**而不是
+「再 refresh 一次清干净」）。**通道**：官方 `rblx_execute_luau` 在 `ReactorBackend` 上被
+Capabilities 全拒 → 见 §0.17。**没做的还是老那一半**：世界侧逐段视觉（E-VENT 真排气、
+激光真打）—— 原版那 110 秒里玩家能看到的只有那块日志面板。细节 `PROGRESS.md` 73，取舍 **249**。
 
 **Phase 54（2026-09-27）—— 监视器 `_tools/TRG_original_watch.luau`：对准的是原版，不是 AIRemake。**
 （你原话「我说的整个控制室+核心腔室+音频监听是监听原游戏的，又不是现在的」，

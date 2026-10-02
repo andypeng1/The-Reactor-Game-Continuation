@@ -6743,3 +6743,124 @@ Phase 71.4 的第 1 条（午夜改注释、不封存）从设计意图变成观
 remake（`The Reactor : AIRemake`）的 `LogPanel`（Phase 65）**复用**那三格固定 label，
 而原版**每条消息克隆一行新的**。这是 remake 与原版的一处**结构性差异**，
 与 Phase 65 的表直接相关 —— 本轮**只记录不改**（§1.4 第 1 条：不动玩法机制）。
+
+## Phase 73（2026-10-02）—— operator 问「那你开机能写吗」，于是把开机在活 VM 里**当场重跑一遍**  [DONE — 本机验过]
+
+原话：**「那你开机能写吗」**。这不是要我再写一遍 —— 是要我拿东西出来。Phase 54 里
+同一件事他说的版本是「你根本不会做开机」。所以这一轮**不写代码**，把 remake 里那两半
+各驱动一遍，读实例状态（§0.2），再把数字写下来。
+
+### 73.1 通道：官方那条这次被沙箱挡住，只有插件 VM 能 `require`
+
+（同一条已写进 `CLAUDE.md` §0.17。）官方 `rblx_execute_luau`（`datamodel_type:"Edit"`）
+在 `SSS.ReactorBackend` 上**两种写法都被拒**，而 `ReactorBackend` 整条文件夹带着
+`Capabilities = LoadUnownedAsset (and 3 more)`：
+
+| 写法 | 报错 |
+|---|---|
+| `Clone()` 到临时 Folder 再 require（§0.15 的现成解法） | `cannot reparent 'Config' to 'ServerScriptService.__StartupDemo' since '…__StartupDemo' has additional values for the Capabilities property: LoadUnownedAsset (and 3 more)` |
+| 克隆进 `ReactorBackend` 自己 | `cannot reparent '__demo_Config' to 'ServerScriptService.ReactorBackend' since '…ReactorBackend' has additional values …` |
+| 直接 `require(backend.Config)` | `cannot require 'Config' since 'Config' has additional values for the Capabilities property: LoadUnownedAsset (and 3 more)` |
+
+**两条通道各管一半，别用一条的失败去否定另一条。** §0.17 原来记的是「源码搬运走官方」，
+理由是插件 VM 的 `GetAsync` 是桩；这一轮补的是**反方向**：**要 `require` 工程模块并在活 VM 里
+驱动它，走第三方 `mcp__robloxstudio__execute_luau`** —— 那个 VM 允许 `Clone()` 到临时
+Folder 再 require。三次报错都指向「目标」而不指向「沙箱」，这一点和第 225 行那条
+`ProtectedString expected, got nil` 是同一张脸。
+
+**代价记下来**：这一条花了三次调用才试出来。下次撞上 `Capabilities` 字样，
+**直接换通道，不要改写法**。
+
+### 73.2 上半：开机链（`Config.Shift.StartupSteps` + `LogPanel`），当场跑
+
+私有 `Engine`（`random` 喂常量 0）+ 假时钟，`monitor_power → shutters → boot`，
+再 `start` 之后按 1 s 拍推进。**读的是真监视器上那三格 label**：
+
+```
+StartupSteps = 16 messages, hold sum 113.4 s
+BootSeconds  = 14 s, 7 reveals
+boot -> Ready at 14 s;  Running at t=114 s after the master switch
+chain replay: 16 non-control events, first 16 vs the table -> mismatches=0
+  first: <b>[ALERT]</b> - SUBSPACE REACTOR START-UP SEQUENCE INITIATED
+  last : PLEASE REFER TO [DIGITAL REACTOR MANUAL] FOR FURTHER INSTRUCTIONS
+log panel draws 4 row(s) -- newest four:
+  [TemplateLogFrame3] <b>[ALERT]</b> - ALL SYSTEMS READY, CORE IGNITION IMMINENT
+  [TemplateLogFrame3] <b>[ALERT]</b> - COMBUSTION LASERS FIRING
+  [TemplateLogFrame3] <b>[ALERT]</b> - START-UP COMPLETED
+  [TemplateLogFrame1] PLEASE REFER TO [DIGITAL REACTOR MANUAL] FOR FURTHER INSTRUCTIONS
+```
+
+四格**正是最新四条**（不是最旧四条），前三条走红模板、最后一条走青色模板 ——
+`TEMPLATE_BY_KIND` 的 `ALERT → TemplateLogFrame3` / `INFO → TemplateLogFrame1` 当场成立。
+翻 `Running` 在 **t=114**，hold 之和 **113.4**（差的那一拍是 `startupHold` 整数累加、
+最后一条 hold=4 的累计门槛 113.4 跨到 114 才满足）。
+
+### 73.3 我自己的断言错了，**而那个错本身就是这条检查的变异证据**
+
+第一趟跑出 **`mismatches=13`**。不是引擎错：`Command('start')` 先调 `AdvanceStartup()`
+发掉三条 `hold=0`，**之后**才在函数尾部 `self:Log('CONTROL', 'start')`（Engine 第 195 行），
+所以 `eng.events[base+i]` 从第 4 条起整体错位一格 —— **13 = 16 − 3**，数对得上。
+把 `CONTROL` 滤掉之后 **0 错**。
+
+**这条不是澄清，是证据**：它证明这组断言**会红**，而且红在它该红的地方
+（Phase 62 的纪律：一条红不了的检查不是检查）。我没有为它另造变异 —— 变异自己撞上来了。
+
+### 73.4 下半：开机屏（`Config.Shell.BootScreen` + `BootPanel`），当场跑
+
+`BootFrame` **在主控室监视器上**，不在日志监视器上 —— 第一趟因此报了
+`attempt to index nil with 'DiagnosticFrame'`。普查结果（顺带量到的）：
+
+```
+MainControlRoomMonitor +boot   PowerControlRoomMonitor +boot   ThermalControlRoomMonitor +boot
+Alerts / Forecast / Log / Quota  -boot
+```
+
+**七台里只有三台带 `BootFrame`**（`Config` 第 40 行说的是 `PreStartupFrame` 写七台，不是这个）。
+
+驱动 `BootSeconds=14` 那一趟，t = 按下开机键之后的整秒：
+
+| t | phase | diag 可见 | log 可见 | logo |
+|---|---|---|---|---|
+| 0 | Booting | 1–8 | – | 0 |
+| 1 | Booting | 1–25 | 1–2 | 0 |
+| 2 | Booting | 1–27 | 1–3 | 0 |
+| 3 | Booting | 1–43 | 1–5 | 0 |
+| 4 | Booting | 1–45 | 1–5 | 0 |
+| 5 | Booting | **–**（清空） | **6** | 0 |
+| 6–13 | Booting | – | 6 | 0（t=8 起 logo=1） |
+| **14** | **Ready** | – | – | 0 |
+
+与 `Config.Shell.BootScreen.Reveals` 的 7 条**逐条对上**：t=0 的 1–8、t=1 的 9–25 + log 1–2、
+t=2 的 26–27 + log 3、t=3 的 28–43 + log 4–5、t=4 的 44–45、t=5 那条「清空 diag + 清 log 1–5 +
+只亮 log 6」的怪条目、t=8 的 `CompanyLogo`。t=14 翻 `Ready` 时整屏收掉 —— 那是 `RoomShell`
+按 phase 换脸，不是 `BootPanel` 写的。
+
+### 73.5 世界还原（动过的都要放回去）
+
+- `LogsFrame` 演示前 **1** 个子物体，演示后销毁自己画的行 → 回到 **1**。
+- `BootFrame` 下所有 `GuiObject` 的 `Visible` 演示前**快照**，演示后**按快照逐个写回**
+  （authored-visible **69 → 69**）。快照而不是「再 refresh 一次清干净」，因为
+  **捕获分不出「authored 隐藏后被显示」和「author-ed 可见从没被碰过」**（Phase 67 那条），
+  所以只有快照能保证逐位还原。
+- 临时 Folder `SSS.__Demo` 用完 `Destroy()`。
+
+### 73.6 没验的
+
+**世界侧的逐段视觉仍然没有** —— E-VENT 真的排气、激光真的打，remake 没做，这一轮也没做。
+原版那 ~110 秒里**玩家能看到的只有这块日志面板**（Phase 66/67 从捕获里量到），
+所以补上面板 = 补上「**能看到的**开机」；这**不等于**补上了世界侧的逐段效果。
+另外 65.8 那张「没做的」表**整张仍然有效**（`s.GameActive` 的 8.65 s 偏移只记录不改、
+`MaxCatchupSteps` 可能跳行、`E INITIATED` 的生命周期没管）。
+
+### 73.7 数字
+
+| 量 | 值 |
+|---|---|
+| 链条数 / hold 之和 | 16 / **113.4 s** |
+| 翻 `Running` | t=**114** s after the master switch |
+| 逐条比对 | **16/16，mismatches=0**（错位那趟是 13，见 73.3） |
+| 面板行数 / 内容 | **4**，最新四条，3 红 + 1 青 |
+| `BootSeconds` / reveals | **14 s** / **7** |
+| 开机屏 T | `Ready` at t=**14** |
+| 跳闸（`BootFrame` 载体） | **3 / 7** 台控制室监视器 |
+| 世界残留 | **0**（两个快照都逐位还原） |

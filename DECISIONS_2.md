@@ -4145,3 +4145,30 @@
      hard-code `build=b2` in its header assertion, which meant bumping the build failed a correct file; it
      now reads the build string off the shipped source, because a literal in the rig is a second copy of the
      one number that changes every build.
+
+## 249. A SANDBOX REFUSAL IS A PROPERTY OF THE CALLER, NOT OF THE CODE.
+
+Official `rblx_execute_luau` runs inside Studio's own assistant sandbox. `SSS.ReactorBackend`
+carries `Capabilities = LoadUnownedAsset (and 3 more)`, and that folder rejects everything the
+assistant VM tries to do with it: clone-into-a-temp-Folder fails
+(`cannot reparent 'Config' to 'ServerScriptService.__StartupDemo' since '…__StartupDemo' has
+additional values for the Capabilities property`), clone-into-`ReactorBackend` fails
+(`'…ReactorBackend' has additional values`), and a plain `require` fails
+(`cannot require 'Config' since 'Config' has additional values …`). The third-party
+`mcp__robloxstudio__execute_luau` VM does all three without complaint.
+
+Three different refusals, two different sentences, and both point at the TARGET
+("… has additional values") rather than at the SANDBOX. Nothing distinguishes "this module is
+unloadable" from "this CALLER may not load it", and the same shape is already on record for the
+HTTP stub (CLAUDE.md §0.17, line 225: `ProtectedString expected, got nil`, an error that points
+at an assignment instead of at the network).
+
+**The rule, and the reason it is worth a numbered entry:** when a capability or sandbox error
+names a property of an instance you did not set yourself, the caller is the variable — **change
+channels before you change code.** This cost three calls to learn. Handing the two channels one
+job each also keeps §0.17 honest: the official tool still owns source MOVEMENT (its `GetAsync`
+is real where the plugin VM's is a stub), and the plugin VM owns `require` + live driving. A
+failure on one is evidence about one, never about the other.
+
+**Corollary for the record:** I never had to touch `ReactorBackend` to find this out, and the
+refusal was not a sign that anything was wrong with it.
