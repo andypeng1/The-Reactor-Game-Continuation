@@ -65,6 +65,16 @@
 --    monitor that reads a fixed descendant set cannot see them.  Fixed by
 --    DescendantAdded, which registers new instances as they appear.
 --
+-- 5. REGISTERING A NEW INSTANCE IS NOT THE SAME AS SEEING IT.  Measured by the
+--    first real run (PROGRESS.md Phase 71): the log panel builds each message by
+--    cloning a frame, writing the text, and only THEN parenting it -- so the
+--    instance first became visible to this file with its message already in
+--    place, registration seeded that value as the baseline, and no later change
+--    ever differed from it.  5156 lines carried the panel's fades and not one
+--    character of the panel's text, which is the boot's own narration.  Fixed by
+--    a BIRTH RECORD: an instance registered after t0 has its watched values
+--    written as lines instead of only seeded.  See register().
+--
 -- AND ONE THING THAT IS NOT A DEFECT BUT A COST: the product used to land in the
 -- executor's own TRG/ folder, which is why getting the last one into this repo
 -- was a 180 MB manual copy.  This file POSTs to the same localhost sink the
@@ -103,7 +113,7 @@
 local NL = string.char(10)
 
 local CONFIG = {
-    Build = 'b1',
+    Build = 'b2',
 
     -- The tick.  See (2) above: this is the resolution of the whole capture, so
     -- it is the one number here that trades fidelity for volume.  The recorder
@@ -518,7 +528,14 @@ local function watch(obj, full, prop, key)
     return true
 end
 
-local function register(obj)
+-- A value no formatted property can ever equal, so 'not written yet' is a state
+-- the tick can recognise.  A NUL is impossible inside fmt()'s output -- that
+-- output goes into a line of a text file -- which is why it is this and not ''.
+local BIRTH = string.char(0)
+
+-- `born` is true only for an instance that DescendantAdded handed us, i.e. one
+-- that came into being AFTER the boot press.  The initial walk leaves it false.
+local function register(obj, born)
     local props = WatchProperties[obj.ClassName]
     if props == nil then return end
     local okName, full = pcall(function() return obj:GetFullName() end)
@@ -528,14 +545,35 @@ local function register(obj)
         if keys[key] == nil and not geometrySkipped(full, prop) then
             if watch(obj, full, prop, key) then
                 keys[key] = true
-                -- SEEDED WITH THE VALUE AT REGISTRATION, and this is the whole of
-                -- the change-and-revert rule.  Comparing against nil instead would
-                -- mean that a value which flickered and came back still got one
-                -- line, because the final reading would differ from 'never seen'
-                -- -- the noise this file exists to remove, arriving by the back
-                -- door.  One property read per key, once, at registration.
-                local okV, v = pcall(function() return obj[prop] end)
-                lastValue[key] = okV and fmt(v) or '<read failed>'
+                if born then
+                    -- BORN DURING THE RUN: its CURRENT values are data, not a
+                    -- baseline.  Phase 71 -- the game writes a cloned log frame's
+                    -- message BEFORE it parents the frame, so seeding here is
+                    -- exactly what swallowed the boot screen's own narration.
+                    -- The seed becomes 'never written', and the next tick writes
+                    -- what the instance actually holds, through the same one-line-
+                    -- per-key path and against the same write budget as every
+                    -- other line.  The cost, stated: a subtree cloned mid-run now
+                    -- contributes its watched values once, and a value that
+                    -- changes between birth and the next tick is reported at its
+                    -- tick value -- the same 0.25 s quantisation every other line
+                    -- already has.
+                    lastValue[key] = BIRTH
+                    if not dirtySet[key] then
+                        dirtySet[key] = true
+                        dirty[#dirty+1] = { obj = obj, full = full, prop = prop, key = key }
+                    end
+                else
+                    -- SEEDED WITH THE VALUE AT REGISTRATION, and this is the whole
+                    -- of the change-and-revert rule.  Comparing against nil
+                    -- instead would mean that a value which flickered and came
+                    -- back still got one line, because the final reading would
+                    -- differ from 'never seen' -- the noise this file exists to
+                    -- remove, arriving by the back door.  One property read per
+                    -- key, once, at registration.
+                    local okV, v = pcall(function() return obj[prop] end)
+                    lastValue[key] = okV and fmt(v) or '<read failed>'
+                end
             end
         end
     end
@@ -677,12 +715,15 @@ local function arm()
     for _, obj in ipairs(Monitors:GetDescendants()) do
         register(obj)
     end
-    -- Instances created DURING the run belong to it.  Phase 66 and 67 both hit
-    -- the consequence of not having this: the start-up steps clone their UI at
-    -- runtime, and a recorder built from a fixed descendant set cannot see them.
+    -- Instances created DURING the run belong to it, and they belong to it with
+    -- the values they were born with -- which is why this is the one call site
+    -- that says born.  Phase 66 and 67 both hit the consequence of not having the
+    -- hook at all: the start-up steps clone their UI at runtime, and a recorder
+    -- built from a fixed descendant set cannot see them.  Phase 71 hit the
+    -- consequence of having the hook without the birth record.
     pcall(function()
         connections[#connections+1] = Monitors.DescendantAdded:Connect(function(obj)
-            if not SEALED then register(obj) end
+            if not SEALED then register(obj, true) end
         end)
     end)
     return true
@@ -711,16 +752,26 @@ local function startRecording()
 end
 
 -- ========== THE CLOCK ==========
--- The operator's stop rule, with one change and one addition.
+-- ONE seal rule, and the midnight wrap is NOT it.  Measured, not reasoned.
 --
--- The change: his rule seals when the label reads 12:00 AM OR 12:00 PM.  The dial
--- OPENS at 12:00 AM (PROGRESS.md Phase 62 -- the shift's own handoff is 11:59 AM
--- to 12:00 PM, and midnight is the other end), so an AM reading is the start
--- line, one transition away from ending the run the instant it begins.  The PM
--- reading is the end of the shift and is kept.  A clock that goes BACKWARD to
--- 12:00 AM after having been elsewhere still seals, so the arm is not gone -- it
--- is just no longer armed while the dial is still on its opening value.
-local seenNonNoon = false
+-- The operator's rule seals on 12:00 AM or 12:00 PM.  The first draft kept both
+-- and disarmed the AM arm until the dial had been seen OFF midnight, on the
+-- assumption -- written down as an assumption in PROGRESS.md Phase 62 -- that the
+-- dial OPENS at 12:00 AM.  The first real run says otherwise: the press landed at
+-- 11:51 PM, so the very first reading armed the wrap, and midnight, 89 s later,
+-- sealed the run.  That is the moment the core lit (temp 248 -> 9478 F, output
+-- 0 -> 146 GW/H, HDEF 5 -> 99 %, and the thermal monitor showing AUTO
+-- RECALIBRATION IN PROGRESS), and the start-up chain's own START-UP COMPLETED
+-- lands at 86..146 s over four measured runs.  The capture was cut by a rule that
+-- fired at the shift's START.
+--
+-- So midnight is recorded and the run continues: the dial's own crossing is the
+-- anchor the boot chain should be read against, and losing it would be its own
+-- defect.  Noon still ends the run, because that is the operator's own spec for
+-- the listening window (PROGRESS.md Phase 62: start at the press, end at 12 PM).
+-- The mark is a COMMENT line, so it stays inside the frozen line format -- the
+-- archived readers skip '#' lines by construction, and appending a field to a data
+-- line is what is forbidden (DECISIONS_2 237).
 local function watchClock()
     local label = descend(workspace:FindFirstChild(CONFIG.RootName), CONFIG.ClockPath, 30)
     if label == nil then
@@ -740,10 +791,10 @@ local function watchClock()
             local text = label.Text
             if text == '12:00 PM' then
                 seal('noon', 'the dial reached 12:00 PM')
-            elseif text == '12:00 AM' and seenNonNoon then
-                seal('wrap', 'the dial went back to 12:00 AM')
-            elseif text ~= '12:00 AM' then
-                seenNonNoon = true
+            elseif text == '12:00 AM' then
+                emit('# MARK midnight at ' .. wallClock() ..
+                    ' -- the dial crossed 12:00 AM, which on this world is the' ..
+                    ' shift START and not its end; the run continues')
             end
         end)
     end)

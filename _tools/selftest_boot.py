@@ -65,6 +65,27 @@ MUTATIONS = [
         "        connections[#connections+1] = workspace.ChildAdded:Connect(function(obj)",
     ),
     (
+        'the birth record is dropped, so a clone is registered but never read',
+        'default',
+        'a label born during the run is written with the text it was born with',
+        "            if not SEALED then register(obj, true) end",
+        "            if not SEALED then register(obj) end",
+    ),
+    (
+        'the midnight wrap seals again, cutting the run in the ignition ramp',
+        'default',
+        'midnight does not end the run -- on this world it is the shift START',
+        "            elseif text == '12:00 AM' then",
+        "            elseif text == '12:00 AM' then\n                seal('wrap', 'the dial went back to 12:00 AM')",
+    ),
+    (
+        'the mark is written as a data line instead of a comment',
+        'default',
+        "every data line matches the archived readers' pattern exactly",
+        "                emit('# MARK midnight at ' .. wallClock() ..",
+        "                emit('MARK midnight at ' .. wallClock() ..",
+    ),
+    (
         'the write budget is raised out of the way, so nothing is ever cut',
         'default',
         'a key that crossed its budget stops writing at exactly the budget',

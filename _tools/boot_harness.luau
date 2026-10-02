@@ -499,14 +499,23 @@ check('a frame outside Workspace.Monitors is never watched',
 
 -- ========== 5. DESCENDANT ADDED ==========
 -- The blind spot Phase 66 and 67 both hit: an instance created during the run.
+-- The label is built the way the live game builds a log frame -- text set BEFORE
+-- the instance is parented (PROGRESS.md Phase 71) -- because that ordering is the
+-- whole reason this scenario exists twice over.
 local late = inst('TextLabel', 'LateTitle', { Text = 'RESUMING NORMAL OPERATION', Visible = false }, BOOT)
 advance(0.3)
 late.Visible = true
 advance(0.6)
 flushNow()
 check('a label created during the run is watched',
-    countFor('LateTitle]<-C:[Visible]') == 1,
+    countFor('LateTitle]<-C:[Visible]') == 2,
     tostring(countFor('LateTitle]<-C:[Visible]')) .. ' lines')
+check('a label born during the run is written with the text it was born with',
+    countFor('LateTitle]<-C:[Text]<-V:[RESUMING NORMAL OPERATION]') == 1,
+    tostring(countFor('LateTitle]<-C:[Text]')) .. ' Text lines')
+check('and its birth does not replace the later change',
+    countFor('LateTitle]<-C:[Visible]<-V:[true]') == 1,
+    tostring(countFor('LateTitle]<-C:[Visible]<-V:[true]')) .. ' true lines')
 
 -- ========== 6. THE HOTKEYS ==========
 -- The key must deliver what the timer has not.  Establishing that is a timing
@@ -585,7 +594,26 @@ else
     check('the opening 12:00 AM does not end the run',
         #artifact('meta.txt') == 0, "the dial's opening value sealed the run")
 
-    LABEL.Text = '12:34 PM'
+    -- THE MEASURED SHAPE OF A REAL RUN (Phase 71).  The press lands at 11:51 PM, so
+    -- the dial is off midnight from the first reading, and midnight arrives about
+    -- 89 s later, in the middle of the core's ignition ramp.  The first draft
+    -- sealed there, which is the defect this sequence exists to keep dead: a
+    -- scenario that only ever sets 12:00 AM as the OPENING value cannot see a rule
+    -- that fires on the way back to it.
+    LABEL.Text = '11:51 PM'
+    idle()
+    LABEL.Text = '11:59 PM'
+    idle()
+    LABEL.Text = '12:00 AM'
+    idle()
+    check('midnight does not end the run -- on this world it is the shift START',
+        #artifact('meta.txt') == 0, 'the midnight crossing sealed the run')
+    flushNow()
+    check('the midnight crossing is recorded as a mark in the capture',
+        countFor('# MARK midnight') == 1,
+        tostring(countFor('# MARK midnight')) .. ' marks')
+
+    LABEL.Text = '12:01 AM'
     idle()
     LABEL.Text = '12:00 PM'
     idle()
@@ -630,7 +658,7 @@ check("every data line matches the archived readers' pattern exactly",
     badLines == 0, tostring(badLines) .. ' of ' .. tostring(dataLines) .. ' lines do not')
 check('the capture is not empty', dataLines > 100, tostring(dataLines) .. ' data lines')
 check('the capture opens with a header naming the build',
-    string.find(captureLines()[1] or '', 'build=b1', 1, true) ~= nil,
+    string.find(captureLines()[1] or '', 'build=b2', 1, true) ~= nil,
     tostring(captureLines()[1]))
 
 -- ========== 10. THE TWO OUTPUT PATHS ==========

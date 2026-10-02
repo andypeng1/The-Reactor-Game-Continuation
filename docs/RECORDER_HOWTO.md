@@ -102,13 +102,16 @@ python -m http.server 8766 --bind 127.0.0.1 --directory _tools
 | `_tools/TRG_original_watch.luau` | 147930 | 2699 | `32bba692e0e078f416789972aecd192a` | `w61` |
 | `_tools/transport_probe.luau` | 10752 | 217 | `5acde17d2bccfa65949c9a4b2bec9a90` | 时间戳目录名 |
 
-**第三份：开机采集器 `_tools/TRG_original_boot.luau`**（Phase 70，2026-10-02）——
-它不是这一份文档的主角，**它有自己的 `docs/BOOT_HOWTO.md`**。一句话：它是操作员自己那份
-`SolaraTab/Test.lua` 的优化版，**开机之前注入**，从按下开机键记到 12:00 PM；
+**第三份：开机采集器 `_tools/TRG_original_boot.luau`**（Phase 70，2026-10-02；
+`b2` = Phase 71）—— 它不是这一份文档的主角，**它有自己的 `docs/BOOT_HOWTO.md`**。
+一句话：它是操作员自己那份 `SolaraTab/Test.lua` 的优化版，**开机之前注入**，
+从按下开机键记到 12:00 PM（**午夜不停，只留一行 `# MARK midnight`**）；
 产物落 `Data/originalboot/`；热键 **`RightAlt` = 立刻冲缓冲、`RightControl` = 封存**
 （和监视器**故意共用**这两个键，**`RightShift` 仍然只属于上面的采集器**）；
-字节 **38609** / 行 **835** / md5 **`243adb577f1442a069144f0bbb6df8f0`**。
-**它到 2026-10-02 为止一次都没在原版里跑过** —— 那三个数只保证「注进去的是我验过的那个文件」。
+字节 **42056** / 行 **886** / md5 **`852753d6861c23836c3cd634611bd04a`**（`b2`）。
+**它在 2026-10-02 跑过一趟**（`b1`，产物 `Data/originalboot/261002-133048/`）
+——那一趟干净的部分和它抓出的两个缺陷，见 `docs/BOOT_HOWTO.md` §8；
+**`b2` 本身还没在原版里跑过**。这三个数只保证「注进去的是我验过的那个文件」。
 **它和采集器/监视器可以同时注入**（全局变量、产物路径、热键三处都对过）。
 
 > **`r60` 改了哪里（Phase 62，2026-09-30）：** ① **DRIVER 整段删除** ——

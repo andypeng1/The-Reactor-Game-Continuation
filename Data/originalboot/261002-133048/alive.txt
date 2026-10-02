@@ -1,0 +1,8 @@
+# the boot screen recorder is loaded and reached its transport (build b1)
+build=b1
+transport=http_request
+sink=http://127.0.0.1:8765/
+prefix=originalboot/261002-133048/
+place=17596243941
+hotkeys=RightAlt flushes every artifact now; RightControl seals and ends
+note=hello.txt follows within a fraction of a second. If this is the only file you have, the script loaded and died in its module body.

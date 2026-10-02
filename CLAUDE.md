@@ -377,7 +377,7 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 堆芯外壳与拉杆握把的 `generate_mesh` 重做）已删掉，该节剩下的只是已完成的施工记录。
 
 **Phase 53（2026-09-27）—— 卷帘门收在 `ControlRoom{L/M/R}Shutter`（向下 10.58 世界空间），
-外加一台只读的房间监视器**（`_tools/room_watch.luau`，43 根 / 30,142 实例 / 235,038 属性）。
+外加一台只读的房间监视器**（`_tools/room_watch.luau`，43 根）。
 细节与 run 1..15 的数字**已整段搬到 `PROGRESS.md` Phase 53 尾部**。这里只留一句：**它只读、
 不写世界，抑制是「扣在手里不写」而不是「先写后擦」**；**两个实例已于 2026-09-27 删除**（D11 答 B），
 `_tools/` 里源码没丢，重新注入就回来。
@@ -390,31 +390,34 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 **三份都不按任何东西**（驱动器的删除见 Phase 62）。用法：`docs/RECORDER_HOWTO.md`
 （开机那份 `docs/BOOT_HOWTO.md`）；测试 `bash _tools/run_tests.sh`。
 
-**Phase 54（2026-09-27）—— 第二份注入原版的脚本：`_tools/TRG_original_watch.luau`。**
-起因是用户的一次更正：「**我说的整个控制室+核心腔室+音频监听是监听原游戏的，又不是现在的**」
-—— Phase 53 那台做在了 **AIRemake** 上，方向错了；目的也说明了：`你根本不会做开机`，
-所以产物要能回答**「开机到底做了什么」**，三个监控对象全部重新对准**原版**。
-**和 `room_watch.luau` 最大的结构差别：根不是写死的。** 原版的树我一次都没看过，
-写死根名 = 把猜测当事实，而猜错**是静默的**（根不存在 = 零行 = 和「没事发生」同形），
-所以它**先普查、再选根**（按实例数**从小到大**取到预算 80000 为止），
-并把**选择过程本身**写进 `rooms.txt`（谁进了、谁没进、**为什么**）。
-产物九份含 `audio.txt` / `error.txt`，热键 `RightAlt` 催 / `RightControl` 停，**只读**。
-**本机验过**：`watch_harness.luau` **45 PASS / 0 FAIL**、`--boom` **4 PASS / 0 FAIL**、
-`selftest_watch.py` **15 个变异 15 个按预期变红**；`bash _tools/run_tests.sh` 全绿。
-**它当时一次都没在原版里跑过**（盘上只有采集器的字节，两种解释同形：`PROGRESS.md` 57.10 /
-`QUESTIONS.md` **P8**）—— **2026-09-30 被它自己的产物推翻**：Phase 61 那趟 11 份产物、
-无 `error.txt`，且翻出两个**跑起来才看得见**的缺陷（hook 晚装 28 秒、`MaxQueue` 太小，修在 `w60`）。
-预算够不够、选出的根对不对，**都是设计意图不是观测**，跑完**第一件事读 `rooms.txt`**。
-验的过程翻出四个错，三个只有变异测试看得见 —— 细节 `PROGRESS.md` 54，取舍 **160..163**。
-**跑法**（全文见 `docs/RECORDER_HOWTO.md`）：起 8766，在原版里 `loadstring(game:HttpGet(...))`；
-sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开局就响着的声音**永远不会**发 `Played`
-（DECISIONS 157），晚注入等于把开盘那段让掉。**三份可以同时注入**（全局变量、输出路径、热键都对过）——
-**热键曾经撞过：两边都绑 `RightShift`，而采集器那边它是「封存并结束这一趟」。**
-监视器与开机那份已让路到 **`RightAlt` = 立刻推/冲**、**`RightControl` = 停/封存**；
-**`RightShift` 只属于采集器**，别在跑的时候按它。harness 各有一条检查守着不再撞回去。
-**D11 已执行（2026-09-27）：** AIRemake 那边 Phase 53 的 `SSS.MCP_RoomWatch` +
-`MCP_RoomWatchRunner` **已删**（你原话「不用吧，采集的是原游戏里面的」）；两个 MCP 探针留着。
-细节 `PROGRESS.md` 54.7，取舍 `DECISIONS_2` **165**。
+**Phase 71（2026-10-02）—— 开机采集器第一趟真机（`b1`）：两个缺陷，都改了（`b2`）。**
+`Data/originalboot/261002-133048/` 的 `meta.txt` 自带 `build=b1`，所以数字能对回代码。
+干净的部分：`dropped_chunks=0` / `suppressed_keys=0` / `sink_error=none`、5156 行 **0 行不合法**、
+`.GlitchEffect` **零条**、≈**9.2 KB/s**（对照 `Test.lua` 的 1.14 MB/s）。**两个假设被真机否掉**：
+① **午夜不是收盘，是开盘** —— 那一按落在 **11:51 PM**，第一个读数就解除了「离开过开盘值」的保险，
+于是 t≈95 s 的午夜封存，而那一拍**核心正在点火**（248 → 9478 F、0 → 146 GW/H）—— **切在结束之前**；
+现在午夜只留一行 `# MARK midnight`、**不封存**（注释行是行格式冻结下唯一安全的加法）。
+② **只挂 `DescendantAdded` 不够** —— 出生时的值被当基线播掉，日志面板**文本 0 行**（104 行全是渐隐）；
+现在**出生记录**把出生时的值写出来。测试台原来**没有覆盖「回到午夜」那条路径**，已按实测形状
+`11:51 PM → 11:59 PM → 12:00 AM` 重摆。`run_tests.sh` **rc=0**（33 / 6 / 6 / 34+1SKIP / 30，
+`selftest_boot` **11/11**）。`b2` = **42056 / 886 / `852753d6861c23836c3cd634611bd04a`**，
+**它自己还没在原版跑过**。细节 `PROGRESS.md` 71，取舍 **243..246**；`docs/BOOT_HOWTO.md` §6/§8 已按实测重写。
+
+**Phase 54（2026-09-27）—— 监视器 `_tools/TRG_original_watch.luau`：对准的是原版，不是 AIRemake。**
+（你原话「我说的整个控制室+核心腔室+音频监听是监听原游戏的，又不是现在的」，
+目的也说明了：`你根本不会做开机`，所以产物要能回答「开机到底做了什么」）。
+**它和 `room_watch.luau` 最大的结构差别：根不是写死的** —— 猜错**是静默的**
+（根不存在 = 零行 = 和「没事发生」同形），所以它**先普查、再选根**，并把**选择过程本身**
+写进 `rooms.txt`（谁进了、谁没进、**为什么**）。产物九份含 `audio.txt` / `error.txt`，只读。
+本机 `watch_harness` **45 PASS**、`selftest_watch` **15/15**。
+**2026-09-30 那趟有 11 份产物、无 `error.txt`**，并翻出两个**跑起来才看得见**的缺陷
+（hook 晚装 28 秒、`MaxQueue` 太小 → 修在 `w60`/`w61`）。**跑法**：起 8766，
+原版里 `loadstring(game:HttpGet(...))`；sink 8765 已在跑；**要抓开机就趁开机前注入**
+（开局就响着的声音**永远不会**发 `Played`，DECISIONS 157，晚注入 = 让掉开盘那段）。
+**三份可以同时注入**（全局变量、输出路径、热键都对过）；热键 **`RightAlt` = 推/冲、
+`RightControl` = 停/封存**，**`RightShift` 只属于采集器**（曾经撞过，各 harness 有检查守着）。
+**D11 已执行**：AIRemake 那边 Phase 53 的 `SSS.MCP_RoomWatch` + `MCP_RoomWatchRunner` 已删。
+细节 `PROGRESS.md` 54 / 57.10，取舍 **160..165**；`QUESTIONS.md` P8 已由产物回答。
 
 **Phase 55/56/57/58 —— 已搬到 `PROGRESS.md` 的历史，这里只留能直接用的那几句。**
 - **55**：GUI 采集（`g.<key>`）**只在客户端**存在；`GuiObject` 答 `Visible`、`LayerCollector`
@@ -497,22 +500,17 @@ sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开�
 监视器看不见）—— **独立通道只在测同一对象时才算独立**。已 `.gitignore`。取舍 **226..229**。
 
 **Phase 67（2026-10-01）—— 开机屏：你给的「直接证据」变成 remake 里会动的那 14 秒。**
-你那段 hook（`_tools/_attic/scratch/aux_boot_hook.luau`）**钉死了 t=0 = `MonitorBootButton` 被按**
-（逐字留着）—— 于是 **§66.5「抓取开始时就已在开机中」是错的**，
-原地划掉更正。由它量出并实现的：`BootSeconds` 3 → **14**、`Config.Shell.BootScreen.Reveals` **7 条**、
+你那段 hook 钉死了 t=0 = `MonitorBootButton` 被按 → **§66.5「抓取开始时就已在开机中」是错的**，
+原地划掉更正。由它量出并实现：`BootSeconds` 3 → **14**、`BootScreen.Reveals` **7 条**、
 新模块 **`BootPanel`**（写 `BootFrame` **里面** 51 个 label 的 `Visible`，与 `RoomShell` 写
 `BootFrame.Visible` **属性不相交**）。**只建模布尔、不重建曲线** —— 捕获里那 99.7% 的位移行是
-「变化才写」，**布尔活得过采样，曲线活不过**。**验证**：`aux_expect.py`（从捕获重放）对
-`aux_compare.py`（读真部件）**14/14 秒全等**，两个变异各在预期段变红，跑完世界复原。
-细节 `PROGRESS.md` 67，取舍 **230..232**。
+「变化才写」，**布尔活得过采样，曲线活不过**。细节 `PROGRESS.md` 67，取舍 **230..232**。
 
 **Phase 68（2026-10-01）—— 镜像追平；`run_tests.sh` 不是并发安全的。**
 **① 判据看 `N of M detected`，不看 rc** —— `selftest_watch.py` 写死固定路径并 `rmtree`，
-**同时跑两遍互删产物 → 报成「NOT DETECTED」**（两遍给出 **17/29**、**25/29** 两个不同的数
-= 污染指纹；其中一遍 rc 还是 **0**）；单独跑 **29/29，rc=0**。
+**同时跑两遍互删产物 → 报成「NOT DETECTED」**（17/29 和 25/29 两数 = 污染指纹，其中一遍 rc 还是 **0**）。
 **② `src/ReactorBackend/`** 漂了 4 个 Phase（3 改 / 2 无 / 5 相同 —— **半新半旧最难认**），
-已按 §0.17 通道 + 两侧 **CRC-32** 追平复验 10/10；**它没有写入者**，会再旧。
-取舍 **233/234**。
+已按 §0.17 通道 + 两侧 **CRC-32** 追平复验 10/10；**它没有写入者**，会再旧。取舍 **233/234**。
 
 **Phase 70（2026-10-02）—— 优化操作员自己那份开机采集脚本 → 新文件 `_tools/TRG_original_boot.luau`。**
 原话「优化一下我写的那个开机（主要是采集，然后我注入）」——「我写的那个」= 他

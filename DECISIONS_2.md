@@ -4053,3 +4053,58 @@
      reader is rewritten the check goes red instead of quietly testing the old format. This also turned "the
      seven agree" from a recollection into a fact that has to keep being true, which is the cheapest kind of
      insurance available on a claim that had already been made wrongly once in this project.
+
+243. A GUARD IS ONLY AS GOOD AS THE VALUE IT IS ARMED BY, AND AN ASSUMED VALUE ARMS NOTHING.
+
+     The wrap seal was written as "12:00 AM seals, but not while the dial is still on its opening value", and
+     the opening value was assumed to BE 12:00 AM -- written down as an assumption in Phase 62 and never
+     measured. The first real run reads 11:51 PM at the press, so the very first reading disarmed the guard,
+     and midnight -- 89 s later, in the middle of the core's ignition ramp -- sealed the capture. The code did
+     exactly what it said; the thing it was protecting against was not in the input any more.
+
+     The rule that survives is the narrower one: the guard has to be armed by the SAME quantity it is meant to
+     be excluded by. "Not while the dial is on its opening value" is only meaningful if something has measured
+     what the opening value is -- and the honest version of that sentence names the measurement, not the
+     assumption. Where a stop rule can be replaced by a record at its own trigger point (see 244), that is
+     strictly better than a rule whose correctness rests on a world fact nobody has looked at.
+
+244. MIDNIGHT IS A MARK, NOT AN END -- AND A COMMENT LINE IS THE ONLY FORMAT-SAFE WAY TO SAY SO.
+
+     Removing the wrap seal could have been the whole change. It was not, because the moment itself is data:
+     the dial crossing 12:00 AM is the shift's start, and the boot chain's own timestamps should be read
+     against it. Losing it would have been the same class of defect as the seal was, from the other side.
+
+     It is written as a '#' comment inside the capture rather than as a new field on a data line, because the
+     line format is frozen and appending a field is not backward compatible (237) -- the greedy value group
+     swallows it and the end anchor is what tells a reader the line is complete. Comment lines are the one
+     thing every archived reader already skips, by construction, so a mark cannot be misread as data by an
+     analyser written before it existed. A separate artifact file would also have worked and was rejected:
+     the mark belongs where the events around it are, not in a file a reader has to correlate by timestamp.
+
+245. REGISTERING AN INSTANCE IS NOT SEEING IT: SEEDING IS RIGHT FOR A CENSUS AND WRONG FOR A BIRTH.
+
+     Seeding at registration exists to make "changed and changed back inside one tick" cost nothing (236's
+     neighbour). For the initial walk that is exactly right: the value at the press is a baseline, and a
+     property that never moves should never produce a line. For an instance that comes into existence during
+     the run it inverts: the value at birth is not a baseline, it is the first and often the ONLY data the
+     instance will ever have -- and the live game writes a cloned log frame's message BEFORE parenting the
+     frame, so the message was seeded away. 5156 lines of fades and not one character of the boot's own
+     narration is what that costs.
+
+     The fix is the exception stated where the rule is: register() takes `born`, one call site passes it, and
+     a born instance's baseline is set to a NUL sentinel -- unrepresentable in any formatted value -- so the
+     next tick writes what it holds through the same one-line-per-key path and against the same budget. The
+     cost is stated with it: a subtree cloned mid-run now writes its watched values once.
+
+246. A SCENARIO WRITTEN FROM THE IMAGINED INPUT TESTS THE IMAGINED PROGRAM.
+
+     The clock scenario set 12:00 AM once, as the opening value, and then went to noon. The rule it was
+     supposed to cover -- seal on the way BACK to midnight -- had no scenario at all, which is why it stayed
+     green through a mutation suite and died on the first real run. The scenario is now laid out to the shape
+     the artifact actually has: 11:51 PM, 11:59 PM, 12:00 AM, and noon after.
+
+     This is 241 from the other end. That one said a scenario that does not change the input is not a
+     scenario; this one says a scenario whose input is a guess tests the guess. The two together are the shape
+     of the whole defect: the rig and the program agreed with each other, and neither had been compared with
+     the world. Tests earned from measurement can disagree with the program; tests written beside the program
+     can only agree with it.

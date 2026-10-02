@@ -1,0 +1,19 @@
+# the boot screen recorder has sealed (build b1)
+build=b1
+reason=wrap
+detail=the dial went back to 12:00 AM
+stamp=261002-133048
+transport=http_request
+prefix=originalboot/261002-133048/
+started_at=1790919061.427898
+elapsed_s=94.93
+lines=5156
+bytes=874526
+sink_chunks=47
+sink_bytes=874526
+local_chunks=0
+local_bytes=0
+dropped_chunks=0
+suppressed_keys=0
+sink_error=none
+note=ScreenChanges.txt carries the capture. LINES ARE WRITTEN ONLY WHEN A VALUE CHANGED AT THE TICK (4 Hz), so a change that reverted inside one tick is not in the file. suppressed.txt names every key that crossed its write budget.
