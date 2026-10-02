@@ -1,0 +1,7 @@
+# the boot screen recorder is armed (build b2)
+build=b2
+transport=http_request
+root_visible_at_inject=true
+waiting_for=Workspace.Consoles.MainReactorConsole.MonitorBootButton
+hotkeys=RightAlt flushes now; RightControl seals
+note=inject this BEFORE pressing the boot button. The capture is indexed from the press, so a run that starts after it has no t=0.

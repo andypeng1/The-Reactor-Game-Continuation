@@ -145,6 +145,17 @@ local function Signal()
     local s = { fns = {} }
     function s:Connect(fn)
         local conn = { Connected = true }
+        -- Disconnect has to EXIST, or the stub cannot express the one state the
+        -- recorder now depends on: a key whose instance was replaced, whose old
+        -- connection is aimed at a corpse.  Without it the script's own
+        -- pcall(conn:Disconnect) fails silently and the ghost test below reports
+        -- the shipped file as broken -- a stub's missing method blaming the code
+        -- under test (the same failure mode the DescendantAdded line in MT.__index
+        -- carries a warning about).
+        conn.Disconnect = function(self)
+            self.Connected = false
+            CONN[self] = nil
+        end
         CONN[conn] = fn
         self.fns[#self.fns+1] = conn
         return conn
@@ -280,7 +291,13 @@ local function monitor(name)
 end
 local _, UI1, GLITCH1, LABEL = monitor('QuotaControlRoomMonitor')
 monitor('ForecastControlRoomMonitor')
-monitor('LogControlRoomMonitor')
+local LOGUI = select(2, monitor('LogControlRoomMonitor'))
+
+-- The SYSTEM LOGS panel: it exists from the start (so the census sees it) and is
+-- EMPTY, because the messages are cloned into it at runtime -- one fresh row per
+-- message, reusing the same three names.  Section 5b uses it: a path is not an
+-- object, and this is the panel where that stops being academic.
+local LOGS = inst('Frame', 'LogsFrame', {}, LOGUI)
 
 -- A boot frame: Visible false, and a plain Frame so its geometry IS watched.
 local BOOT = inst('Frame', 'BootFrame',
@@ -378,6 +395,21 @@ local function key(name)
     INPUT:Fire({ KeyCode = 'Enum.KeyCode.' .. name }, false)
 end
 local function flushNow() key('RightAlt') end
+
+-- The build string is read OFF THE SHIPPED FILE, not written here a second time.
+-- A literal in the harness is a copy of the one number that changes every build,
+-- and a stale copy fails against a correct file -- which is how the check that the
+-- capture names its own build turned red for a reason that had nothing to do with
+-- the capture.  Anchored on the CONFIG assignment, so a 'b3' in a comment above it
+-- cannot satisfy the match.  Under the mutation suite PATH is the mutant, which
+-- carries the same line, and that is the copy the mutant is being asked about.
+local SRC_BUILD = (function()
+    local fh = io.open(PATH, 'r')
+    if fh == nil then return nil end
+    local body = fh:read('*a')
+    fh:close()
+    return string.match(body, "Build%s*=%s*'([^']+)'")
+end)()
 
 -- ========== 1. THE BEACONS ==========
 check('the beacon names the transport it actually selected',
@@ -516,6 +548,72 @@ check('a label born during the run is written with the text it was born with',
 check('and its birth does not replace the later change',
     countFor('LateTitle]<-C:[Visible]<-V:[true]') == 1,
     tostring(countFor('LateTitle]<-C:[Visible]<-V:[true]')) .. ' true lines')
+
+-- ========== 5b. THE SAME PATH, TWICE ==========
+-- A PATH IS NOT AN OBJECT, and the log panel is where that stops being academic.
+-- Every message is a FRESH row cloned onto one of three names, so
+-- ...LogsFrame.TemplateLogFrame1.TextLabel is born, fades, is destroyed and is
+-- born again for the rest of the shift.  Phase 72 measured what a register() that
+-- stops at 'this key already exists' costs: the recorder kept three messages out
+-- of a 428 s shift while the r60 capture of the SAME shift holds 35 distinct ones
+-- -- the whole narration after the first three lines, including START-UP
+-- COMPLETED.  The instance set is a fixed descendant set only until something
+-- clones; the KEY set was a fixed descendant set for the entire run.
+--
+-- The row is built the way the live game builds it -- the text is set BEFORE the
+-- row is parented -- because that ordering is what makes the birth record the
+-- only thing that can see the message at all.
+local function logMessage(name, text)
+    local row = inst('Frame', name, { Visible = true, Position = '0,0', Size = '1,0' }, LOGS)
+    local lbl = inst('TextLabel', 'TextLabel', { Text = text, Visible = true }, row)
+    -- Both are returned: the row is what the panel re-parents away between two
+    -- messages, the label is what carries the message and what must go quiet once
+    -- a different instance occupies the path.
+    return row, lbl
+end
+
+local FIRST = 'PRIMING ISOTOPE E COOLANT NETWORK'
+local SECOND = 'DEEP SCAN PROCEDURE COMPLETED'
+local firstPath = 'TemplateLogFrame1.TextLabel]<-C:[Text]<-V:['
+
+local row1, lbl1 = logMessage('TemplateLogFrame1', FIRST)
+advance(0.3)
+flushNow()
+check('the first instance on a path is recorded with the text it was born with',
+    countFor(firstPath .. FIRST .. ']') == 1,
+    tostring(countFor('TemplateLogFrame1.TextLabel]<-C:[Text]')) .. ' Text lines')
+
+-- The row fades and the panel destroys it; re-parenting the whole row away leaves
+-- exactly the state the panel leaves behind between two messages: the path is
+-- free, the name is unchanged, and the next message is a different object.
+row1.Parent = nil
+advance(0.3)
+
+local _, lbl2 = logMessage('TemplateLogFrame1', SECOND)
+advance(0.3)
+flushNow()
+check('a second instance on the same path is recorded too, so a path is not an object',
+    countFor(firstPath .. SECOND .. ']') == 1,
+    tostring(countFor(firstPath .. SECOND .. ']')) .. ' lines for the second message')
+
+-- And the instance that was replaced must stop writing.  Its property signal is
+-- still live unless the key was re-pointed, and a key that was never re-pointed
+-- keeps a connection aimed at a corpse -- so the artifact would report a message
+-- this panel never showed, on a path the corpse no longer occupies.
+lbl1.Text = 'GHOST OF THE REPLACED ROW'
+advance(0.3)
+flushNow()
+check('the replaced instance is disconnected, so its later writes do not reach the path',
+    countFor(firstPath .. 'GHOST OF THE REPLACED ROW]') == 0,
+    tostring(countFor(firstPath .. 'GHOST OF THE REPLACED ROW]')) .. ' ghost lines')
+lbl2.Visible = false
+advance(0.3)
+flushNow()
+check('and the live instance on that path still writes',
+    countFor('TemplateLogFrame1.TextLabel]<-C:[Visible]<-V:[false]') == 1,
+    'the live row wrote ' ..
+    tostring(countFor('TemplateLogFrame1.TextLabel]<-C:[Visible]<-V:[false]')) ..
+    ' false line(s) after the re-point')
 
 -- ========== 6. THE HOTKEYS ==========
 -- The key must deliver what the timer has not.  Establishing that is a timing
@@ -658,8 +756,9 @@ check("every data line matches the archived readers' pattern exactly",
     badLines == 0, tostring(badLines) .. ' of ' .. tostring(dataLines) .. ' lines do not')
 check('the capture is not empty', dataLines > 100, tostring(dataLines) .. ' data lines')
 check('the capture opens with a header naming the build',
-    string.find(captureLines()[1] or '', 'build=b2', 1, true) ~= nil,
-    tostring(captureLines()[1]))
+    SRC_BUILD ~= nil and
+    string.find(captureLines()[1] or '', 'build=' .. SRC_BUILD, 1, true) ~= nil,
+    tostring(captureLines()[1]) .. '  (source says ' .. tostring(SRC_BUILD) .. ')')
 
 -- ========== 10. THE TWO OUTPUT PATHS ==========
 if SCENARIO == 'nosink' then

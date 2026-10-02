@@ -1,0 +1,12 @@
+# watcher health, rewritten every 30 scans
+t=0000450.43 tick=30 running=false
+window=open recorded=4492 withheld=0 clock=1028
+watched=71612 props=560318 moved=4134 ambient=797
+queued=0 dropped=0 scan_ms=3223 sleep_ms=6521 duty=0.30 yields=56 (block_ms=25 target=0.30)
+sink=ok
+sink_error=none
+transport=http_request
+sink_outages=0 sink_down_total=0.00s sink_last_at=never sink_last_error=none
+audio_hooks=4122 refused=0 events=4369 poll_only=0 dropped=0 err=none
+fatal=none
+prefix=originalwatch/261002-140021/

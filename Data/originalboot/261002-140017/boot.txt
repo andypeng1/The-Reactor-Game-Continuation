@@ -1,0 +1,4 @@
+# the boot button was pressed (build b2)
+build=b2
+t0=14:00:35
+note=ScreenChanges.txt is indexed from this press

@@ -35,12 +35,11 @@ MUTATIONS = [
         'no coalescing: the signal handler writes at event time',
         'default',
         'sixty changes inside one tick become at most one line',
-        """            if not dirtySet[key] then
-                dirtySet[key] = true
-                dirty[#dirty+1] = { obj = obj, full = full, prop = prop, key = key }
-            end""",
-        """            dirtySet[key] = true
-            emit(string.format('Time:[%s]<-O:[%s]<-C:[%s]<-V:[%s]',
+        """            -- THE COALESCER.  A change costs one table lookup and one mark, not a
+            -- formatted line: 60 Hz of jitter becomes one entry in one batch, and
+            -- the tick decides whether the value was worth anything.
+            mark(key, obj, full, prop)""",
+        """            emit(string.format('Time:[%s]<-O:[%s]<-C:[%s]<-V:[%s]',
                 wallClock(), full, prop, fmt(obj[prop])))""",
     ),
     (
@@ -77,6 +76,13 @@ MUTATIONS = [
         'midnight does not end the run -- on this world it is the shift START',
         "            elseif text == '12:00 AM' then",
         "            elseif text == '12:00 AM' then\n                seal('wrap', 'the dial went back to 12:00 AM')",
+    ),
+    (
+        'the key is not re-pointed, so a second instance on a known path is dropped',
+        'default',
+        'a second instance on the same path is recorded too, so a path is not an object',
+        "            elseif born and ownerOf[key] ~= obj then",
+        "            elseif false then",
     ),
     (
         'the mark is written as a data line instead of a comment',

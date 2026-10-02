@@ -1,5 +1,5 @@
 -- ============================================================================
--- TRG ORIGINAL -- THE START-UP SCREEN RECORDER   (build b1)
+-- TRG ORIGINAL -- THE START-UP SCREEN RECORDER   (build b3)
 -- ============================================================================
 -- WHAT THIS IS.  It replaces the operator's own recorder, the one that produced
 -- Data/auxcollection/startup/ScreenChanges.txt -- 179,788,590 bytes, 1,162,737
@@ -75,6 +75,18 @@
 --    a BIRTH RECORD: an instance registered after t0 has its watched values
 --    written as lines instead of only seeded.  See register().
 --
+-- 6. AND REGISTERING IT ONCE IS NOT THE SAME AS WATCHING THE PATH.  Measured by
+--    the second real run (PROGRESS.md Phase 72): a key is a PATH, and the gate was
+--    'have I ever seen this path'.  The log panel clones a FRESH row per message
+--    onto three fixed names, so from the second message onwards the path was
+--    already known, the new instance was skipped whole, and the connection that
+--    stayed registered was aimed at a row the panel had since destroyed.  The
+--    capture kept 3 messages out of a 428 s shift; the r60 recorder's capture of
+--    the SAME shift holds 35 distinct ones, START-UP COMPLETED among them.  Fixed
+--    by re-pointing the key at whatever occupies the path now.  See register()'s
+--    second branch -- and note that the harness's clone test cloned a NEW path,
+--    which is why it stayed green through this.
+--
 -- AND ONE THING THAT IS NOT A DEFECT BUT A COST: the product used to land in the
 -- executor's own TRG/ folder, which is why getting the last one into this repo
 -- was a 180 MB manual copy.  This file POSTs to the same localhost sink the
@@ -113,7 +125,7 @@
 local NL = string.char(10)
 
 local CONFIG = {
-    Build = 'b2',
+    Build = 'b3',
 
     -- The tick.  See (2) above: this is the resolution of the whole capture, so
     -- it is the one number here that trades fidelity for volume.  The recorder
@@ -490,6 +502,9 @@ local suppressed = {}         -- the ledger: one line per key that crossed a bud
 local connections = {}        -- everything that must be disconnected on seal
 local writes = {}             -- key -> lines this key has produced
 local lastValue = {}          -- key -> the last value WRITTEN (not the last seen)
+local ownerOf = {}            -- key -> the instance that currently occupies it
+local connOf = {}             -- key -> that instance's live connection
+local entryOf = {}            -- key -> the one queued entry for that key
 
 local seal                    -- forward: the tick reports its own death through it
 local emit                    -- forward: the tick writes through it
@@ -508,6 +523,24 @@ local function geometrySkipped(full, prop)
     return false
 end
 
+-- One mark per key per tick, and the queue entry for a key is REUSED rather than
+-- re-pushed.  That is what makes a re-point safe: a key whose instance was
+-- replaced between the mark and the tick is read from the replacement, and not
+-- from the corpse the entry was queued with.
+local function mark(key, obj, full, prop)
+    local entry = entryOf[key]
+    if entry == nil then
+        entry = { obj = obj, full = full, prop = prop, key = key }
+        entryOf[key] = entry
+    else
+        entry.obj = obj
+    end
+    if not dirtySet[key] then
+        dirtySet[key] = true
+        dirty[#dirty+1] = entry
+    end
+end
+
 local function watch(obj, full, prop, key)
     local okSig, signal = pcall(function() return obj:GetPropertyChangedSignal(prop) end)
     if not okSig or signal == nil or signal.Connect == nil then return false end
@@ -517,14 +550,12 @@ local function watch(obj, full, prop, key)
             -- THE COALESCER.  A change costs one table lookup and one mark, not a
             -- formatted line: 60 Hz of jitter becomes one entry in one batch, and
             -- the tick decides whether the value was worth anything.
-            if not dirtySet[key] then
-                dirtySet[key] = true
-                dirty[#dirty+1] = { obj = obj, full = full, prop = prop, key = key }
-            end
+            mark(key, obj, full, prop)
         end)
     end)
     if not okConn or conn == nil then return false end
     connections[#connections+1] = conn
+    connOf[key] = conn
     return true
 end
 
@@ -542,37 +573,61 @@ local function register(obj, born)
     if not okName or type(full) ~= 'string' then return end
     for _, prop in ipairs(props) do
         local key = keyOf(full, prop)
-        if keys[key] == nil and not geometrySkipped(full, prop) then
-            if watch(obj, full, prop, key) then
-                keys[key] = true
-                if born then
-                    -- BORN DURING THE RUN: its CURRENT values are data, not a
-                    -- baseline.  Phase 71 -- the game writes a cloned log frame's
-                    -- message BEFORE it parents the frame, so seeding here is
-                    -- exactly what swallowed the boot screen's own narration.
-                    -- The seed becomes 'never written', and the next tick writes
-                    -- what the instance actually holds, through the same one-line-
-                    -- per-key path and against the same write budget as every
-                    -- other line.  The cost, stated: a subtree cloned mid-run now
-                    -- contributes its watched values once, and a value that
-                    -- changes between birth and the next tick is reported at its
-                    -- tick value -- the same 0.25 s quantisation every other line
-                    -- already has.
-                    lastValue[key] = BIRTH
-                    if not dirtySet[key] then
-                        dirtySet[key] = true
-                        dirty[#dirty+1] = { obj = obj, full = full, prop = prop, key = key }
+        if not geometrySkipped(full, prop) then
+            if keys[key] == nil then
+                if watch(obj, full, prop, key) then
+                    keys[key] = true
+                    ownerOf[key] = obj
+                    if born then
+                        -- BORN DURING THE RUN: its CURRENT values are data, not a
+                        -- baseline.  Phase 71 -- the game writes a cloned log frame's
+                        -- message BEFORE it parents the frame, so seeding here is
+                        -- exactly what swallowed the boot screen's own narration.
+                        -- The seed becomes 'never written', and the next tick writes
+                        -- what the instance actually holds, through the same one-line-
+                        -- per-key path and against the same write budget as every
+                        -- other line.  The cost, stated: a subtree cloned mid-run now
+                        -- contributes its watched values once, and a value that
+                        -- changes between birth and the next tick is reported at its
+                        -- tick value -- the same 0.25 s quantisation every other line
+                        -- already has.
+                        lastValue[key] = BIRTH
+                        mark(key, obj, full, prop)
+                    else
+                        -- SEEDED WITH THE VALUE AT REGISTRATION, and this is the whole
+                        -- of the change-and-revert rule.  Comparing against nil
+                        -- instead would mean that a value which flickered and came
+                        -- back still got one line, because the final reading would
+                        -- differ from 'never seen' -- the noise this file exists to
+                        -- remove, arriving by the back door.  One property read per
+                        -- key, once, at registration.
+                        local okV, v = pcall(function() return obj[prop] end)
+                        lastValue[key] = okV and fmt(v) or '<read failed>'
                     end
-                else
-                    -- SEEDED WITH THE VALUE AT REGISTRATION, and this is the whole
-                    -- of the change-and-revert rule.  Comparing against nil
-                    -- instead would mean that a value which flickered and came
-                    -- back still got one line, because the final reading would
-                    -- differ from 'never seen' -- the noise this file exists to
-                    -- remove, arriving by the back door.  One property read per
-                    -- key, once, at registration.
-                    local okV, v = pcall(function() return obj[prop] end)
-                    lastValue[key] = okV and fmt(v) or '<read failed>'
+                end
+            elseif born and ownerOf[key] ~= obj then
+                -- A PATH IS NOT AN OBJECT.  Phase 72: the log panel clones a FRESH
+                -- row per message onto three fixed names, so this path is born and
+                -- destroyed once per message for the whole shift.  While the key
+                -- was gated on 'have I ever seen this path', the second message
+                -- onwards was dropped whole -- the old instance's connection stayed
+                -- aimed at a corpse, and the run's own narration stopped after its
+                -- first three lines (3 lines here against 35 distinct messages in
+                -- the r60 capture of the same shift, START-UP COMPLETED among the
+                -- missing).  Re-point the key at the instance that actually
+                -- occupies the path now: drop the corpse's connection, watch the
+                -- replacement, and let the birth record say what it was born
+                -- holding.  keys[key] and writes[key] deliberately survive: the
+                -- budget is per PATH, because that is what suppressed.txt names.
+                local stale = connOf[key]
+                if stale ~= nil then
+                    pcall(function() stale:Disconnect() end)
+                    connOf[key] = nil
+                end
+                if watch(obj, full, prop, key) then
+                    ownerOf[key] = obj
+                    lastValue[key] = BIRTH
+                    mark(key, obj, full, prop)
                 end
             end
         end

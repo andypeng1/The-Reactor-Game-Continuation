@@ -1,0 +1,19 @@
+# the boot screen recorder has sealed (build b2)
+build=b2
+reason=hotkey
+detail=RightControl
+stamp=261002-140017
+transport=http_request
+prefix=originalboot/261002-140017/
+started_at=1790920835.170772
+elapsed_s=428.82
+lines=25007
+bytes=4178252
+sink_chunks=200
+sink_bytes=4178252
+local_chunks=0
+local_bytes=0
+dropped_chunks=0
+suppressed_keys=0
+sink_error=none
+note=ScreenChanges.txt carries the capture. LINES ARE WRITTEN ONLY WHEN A VALUE CHANGED AT THE TICK (4 Hz), so a change that reverted inside one tick is not in the file. suppressed.txt names every key that crossed its write budget.

@@ -4108,3 +4108,40 @@
      of the whole defect: the rig and the program agreed with each other, and neither had been compared with
      the world. Tests earned from measurement can disagree with the program; tests written beside the program
      can only agree with it.
+
+247. A KEY IS A PATH, AND A PATH IS NOT AN OBJECT.
+
+     The boot recorder keys every watched property by `full path | property`, and register() admitted a key
+     once: `if keys[key] == nil`. That is correct for a world with a fixed cast of instances and wrong for
+     one that clones. The original's log panel does not move a message through three fixed labels -- it
+     clones a fresh row per message onto the SAME three names and destroys the row when the fade ends. So
+     after the first three messages every later one was skipped whole, and worse, the surviving connection
+     still pointed at a row that had already been destroyed: the key was occupied by a dead object, so the
+     new instance's writes had nothing watching them at all.
+
+     Two instruments measuring the same face of the same shift are what named it. This file counted 3 log
+     messages; r60, running in the same session against the same LogsFrame, counted 35 distinct ones
+     including START-UP COMPLETED; the watcher counted the three TextLabels destroyed 47 times (12 + 27 + 8
+     distinct instances). 3 is a defect of this measurement, not a property of the panel.
+
+     The fix keeps the key path-shaped and makes the registration re-point it: a born instance on a known
+     path disconnects the stale connection, connects the new one, and takes the birth record again.
+     `keys[key]` and `writes[key]` deliberately survive -- the write budget is per PATH, because that is
+     what suppressed.txt's ledger names. Disconnecting before re-pointing is not tidiness: without it a dead
+     connection keeps writing to a path it no longer occupies, and the artifact reports messages the panel
+     never showed. A recorder that invents data is worse than one that misses it.
+
+248. THE HARNESS CLONED A NEW PATH, WHICH IS WHY IT STAYED GREEN.
+
+     The birth record shipped in b2 with a test and with a mutation that made it go red. Both used a clone
+     onto a NEW path (TemplateLogFrame4). The defect was the second instance on the SAME path -- a shape the
+     rig did not contain -- so b2 went to the real game with a full green board. This is 246's twin: 246 was
+     a scenario written from a guessed input, this is a scenario written for the convenient shape. A suite
+     can only fail in the shapes someone thought of, and the defect lives in the shapes nobody did.
+
+     Two smaller things from the same pass. The signal stub had no Disconnect method, so the shipped file's
+     own pcall(conn:Disconnect) -- correct code -- would have failed silently and been reported as a broken
+     file: a stub that cannot do what the real object does is a test that lies. And the harness used to
+     hard-code `build=b2` in its header assertion, which meant bumping the build failed a correct file; it
+     now reads the build string off the shipped source, because a literal in the rig is a second copy of the
+     one number that changes every build.

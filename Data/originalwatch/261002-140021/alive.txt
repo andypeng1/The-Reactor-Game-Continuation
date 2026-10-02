@@ -1,0 +1,8 @@
+# the watcher is loaded and reached its transport (build w61)
+build=w61
+transport=http_request
+sink=http://127.0.0.1:8765/
+prefix=originalwatch/261002-140021/
+place=17596243941
+hotkeys=RightAlt writes every file out now; RightControl stops
+note=hello.txt follows within a fraction of a second, from inside Start. If this is the only file you have, the watcher loaded and died in its module body -- nothing below this point had run, so the console error is the whole of the diagnosis.

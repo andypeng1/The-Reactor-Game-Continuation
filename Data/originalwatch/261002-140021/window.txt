@@ -1,0 +1,16 @@
+# the recording window -- when this run was being recorded, and what was not
+# rule: from the start-up lever to the shift dial wrapping past 12:00 PM
+state=open
+opened_at=21.47 why=the start-up lever was clicked at Workspace.Consoles.MainReactorConsole.StartUpBigLever.StartClickPart
+closed_at=not yet why=(still open, or never opened)
+withheld_before_open=0 line(s), plus 99 audio line(s)
+recorded=1521 line(s)
+lever_path=Consoles.MainReactorConsole.StartUpBigLever.StartClickPart
+lever_hooked=true
+opened_by_fallback_flag=false
+clock_path=Monitors.QuotaControlRoomMonitor.Screen.MonitorUI.MainMonitorFrame.TimeFrame.TimeLabel
+clock_text=1:23 AM
+clock_mins=803  (the close rule is the dial FALLING by >= 60 minutes, 2 poll(s) in a row)
+dial_previous_mins=803
+wrap_latched_from=(not latched)  (set when the fall was seen; cleared if the dial came back up)
+wrap_polls=0 of 2
