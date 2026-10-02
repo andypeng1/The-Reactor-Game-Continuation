@@ -6397,3 +6397,82 @@ new keys = [pages, source, total_pages, wiki]          ← 丢了三个
 
 备份：`TRGWiki.json.261001.bak`（脚本自己写的；**已存在就跳过**，所以重跑不会把「拉取前」
 覆盖成「拉取后」）。重跑验证：`--no-write` 不需要，第二次跑 `added/removed` 仍为 0/0。
+
+## Phase 70（2026-10-02）—— 优化用户自己写的开机采集脚本：新文件 `_tools/TRG_original_boot.luau`
+
+用户原话（这一轮的活就是这一句）：**「优化一下我写的那个开机（主要是采集，然后我注入）」**。
+
+「我写的那个开机」指的是 **`C:\Users\andypeng1NB\AppData\Local\SolaraTab\Test.lua`**
+（4935 字节 / 4564 字节文本 / 160 行）—— 用户自己在 Solara V3 里 `loadstring` 注入的
+**开机屏逐属性变化采集器**。**那个文件一个字都没改**（执行器会重写 tab 目录下的所有文件，
+改它等于白改）。优化落在**本仓库的新文件** `_tools/TRG_original_boot.luau`，
+用户从 8766 上 `HttpGet` 下来注入。
+
+**先读了它，再说优化了什么** —— 它自己的产物就是优化的靶子：
+`Data/auxcollection/startup/ScreenChanges.txt`，**1,162,737 行 / 179,788,590 字节 / 158 秒**。
+
+### 70.1 靶子是量出来的，不是猜的
+
+| # | 缺陷（从它的源码和产物读出来的） | 这一份怎么处理 |
+|---|---|---|
+| a | `WatchProperties` 按 ClassName 挂，`Position`/`Size` 在表里 → `…MonitorUI.GlitchEffect.GlitchFrame` 每帧写一行 = **99.4% 的行** | `GeometrySkip = {'.GlitchEffect'}` —— **按路径**不挂几何属性，源头不产生 |
+| b | `appendfile` 且从不先 `writefile` → **两次注入串成一个文件**（Phase 66 那个「文件顺序不是时间顺序」的来源） | 首次覆盖、之后追加；本地名带时间戳 |
+| c | 没有 `DescendantAdded` → 运行期克隆的开机帧永远看不见 | 挂 `Monitors.DescendantAdded` |
+| d | 没有传输层 → 手搬 180 MB | POST 到 8765 的 `originalboot/` |
+| e | 没有体积上限（实测 **1.14 MB/s**） | 每键 2000 行 / 全局 24 MB / 2 s 或 64 KB 冲一次 |
+| f | 每行都算一次 `GetFullName()` | 登记时算一次，之后复用 |
+| g | 白名单缺 `Image` / `ImageTransparency` / `TextTransparency` / 颜色 / `ZIndex` | 补上 |
+| h | 停止条件 `'12:00 AM'` 和班次开盘撞车（表盘开盘就是 12:00 AM），且没有手动停止键 | 等 **11:59 AM → 12:00 PM 的交接**；`RightControl` 手动封存 |
+| i | 没有自报死因 | `alive` / `hello` / `boot` / `meta` / `error` |
+
+**根没有动**：它第 68 行是 `workspace:FindFirstChild("Monitors")`，这一份的 `RootName` 也是
+`'Monitors'` —— **作用域逐字相同**，没有借优化收窄。
+
+### 70.2 收尾时被测试台翻出来的东西（这一轮最花时间的部分）
+
+新写了三个本机工具，都在 `_tools/`：
+
+- **`boot_harness.luau`**（702 行）—— 假世界 + 假 sink + 虚拟时钟。五个场景：
+  `default` **29 PASS** / `nobutton` 6 / `noroot` 6 / `nosink` **30 PASS + 1 SKIP** /
+  `rightcontrol` 28，合计 **99 PASS / 0 FAIL / 1 SKIP**。
+- **`verify_boot_capture.py`** —— 从**七个旧分析器自己的源码里**把行格式正则读出来，
+  要求七个**完全一致**再逐行验捕获（三个捕获共 **6015 行，0 行不合法**）。
+- **`selftest_boot.py`** —— **8 个变异，8 个都被抓住**。
+
+**它翻出的四个 bug，全是「测试在说谎」那一类，值得记：**
+
+1. **`nosink` 场景声明了却从来没真拒过**（`SINK_UP` 声明后从没被压低），于是四条红线
+   对着一个**一直在工作**的 sink —— 四条 fail **不指向被测物**。
+2. **`noroot` 断言的是「加载时就报死」**，而文件的契约是「**按下才解析世界**」——
+   那条契约是**故意的**（StreamingEnabled 下加载时没有根通常只是「还没到」，
+   为它杀一趟是假警报）。改的是**测试**，不是文件。
+3. **`dump()` 写出一行 `'0'`**：`f:write(string.gsub(...))` —— gsub 返回 `(text, count)`，
+   **第二个返回值被当成第二个参数写进文件**。一个字符的疏忽，症状是**数据损坏**。
+4. 测试台自己的**缓冲相位依赖**（Phase 64 那个硬币）：现在每次测量前先 `flushNow()`，
+   `RightAlt` 那条则是**先等过一次定时器**再测，让变化**可证地落在无定时器的窗口里**。
+
+**真正改了一次被测文件**：`startRecording()` 原来先 `emit(表头)` 再 `arm()`，
+所以一次失败的按键会留下**一个只含表头的文件** —— 看起来像「开始了」、像「有数据」。
+现在 `arm()` 在前，失败时 `ScreenChanges.txt` **一个字节都不动**，死因写在 `meta.txt`。
+
+### 70.3 验证状态（分开写）
+
+**验了（本机，不进游戏）**：`bash _tools/run_tests.sh` **rc=0**，里面新加三道门 ——
+整文件 **Lua 5.1 解析**、`boot_harness.luau` 五个场景、`verify_boot_capture.py`、`selftest_boot.py`。
+
+**没验（必须说清楚）**：**它一次都没在原版里跑过。** 因此三条是**设计意图不是观测**：
+`GeometrySkip` 的粒度够不够、每键 2000 行切得对不对、`MaxPendingLines = 20000`
+够不够扛开机峰值。**跑完第一件事读 `suppressed.txt` 和 `meta.txt` 的 `dropped_chunks=`**。
+
+### 70.4 三个身份数（注入前核这个，别核时间）
+
+| | 字节 | 行 | md5 |
+|---|---|---|---|
+| `TRG_original_boot.luau` | **38609** | **835** | **`243adb577f1442a069144f0bbb6df8f0`** |
+
+这一份比另两份**更硬**：采集器/监视器经 Studio 编辑层搬运，这一份是 `HttpGet` 直取 ——
+**盘上就是注入进去的那个字节**，中间没有一层会改文本。
+
+字节性质**这次是量过的、不是断言的**：0 个反斜杠、0 个 CRLF、结尾有换行、纯 ASCII。
+
+用法全文 `docs/BOOT_HOWTO.md`。取舍 `DECISIONS_2.md` **236..242**。

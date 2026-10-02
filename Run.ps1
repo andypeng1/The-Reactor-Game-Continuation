@@ -1,2 +1,2 @@
 cd "D:\rblxTRGproject"
-claude
+claude --resume TRGRemake

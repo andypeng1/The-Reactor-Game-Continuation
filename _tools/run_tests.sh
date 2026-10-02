@@ -209,6 +209,45 @@ python _tools/selftest_flow_test.py
 echo "=== gate mutations ==="
 python _tools/selftest_gate_test.py
 
+# The third injected file, and the one whose subject appears EXACTLY ONCE per
+# shift: the boot screen can be pressed one time, so a broken boot capture is a
+# wasted run. That is the same argument as gui's and gate's, one step stronger,
+# because this file has never been injected at all -- its harness is the whole of
+# the evidence available before the operator spends the shift.
+#
+# Three gates, and the middle one is the one that matters:
+#   1. a whole-file 5.1 parse. The harness only walks the regions it reaches, and
+#      the regions it skips are the ones a real start-up hits first.
+#   2. the five scenarios, in the order a run meets them: an injection with no
+#      root or no button must still report its OWN death, a sink that refuses
+#      everything must still land every chunk on the disk, and the two hotkeys
+#      must do what RECORDER_HOWTO says they do. "SKIP" is printed rather than
+#      scored as a pass where the scenario makes a check unmeasurable.
+#   3. verify_boot_capture.py, which takes the line pattern out of the SEVEN
+#      archived readers' own source and requires every data line to match it. The
+#      pattern is READ, not retyped: a re-typed copy would keep passing after the
+#      readers changed, which is the drift it is here to catch.
+"$LUA" -e "
+local f, err = loadfile('_tools/TRG_original_boot.luau')
+if not f then io.stderr:write('boot recorder does not parse: ' .. tostring(err) .. string.char(10)) os.exit(1) end
+print('boot recorder parses: ' .. _VERSION)
+"
+
+echo "=== boot scenarios ==="
+for s in default nobutton noroot nosink rightcontrol; do
+	"$LUA" _tools/boot_harness.luau _tools/TRG_original_boot.luau "$s"
+	echo "boot $s rc=$?"
+done
+
+echo "=== boot capture readability ==="
+# Only the three scenarios that reach the end write a capture. nobutton and noroot
+# stop at the death report, which is the whole point of them.
+python _tools/verify_boot_capture.py 	_tools/_harness_out/boot_default_ScreenChanges.txt 	_tools/_harness_out/boot_nosink_ScreenChanges.txt 	_tools/_harness_out/boot_rightcontrol_ScreenChanges.txt
+echo "verify_boot_capture rc=$?"
+
+echo "=== boot mutations ==="
+python _tools/selftest_boot.py
+
 echo
 echo "recorder: $(wc -c < _tools/TRG_original_recorder.luau) bytes, $(wc -l < _tools/TRG_original_recorder.luau) lines"
 echo "watcher:  $(wc -c < _tools/TRG_original_watch.luau) bytes, $(wc -l < _tools/TRG_original_watch.luau) lines"

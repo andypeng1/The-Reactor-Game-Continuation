@@ -377,22 +377,18 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 堆芯外壳与拉杆握把的 `generate_mesh` 重做）已删掉，该节剩下的只是已完成的施工记录。
 
 **Phase 53（2026-09-27）—— 卷帘门收在 `ControlRoom{L/M/R}Shutter`（向下 10.58 世界空间），
-外加一台只读的房间监视器**（`_tools/room_watch.luau`，43 根 / 30,142 实例 / 235,038 属性，
-产物 `rooms.txt` / `inventory.txt` / `summary.txt` / `changes.log` / `suppressed.txt`）。
-全部细节、run 1..15 的数字、音频 hook 的探针判决（`Pitch=0.00` 那 15 个、0.73 s 的片段）
-**已整段搬到 `PROGRESS.md` Phase 53 尾部**，标题是「Phase 53 的 §8 摘要原文」——
-逐字未改，只是换了个住处，因为这一节是跑动细节而 `CLAUDE.md` 每轮都要进上下文。
-本文件只留一句：**它只读、不写世界，抑制是「扣在手里不写」而不是「先写后擦」**。
-**它的两个实例已于 2026-09-27 从数据模型删除**（D11 答 B，理由见下 Phase 54）——
-`_tools/` 里那两份源码没丢，重新注入就回来。
+外加一台只读的房间监视器**（`_tools/room_watch.luau`，43 根 / 30,142 实例 / 235,038 属性）。
+细节与 run 1..15 的数字**已整段搬到 `PROGRESS.md` Phase 53 尾部**。这里只留一句：**它只读、
+不写世界，抑制是「扣在手里不写」而不是「先写后擦」**；**两个实例已于 2026-09-27 删除**（D11 答 B），
+`_tools/` 里源码没丢，重新注入就回来。
 
-**当前唯一在跑的活是「原版游戏的两份注入脚本」** —— 不是这个工程里的代码，而是
-注入到**原版游戏**（placeId `17596243941`）里、由 Solara V3 用 `loadstring` 执行的
-单文件脚本：采集器 `_tools/TRG_original_recorder.luau` 和监视器
-`_tools/TRG_original_watch.luau`（后者见 Phase 54）。它们**不依赖** `ReactorBackend` /
-`Config` / `Engine`，只读实例状态；写文件时**只记有变化的键**。
-**两份都不按任何东西** —— 采集器 `r60` 起连「只观察不按」的那台驱动器也没有了（Phase 62）。
-用法看 `docs/RECORDER_HOWTO.md`；测试跑 `bash _tools/run_tests.sh`。
+**当前在跑的活是「原版游戏的三份注入脚本」** —— 不是这个工程里的代码，而是注入到
+**原版游戏**（placeId `17596243941`）里、由 Solara V3 用 `loadstring` 执行的单文件脚本：
+采集器 `_tools/TRG_original_recorder.luau`（`r60`）、监视器 `_tools/TRG_original_watch.luau`
+（`w61`，见 Phase 54）、开机采集器 `_tools/TRG_original_boot.luau`（Phase 70）。
+它们**不依赖** `ReactorBackend` / `Config` / `Engine`，只读实例状态；**只记有变化的键**，
+**三份都不按任何东西**（驱动器的删除见 Phase 62）。用法：`docs/RECORDER_HOWTO.md`
+（开机那份 `docs/BOOT_HOWTO.md`）；测试 `bash _tools/run_tests.sh`。
 
 **Phase 54（2026-09-27）—— 第二份注入原版的脚本：`_tools/TRG_original_watch.luau`。**
 起因是用户的一次更正：「**我说的整个控制室+核心腔室+音频监听是监听原游戏的，又不是现在的**」
@@ -405,27 +401,19 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 产物九份含 `audio.txt` / `error.txt`，热键 `RightAlt` 催 / `RightControl` 停，**只读**。
 **本机验过**：`watch_harness.luau` **45 PASS / 0 FAIL**、`--boom` **4 PASS / 0 FAIL**、
 `selftest_watch.py` **15 个变异 15 个按预期变红**；`bash _tools/run_tests.sh` 全绿。
-**它当时一次都没在原版里跑过**（2026-09-27 追加：用户说他那一轮 `watch` 和 `record` 都开了，
-**但盘上只有采集器的字节** —— `Data/originalwatch/` 不存在，而 `hello.txt` 是设计上
-第一个该出现的路径。所以「跑过」这件事**当时仍然没有字节支持**，
-两种解释在盘上同形，见 `PROGRESS.md` 57.10 / `QUESTIONS.md` **P8**。
-**2026-09-30 已被它自己的产物推翻**：Phase 61 那趟它有 11 份产物、没有 `error.txt` ——
-跑起来了，而且是**跑起来才看得见**的两个缺陷（hook 晚装 28 秒、`MaxQueue` 太小），修在 `w60`。）
-—— 预算够不够、选出的根对不对，**都是设计意图不是观测**，
-跑完**第一件事读 `rooms.txt`**。验的过程翻出四个错，其中三个只有变异测试看得见
-（`judged` 只写不读而文档在替它说话；删掉整个静默放行规则产物逐字节不变；
-`--dump` 判了两次所以静默不写文件）—— 细节 `PROGRESS.md` 54，取舍 `DECISIONS_2.md` **160..163**。
-**跑法**（全文见 `docs/RECORDER_HOWTO.md`）：起 8766，在原版里 `loadstring(game:HttpGet(...))`
-那份监视器；sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开局就响着的声音
-**永远不会**发 `Played`（DECISIONS 157），晚注入等于把开盘那段让掉。
-**它和采集器可以同时注入**（全局变量、输出路径、热键三处都对过，见 54.6）——
-**但热键曾经撞过：两边都绑 `RightShift`，而采集器那边它是「封存并结束这一趟」。**
-监视器已让路到 **`RightAlt` = 立刻推文件**、`RightControl` = 停；
-**`RightShift` 现在只属于采集器**，别在跑的时候按它。harness 有一条检查
-（`the watcher does not steal the recorder's seal key`）守着不再撞回去 —— 45 PASS。
+**它当时一次都没在原版里跑过**（盘上只有采集器的字节，两种解释同形：`PROGRESS.md` 57.10 /
+`QUESTIONS.md` **P8**）—— **2026-09-30 被它自己的产物推翻**：Phase 61 那趟 11 份产物、
+无 `error.txt`，且翻出两个**跑起来才看得见**的缺陷（hook 晚装 28 秒、`MaxQueue` 太小，修在 `w60`）。
+预算够不够、选出的根对不对，**都是设计意图不是观测**，跑完**第一件事读 `rooms.txt`**。
+验的过程翻出四个错，三个只有变异测试看得见 —— 细节 `PROGRESS.md` 54，取舍 **160..163**。
+**跑法**（全文见 `docs/RECORDER_HOWTO.md`）：起 8766，在原版里 `loadstring(game:HttpGet(...))`；
+sink（8765）**已在跑**。**要抓开机就趁开机前注入** —— 开局就响着的声音**永远不会**发 `Played`
+（DECISIONS 157），晚注入等于把开盘那段让掉。**三份可以同时注入**（全局变量、输出路径、热键都对过）——
+**热键曾经撞过：两边都绑 `RightShift`，而采集器那边它是「封存并结束这一趟」。**
+监视器与开机那份已让路到 **`RightAlt` = 立刻推/冲**、**`RightControl` = 停/封存**；
+**`RightShift` 只属于采集器**，别在跑的时候按它。harness 各有一条检查守着不再撞回去。
 **D11 已执行（2026-09-27）：** AIRemake 那边 Phase 53 的 `SSS.MCP_RoomWatch` +
 `MCP_RoomWatchRunner` **已删**（你原话「不用吧，采集的是原游戏里面的」）；两个 MCP 探针留着。
-删前把磁盘那两份读回同一个 VM **逐字符**比过、并 grep 全 DataModel 确认无第三方绑定。
 细节 `PROGRESS.md` 54.7，取舍 `DECISIONS_2` **165**。
 
 **Phase 55/56/57/58 —— 已搬到 `PROGRESS.md` 的历史，这里只留能直接用的那几句。**
@@ -474,17 +462,14 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
   **结构性盲点** —— 写下来 + 一行断言，**变成已知的盲点而不是一个洞**，**205**）。它翻出一个
   **真代码缺陷**（`coreGateOpen` 不重取 `Stats`，文件夹晚到就永远打不开）。
 - **`run_tests.sh` rc=0**（**133 条 ok**）。
-- **三个 md5（注入前核这个，别核时间）：** 采集器 **121202 / 2644 / `48f2c155b7d6342f07cafcfb4404e9e8`**（`r60`）、
-  监视器 **147930 / 2699 / `32bba692e0e078f416789972aecd192a`**（`w61`，Phase 64 的卡顿修复）、
-  探针 **10752 / 217 / `5acde17d2bccfa65949c9a4b2bec9a90`**（未改）。
-  细节 `PROGRESS.md` 62，取舍 **201..205**。**`docs/RECORDER_HOWTO.md` 已按 `r60` 全文改过**
-  （它以前教人按一个已不存在的按钮 —— **散文说的谎和代码说的谎一样贵**）。
-- **下一次两份都要重注**：`r60` 字节没变，监视器换成 `w61`。
+- **md5 与字节数一律在 `docs/RECORDER_HOWTO.md` §2**（`r60` / `w61` / 探针），**注入前核那个**。
+  细节 `PROGRESS.md` 62，取舍 **201..205**。（HOWTO 以前教人按一个已不存在的按钮 ——
+  **散文说的谎和代码说的谎一样贵**。）
+- **下一次三份都要重注**：`r60` 字节没变，监视器换成 `w61`，开机那份首次注入（Phase 70）。
 
-**悬着的还是那两件**（`QUESTIONS.md` 无新条目）：**P4:A 冷却泵 2/3 档**（要等注入）、
-**P6:A 的 187 键探针**（不叠在同一个注入里）。**信标补不上的那一格**：顶层代码在信标
-**之前**抛错时和「从没注入」在盘上逐字节一样 —— 补它要放到文件第一行，那时 `CONFIG` 还没读完，
-**代价大于收益，不做，且这条要一直写在这题的答案里**。
+**悬着的还是那两件**（`QUESTIONS.md` 无新条目）：**P4:A 冷却泵 2/3 档**、**P6:A 的 187 键探针**。
+**信标补不上的那一格**：顶层代码在信标**之前**抛错时与「从没注入」在盘上逐字节一样；
+补它要放到文件第一行（那时 `CONFIG` 没读完），**代价大于收益，不做**。
 
 **Phase 64（2026-10-01）—— 「注入之后游戏贼卡」的修复：监视器让帧 + 份额上限（`w61`）。**
 上一趟**监视器自报** `scan_ms=2197` 配 `Interval=1` ≈ **70% 的客户端**，采集器只 `cpu_pct=10.9`
@@ -522,13 +507,26 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 细节 `PROGRESS.md` 67，取舍 **230..232**。
 
 **Phase 68（2026-10-01）—— 镜像追平；`run_tests.sh` 不是并发安全的。**
-**① 判据看 `N of M detected`，不看 rc** —— `selftest_watch.py` 写死 `_tools/_watch_mutant.luau`
-和 `_tools/_mut_out`（收尾 `rmtree`），**同时跑两遍互删产物 → 报成「NOT DETECTED」**
-（两遍给出 **17/29**、**25/29** 两个不同的数 = 污染指纹；其中一遍 rc 还是 **0**）。
-单独跑 **29/29，rc=0**。
-**② `src/ReactorBackend/`** 漂了 4 个 Phase（3 改 / 2 无 / 5 逐字节相同 —— **半新半旧最难认**），
-已按 §0.17 通道 + 两侧 **CRC-32**（不比字节数）追平复验 10/10；**它没有写入者**，会再旧。
+**① 判据看 `N of M detected`，不看 rc** —— `selftest_watch.py` 写死固定路径并 `rmtree`，
+**同时跑两遍互删产物 → 报成「NOT DETECTED」**（两遍给出 **17/29**、**25/29** 两个不同的数
+= 污染指纹；其中一遍 rc 还是 **0**）；单独跑 **29/29，rc=0**。
+**② `src/ReactorBackend/`** 漂了 4 个 Phase（3 改 / 2 无 / 5 相同 —— **半新半旧最难认**），
+已按 §0.17 通道 + 两侧 **CRC-32** 追平复验 10/10；**它没有写入者**，会再旧。
 取舍 **233/234**。
+
+**Phase 70（2026-10-02）—— 优化操作员自己那份开机采集脚本 → 新文件 `_tools/TRG_original_boot.luau`。**
+原话「优化一下我写的那个开机（主要是采集，然后我注入）」——「我写的那个」= 他
+`%LOCALAPPDATA%\SolaraTab\Test.lua` 里那份**开机屏逐属性采集器**；**那个文件一个字没改**，
+优化落在仓库新文件，他从 8766 `HttpGet` 下来注入。
+**靶子是量出来的**：他那份产物 **1,162,737 行 / 179.8 MB / 158 秒**，其中 **99.4% 是
+`…MonitorUI.GlitchEffect.GlitchFrame` 的 Position/Size** → `GeometrySkip = {'.GlitchEffect'}`
+**按路径不挂几何属性**（`Visible`/`Image`/颜色照记 —— 开机屏自己那 0.2% 才是要的，
+同文件同 ClassName，只能按路径分）；另修 `appendfile` 串档、缺 `DescendantAdded`、无传输层。
+**根没动**：`RootName = 'Monitors'` 与他自己那行 `FindFirstChild` 逐字相同。**行格式冻结** ——
+`V` 是贪婪 `(.*)` 且两端锚定，**行尾加字段不是向后兼容的**；新东西一律新行（`#` 开头）或新文件。
+字节 **38609** / **835** 行 / md5 **`243adb577f1442a069144f0bbb6df8f0`**（**HttpGet 直取，
+盘上就是注入进去的字节**）。本机五场景 **99 PASS / 0 FAIL / 1 SKIP**、变异 **8/8**。
+**它一次都没在原版里跑过** —— 用法 `docs/BOOT_HOWTO.md`，取舍 **236..242**。
 
 **Phase 号按做事的先后（mtime）编，不按补号的顺序。** 2026-09-26 那四件活是 45（拉杆反馈）、
 46（灯矩阵）、47（整理 Workspace）、48（采集器读文件）；45/46 本来两边都没落，已按 **O4:A**

@@ -53,4 +53,3 @@ start "TRG sink 8765" cmd /k %PY% "%~dp0_tools\receive.py" --port 8765 --dir "%~
 start "TRG files 8766" cmd /k %PY% -m http.server 8766 --bind 127.0.0.1 --directory "%~dp0_tools"
 
 endlocal
-pause

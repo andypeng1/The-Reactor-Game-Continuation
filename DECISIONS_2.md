@@ -3954,3 +3954,102 @@
      the backup when it already exists. A backup step that overwrites on every run hands you
      "after" labelled as "before" on the second run -- which is exactly the run where you would be
      trying to work out what the first one changed.
+
+236. AN OPTIMIZATION OF SOMEONE ELSE'S SCRIPT IS MEASURED AGAINST THEIR SCRIPT, AND THEY GET TO KEEP THEIR SCRIPT.
+
+     The request was "optimize the startup [recorder] I wrote". The thing named by "I wrote" is a real
+     file the operator runs (SolaraTab/Test.lua), and it stays theirs: the executor rewrites every file
+     in that tab, so editing it in place would be undone and, worse, would make the next diff unattributable.
+     The optimization therefore lands as a new repo file (TRG_original_boot.luau) that they fetch and inject.
+
+     This is not a courtesy, it is the only way the claim can be checked. "Optimized" is a comparative with
+     no meaning unless the baseline exists, so the baseline was read twice: the source, and its own output
+     (1,162,737 lines / 179.8 MB in 158 s). Every change is a row against a measured defect -- the 99.4%
+     that was one GlitchFrame's geometry, the appendfile that made two injections into one file, the
+     missing DescendantAdded, the absent transport, the 1.14 MB/s with no ceiling. An optimization whose
+     targets were chosen from taste would be unarguable and unverifiable at the same time.
+
+     The scope is part of the baseline too. The original resolves its root as
+     workspace:FindFirstChild("Monitors"); so does this one, and RootName is pinned to 'Monitors' for that
+     reason. An "optimization" that quietly narrowed the view would be a different instrument, not a faster one.
+
+237. THE LINE FORMAT IS FROZEN, AND THAT IS WHY NOTHING NEW IS EVER APPENDED TO A LINE.
+
+     A reader's pattern is ^Time:\[([0-9:]+)\]<-O:\[([^\]]*)\]<-C:\[([^\]]*)\]<-V:\[(.*)\]$ -- anchored at
+     both ends, with a greedy (.*) for the value. Ancestors: adding a field to the end of that line is not
+     backward compatible, because the greedy group swallows it and no reader ever sees it. The end anchor is
+     what tells a reader the line is complete, so the same property that makes the format checkable is the one
+     that makes it closed.
+
+     Everything new therefore goes in a new line starting with '#', or in a new file. The header line, the
+     beacon fields, the seal reason -- all of it. The alternative, a second format that only the new reader
+     knows, is how a capture stops being one artifact.
+
+     Seven archived analysers compile that pattern, and "they all agree" had been asserted from memory. It is
+     now a check: verify_boot_capture.py reads the pattern out of the seven source files, requires exactly one
+     declaration in each, requires all seven to be byte-identical, requires the anchors, and only then tests
+     the capture with it. A copy retyped into the checker would keep passing after a reader changed, which is
+     precisely the failure the check exists to catch.
+
+238. A COALESCER'S PRICE IS STATED WHERE THE COALESCER IS, AND THE SEED IS THE WHOLE OF THE CHANGE-AND-REVERT RULE.
+
+     Writing only on a tick, and only when the value differs from the last one written, is what removes 99.4%
+     of the noise. It also means a value that changes and reverts inside one tick is never recorded. That is a
+     real loss and it is written in the how-to next to the coalescer, not buried in a comment: the operator
+     read the old behaviour (event-time writes, 1.16 M lines) and is entitled to know what they are trading.
+
+     The other half of the rule is subtler. Registration seeds lastValue[key] with the current value, so a key
+     that has been false since the beginning does not emit a line on the first tick -- the baseline is a
+     baseline, not a change. That single line is the entire difference between "a change that came back" and
+     "a value that was always there", and it is a payload drop if it is wrong, so it has its own mutation.
+
+239. THE 99.4% IS NEVER PRODUCED, NOT FILTERED AT THE READER, AND ONLY FOR GEOMETRY.
+
+     The dead weight in the operator's capture was Position/Size writes from ...MonitorUI.GlitchEffect.GlitchFrame,
+     a decoration. Filtering those lines out afterwards would have kept the cost that mattered: the writes, the
+     network, the ceiling, all of it still paid. GeometrySkip = {'.GlitchEffect'} skips the connection, so the
+     lines do not exist.
+
+     It is scoped to geometry on purpose. Visible, Image, colours and Text are still watched on those same
+     instances, because the boot screen's own reveals are the 0.2% underneath the 99.4% -- and they sit in the
+     same file, on the same ClassName, under the same path prefix. That is why the split has to be by property
+     within a path and not by class: a rule that dropped the whole subtree would have thrown away the signal
+     along with the noise, and the two are not separable any other way.
+
+240. NOTHING ABOUT THE WORLD IS RESOLVED UNTIL THE PRESS -- AND ONE LINE SAYS WHETHER IT WAS THERE.
+
+     The harness first demanded this file die at injection when Workspace.Monitors is absent, and that demand
+     was wrong, so the harness changed and not the file. Under StreamingEnabled a root missing at injection is
+     usually merely late, so killing the run for it is a false alarm; everything structural is therefore resolved
+     at the press. The honest answer to "did I inject too early" is a measurement, not a policy, so the beacon
+     carries root_visible_at_inject= -- one boolean, taken at injection, about the only moment that can answer it.
+
+     The press is also where the header goes. Written the other way round, a press on a world with no root left
+     a capture file containing nothing but its own header: a run that looks started and a file that looks like
+     data, which is the shape of defect this whole project keeps re-learning to reject. arm() now runs first, so
+     a failed arm leaves the capture untouched and the death is in meta.txt where a death belongs.
+
+241. A SCENARIO THAT DOES NOT CHANGE THE INPUT IS NOT A SCENARIO, AND A SKIP IS PRINTED, NOT SCORED.
+
+     The nosink scenario was declared and never implemented -- SINK_UP was a local that nothing ever lowered, so
+     the "sink refuses" case ran the happy path and its four fallback checks failed against a sink that had been
+     quietly working the whole time. Four red lines pointing at the script, all four caused by the test rig. The
+     lesson is not "be careful", it is structural: a flag that never changes value is indistinguishable from a
+     flag that is honoured, and it reads as coverage.
+
+     Where a check genuinely cannot run in a scenario, the harness prints SKIP and counts it separately from
+     PASS. Scoring it as a pass is how "one check did not run" becomes "all checks passed" -- and the number that
+     reports that is the one anybody quotes later.
+
+242. THE FORMAT CHECK READS THE PATTERN OUT OF THE READERS, BECAUSE A PARAPHRASE OUTLIVES THE THING IT DESCRIBES.
+
+     Same rule as 237's second half, stated on its own because it generalises. A compatibility promise is worth
+     exactly the freshness of whatever it is compared against. A pattern retyped into the verifier is a promise
+     to agree with a memory, and it will keep agreeing after the readers have moved on -- green, and measuring
+     nothing.
+
+     So the verifier discovers its oracle: it parses the seven reader sources, asserts exactly one pattern
+     declaration in each, asserts all seven are byte-identical, asserts the anchors, and only then tests. If a
+     reader is rewritten the check goes red instead of quietly testing the old format. This also turned "the
+     seven agree" from a recollection into a fact that has to keep being true, which is the cheapest kind of
+     insurance available on a claim that had already been made wrongly once in this project.
