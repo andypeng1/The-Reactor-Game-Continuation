@@ -588,6 +588,22 @@ Capabilities 全拒 → 见 §0.17。**没做的还是老那一半**：世界侧
 `ServerStorage.OrganizeRollback20260926`。**代价：多删了 6 个东西**（`CreepySounds` 的 6 个子物体，
 找不回来）—— 见 `PROGRESS.md` Phase 47 的 DISCLOSURE 段。
 
+**Phase 74（2026-10-02）—— 「为啥机房这么容易坏掉」：「机房」= `s.MainframeMeltdown`（你 D9 的原话），
+而它的规格**不用猜、原版把说明书放进了世界里**。**
+`Workspace.Consoles.ElectricGridConsole.DRMScreen.SurfaceGui.MainFrame.MainframeFrame.OperationsFrame.TextLabel`
+就是 Digital Reactor Manual 的 MAINFRAME 段，flow 产物逐条抓到了 —— **逐字全文已抄进 `PROGRESS.md` 74.1**
+（必须抄：`Data/` 是 gitignored，不抄等于没抓过）。答案四条：**① 它按 uptime 磨损、不是故障**
+（Tesseract 是全设施唯一一台，算 CBL+控制台+传送门+医疗机，**天生超频**）；**② 起火是唯一加速器**
+（「fires … cause QPUs to degrade at a much **faster** rate」，所以手册叫**带着灭火器**去换 QPU）；
+**③ Shift 1 豁免**（维基：不掉 QPU），掉点「usually occur at the **middle and end of Shift 2**」；
+**④ 它是配额不是故障**（6 个 QPU，前五次只是监视器蓝屏，第六次才瘫，**换 QPU 就修**）。
+那段说明自己盖着 **`{wip system}`** 的章 —— 原版这系统**本来就没做完**。
+**实测**（11 趟里只有 2 趟真的翻起）：`t=719.86` 与 `t=868.94`（开机后 ~12–14.5 分钟），
+后者那一刻温度**只有 7978 °F** —— 离 `MeltdownF=39000` 差五倍，**所以它从来不是「堆芯要炸」**。
+**remake 这边不是「容易坏」，是根本没装**：`MainframeMeltdown` 全 DataModel 零命中，
+`StateBridge` 第 57 行 `set(stats,'ActiveQPUs',6)` **焊死**。**要接不接 → `QUESTIONS.md` `P10`**，
+**我没动**（§1.4 第一条）。细节 `PROGRESS.md` 74，取舍 **250**。
+
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒 Ctrl+S。
 **自动 `add`+`commit` 也已开**（2026-10-01 原话 `AUTO COMMIT+ADD PERMANENTLY ON`）：

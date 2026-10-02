@@ -4172,3 +4172,41 @@ failure on one is evidence about one, never about the other.
 
 **Corollary for the record:** I never had to touch `ReactorBackend` to find this out, and the
 refusal was not a sign that anything was wrong with it.
+
+---
+
+## 250. 「机房容易坏」是规格，不是缺陷 —— 所以查清楚之后**一个字都不改**
+
+你问「为啥机房这么容易坏掉」。答案在**原版自己的世界里**（Digital Reactor Manual 的
+MAINFRAME 段，`Workspace.Consoles.ElectricGridConsole.DRMScreen…MainframeFrame…TextLabel`，
+我们的 flow 产物逐字抓到了，见 `PROGRESS.md` Phase 74.1）：
+
+> Majority of its computational operations are controlled by **QPUs**, which have a tendency to
+> **degrade**, especially in unfavorable environmental conditions or **overclocking** scenarios.
+
+> components of the **mainframe may catch on fire** from reactor operation … Excessive **fires**
+> may raise the mainframe temperature and **cause QPUs to degrade at a much faster rate.**
+
+> TLDR: … if theres enough, they can trigger a mainframe meltdown …
+
+**Tesseract 是全设施唯一一台量子机，要同时算 CBL + 控制台 + 传送门 + 医疗机，
+本来就长期超频；QPU 降解是它的磨损方式，不是它出了故障。** 6 个 QPU = 6 次配额，
+前五次只是监视器蓝屏/软重启，第六次才真的瘫 —— 而且**换 QPU 就能修**。
+
+**为什么这值得一条 decision，而不是一条 progress：** 查到这里有一条**看起来的**下一步 ——
+「把 QPU 降解实现进 remake」。**我没做，而且这是刻意的。**
+
+1. **它是玩法机制**，而 `CLAUDE.md` §1.4 第一条是
+   「NEVER CHANGE EXISTING GAMEPLAY MECHANICS」。往一个模拟器里**新加**一条周期性资源损耗，
+   改变的是这个游戏有多难、玩家要花多少时间在维护上 —— 这不是我可以自己拍板的事。
+2. **速率一个数都没量到。** 我量到的是**旗标翻起**（`t=719.86` / `t=868.94`），
+   不是「第一个 QPU 在第几秒掉」。把 720 s 当成降解周期，就是把**一趟的运行时长
+   当成了机器的规则** —— `PROGRESS.md` Phase 65 里已经为同一类错误写过一次拒绝
+   （那时差点把 `StartupSeconds` 从 8 改成 111）。**没量到就不实现**，同 65.6。
+3. **remake 里那个位置是空的，但口子已经开好了**：`StateBridge` 第 57 行
+   `set(stats,'ActiveQPUs',6)` —— 名字和类型都照原版搭了，值焊死。
+   将来要接，缺的只是**写入者**。**不留一个没人读的一半**（同 Phase 65「不加新 `Stats` 值」
+   那条理由的反面：这里 `ActiveQPUs` 本来就在，只是恒定）。
+
+**所以：**这条进了 `QUESTIONS.md` 的 **P10**，带三个选项（不做 / 只做监视器蓝屏那一刻 /
+整条 QPU 磨损），等你一句话。**在你说之前，remake 保持现状 —— 机房不会坏，因为它根本没装。**

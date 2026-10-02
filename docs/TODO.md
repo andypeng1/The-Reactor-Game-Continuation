@@ -189,6 +189,15 @@
       （`OnButton`/`OffButton` 自己没灯），而现在先绑上的 `coolant_pump_on` 拿走了它们。
       调换两行绑定顺序就能改观，但那等于拿测试场景去猜 —— 先记下来，不当场答。
 
+- [ ] **机房（Tesseract）在 remake 里没装 —— 被 `P10` 挡着，没动。**
+      原版的 `s.MainframeMeltdown` 全 DataModel 零命中，
+      而 `StateBridge` 第 57 行 `set(stats,'ActiveQPUs',6)` **焊死** ——
+      名字和类型都照原版搭了，**缺的只有写入者**（同 `engine.events` 在 Phase 65 之前那个洞的另一半）。
+      规格已挖出来（`PROGRESS.md` Phase 74：原版 DRM 的 MAINFRAME 段逐字全文），
+      **但这是新加一条玩法机制，只能你拍板**（`CLAUDE.md` §1.4 第一条）—— 见 `QUESTIONS.md` `P10`。
+      **速率一个数都没量到**（我量到的是旗标翻起 `t=719.86` / `t=868.94`，
+      不是「第一个 QPU 第几秒掉」），所以选「做整条」得**先加一趟采集**。
+
 ### 3.3 测试覆盖缺口
 - [x] **原条目把两类东西并列了，是分类错误。** `ConsoleBinder` 的控件表里
       **根本没有 QPU / Gateway / GravLift** —— 那三个是 `FacilitySystem` 下的独立系统，

@@ -6864,3 +6864,136 @@ t=2 的 26–27 + log 3、t=3 的 28–43 + log 4–5、t=4 的 44–45、t=5 �
 | 开机屏 T | `Ready` at t=**14** |
 | 跳闸（`BootFrame` 载体） | **3 / 7** 台控制室监视器 |
 | 世界残留 | **0**（两个快照都逐位还原） |
+
+## Phase 74（2026-10-02）—— 「为啥机房这么容易坏掉」
+
+> 你的原话：**「为啥机房这么容易坏掉」**
+
+问的是**原版**，不是 remake。定住这条的不是我的猜测，是你自己 2026-09-26 那句
+`D9:"MainframeMeltdown"是机房熔毁又不是核心熔毁`（`QUESTIONS.md` D9）——
+「机房」= `s.MainframeMeltdown`，而它今天仍然是 `_tools/TRG_original_recorder.luau`
+第 2284 行那条封存判据。所以这一轮是**去产物里把它的规格挖出来**，不是改代码。
+（顺带核对：`MainframeMeltdown` 在这次会话里被确认**只存在于原版** ——
+`rblx_script_grep` 在 AIRemake 全 DataModel 里零命中。）
+
+### 74.1 规格不用猜 —— 原版把说明书放进了世界里，而我们的产物抓到了它
+
+`Workspace.Consoles.ElectricGridConsole.DRMScreen.SurfaceGui.MainFrame.MainframeFrame.OperationsFrame.TextLabel`
+就是 Digital Reactor Manual 的 MAINFRAME 段，flow 产物按 `EVT<n> TEXT <path> <文本>`
+逐条记了下来（`Data/flow/original_261002-140019` 与 `…261001-125206` 两趟**逐字相同**）。
+
+**逐字抄在下面。** 理由不是好看：`Data/` 是 gitignored，
+**不抄进仓库就等于这一趟没抓过**，而下一个人会去重新抓一遍同样的东西。
+
+> Overview - The 'Tesseract' **Quantum Mainframe** is the world's most powerful Quantum
+> Supercomputer, responsible for **maintaining** extremely complex machinery such as the:
+> **CBLs, Reactor Console Command Interface, Gateway Transporters, Medical Dispensers,** and more.
+>
+> Majority of its computational operations are controlled by **QPUs**, which have a tendency to
+> **degrade**, especially in unfavorable environmental conditions or overclocking scenarios.
+>
+> When a **QPU fails completely,** it will cause connected systems to reconnect and adjust their
+> operations to the remaining QPUs which often results in **devices enacting a soft-reboot protocol**
+> or in the case of the **control room monitors, experience a blue visual distortion.**
+>
+> To **replace a QPU**, operators will first have to disconnect any remaining connections it has to
+> the mainframe. This can be done by **disabling any red indicators on a QPU receptacle.** Once the
+> **old QPU** is **extracted**, a **new one** can be **inserted**, and integration will happen automatically.
+>
+> Additionally, components of the **mainframe may catch on fire** from reactor operation. It's advised
+> that when operators are preparing to replace a QPU, they **equip a fire extinguisher.** Excessive
+> **fires** may raise the mainframe temperature and **cause QPUs to degrade at a much faster rate.**
+>
+> TLDR: If all QPUs degrade fully, the gateway transporters will remain offline until one is replaced.
+> Be aware of mainframe fires, as if theres enough, they can trigger a mainframe meltdown which will
+> cause QPUs to degrade faster.
+>
+> **Gateway Transporters, Medical dispensers, and especially the control room consoles will be
+> non-functional** if there are too few QPUs or the mainframe completely shuts down.
+>
+> Large stockpiles of QPUs tend to be counterintuitive, so operators **may have to use a Synthesiser
+> Unit** in order to sucessfully replace dying QPUs. Be weary that the mainframe is always kept at
+> extremely low temperatures, and as such haste is of the essence. **{wip system}**
+>
+> Operators are required to **replace** the affected QPU **as soon as possible**, otherwise machines
+> across the facility will begin to shut off in order to conserve resources.
+
+（`<b>` 是原样存在的 markup，上面把标签去掉了、粗体留下；原文里的拼写错误
+—— `sucessfully`、`inferference`、`weary` —— **一个没改**，因为它们是这段文本的身份。）
+
+### 74.2 「容易」不是手感，是四条机制叠出来的
+
+1. **它是按 uptime 计的磨损，不是故障。** 「QPUs … have a tendency to **degrade**, especially
+   in … **overclocking** scenarios」。Tesseract 是全设施唯一一台，要算 CBL + 控制台 +
+   传送门 + 医疗机 —— **它天生就在超频**。你什么都不做它也在掉。
+2. **火灾是唯一的加速器。** 「components of the mainframe **may catch on fire from reactor
+   operation**」，而火 **cause QPUs to degrade at a much faster rate**。所以机房里的火
+   不是布景；原版自己建议你**带着灭火器去换 QPU**。
+3. **Shift 1 豁免。** 维基 `Central Mainframe` 页：QPU「will not degrade whatsoever on Shift 1」，
+   而 Mainframe Meltdowns「usually occur at the **middle and end of Shift 2** due to
+   **prolonged reactor operation time**」。**教学班不折磨你** —— 所以你第一次看见它，
+   大概就是 Shift 2 中段。
+4. **它是配额，不是故障。** 6 个 QPU →「you can only have **six QPU meltdowns** before
+   control room functions cease to work」。前五次是**提示**（监视器蓝屏 / 软重启），
+   第六次才真的瘫，而且要**换 QPU 才恢复**（「permanent until a QPU is replaced」）。
+
+**加一条不是机制的机制**：那段说明自己盖着 **`{wip system}`** 的章。
+原版这个系统**本来就没做完** —— 所以「怎么老坏」有一部分答案是：它现在只有坏这一半。
+
+### 74.3 我们自己的产物怎么说（实测，不是转述）
+
+11 趟可用的 `Data/flow/original_*` 里，**只有 2 趟**真的抓到了旗标翻起：
+
+| 趟 | 翻起 | 那一刻的温度 | 同一拍还写了什么 |
+|---|---|---|---|
+| `original_260926-183529` | `t=719.86` s（`dt=386`） | —— | 三台监视器的 `ErrorFrame.Frame.InfoLabel=3` |
+| `original_260926-230049` | `t=868.94` s（`dt=296`） | **7978 °F** | `…DisplayMonitor…ReactorMonitoring.ErrorFrame…=3`、`Screen.CBLMonitoring…=3`，随后 `SEAL machine room meltdown` |
+
+两条意思：
+
+- **它落在开机后 ~12–14.5 分钟**，而那时温度只有 **7978 °F** —— 离核心熔毁那条
+  `MeltdownF=39000` 差了**五倍**。所以「机房熔毁」根本**不是**「堆芯要炸了」，
+  这正是 D9 当初要拆开的那两件事，这次由产物第二次确认。
+- **它在全设施监视器上同时出现**（`MonitorsFacility.DisplayMonitor` 也在列），
+  不是只有控制室。这与 74.1 那段「machines across the facility will begin to shut off
+  in order to conserve resources」对得上。
+
+### 74.4 屏幕上你会看到的那两句话（逐字，每台监视器各一份）
+
+```
+x.Screen.<任何一台>.GlitchFrame.Frame.Frame.TextLabel
+  MAINFRAME CONNECTION OVERLOAD
+  An unknown error in the mainframe is causing this device to experience electronic
+  inferference. This could be due to failing computational systems. Please contact
+  IT Personnel if this issue persist.
+
+x.Screen.<任何一台>.DisconnectFrame.Frame.Frame.TextLabel
+  OPERATOR ERROR                     ← 标题
+  To resolve this issue, please make sure the proper mainframe data connection is
+  working / active. If problems persist, please contact System Maintenance Personnel.
+```
+
+这两段在**主控室 7 台和 `MonitorsFacility` 里那几台上一模一样**，
+所以「机房一打喷嚏，全设施的屏幕一起花」这件事在产物里是**可数的**，不是印象。
+
+### 74.5 remake 这边：机房不是「容易坏」，是**根本没装**
+
+| | 原版 | remake |
+|---|---|---|
+| 旗标 | `MainframeMeltdown`（BoolValue，住在 `Workspace.Stats` 下） | **不存在**（全 DataModel `rblx_script_grep` 零命中） |
+| QPU 数 | 会掉，掉满 6 次控制室瘫 | `StateBridge` 第 57 行：`set(stats,'ActiveQPUs',6)` —— **写死的 6** |
+| 机房几何 | `QuantumMainframe`（6,071 件） | `Mainframe`(17,078) + `QuantumMainframe`(6,071)，**只有皮** |
+
+**`ActiveQPUs` 这条值得单说**：remake 把原版的那个**槽位**照着搭出来了
+（名字对、类型对、写进 `Workspace.Stats`），然后**焊死在 6**。
+也就是说，将来要接这条机制，接的口子在，缺的只是**写入者** ——
+和 `engine.events` 在 Phase 65 之前「只写不读」是**同一类洞的另一半**。
+
+### 74.6 没验的 / 不替你决定的
+
+- **没验**：原版 QPU 降解的**速率**（每 QPU 多少秒掉一格）、火灾对速率的**倍率**、
+  6 次里每次的间隔。产物里那两个时刻是**旗标翻起**，不是「第一个 QPU 掉了」。
+  要量速率得直接读 Tesseract 上的 QPU receptacle 指示灯，而我们的产物**没有对准它**。
+- **不去动**：remake 要不要把这条机制做出来，是**玩法决策**（CLAUDE.md §1.4 第一条：
+  NEVER CHANGE EXISTING GAMEPLAY MECHANICS）。所以这条变成 `QUESTIONS.md` 的 **P10**，
+  **我没有替你做**。
