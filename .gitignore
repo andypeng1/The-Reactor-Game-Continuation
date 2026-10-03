@@ -114,3 +114,38 @@ Data/auxcollection/
 #     authority is src/ (git-backed), never this.  Keeping it is useful -- it is
 #     the evidence that the copy into src/ was byte-exact. ---
 Data/reflect/
+
+# --- the third-party transport probes.  These are the "is this channel alive at
+#     all" files: five of them TOTAL 50 BYTES (the largest is 19), and every one
+#     of them is a literal handshake string -- hello-from-studio, plugin-alive,
+#     probe-ok-2026-10-02, x.  Nothing reads them back: no script, no test, no
+#     harness.  Each was written once to prove a sink or a VM was reachable and
+#     then left behind.  Machine state about a localhost port, same rule as
+#     _tools/_attic/logs/ above -- and the same reason the file-shaped probe
+#     scratch is listed here while the DIRECTORY-shaped _tools/_probe/ is listed
+#     further up: the pattern has to match the shape that actually exists. ---
+Data/__probe_post.txt
+Data/_plugintest.txt
+Data/_probe2.txt
+_tools/_probe.txt
+
+# --- Data/_transfer/ is the 8765 sink's landing zone, so it is scratch by
+#     construction (the authority is wherever the bytes get copied TO, never the
+#     place they land first).  Three of its four files are the handshake scratch
+#     above, but the fourth is a 2,543,006-byte hgchamber_place.rbxl -- a whole
+#     place export, pulled while I was chasing the wrong room.  HG Chamber turned
+#     out to be the HOLOGRAPHIC chamber rather than the reactor chamber, and the
+#     user's own words were that we are not using it for now.  So the export is
+#     neither ours to publish nor needed to reproduce anything, and at 2.5 MB it
+#     is well past the size where "just commit it" is free.  Nothing reads it. ---
+Data/_transfer/
+
+# --- the MCP build-library's own output directory.  generate_build / create_build
+#     write here AUTOMATICALLY on every call, which is the whole reason to leave
+#     it out: it is a tool's write target, not an authored asset, and a file
+#     sitting there says nothing about whether anyone meant to keep it.  Its
+#     single file today is misc/axis_probe_contour.json, a 4,985-byte contour
+#     exported by a throwaway probe build.  A build worth keeping belongs under
+#     src/ or Data/ with its existence stated in PROGRESS -- not left in a
+#     directory the tool rewrites. ---
+build-library/
