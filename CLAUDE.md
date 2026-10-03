@@ -252,6 +252,28 @@ Folder 再 require）。**两条通道各管一半** —— 一条的失败是�
 **「在跑但没事发生」和「第一拍就崩了」从外面长得一模一样**。
 `room_watch.luau` 的 `scan()` 因此套着 `pcall`，出错就写一份 `error.txt` 到 sink。
 
+### 0.18 【坑】量一个**旋转过的**件，不能用 `Position ± Size/2`
+
+`Size` 是**局部轴**上的尺寸。`PowerExtractionAssembly.ThermalOutline` 的 `Size` 是
+`8.4 × 39.6 × 39.6` 而它**平躺着**（局部 X 竖直，8.4 就是厚度）——
+「位置加减半尺寸」把局部 Y 当世界 Y，凭空造出一个 39.6 高的圆柱，
+把这个堆芯的顶从 **y 270.4** 报成 **286.0**。我照着这把虚高的尺子建了一版，
+**高了 16 stud**，回头才发现。**错的量法不报错，它只安静地给你一个数。**
+
+正确的有向包围盒（OBB）逐轴投三根基向量：
+
+```lua
+local R, U, L = cf.RightVector, cf.UpVector, cf.LookVector
+local ex = math.abs(R.X)*s.X + math.abs(U.X)*s.Y + math.abs(L.X)*s.Z
+local ey = math.abs(R.Y)*s.X + math.abs(U.Y)*s.Y + math.abs(L.Y)*s.Z
+local ez = math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z
+```
+
+两条随附纪律：**① 「逐位相同」作为「两个 place 之间的比较」仍然有效**（同一个错方法量两边，
+一起错、差还是 0），但**那些数字不是包围盒，不能当尺寸用**；
+**② 分组汇总会把错的东西压得很合理** —— 我直到把 `ThermalOutline` 单独拉出来
+（一个 `n=1` 的行）才看见 `8.4` 是厚度。取舍 **253**。
+
 ### 1.1 基本信息
 | 项 | 值 |
 |---|---|
@@ -603,6 +625,20 @@ Capabilities 全拒 → 见 §0.17。**没做的还是老那一半**：世界侧
 **remake 这边不是「容易坏」，是根本没装**：`MainframeMeltdown` 全 DataModel 零命中，
 `StateBridge` 第 57 行 `set(stats,'ActiveQPUs',6)` **焊死**。**要接不接 → `QUESTIONS.md` `P10`**，
 **我没动**（§1.4 第一条）。细节 `PROGRESS.md` 74，取舍 **250**。
+
+**Phase 75/76（2026-10-03）—— Rebuild 里重建反应堆腔室。**
+**Rebuild 的 placeId = `131274481205639`**（第三方 instanceId `9600b305-e366-4c12-bab6-204a748a32aa`）。
+**75**：把 AIRemake 的 `ChamberWalls`(2267) / `Core`(21) / `PowerExtractionAssembly`(1921)
+用 Ctrl+C/Ctrl+V 搬进 Rebuild，**并且摆回原版自己的世界坐标**（`Δ = target − current`，
+`ChamberWalls` 本来就在位、`Core`/`PEA` 各偏 193.7/146.3 —— **一次粘贴不保证一个偏移**）。
+**76**：`Core` 是**纯 FX 架**（21 件全 `Transparency=1.00`；看得见的「堆芯那一摞」是 `PEA`）。
+**`RebuildColumn_v2`** 258 件 @ `(140.125, −0.603)` = 原版**正东 150 stud**，实测
+`89.8 × 54.1 × 101.4` vs 原版 `90.9 × 54.0 × 98.1`，底/顶 `216.4 / 270.5` 对 `216.4 / 270.4`。
+三座**宽舱段**（不是细柱！径向 16–44.5、切向 49、高 30.5，反解自包围盒）+
+36 片六角砖 + 两段法兰盘 + 中心镀层筒 + 38 片光伏板带 + 顶部排气盘/橙 `ThermalOutline` 盘。
+**Z 深 3.4% 是已知偏差，没修** —— 缩顶盖能让 Z 好但 X 坏，总误差 4.6→4.9（取舍 **254**）。
+**这一轮最重要的是 §0.18**：那把量错 15.6 stud 的尺子。细节 `PROGRESS.md` 75/76，
+取舍 **251..254**。**下一步**：`ChamberWalls` / `ReactorCBLs`(8291) / `METU`(1612)。
 
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒 Ctrl+S。
