@@ -248,5 +248,21 @@
       **写的时候注意**：`DECISIONS.md` 里有 2 个反斜杠（早期条目里 Lua 代码片段中的「反斜杠 + n」），
       所以这一份**只能在 Studio 内部从已有文本搬移出来，不能通过工具调用传文本**（§0.10）。
 
+### 3.5 建好但**没进 Studio** 的资产
+
+- [ ] **`ChamberWall24`（Phase 86）—— 已建、已验、未导入。** 把 `Workspace.Folder.Folder.Folder.18`
+      （18 边环，apothem 63.712，**顶点在 +X**）往外扩成 24 边墙（apothem 68.000），
+      中间用 84 个三角形（每面 42）桥接两条**边数不同**的开环。
+      两种格式各 16 项检查全绿（`CHECK 16 ok, 0 failed`），三个变异各自红在自己的断言上。
+      **差的是最后一步**：`ROBLOX_OPEN_CLOUD_API_KEY` 没设，`upload_asset` / 拖拽之外的
+      自动路径都走不通。手动落地：把 `D:\BlenderRobloxTestProjects\ChamberWall24\ChamberWall24.fbx`
+      拖进 **The Reactor [Rebuild]**，**scale 1.0**，底面中心 `(-12.200, 47.400, -85.362)`，
+      不旋转（18/24 两套顶点都对 180° 镜像不变，所以不用补相位）。
+      导入后 `Size` 应是 `137.17 × 13.20 × 137.17`；**不是这个数就是 scale 填错了，不是模型的问题**。
+      上色跑 `_tools/apply_chamber_wall_materials.luau`（导入器把材质全丢成 `Plastic` + 灰）。
+- [ ] **`TransitionPillar` / `LaserPort` / `RadiationScrubberUnit` 的材质**同样只在 Blender 侧验过、
+      没进 Studio。LaserPort 的落地脚本已写（`_tools/apply_laser_port_materials.luau`），
+      另外两个还没有对应脚本。
+
 ---
 

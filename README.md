@@ -776,3 +776,50 @@ Four things here were measured rather than assumed, and all four are silent when
     origin - so the beam's first frame is placed synchronously in `fire()`.
 
 See CLAUDE.md 0.19, DECISIONS 263 to 266, PROGRESS.md Phase 83.
+
+### `ChamberWall24` - the 18-sided ring, widened to 24
+
+Built in Blender by `_tools/blender/chamber_wall_24.py`, verified by
+`_tools/blender/chamber_wall_24_check.py`, colour pass `_tools/apply_chamber_wall_materials.luau`.
+The asset has **not been imported** - there is no upload credential on this machine, so the `.fbx`
+has to be dragged in by hand. `docs/TODO.md` 3.5 carries the landing instructions.
+
+The target is the platform rim in The Reactor [Rebuild]: `Workspace.Folder.Folder.Folder.18`, an
+18-sided ring nineteen parts long, apothem **63.712**, with a **vertex** on +X (720 inward
+raycasts from outside read 63.711 / 64.695, no misses, and the profile breaks at 0, 20, 40 degrees).
+The deliverable is a 24-sided wall at apothem **68.000** plus the 84 triangles that bridge the two.
+It sits flush on the existing platform top plane, `y = 47.400`.
+
+Three things are measured and one is chosen, and the code keeps them visibly apart (DECISIONS 274).
+Measured: the inner ring's apothem, its vertex phase, and the platform top plane. Chosen: the
+outer apothem and the three heights - so the wall is a 13.2-stud parapet with a 3.3-stud overhang,
+which is a taste call, not a reading.
+
+Four things here were measured rather than assumed:
+
+  - **Roblox MeshParts cannot bridge two open rims with different vertex counts.** Going 18 to 24
+    needs 18x2 triangles per surface computed by hand; there is no operator on the Roblox side that
+    will do it, because an imported mesh is a finished triangle soup. So the join is built where the
+    operator exists, and the band is the deliverable rather than a by-product.
+  - **`bmesh.ops.delete(..., context="FACES_ONLY")`** - the default takes edges and vertices with the
+    face, and the ring you were trying to expose is one of them. The failure looks like
+    "Bridge Edge Loops did nothing".
+  - **The gap between the two rims is not slack, it is the bridge.** If they were coplanar the 42
+    triangles per surface would all be zero-area - invisible, while "42 faces" still passes.
+  - **The rims are named by height, then by radius within the pair**, and `bridge_loops` will happily
+    pair the wrong two and return a valid mesh. The build asserts the rim count and sizes before
+    bridging and the band's two edges after; `--wrong-pair` is the mutation that proves the
+    assertion is load-bearing.
+
+Import the **`.fbx`**, not the `.glb`: Roblox's glTF path reads 10 studs per file unit while the FBX
+path honours the 5.902 these files were written at, so the glb lands **1.6943x** too large.
+
+Two facts about the checker worth carrying: it re-imports the exported file and reads it back, so
+the build loop is never the evidence, and it exits 1 on failure. And it normalises shapes by
+dividing **each side by its own max** - the first version of the colour script divided both sides by
+the scene's widest part, which cancels only when the import happens to be at design scale and
+refused all four parts at 1.6943x while printing ratios identical to the design table (DECISIONS 275).
+
+`_tools/blender/transition_pillar.py` is the same family of work - an 18-sided base bridged to a
+24-sided top - and is likewise built and verified but not imported. See PROGRESS.md Phases 84 and 86,
+DECISIONS 267 to 277.
