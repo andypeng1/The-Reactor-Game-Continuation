@@ -44,7 +44,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import trg  # noqa: E402
 
 NAME = "RadiationScrubberUnit"
-OUT_DIR = r"D:\BlenderRobloxTestProjects"
+# One folder per asset, on purpose: the hand-off folder is the operator's, and it
+# already held his own DMR/Ball/NeonBox work. Sets of six files each (fbx, glb,
+# blend, three renders) do not survive sharing a directory for long.
+OUT_DIR = r"D:\BlenderRobloxTestProjects\RadiationScrubberUnit"
 
 # ---------------------------------------------------------------- dimensions (studs)
 FLOOR_R = 3.30          # base flange outer radius

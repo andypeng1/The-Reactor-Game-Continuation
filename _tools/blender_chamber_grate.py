@@ -51,7 +51,7 @@ BAND_H = 2.4          # band height, measured along Z
 BAND_T = 1.8          # band radial thickness
 BEVEL = 0.12          # edge bevel -- this is the thing a part-based build cannot do
 
-OUT_DIR = r"D:\BlenderRobloxTestProjects"
+OUT_DIR = r"D:\BlenderRobloxTestProjects\ChamberGrate"
 NAME = "ChamberGrate"
 
 

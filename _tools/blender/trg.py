@@ -34,22 +34,40 @@ def new_scene():
 
 
 # ---------------------------------------------------------------- primitives
-def revolve(bm, profile, n=48, centre=(0.0, 0.0), cap_bottom=True, cap_top=True):
-    """Lathe a (r, z) profile about Z. profile runs bottom -> top.
+_AXES = {
+    # u and v span the circle's plane, w runs along the profile's second coord.
+    "Z": ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)),
+    "X": ((0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0)),
+    "Y": ((0.0, 0.0, 1.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+}
+
+
+def revolve(bm, profile, n=48, centre=(0.0, 0.0), cap_bottom=True, cap_top=True,
+            axis="Z"):
+    """Lathe a (radius, position-along-the-axis) profile. profile runs low -> high.
 
     A point with r == 0 becomes a single pole vertex rather than a ring of
     coincident ones; that is what makes a domed head read as a dome instead of a
     very short cylinder with a pinched cap.
+
+    `axis` names the direction the profile's second coordinate runs along; the
+    circle is swept in the other two and `centre` is then a 3-tuple. It exists
+    because a wall-mounted part is authored along the wall's normal, and the
+    alternative -- build about Z, then rotate the finished mesh -- silently
+    swaps which local axis ends up pointing up. Nothing errors; the part is just
+    lying on its side, or upside down, in a way that only shows after import.
     """
-    cx, cy = centre
+    u, v, w = (Vector(a) for a in _AXES[axis])
+    c = Vector(centre) if len(centre) == 3 else Vector((centre[0], centre[1], 0.0))
     rings = []
-    for r, z in profile:
+    for r, t in profile:
         if r <= 1e-9:
-            rings.append([bm.verts.new((cx, cy, z))])
+            rings.append([bm.verts.new(c + w * t)])
         else:
             rings.append([
-                bm.verts.new((cx + r * math.cos(2 * math.pi * i / n),
-                              cy + r * math.sin(2 * math.pi * i / n), z))
+                bm.verts.new(c + w * t
+                             + u * (r * math.cos(2 * math.pi * i / n))
+                             + v * (r * math.sin(2 * math.pi * i / n)))
                 for i in range(n)
             ])
     for a, b in zip(rings, rings[1:]):
@@ -72,8 +90,8 @@ def revolve(bm, profile, n=48, centre=(0.0, 0.0), cap_bottom=True, cap_top=True)
     return rings
 
 
-def cylinder(bm, r, z0, z1, n=32, centre=(0.0, 0.0)):
-    return revolve(bm, [(r, z0), (r, z1)], n=n, centre=centre)
+def cylinder(bm, r, z0, z1, n=32, centre=(0.0, 0.0), axis="Z"):
+    return revolve(bm, [(r, z0), (r, z1)], n=n, centre=centre, axis=axis)
 
 
 def sweep_arc(bm, centre, major_r, minor_r, a0, a1, n_path=28, n_tube=18):
@@ -203,16 +221,32 @@ def measure(obj):
     }
 
 
-def export(obj, name, out_dir):
+def export(objs, name, out_dir):
+    """Export one object, or a list of them as one file.
+
+    The scale goes through each exporter's own argument (FBX takes global_scale,
+    glTF takes nothing so the object scale is set and put back), which is the one
+    place this pipeline still rests on an untested assumption -- see the header.
+    The `expected_studio_size` line every script prints is the check on it.
+    """
     os.makedirs(out_dir, exist_ok=True)
+    if not isinstance(objs, (list, tuple)):
+        objs = [objs]
     scale = 1.0 / STUDS_PER_UNIT
+    for o in bpy.context.scene.objects:
+        o.select_set(False)
+    for o in objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
     bpy.ops.export_scene.fbx(filepath=os.path.join(out_dir, name + ".fbx"),
-                             use_selection=False, global_scale=scale)
-    obj.scale = (scale, scale, scale)  # glTF has no scale argument, so bake it here
+                             use_selection=True, global_scale=scale)
+    for o in objs:
+        o.scale = (scale, scale, scale)
     bpy.context.view_layer.update()
     bpy.ops.export_scene.gltf(filepath=os.path.join(out_dir, name + ".glb"),
-                              export_format="GLB", use_selection=False)
-    obj.scale = (1.0, 1.0, 1.0)
+                              export_format="GLB", use_selection=True)
+    for o in objs:
+        o.scale = (1.0, 1.0, 1.0)
     bpy.context.view_layer.update()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, name + ".blend"))
 
