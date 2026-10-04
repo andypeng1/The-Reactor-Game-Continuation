@@ -104,12 +104,22 @@ local CV = loadstring(modScript.Source)()
 | Blender 5.1.2 | `D:\Blender 5.1\blender.exe` | 无头 `--background --python` 可用 |
 | **没有** | `uv` / `uvx` / `pipx` / `winget` / `choco` / `scoop` | 装包走 `pip` |
 
-**Blender 那条路**（Phase 79）：`_tools/blender_chamber_grate.py`，
-跑法 `"D:\Blender 5.1\blender.exe" --background --factory-startup --python <脚本>`，
-产物落操作员自己的交接夹 `D:\BlenderRobloxTestProjects`（里面本来就有他倒腾的
-`DMR.fbx` / `NeonBox.fbx`）。**最后一公里我走不通**：`upload_asset` 要
+**Blender 那条路**（Phase 79 起）：脚本在 `_tools/blender/`（`trg.py` 是共用件 +
+`chamber_grate` / `radiation_scrubber` / `laser_port`），跑法
+`"D:\Blender 5.1\blender.exe" --background --factory-startup --python <脚本>`，
+产物落操作员自己的交接夹 `D:\BlenderRobloxTestProjects` —— **现在一个资产一个子目录**
+（`ChamberGrate\` / `RadiationScrubberUnit\` / `LaserPort\`），
+**他自己那份进了 `Misc\`**（`DMR.*` / `Ball.*` / `NeonBox.fbx` / `Test1.fbx`，
+外加他挪过去的那份 `README.md`）。**别把它们搬回根** —— `DMR.blend` 引用的
+`Part1_*.png` 就在同一个 `Misc\` 里。**最后一公里我走不通**：`upload_asset` 要
 `ROBLOX_OPEN_CLOUD_API_KEY`（`asset:write`）+ creator id，**两个都没设** →
 fbx/glb 得他自己拖进 Studio。教训同 §0.2：**探条只探它探的那件事**。
+
+**Blender 侧的证据规则**（Phase 82，**与 Studio 侧 §0.2 同源**）：构建循环**不是证据** ——
+`_tools/blender/laser_port_check.py` 把导出的 **FBX 重新导入**再逐件读回（原点/尺寸/tris）
+并**摆一遍姿态**，`CHECK n ok, 0 failed` 且**失败时 exit 1**。这么做的理由是有一条缺陷
+**在构建侧完全不可见**：导出如果把变换烘进几何体，件的原点就塌到包围盒中心，
+**摆位、尺寸、渲染全对，而它永远动不了**（取舍 **261**）。
 
 ### 0.7 MCP 插件的无害报错
 ```

@@ -201,9 +201,16 @@ def finish(bm, name, materials, bevel=0.07, bevel_angle_deg=25.0):
 
 def measure(obj):
     """Read the mesh back out. The build loop is not evidence -- same rule as
-    reading instance properties instead of module state on the Studio side."""
+    reading instance properties instead of module state on the Studio side.
+
+    Walks mesh.vertices rather than Object.bound_box, which the depsgraph fills
+    in lazily. I switched on the theory that a fresh object still reports the
+    default cube -- that theory was WRONG (both paths agree to the last digit on
+    this asset), so this is defensive, not a bug fix. The walk stays because it
+    has no update-order dependency to be wrong about, and because when a number
+    does look wrong it can name the vertex that produced it."""
     mesh = obj.data
-    corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+    corners = [obj.matrix_world @ v.co for v in mesh.vertices]
     xs = [v.x for v in corners]
     ys = [v.y for v in corners]
     zs = [v.z for v in corners]
@@ -221,13 +228,17 @@ def measure(obj):
     }
 
 
-def export(objs, name, out_dir):
+def export(objs, name, out_dir, blend=True):
     """Export one object, or a list of them as one file.
 
     The scale goes through each exporter's own argument (FBX takes global_scale,
     glTF takes nothing so the object scale is set and put back), which is the one
     place this pipeline still rests on an untested assumption -- see the header.
     The `expected_studio_size` line every script prints is the check on it.
+
+    `blend=False` for a caller exporting several files from one scene: the .blend
+    is always the WHOLE scene, so saving it per file produces byte-identical
+    copies under different names. Save it once, under a name that says so.
     """
     os.makedirs(out_dir, exist_ok=True)
     if not isinstance(objs, (list, tuple)):
@@ -248,7 +259,8 @@ def export(objs, name, out_dir):
     for o in objs:
         o.scale = (1.0, 1.0, 1.0)
     bpy.context.view_layer.update()
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, name + ".blend"))
+    if blend:
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, name + ".blend"))
 
 
 def render(name, out_dir, views, target, ortho):
