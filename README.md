@@ -740,3 +740,39 @@ And `FacilityBridge` will warn once per boot for a mapped unit that is parked - 
 per-unit list of what still needs an Mk2, and it clears when the Mk2 lands. Do not add an archive
 fallback to silence it: for a unit the bridge actually drives, a ServerStorage instance accepts
 `Light.Enabled` and `Sound:Play` and does nothing. See DECISIONS 128 to 130.
+
+## The Rebuild place
+
+A second place, `131274481205639`, holds the original facility's geometry reassembled at
+its own world coordinates - the chamber walls, the core column, the CBL lasers - so a
+rebuild can be compared against the original one part at a time. It is not the remake's
+place: nothing under `GameCore` runs there. Phases 75 to 77 are the assembly log.
+
+### `Workspace.Scene.LaserPortGimbal`
+
+A `Script` shipped from `_tools/laser_port_gimbal.luau`. In Play mode a click on the base
+plate cycles the emitter head through five poses and fires a real beam: a Neon cylinder
+re-laid every frame from the lens's live CFrame, raycast so it stops at the first thing it
+meets, with a glow and an impact marker. `_tools/apply_laser_port_materials.luau` is the
+separate colour pass - the meshes carry flat colour factors only, and Roblox's importer
+has no per-face material slot, so all eleven parts land identical grey Plastic.
+
+Four things here were measured rather than assumed, and all four are silent when wrong:
+
+  - The joint turns about the **recovered node origin**, not the MeshPart's `Position`.
+    Studio's importer re-origins every part somewhere inside its own primitive, so
+    `origin = part.CFrame * CFrame.new(-row.off * k)`. Turning about a guessed point does
+    not error - the port still moves, it sweeps about a line through nothing.
+  - The muzzle direction is the **lens part's own local -X**, not a typed-in angle. The
+    lens is the one primitive thin along its X, so that axis *is* the optical axis.
+  - The glTF import landed **1.6943x** design size, uniformly: `1.6943 = 10 / 5.902`.
+    Roblox's glTF importer reads 10 studs per file unit; the FBX path honours the 5.902
+    the files were written at. Because it is uniform the port still assembles and every
+    joint works - it is just ~70% larger. Prefer the `.fbx`.
+  - Per-frame work lives in an exported `M.stepBeam(rig)` rather than inside the Heartbeat
+    connection, because the plugin VM answers `Heartbeat:Wait()` and then never runs the
+    callbacks it was handed. Anything that exists *only* inside a connection cannot be
+    driven from the only VM available, and `Instance.new("Part")` is born at the world
+    origin - so the beam's first frame is placed synchronously in `fire()`.
+
+See CLAUDE.md 0.19, DECISIONS 263 to 266, PROGRESS.md Phase 83.

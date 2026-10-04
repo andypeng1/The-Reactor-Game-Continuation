@@ -236,6 +236,22 @@ def export(objs, name, out_dir, blend=True):
     place this pipeline still rests on an untested assumption -- see the header.
     The `expected_studio_size` line every script prints is the check on it.
 
+    glTF HAS NO global_scale, and scaling it by hand means scaling BOTH halves of
+    every object's transform. Setting only o.scale shrinks each mesh about its own
+    origin while o.location leaves the authored spacing untouched -- the file then
+    holds geometry at 1/5.902 and spacing at 1.0, which is not a smaller model, it
+    is a model whose parts fly apart on re-import. MEASURED 2026-10-04: the
+    shipping .glb had exactly that (nodes S=0.1694, T=0.66), and it went unseen
+    for two rounds because the round-trip check only ever read the .fbx. The FBX
+    path is fine because global_scale scales translations too.
+
+    o.location is in the PARENT's space; here the parent is the scene, so scaling
+    it by the same scalar is the whole job. Do not "improve" this by parenting to
+    an Empty: that puts an extra root node in the file and the importer hands back
+    a model with a pointless wrapper inside it. Saved/restored from a copy rather
+    than divided back out, so it stays exact and cannot drift if this is called
+    twice.
+
     `blend=False` for a caller exporting several files from one scene: the .blend
     is always the WHOLE scene, so saving it per file produces byte-identical
     copies under different names. Save it once, under a name that says so.
@@ -251,13 +267,16 @@ def export(objs, name, out_dir, blend=True):
     bpy.context.view_layer.objects.active = objs[0]
     bpy.ops.export_scene.fbx(filepath=os.path.join(out_dir, name + ".fbx"),
                              use_selection=True, global_scale=scale)
-    for o in objs:
+    saved = [o.location.copy() for o in objs]
+    for o, loc in zip(objs, saved):
         o.scale = (scale, scale, scale)
+        o.location = loc * scale
     bpy.context.view_layer.update()
     bpy.ops.export_scene.gltf(filepath=os.path.join(out_dir, name + ".glb"),
                               export_format="GLB", use_selection=True)
-    for o in objs:
+    for o, loc in zip(objs, saved):
         o.scale = (1.0, 1.0, 1.0)
+        o.location = loc
     bpy.context.view_layer.update()
     if blend:
         bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, name + ".blend"))
