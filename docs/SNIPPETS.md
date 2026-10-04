@@ -816,3 +816,36 @@ worst = min(math.hypot(sum(pos[i][0] for i in f) / len(f),
 `--twist`（**全绿，负结果**：`recalc_face_normals` 抹掉翻转，`bridge_loops` 按几何推对应关系，
 绕向传不到带子上）、`--cross`（**只有 twist 那一行红**）。
 **一条从没红过的断言是装饰** —— 前两次变异都没把 twist 逼红，所以补了第三种。
+
+### 5.16 量一个件的真实占据范围：先看 `Shape`（★ Phase 85，§0.18 第三张脸）
+
+`Size` 有三种坏法，**全都安静**：**旋转过**的件要逐轴投三根基向量（§0.18）；
+**非 Block** 的件**根本没有那个尺寸**（本条）；**分组汇总**会把错的压得很合理。
+
+```lua
+local function extents(p)                       -- 世界轴上的真实占据范围
+    local s, R, U, L = p.Size, p.CFrame.RightVector, p.CFrame.UpVector, p.CFrame.LookVector
+    if p:IsA("Part") then
+        -- Ball: 直径 = min(Size)，三个分量都等于它。Cylinder: 轴长取一个分量、
+        -- 直径取另两个的 min —— Roblox 取的是 min(Size.Y, Size.Z)，轴沿局部 X。
+        local d = math.min(s.X, s.Y, s.Z)
+        if p.Shape == Enum.PartType.Ball then
+            s = Vector3.new(d, d, d)
+        elseif p.Shape == Enum.PartType.Cylinder then
+            s = Vector3.new(s.X, math.min(s.Y, s.Z), math.min(s.Y, s.Z))
+        end
+    end
+    return Vector3.new(
+        math.abs(R.X)*s.X + math.abs(U.X)*s.Y + math.abs(L.X)*s.Z,
+        math.abs(R.Y)*s.X + math.abs(U.Y)*s.Y + math.abs(L.Y)*s.Z,
+        math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z)
+end
+```
+
+**证据长什么样**：`Size=(0.5, 46, 35)` 的 `Shape=Ball` 是**一颗 0.5 stud 的弹珠**，
+不是一块 46×35 的板。**判据**：把它染成一个刺眼的颜色再拍一张 ——
+显出的是**一圈细环**（1 stud 的盘被 0.9 的盘盖住）而不是一块铺满画面的板，量法当场作废。
+**别用「再读一遍属性」自证**：读的是同一个错前提，两次都错也会一致。
+
+**顺带**：`Size` **不随 `Shape` 变**。`(0.5,46,35)` / `(0.45,41.4,31.5)` 这种「板尺寸 + Ball 形状」的
+组合是**改形状的化石** —— 死参数是线索，能反推原设计，不是噪声。
