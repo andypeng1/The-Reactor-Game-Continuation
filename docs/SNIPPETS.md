@@ -737,3 +737,82 @@ end
 > **⚠️ 出射方向也别拍脑袋写一个角度。** 用的是**镜片自己局部的 −X**
 > （`-lens.CFrame.RightVector`），因为镜片是唯一一个沿 X 薄的 primitive，
 > **那条轴就是光轴**。写死的角度错了不会报错，只会安静地打偏。
+
+### 5.15 顶点数不同的两条开环缝起来（Bridge Edge Loops）★ Phase 84
+
+Roblox 的 MeshPart 是一份**做完的三角形汤**，那一侧没有任何算子能拿两条**边数不同**的环
+把它们缝起来 —— 要手算那 n + m 个三角形再写进文件。这是基于部件的建模**到不了**的一类形状，
+**不是"更难"，是不可达**。所以这类活是 Blender 的。
+
+```python
+bm = bmesh.new()
+with trg.layer(bm, MAT_BASE):
+    base_rings = trg.revolve(bm, [(BASE_R, BASE_Z[0]), (BASE_R, BASE_Z[1])], n=18)
+with trg.layer(bm, MAT_TOP):
+    top_rings  = trg.revolve(bm, [(TOP_R,  TOP_Z[0]),  (TOP_R,  TOP_Z[1])],  n=24)
+
+# 只删"相对的那一对"端面，而且必须用 FACES_ONLY。
+# 默认上下文会把面和它的棱、点一起带走 —— 那正是整条环，之后就没东西可桥了，
+# 而失败长得像"Bridge Edge Loops 什么都没做"。
+doomed = [cap_face(bm, base_rings[-1]), cap_face(bm, top_rings[0])]
+if None in doomed:
+    raise SystemExit("找不到两条接缝端面；拒绝猜")
+bmesh.ops.delete(bm, geom=doomed, context="FACES_ONLY")
+
+# 前置断言：正好两条环，18 和 24。喂给它四条开环它照样会产出"一个"网格。
+sizes = sorted(len(l) for l in rim_loops(bm))
+if sizes != [18, 24]:
+    raise SystemExit("期望环长 [18, 24]，实际 %s；拒绝架桥" % sizes)
+
+with trg.layer(bm, MAT_BAND):
+    res = bmesh.ops.bridge_loops(bm, edges=[e for e in bm.edges if len(e.link_faces) == 1])
+assert len(res["faces"]) == 18 + 24          # 边数不同 → 三角形扇，正好 n + m 个
+```
+
+**四条会复发的：**
+
+1. **`context="FACES_ONLY"` 是这里的全部关键。** 默认删除会把棱和点一起带走 ——
+   带走的就是要桥的那条环。
+2. **空隙不是余量，空隙就是桥。** 两条环若共面，桥出来的是 42 个**退化**三角形：
+   零面积、看不见，而"42 个面"**照样成立**。凡"计数对、内容空"的地方都再配一条几何断言。
+3. **`cap_face` 要按顶点**集合**认，不能按边数认** —— 两个端面多边形边数相同，
+   `len(f.verts) == n` 分不出上下。认错就删错端，两条环跑到模型两端、相距 4.6 stud，
+   桥成一个吞掉整根柱子的桶。
+4. **倒角是角度过滤的，所以它滤的其实是"形状对不对"。** 正确的带子只倾 20.6° < 25° → 被跳过；
+   一块**交叉**的带子很陡 → 倒角去吃它，把带子切碎、把两条环从设计高度上拽下来
+   （verts 126 → 240，`band_faces` 直接归 0）。**错的带子会被倒角藏起来**：
+   看起来不像"错了"，像"那一段什么都没有"。
+
+**怎么读回来（`_tools/blender/transition_pillar_check.py`）：** 重新导入 `.fbx` **和** `.glb`，
+断言 ①闭合流形 ②单壳 ③两条环的**边数与半径** ④带子 42 个**三角形** ⑤不扭 ⑥无退化面。
+
+```python
+# glTF 没有地方放多边形，所以它把每个角拆成独立顶点：504 个顶点焊完只剩 126 个,
+# 和 FBX 一模一样。不焊接，open_edges=504 / components=128 这数是**关于问法的**,
+# 不是关于文件的。跨格式比较前一律先按位置焊接。
+def welded(obj):
+    key_of, pos, index = {}, [], []
+    for v in obj.data.vertices:
+        w = obj.matrix_world @ v.co                       # ← 文件单位
+        k = (round(w.x, 5), round(w.y, 5), round(w.z, 5))
+        if k not in key_of:
+            key_of[k] = len(pos)
+            pos.append((w.x * SPU, w.y * SPU, w.z * SPU))  # ← 乘回 stud 才能比设计数
+        index.append(key_of[k])
+    return pos, [tuple(index[i] for i in p.vertices) for p in obj.data.polygons]
+```
+
+**扭不扭只能靠面在哪。** 一条扭过的带子**面数相同、同样闭合、同样单壳** ——
+分开它们的只有位置：
+
+```python
+floor_r = 0.9 * min(BASE_R, TOP_R)          # 门槛由设计推出来，不手挑
+worst = min(math.hypot(sum(pos[i][0] for i in f) / len(f),
+                       sum(pos[i][1] for i in f) / len(f)) for f in band)
+# 正确 2.1837 ／ 交叉 0.5898 ／ 门槛 1.8900
+```
+
+**变异开关（写在构建脚本里，`sys.argv` 门控）：** `--no-bridge`（10 红）、
+`--twist`（**全绿，负结果**：`recalc_face_normals` 抹掉翻转，`bridge_loops` 按几何推对应关系，
+绕向传不到带子上）、`--cross`（**只有 twist 那一行红**）。
+**一条从没红过的断言是装饰** —— 前两次变异都没把 twist 逼红，所以补了第三种。
