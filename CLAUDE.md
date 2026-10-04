@@ -88,13 +88,28 @@ local CV = loadstring(modScript.Source)()
 否则 Play 模式会卡死（`start_stop_play` 一直返回 "hasn't finished yet"）。
 用户已经开好了，如果 Play 又卡，先让他确认这个开关。
 
-### 0.6 这台机器没有 Node.js
-```
-node / npx / npm / bun / pnpm  -> NOT FOUND
-winget / choco / scoop          -> NOT FOUND
-```
-`@6xvl/robloxstudio-mcp` 是 Node CLI，跑不起来。已在项目根写了 `opencode.json`
-但需要 Node + 重启 opencode 才生效。
+### 0.6 【2026-10-04 更正】这台机器**有** Node.js，而且不止它
+
+原文说「node / npx / npm -> NOT FOUND，`@6xvl/robloxstudio-mcp` 跑不起来」——
+**是错的**。Node 在 `D:\nodejs\node`，`claude mcp list` 里那两个 server
+（`robloxstudio`、`vision-bridge`）本来就是 `cmd /c npx -y …` 起着的。
+**当初是拿 `command -v node` 判的，而它只探 PATH。**
+
+实测装着的（2026-10-04）：
+
+| 工具 | 位置 | 备注 |
+|---|---|---|
+| Node.js | `D:\nodejs\node`（**不在 PATH**） | 两个 MCP server 靠它 |
+| Python 3.14.7 | `C:\Python314\python` + `Scripts\pip` | 整个 `_tools/` 靠它 |
+| Blender 5.1.2 | `D:\Blender 5.1\blender.exe` | 无头 `--background --python` 可用 |
+| **没有** | `uv` / `uvx` / `pipx` / `winget` / `choco` / `scoop` | 装包走 `pip` |
+
+**Blender 那条路**（Phase 79）：`_tools/blender_chamber_grate.py`，
+跑法 `"D:\Blender 5.1\blender.exe" --background --factory-startup --python <脚本>`，
+产物落操作员自己的交接夹 `D:\BlenderRobloxTestProjects`（里面本来就有他倒腾的
+`DMR.fbx` / `NeonBox.fbx`）。**最后一公里我走不通**：`upload_asset` 要
+`ROBLOX_OPEN_CLOUD_API_KEY`（`asset:write`）+ creator id，**两个都没设** →
+fbx/glb 得他自己拖进 Studio。教训同 §0.2：**探条只探它探的那件事**。
 
 ### 0.7 MCP 插件的无害报错
 ```

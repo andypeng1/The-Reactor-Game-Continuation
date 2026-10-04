@@ -7338,3 +7338,44 @@ x **-68.85..-59.20** / y **0.00..9.10** / z **25.42..33.70**（9.65 x 9.10 x 8.2
 而且 `generate_build` 出来的 JSON 就是可复用的资产（`build-library/misc/`）。
 
 **没做的**：没有脚本、没有 `ClickDetector`、没有绑定（§6 —— 这是纯视觉资产）。
+
+## Phase 79 (2026-10-04) - Blender 管道通了，而第一个读数反驳了我自己的说法
+
+用户问「我如何让你能连接到 Blender」。我给了两条路（A 无头脚本 / B blender-mcp），
+建议先走 A；用户「ok，按你说的做」→ 本轮做 A。
+
+**环境（实测，同时更正 CLAUDE.md §0.6）**
+- Blender 5.1.2 `D:\Blender 5.1\blender.exe`，`--background --python` 可用
+- Python 3.14.7 `C:\Python314`，有 pip；**没有** uv / uvx / pipx
+- Node.js 其实在 `D:\nodejs`（§0.6 原文那句「NOT FOUND」是错的，已改）
+- `ROBLOX_OPEN_CLOUD_API_KEY` / creator id **都没设** -> `upload_asset` 传不了
+  fbx，最后一公里得操作员自己拖进 Studio
+
+**管道**：`_tools/blender_chamber_grate.py`，产物落 `D:\BlenderRobloxTestProjects`。
+一次吐出 `.glb` / `.fbx` / `.blend` + 两张 Workbench 正交渲染 PNG。
+
+**靶子选了腔室外壳格栅** —— 就是我在对话里说「Blender 一个 revolve + array 就出来了，
+不用 2002 个 Part」的那个东西。所以这是一次对我自己论点的检验，不是随便建着玩。
+
+**实测**（脚本自己回读网格，不信构建循环）
+- 72 肋 x 12 段 + 13 条环形横带 -> **1 个 mesh**
+- bbox `201.79 x 201.79 x 347.00`（z 0.00..347.00）
+- **35712 verts / 37440 polys / 67968 tris**，`open_edges = 0`（全是闭合实体）
+- 对照：Studio 那版 **2002 个 Part**，每 box 12 tris 约 **24024 tris**
+
+**结论（不粉饰）**
+1. **实例数我赢了**：2002 -> 1。Roblox 在乎 draw call，这条是真的。
+2. **三角面我输了**：67968 vs ~24024，**2.8 倍**。倒角（bevel）就是代价。
+3. **我说「Studio 只能 primitive，所以我只能堆积木」—— 这条是错的。** 我给出去的
+   Blender 版里**肋还是 box**，和 Studio 里一模一样的那个 primitive。Blender 让我
+   够得到真曲面，我伸手拿了个方块。**媒介不是约束，我是。** 这一轮真正用了媒介的
+   只有两处：横带做成真环形（4n 个面，不是 n 个方块）、以及倒角 —— 都真，都不是曲面。
+4. **我看不见结果。** 两张 PNG（447 KB / 537 KB —— 不是空白帧，但这只是**文件大小**
+   的推断，不是我看过）。剪影好不好只能由操作员判。
+
+**没做的**
+- 没走 blender-mcp（路 B）。它的卖点是我「看见视口」，而我看不了图；对我真正有用的
+  是**操作员开着 Blender 当我的眼睛**，那条等需要时再装。
+- 肋的截面还是矩形，没做面片级。
+- **没量 Blender 单位 -> stud 的换算**（glTF 米制 / FBX 自己的约定 / Roblox 导入系数）。
+  脚本头部已写明「不要假设 1.0，导入一次读 MeshPart.Size 把系数告诉我」。
