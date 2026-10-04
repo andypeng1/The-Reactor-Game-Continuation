@@ -862,3 +862,59 @@ flag as a file to open, complains, and then **runs to completion anyway** (DECIS
 `_tools/blender/transition_pillar.py` is the same family of work - an 18-sided base bridged to a
 24-sided top - and is likewise built and verified but not imported. See PROGRESS.md Phases 84 and 86,
 DECISIONS 267 to 277.
+
+### `RingBridge18_24` - the same join at unit scale, to the operator's own triangle list
+
+Built by `_tools/blender/ring_bridge_18_24.py`, verified by
+`_tools/blender/ring_bridge_18_24_check.py` (**53 checks, 0 failed**, split evenly across the `.fbx`
+and the `.glb`; six mutations each turn their own named assertion red). Delivered to
+`D:\BlenderRobloxTestProjects\RingBridge18_24\`.
+
+**This one is a specification, not a scene reading.** For Phases 84/86/87/88/89 the radii came out of
+the world (63.712, 64.695, 68.000). Here the operator gave a numbered spec and it is abstract:
+an 18-gon of radius 0.8 at z=0, a 24-gon of radius 1.2 at z=1, both end faces kept as n-gons, red
+bridge triangles, blue end faces. **His list starts at "3." - items 1 and 2 never arrived**, and they
+were not guessed. He also wrote the triangulation out line by line: six groups of three small
+corners and four large ones, seven triangles each, `A0-B0-B1`, `A0-A1-B2`, `A0-B2-B1`, `A1-A2-B3`,
+`A1-B3-B2`, `A2-A3-B4`, `A2-B4-B3`.
+
+**"radius 0.8" has two readings and both are printed.** A regular n-gon has a circumradius (to the
+corners) and an apothem (to the face planes), differing by `cos(pi/18)` = 1.5%. The build takes the
+circumradius - it is what you get when you place vertices on a circle of radius r, and the only
+reading under which "the two rings are coaxial on one circle family" carries content - and prints the
+apothem (`0.787846 / 1.189734`) beside it. That is Phase 89's lesson used forwards: the error there
+was choosing the wrong one of two radii while every check measured the other (DECISIONS 293/297).
+
+**42 is forced by Euler, so Euler cannot validate the list.** For an annulus with `a` and `b` boundary
+vertices, `chi = (a+b) - (3F+a+b)/2 + F = 0`, so `F = a+b = 18+24 = 42`. *Any* six-groups-of-seven
+scheme satisfies it. What the checker can validate is his **42 relations specifically**: it rebuilds
+each one as a position set and looks for a face with exactly that set. `--fan` (bridge via
+`bmesh.ops.bridge_loops`) produces a valid, closed, 42-triangle band that is *not* his - and reddens
+that assertion, which is the whole reason it exists (DECISIONS 298).
+
+**His seven relations are not consistently wound - measured: 12 of the 84 interior edges run the same
+direction twice.** It does not matter here, because the solid is closed and `recalc_face_normals`
+derives outward from the geometry alone. It would matter if he builds the band **open** (no caps, or
+one cap): then there is no inside to derive from and those 12 faces come out flipped, which is
+invisible in the viewport with backface culling off. Same finding as Phase 84's `--twist` negative
+result (DECISIONS 265/300).
+
+**The two formats do not ship the same asset.** FBX has a polygon type and its importer rebuilds
+`1 x 18-gon + 1 x 24-gon`; glTF has none and ships `16 + 22` triangles. So item 4's "the end faces are
+kept as n-gons" is literally true in the FBX and only true *by area* in the glb. The export-side
+assertion is therefore the format-independent half - the cap spans all 18 (resp. 24) corners and has
+the ring's full area, which a partial fan would fail - and the shipped face count is printed rather
+than asserted. Bridge faces are identified by **material slot, never by side count**: `len(f) == 3`
+counted glTF's 38 cap triangles too and read "80 bridge triangles" (DECISIONS 299).
+
+**Import the `.fbx`** (the glb lands 1.6943x, as always). Radius is in scene units, so the FBX path
+(`global_scale = 1/5.902`) gives **`14.1648 x 14.1648 x 5.9020`** studs. No Studio import happened -
+there is no upload credential on this machine - so that size is computed, not measured. The material
+assertion reads the colour back **out of the file** (Principled Base Color, falling back to
+`diffuse_color`) rather than trusting the Workbench render, which reads the other field: a picture can
+be entirely right about a material that exported white (DECISIONS 300). Volume is confirmed two
+independent ways - prismatoid `3.111157480` vs a divergence sum over the shipped faces `3.111157526`,
+delta `4.53e-08` - and the tolerance is `1e-6` relative because **Blender stores vertex coordinates as
+float32**, so a 1e-9 tolerance tests the storage format, not the geometry.
+
+See PROGRESS.md Phase 90, DECISIONS 297 to 302, docs/SNIPPETS.md 5.21.

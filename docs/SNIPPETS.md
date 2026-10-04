@@ -1211,3 +1211,66 @@ except BaseException:
 
 变异要写成 `--python s.py -- --flag`；`--python s.py --flag` 会让 Blender
 把 `--flag` 当成**要打开的文件**，然后**照常跑完**。
+
+## 5.21 两个环之间的桥：**规格是别人给的**，所以断言要建在**面**上而不是面数上 ★ Phase 90
+
+**场景**：用户把三角化逐条写下来（`A0-B0-B1` … `A2-B4-B3`，6 组 × 7 = 42），
+外加「端面留作 n-gon」「端面蓝、桥接红」。产物是 Blender 参考件，不是 Studio 里任何东西。
+
+**① 「9 个三角形」不够，要的是「**这 42 条关系**」** —— 42 是 Euler 逼出来的
+（环面 `F = a + b = 18 + 24`），所以**任何** 6 组 × 7 的方案都满足 Euler：
+Euler、闭合、体积**都不能**验证他给的表。能验证的只有把每条关系**重建出来当集合去找面**：
+
+```python
+def pos_of(ring, g, off):          # 组的编号就从这里进：小环 3g+off，大环 4g+off
+    z, r, n, base = ((Z_SMALL, R_SMALL, N_SMALL, 3*g) if ring == "A"
+                     else (Z_LARGE, R_LARGE, N_LARGE, 4*g))
+    a = 2.0 * math.pi * ((base + off) % n) / n
+    return (round(r*math.cos(a), 5), round(r*math.sin(a), 5), round(z, 5))
+
+lookup = {pos: i for i, pos in enumerate(pts)}          # 按**位置**，不按索引：
+for g in range(GROUPS):                                 # 焊接会把索引全洗掉
+    for rel in BRIDGE:
+        want = {lookup[pos_of(r, g, o)] for (r, o) in rel}
+        assert any(set(f) == want for f, _ in faces)    # 逐条关系都必须是一张面
+```
+`--fan`（改用 `bmesh.ops.bridge_loops` 自己配）**红的正是这一行** —— 它给出的 42 个三角形
+**合法、闭合、体积更接近正确**，只是**不是他那 42 条**。**这就是这条断言存在的唯一理由。**
+
+**② 面**分类**绝不能按边数** —— 那是在回答**文件格式**：
+glTF 没有多边形类型，端面在 `.glb` 里是 16 + 22 个三角形，于是 `len(f) == 3`
+把 38 个端面三角形一起数进来 → 「42 个桥接三角形」读到 **80**。**按 material slot 分类** ——
+slot 两个格式都有，而且它本来就是第 6 条在说的事。同理「44 个面」要改问
+**三角化后的三角形数** `Σ(len(f) - 2)`（两格式都是 80）。
+
+**③ 「端面是 n-gon」只能在 `.blend`/FBX 里问原话，导出件问**面积和角集**：
+```python
+ok("the z=0 end face spans all 18 corners", used_lo == ring_lo)
+ok("the z=0 end face has the 18-gon's area",
+   abs(planar_area(pts, cap_lo) - ngon_area(N_SMALL, R_SMALL)) < 1e-4 * want)
+```
+一个**残缺的扇面**照样是「端面那个材质的面」——**数面数抓不到它，面积和角集抓得到**。
+（实测：FBX 留 `1 + 1` 个 n 边形，GLB 是 `16 + 22` —— **两种格式交付的不是一个东西**。）
+
+**④ 按方位分区，先把方位**吸附到环自己的角格**再除**：
+```python
+def corner(n, p):                       # n = 环的边数
+    return int(round(azim(p) / (360.0 / n))) % n
+# 第 g 组：小环 3g..3g+2，大环 4g..4g+3
+```
+`azim(p) // 60` 和 `round(azim(p) / 60)` **都错**：15° 间距整除 60° → 角**正落在边界上**，
+`atan2` 对「标称 60°」回 59.999999，而 Python 的 `round()` 是**银行家舍入**（`round(1.5) == 2`）
+→ 实测读出 `[3,4,5,3,5,4]`。吸附留 ~10° 余量，浮点是 ~1e-5。
+
+**⑤ 颜色的断言要**读回文件里的字段**：Workbench 渲染读 `mat.diffuse_color`，
+导出器写的是 Principled 的 `Base Color` —— **两个字段**。读回时优先取后者、退前者：
+```python
+for n in mat.node_tree.nodes:
+    if n.type == "BSDF_PRINCIPLED" and "Base Color" in n.inputs:
+        c = n.inputs["Base Color"].default_value; return (c[0], c[1], c[2])
+return mat.diffuse_color
+```
+**否则一张看着全对的图救不了一个导出成白色的材质。**
+
+**⑥ 变异要覆盖每条规格**，其中 `--swap-rgb`（只换颜色，不换面用哪个 slot）**是专为颜色那条加的** ——
+`--swap-mats`（换面用哪个 slot，颜色不变）**逼不红**它。**专为它造一个变异，别让那条断言装饰着。**
