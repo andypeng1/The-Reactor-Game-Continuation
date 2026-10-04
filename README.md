@@ -780,9 +780,22 @@ See CLAUDE.md 0.19, DECISIONS 263 to 266, PROGRESS.md Phase 83.
 ### `ChamberWall24` - the 18-sided ring, widened to 24
 
 Built in Blender by `_tools/blender/chamber_wall_24.py`, verified by
-`_tools/blender/chamber_wall_24_check.py`, colour pass `_tools/apply_chamber_wall_materials.luau`.
-The asset has **not been imported** - there is no upload credential on this machine, so the `.fbx`
-has to be dragged in by hand. `docs/TODO.md` 3.5 carries the landing instructions.
+`_tools/blender/chamber_wall_24_check.py`. The colour pass
+`_tools/apply_chamber_wall_materials.luau` is **obsolete** - it coloured the *imported* asset, and
+the wall no longer comes in through the importer.
+
+**Landed in Studio as 66 Parts, not as an import** (Phases 87 and 88). The `.fbx` remains the
+Blender-side acceptance input; dragging it into Studio is **no longer the route** - it was measured
+at 1.0769x design scale and 0.873 off centre, and it did not join. The wall is
+`Workspace.Folder.Folder.Folder.ChamberWall24`: 18 collar + 24 band + 24 wall panels, every one
+`Anchored`/`CanCollide`/`CanQuery`, so the visible shape and the collision body are the same parts.
+Built by `_tools/build_chamber_wall_24_parts.luau` (with a 198-check self-test that destroys the
+model rather than let a bad one into the world), verified by `_tools/cw24_parts_verify.luau`
+(117 checks, 0 failed; a 7-height x 720-azimuth sweep is 5040/5040 rays with no miss).
+The earlier single-**MeshPart** build (`_tools/build_chamber_wall_24.luau`) is **parked, not deleted**,
+at `ServerStorage.ChamberWall24_mesh_20261004` - its `CollisionFidelity` could not be written, so its
+collision body was the convex hull of a ring, i.e. a solid disk. `docs/TODO.md` 3.5 and
+`docs/SNIPPETS.md` 5.18/5.19 carry the details.
 
 The target is the platform rim in The Reactor [Rebuild]: `Workspace.Folder.Folder.Folder.18`, an
 18-sided ring nineteen parts long, apothem **63.712**, with a **vertex** on +X (720 inward
@@ -811,8 +824,10 @@ Four things here were measured rather than assumed:
     bridging and the band's two edges after; `--wrong-pair` is the mutation that proves the
     assertion is load-bearing.
 
-Import the **`.fbx`**, not the `.glb`: Roblox's glTF path reads 10 studs per file unit while the FBX
-path honours the 5.902 these files were written at, so the glb lands **1.6943x** too large.
+**If a `.fbx` or `.glb` from this family does get imported anywhere, use the `.fbx`, not the `.glb`**:
+Roblox's glTF path reads 10 studs per file unit while the FBX path honours the 5.902 these files were
+written at, so the glb lands **1.6943x** too large. (The checker re-imports on the Blender side, where
+this still matters; the wall itself no longer goes through the importer at all.)
 
 Two facts about the checker worth carrying: it re-imports the exported file and reads it back, so
 the build loop is never the evidence, and it exits 1 on failure. And it normalises shapes by

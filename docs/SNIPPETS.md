@@ -913,3 +913,181 @@ def end_faces(bm, z, tol=1e-6):
 **消费端那条（上色脚本）**：判断「这一件是哪一段」用**尺寸比例**，而**归一化必须各自除以自己** ——
 两件都除以「场景里最宽的那件」只在**导入恰好是设计尺寸**时才抵消（**DECISIONS 275**）。
 上面这几条都在 `PROGRESS.md` Phase 86。
+
+
+---
+
+### 5.18 在 Studio 里从零建一个 MeshPart（**不需要上传凭据**），以及它的碰撞体代价 ★ Phase 87
+
+**问题**：`ROBLOX_OPEN_CLOUD_API_KEY` 没设，`upload_asset` 走不通，于是「Blender 建好、人手动拖进 Studio」
+是唯一的路 —— 而那条路**已经被用户否掉了**：**「你自己在 studio 里面做，我这里人工调整肯定不准确」**（他拖过一次，
+结果偏 1.0769 倍、接缝差 3 stud）。
+
+**答案**：`AssetService` 有一条**不上传**的路。网格作为**对象**存在这个 place 里
+（`Content.SourceType = Object`，`serialization.can_save` 为真），不经过 asset 服务器，**不要凭据**。
+
+```lua
+local AssetService = game:GetService("AssetService")
+
+local mesh = AssetService:CreateEditableMesh()
+local ids = {}
+for i, v in ipairs(verts) do
+    ids[i] = mesh:AddVertex(v)                 -- Vector3 -> int64 顶点 id
+end
+for _, t in ipairs(tris) do
+    mesh:AddTriangle(ids[t[1]], ids[t[2]], ids[t[3]])
+end
+
+local ok, mpOrErr = pcall(function()
+    -- CreateMeshPartAsync 是 Yields 的，而且会抛错（尺寸/内容不合法时）
+    return AssetService:CreateMeshPartAsync(Content.fromObject(mesh))
+end)
+if not ok then
+    mesh:Destroy()
+    error(mpOrErr)
+end
+local mp = mpOrErr
+mp.Name = "ChamberWall24"
+mp.Anchored = true
+mp.CFrame = CFrame.new(CENTRE)   -- 网格局部 (0,0,0) 就是 pivot，不重新原点化
+mp.Parent = workspace
+mesh:Destroy()                   -- Content 已经握着它了，克隆出来的这份可以丢
+```
+
+**两条与导入器实质不同的性质**（都用上了，不是巧合）：
+
+1. **不重新原点化。** `MeshSize == Size`，局部 `(0,0,0)` **就是** pivot。
+   所以 `CFrame.new(CENTRE)` 精确把「网格里 y=0 那个环」放到 CENTRE。
+   （导入器相反：Phase 83 里 `Model:GetPivot()` 在导入模型上直接不可用，
+   每个 MeshPart 的 `Position` 既不是节点原点也不是它自己的包围盒中心。）
+2. **建之前就能自检。** 顶点/三角形还没交给引擎时就能断言
+   （计数、每条有向边恰好一次、每条无向边恰好两次、欧拉特征、有向体积），
+   `AddTriangle` 拒掉退化面。**这比事后量便宜得多。**
+
+**唯一可信的读回**：`MeshPart.MeshContent` -> `AssetService:CreateEditableMeshAsync(content)`
+-> `GetVertices()` / `GetPosition(id)`。这是**往返**，不是自证。
+**不要用射线验形状** —— 见下面的代价。
+
+**代价：碰撞体。** `MeshContent.SourceType = Object` 的 MeshPart 上，
+`CollisionFidelity` **写不进去**：Default / Hull / PreciseConvexDecomposition / Box
+四个值**四次赋值全部 `pcall` 返回 ok、四次读回 `Default`**，re-parent 无效。
+**对照证明这不是 Studio 的锅**：邻座 `SourceType = Uri` 的导入件接受同一个写。
+所以碰撞面**永远是凸包**。环面的凸包是**实心圆盘** —— 一块 137.17 stud 的盘会把腔室封死。
+
+```lua
+-- 交付态：一面「走得过去」的墙，好过一座「进不去」的腔室。
+-- 两个都是谎，选小的那个 —— 而且把原因写在这里，不只是写进报告。
+mp.CanCollide = false
+mp.CanQuery  = false   -- 只关 CanCollide 是把物理关掉了、把它留给了查询
+```
+
+**什么时候值得走这条路**：形状是**程序化**的（从常量算得出来）、**不需要碰撞**（装饰、视觉延续）、
+而且**导入器那条路已经证明不准确**。**什么时候不值得**：需要精确碰撞，或者需要 UV / 贴图
+（EditableMesh 的这条写入路径不含材质映射）。
+
+**顺带两条纪律**（都在 `DECISIONS_2` 279..285）：
+会**写**世界的探针必须还原成**它找到的值**（不是它想要的值）；
+**永远不可能通过**的检查是噪音 —— 原来那条「Precise 让腔室保住开口」永远红，
+改成写**发现** + 两条真正可能失败的断言。
+
+**这条路是有出路的**：同一面墙改用**普通 Part** 拼，外形与碰撞就由同一批件负责了，
+而且射线从此能量到真几何 —— 见 **§5.19**（`## Phase 88`）。
+
+---
+
+## 5.19 用普通 Part 拼一个正多边形壳（union 精确等于壳），以及斜接带的面板 ★ Phase 88
+
+§5.18 讲的是「在 Studio 里从零建 MeshPart」那条路，末尾是它的**代价**：碰撞体永远是凸包。
+这一节是那条代价的**出路** —— 同一面墙改用普通 Part 拼，**外形与碰撞由同一批件负责**。
+（触发它的是一个测出来的事实：那面墙是**整个邻里唯一不参与物理**的一件，
+环 19/19、与它重叠的 60/60 全是实心 —— 「保守」在这里等于「玩家能穿过去」。）
+
+### 一条不显然的恒等式
+
+**正 n 边形壳的一个面 = 一个 Box**，只要弦长取满：
+
+```lua
+-- 外层在 apothem a 的多边形面上，内面平行，厚度 WALL
+local half  = math.pi / n
+local chord = 2 * apothem * math.tan(half)   -- ★ 取满，不是取小一点
+local rMid  = apothem - WALL * 0.5           -- Box 中心在自己面的法线上
+for k = 0, n - 1 do
+    local phi = k * 2 * half
+    local nrm = Vector3.new(math.cos(phi), 0, math.sin(phi))
+    -- CFrame.Angles(0, yaw, 0) 把局部 +Z 送到 (sin yaw, 0, cos yaw)
+    -- 我们要 +Z = 向外的法线，所以 yaw = pi/2 - phi
+    local p = Instance.new("Part")
+    p.Shape = Enum.PartType.Block
+    p.Size  = Vector3.new(chord, height, WALL)
+    p.CFrame = CFrame.new(CENTRE + nrm * rMid + Vector3.new(0, yBase + height * 0.5, 0))
+             * CFrame.Angles(0, math.pi / 2 - phi, 0)
+    p.Anchored, p.CanCollide, p.CanQuery = true, true, true
+    p.Parent = model                            -- CFrame 必须在 Parent 之前（§0.19）
+end
+```
+
+**弦取满时，两个半弦正好够到多边形的顶点**，于是相邻面板在顶点处**恰好相接**、
+在内侧轻微重叠 —— **一圈面板的并集就是这个多边形壳本身，角也在内**。
+不用楔形补角、没有缝、也不外凸。
+
+弦**不取满**（环 `18` 自己取的是 `20.705`，真弦 `22.468`）就会在每个顶点留一个 V 形缺口，
+得靠一块 `UnionOperation` 盖板补 —— 那是另一种做法，**不是错的，但要知道自己选的是哪种**。
+
+**两条提醒：**
+
+- `CFrame.LookVector` 是 **−Z**（相机约定）。把它当「向外的法线」用，
+  法线会**指向轴心**，而所有 apothem 检查**照样全绿**（量的是半径，不看朝向）。
+  要用 `CFrame.ZVector`，并且另写一条 `dot2(ZVector, radial) > 0.999` 的检查。
+- **角的相位**：`rem = phi % step; err = min(rem, step − rem)` —— 负方位角在 Lua 里
+  向下取整是对的，不用自己加圈。
+
+### 斜接带：同一种盒子，旋转 + 厚度换成**垂直厚度**
+
+内外两个表面是两条**平行线**，所以厚度是**垂直距离**，不是水平间距：
+
+```lua
+local lean = math.atan2(dR, dY)            -- 0 = 竖直，pi/2 = 水平
+local uR, uY = dR / len0, dY / len0        -- 沿斜面，向外向上
+local uR_, uY_ = -uY, uR                   -- 垂直斜面，向内向上
+local thickness = WALL * math.cos(lean)    -- ★ 4.00 * cos(55.02) = 2.2930，不是 4.00
+```
+
+写成 `WALL` 会让带**厚出 74%**。
+端面**垂直于斜面**，所以上端面从 `(A_outer, y_top)` 往**内上**方走 ——
+**外缘恰好止于墙脚**时端面永远不超过墙的外表面。这是设计约束：
+外缘越过墙脚，斜带就会在墙面外露出一圈薄毛边，**而所有量 apothem 的检查一条都不会红**。
+下端**故意沿斜向往 collar 里塞 0.60**，把接缝从一条刀刃变成一段搭接。
+
+### 交付数字一律实测，不手算
+
+接缝处的台肩：**手算 0.434、实测 0.3002**。
+手算错在拿两个**多边形顶点**相减 —— 面板是**盒子**，它的角在切向上**悬出**那个顶点
+（带宽按**顶端** apothem 取，在底端该窄 1.13）。同一份手算里的**另一项**
+（带追上该角的高度 0.5153 vs 实测 0.520）却几乎全对，因为它算的是**面中心方向**，
+那里没有悬出 —— **同一个几何量，一个方向对、一个方向错**（§0.18 的家族）。
+
+手算是用来**定形状**的；**交付数字一律实测，两个都写下来**，错的那个写在实测旁边。
+
+### 换法子的收益：终于能被射线量了
+
+射线打的是**碰撞体**。MeshPart 那条路上，射线只会打到那个 137 stud 的凸包盘，
+**量不到形状**；Part 这条路上**几何体就是碰撞体**，于是这些检查第一次有意义：
+
+```lua
+-- 7 个高度 × 720 方位各打一条向内的射线，一条都不许漏 —— 壳闭合
+-- 某高度向内打，落点半径应当等于该高度的设计 apothem
+-- 中间那根半径（rho 55）必须 MISS —— 否则腔室被堵死了
+```
+
+实测：**5040/5040 无漏**、collar 停在 63.7120（设计 63.7120）、wall 停在 68.0000、
+墙顶在 y 60.6000、rho 55 **MISS**、66/66/66 `CanCollide`/`CanQuery`/`Anchored`。
+
+### 四条附带纪律
+
+1. **有自检再让它进世界。** 建完先按**Part 自己的 `CFrame`/`Size`**（而不是建它用的变量）
+   跑一遍全部断言，不过就 `Destroy()` 并在返回值里说明。
+2. **守卫要守不可逆的那一步，不是「这脚本跑过」。** 存档 idempotent：
+   只有「世界里还有待存的东西 **且** 存档名已被占」才拒绝。
+3. **同名的旧件搬走、不删** —— 它是**已验过的那一版**（`ServerStorage.<name>_<date>`）。
+4. **接缝要在两侧各量一次**，用**同类仪器**：环自己量到 63.7114，
+   新件量到 63.7120，差 **0.0006** —— 和自己比不算数，和**已经在那里的东西**比才算。

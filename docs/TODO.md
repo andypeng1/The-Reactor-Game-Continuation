@@ -248,21 +248,50 @@
       **写的时候注意**：`DECISIONS.md` 里有 2 个反斜杠（早期条目里 Lua 代码片段中的「反斜杠 + n」），
       所以这一份**只能在 Studio 内部从已有文本搬移出来，不能通过工具调用传文本**（§0.10）。
 
-### 3.5 建好但**没进 Studio** 的资产
+### 3.5 资产的落地状态（2026-10-04 重写；同日 Phase 88 订正墙体那一条）
 
-- [ ] **`ChamberWall24`（Phase 86）—— 已建、已验、未导入。** 把 `Workspace.Folder.Folder.Folder.18`
-      （18 边环，apothem 63.712，**顶点在 +X**）往外扩成 24 边墙（apothem 68.000），
-      中间用 84 个三角形（每面 42）桥接两条**边数不同**的开环。
-      两种格式各 16 项检查全绿（`CHECK 16 ok, 0 failed`），三个变异各自红在自己的断言上。
-      **差的是最后一步**：`ROBLOX_OPEN_CLOUD_API_KEY` 没设，`upload_asset` / 拖拽之外的
-      自动路径都走不通。手动落地：把 `D:\BlenderRobloxTestProjects\ChamberWall24\ChamberWall24.fbx`
-      拖进 **The Reactor [Rebuild]**，**scale 1.0**，底面中心 `(-12.200, 47.400, -85.362)`，
-      不旋转（18/24 两套顶点都对 180° 镜像不变，所以不用补相位）。
-      导入后 `Size` 应是 `137.17 × 13.20 × 137.17`；**不是这个数就是 scale 填错了，不是模型的问题**。
-      上色跑 `_tools/apply_chamber_wall_materials.luau`（导入器把材质全丢成 `Plastic` + 灰）。
-- [ ] **`TransitionPillar` / `LaserPort` / `RadiationScrubberUnit` 的材质**同样只在 Blender 侧验过、
-      没进 Studio。LaserPort 的落地脚本已写（`_tools/apply_laser_port_materials.luau`），
-      另外两个还没有对应脚本。
+**标题变了，因为终点变了。** 上一版这一节叫「建好但**没进 Studio** 的资产」，
+内容是**教用户手动拖 fbx**。他拖了 —— 然后说
+**「你自己在 studio 里面做，我这里人工调整肯定不准确」**。
+底部那条 `ChamberWall24` 就是那条路的实证（1.0769 倍、偏 0.873、接不上）。
+所以：**能从零在 Studio 里建的，就不走导入器**。
+
+- [x] **`ChamberWall24` —— 已在 Studio 里建成并验证；现在是 66 个 Part（Phase 88 换的载体）。**
+      **交付态**：`Workspace.Folder.Folder.Folder.ChamberWall24`，**18 collar + 24 band + 24 wall**，
+      66 件全部 `Anchored` / `CanCollide` / `CanQuery`，**外形与碰撞由同一批件负责**。
+      `_tools/build_chamber_wall_24_parts.luau`（自带 198 项进世界之前的自检）
+      + `_tools/cw24_parts_verify.luau`（**117 项全绿**）：collar apothem 63.7120（最差偏 9e-6）、
+      wall 68.0000（8e-6）、斜带 55.02°、加宽接缝 `delta 0.0006`、
+      **7 高度 × 720 方位 = 5040 条向内射线 0 条漏**、中间那根半径（rho 55）仍然 MISS。
+      四张 `rblx_screen_capture` 看过（整体 / 接缝 / 俯视 / 接头）。细节 `PROGRESS.md` Phase 88，
+      取舍 **286..292**，片段 `docs/SNIPPETS.md` §5.19。
+      **为什么换**：上一版是单个 **MeshPart**（`build_chamber_wall_24.luau`，
+      `AssetService:CreateEditableMesh()` + `Content.fromObject` + `CreateMeshPartAsync`，
+      **不需要上传凭据**），几何逐顶点读回 32 项全绿 —— 但那条路的 `CollisionFidelity`
+      **写不进去**（四个值全部 `pcall` ok、全部读回 `Default`，而邻座 `SourceType = Uri`
+      的导入件同一个写立刻生效，所以不是 Studio 的锅），碰撞面**永远是凸包** =
+      一块 137.17 stud 的**实心圆盘**。交付态只能是 `CanCollide=false` + `CanQuery=false`，
+      于是它成了**那个邻里唯一一件能穿过去的墙**（环 19/19、重叠件 60/60 全是实心）。
+      用户选择了「**改用普通 Part 拼**」，代价是件数 1 → 66、几何重做一遍。
+      **那份 MeshPart 没删**，存档在 `ServerStorage.ChamberWall24_mesh_20261004`。
+- [x] **「手动拖 fbx」那条路 —— 已作废，保留作历史。**
+      拖进来的那份在 `Workspace.Wall24`，三件 MeshPart，**整体是设计尺寸的 1.0769 倍**
+      （三个件、每个件的三个轴**全是这个系数**，所以是**均匀**的，不是哪个轴填错），
+      中心偏 **0.873**，内面离环外面 64.695 还差 **3 stud**，**根本没接上**。
+      上一版这一节自己写着「**不是这个数就是 scale 填错了，不是模型的问题**」—— 它说对了。
+      已按用户选择搬成 `ServerStorage.Wall24_import_20261004`（**没删**）。
+- [ ] **`LaserPort` / `TransitionPillar` / `RadiationScrubberUnit` 要按设计**重量一遍尺寸。
+      理由：退役那份导入墙的 1.0769 倍是**均匀**的，指向**导出链**而不是某一次操作。
+      同一套链出来的 `LaserPort`（Phase 83，走 glTF，那边已知是 **1.6943 倍**）和
+      `TransitionPillar`（Phase 84）**可能一样中招**。
+      **做法**：拿 `_tools/blender/*_check.py` 里那份**设计数字**（那些脚本已经把导出物重新导入量过）
+      对 Studio 里已导入的实例读 `MeshSize`，比一遍。**在量之前不要假定它们是对的。**
+      （1.0769 这个系数本身**没查来源** —— 那份已退役，不值得为它开一轮。）
+- [ ] **这三件的材质**同样只在 Blender 侧验过。`LaserPort` 的落地脚本已写
+      （`_tools/apply_laser_port_materials.luau`），`TransitionPillar` / `RadiationScrubberUnit` 还没有。
+- [ ] `_tools/apply_chamber_wall_materials.luau` **作废** —— 它是给**导入物**上色的，
+      而墙现在不走导入器（`build_chamber_wall_24.luau` 建的时候就设 `Material` / `Color`）。
+      文件留在盘上作历史，别跑它。
 
 ---
 
