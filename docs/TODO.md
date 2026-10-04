@@ -248,38 +248,38 @@
       **写的时候注意**：`DECISIONS.md` 里有 2 个反斜杠（早期条目里 Lua 代码片段中的「反斜杠 + n」），
       所以这一份**只能在 Studio 内部从已有文本搬移出来，不能通过工具调用传文本**（§0.10）。
 
-### 3.5 资产的落地状态（2026-10-04 重写；同日 Phase 88 订正墙体那一条）
+### 3.5 资产的落地状态（2026-10-04 第三次重写；Phase 89 换了终点）
 
-**标题变了，因为终点变了。** 上一版这一节叫「建好但**没进 Studio** 的资产」，
-内容是**教用户手动拖 fbx**。他拖了 —— 然后说
-**「你自己在 studio 里面做，我这里人工调整肯定不准确」**。
-底部那条 `ChamberWall24` 就是那条路的实证（1.0769 倍、偏 0.873、接不上）。
-所以：**能从零在 Studio 里建的，就不走导入器**。
+**终点又变了，而且是用户自己定的。** 这一节的三个版本对应三条路：
 
-- [x] **`ChamberWall24` —— 已在 Studio 里建成并验证；现在是 66 个 Part（Phase 88 换的载体）。**
-      **交付态**：`Workspace.Folder.Folder.Folder.ChamberWall24`，**18 collar + 24 band + 24 wall**，
-      66 件全部 `Anchored` / `CanCollide` / `CanQuery`，**外形与碰撞由同一批件负责**。
-      `_tools/build_chamber_wall_24_parts.luau`（自带 198 项进世界之前的自检）
-      + `_tools/cw24_parts_verify.luau`（**117 项全绿**）：collar apothem 63.7120（最差偏 9e-6）、
-      wall 68.0000（8e-6）、斜带 55.02°、加宽接缝 `delta 0.0006`、
-      **7 高度 × 720 方位 = 5040 条向内射线 0 条漏**、中间那根半径（rho 55）仍然 MISS。
-      四张 `rblx_screen_capture` 看过（整体 / 接缝 / 俯视 / 接头）。细节 `PROGRESS.md` Phase 88，
-      取舍 **286..292**，片段 `docs/SNIPPETS.md` §5.19。
-      **为什么换**：上一版是单个 **MeshPart**（`build_chamber_wall_24.luau`，
-      `AssetService:CreateEditableMesh()` + `Content.fromObject` + `CreateMeshPartAsync`，
-      **不需要上传凭据**），几何逐顶点读回 32 项全绿 —— 但那条路的 `CollisionFidelity`
-      **写不进去**（四个值全部 `pcall` ok、全部读回 `Default`，而邻座 `SourceType = Uri`
-      的导入件同一个写立刻生效，所以不是 Studio 的锅），碰撞面**永远是凸包** =
-      一块 137.17 stud 的**实心圆盘**。交付态只能是 `CanCollide=false` + `CanQuery=false`，
-      于是它成了**那个邻里唯一一件能穿过去的墙**（环 19/19、重叠件 60/60 全是实心）。
-      用户选择了「**改用普通 Part 拼**」，代价是件数 1 → 66、几何重做一遍。
-      **那份 MeshPart 没删**，存档在 `ServerStorage.ChamberWall24_mesh_20261004`。
+| 版本 | 教什么 | 结局 |
+|---|---|---|
+| 一 | 手动拖 fbx | 他拖了：**1.0769 倍**、偏 0.873、**没接上** |
+| 二（Phase 88） | 我在 Studio 里用 66 个 Part 建 | 他说**「依据18那个part的最外围来扩」** —— 那一版把 collar 外面放在**面平面**（63.7120），环的**角**（64.6951）从墙里戳出来。**驳回。** |
+| 三（Phase 89，**现在**） | **把环连参考件一起交到 Blender，衔接在那边做，他自己照做** | 用户原话：「**你把那个18边形搞到blender然后再衔接，我直接作为参考自己做**」 |
+
+- [x] **`ChamberWall24` 参考件 —— 已交付在 `D:\BlenderRobloxTestProjects\ChamberWall24\`。**
+      `.blend` / **`.fbx`（要导的就是这一个）** / `.glb` / 三张渲染图。
+      **衔接是当前值定的，不是保守取大**：外接 24 边形（inradius `R`）包含环
+      （circumradius `R′`）当且仅当 `R ≥ R′`，所以 `A24_IN = RING_R = 64.6951` **就是最小可行值**
+      —— 它在 6 个方位（`0+60k`）**恰好碰到**环的角。
+      四条接缝实测：**J1 最差顶点间隙 0.00000 stud**、**J2 = 64.6951**、
+      **J3 最坏 `r·cos` 64.6327 ≤ 64.6951**、**J4 60° 扇区 环 3 / collar 3 / 墙 4 且 6 个角对齐**。
+      **落地**：底面中心 `(-12.200, 47.400, -85.362)`、scale **1.0**、不旋转，
+      期望 `Size ≈ 138.58 × 13.85 × 138.58`；**相位不用补**（三套顶点集都对 180° 镜像不变）。
+      **必须导 FBX**：glTF 那条路进 Studio 是 **1.6943 倍**（10 / 5.902）。
+      验证 76 项 / 0 失败（两种格式各 38），四个变异各红在自己的断言上。
+      细节 `PROGRESS.md` Phase 89，取舍 **293..296**，片段 `docs/SNIPPETS.md` §5.20。
+- [x] **Studio 里那一版（Phase 88 的 66 个 Part）—— 已不在世界里，也不该再建。**
+      世界现在**没有任何 `ChamberWall*` 件**，只剩 `ServerStorage` 两份存档
+      （`ChamberWall24_mesh_20261004` = Phase 87 那版 MeshPart；
+      `Wall24_import_20261004` = 他手动拖的那份，1.0769 倍、体量 147.72）。
+      **Phase 89 没有删任何东西。** 脚本 `build_chamber_wall_24_parts.luau` 留在盘上作历史。
 - [x] **「手动拖 fbx」那条路 —— 已作废，保留作历史。**
-      拖进来的那份在 `Workspace.Wall24`，三件 MeshPart，**整体是设计尺寸的 1.0769 倍**
-      （三个件、每个件的三个轴**全是这个系数**，所以是**均匀**的，不是哪个轴填错），
-      中心偏 **0.873**，内面离环外面 64.695 还差 **3 stud**，**根本没接上**。
-      上一版这一节自己写着「**不是这个数就是 scale 填错了，不是模型的问题**」—— 它说对了。
-      已按用户选择搬成 `ServerStorage.Wall24_import_20261004`（**没删**）。
+      拖进来的那份**整体是设计尺寸的 1.0769 倍**（三个件、每个件的三个轴**全是这个系数**，
+      所以是**均匀**的，不是哪个轴填错），中心偏 **0.873**，
+      内面离环最外围还差 **3 stud**，**根本没接上**。
+      已搬成 `ServerStorage.Wall24_import_20261004`（**没删**）。
 - [ ] **`LaserPort` / `TransitionPillar` / `RadiationScrubberUnit` 要按设计**重量一遍尺寸。
       理由：退役那份导入墙的 1.0769 倍是**均匀**的，指向**导出链**而不是某一次操作。
       同一套链出来的 `LaserPort`（Phase 83，走 glTF，那边已知是 **1.6943 倍**）和
@@ -289,8 +289,10 @@
       （1.0769 这个系数本身**没查来源** —— 那份已退役，不值得为它开一轮。）
 - [ ] **这三件的材质**同样只在 Blender 侧验过。`LaserPort` 的落地脚本已写
       （`_tools/apply_laser_port_materials.luau`），`TransitionPillar` / `RadiationScrubberUnit` 还没有。
+- [ ] **`ChamberWall24` 的材质也没在 Studio 验过** —— 它现在走的是**导入器**
+      （用户自己导 FBX），所以材质在 Blender 侧怎么设就怎么进来。
 - [ ] `_tools/apply_chamber_wall_materials.luau` **作废** —— 它是给**导入物**上色的，
-      而墙现在不走导入器（`build_chamber_wall_24.luau` 建的时候就设 `Material` / `Color`）。
+      而它要匹配的那两版（Phase 87 的 MeshPart、Phase 88 的 66 个 Part）**都已经不在世界里**。
       文件留在盘上作历史，别跑它。
 
 ---

@@ -34,6 +34,24 @@
 -- a tangential overhang that a polygon vertex does not have. The measurement
 -- supersedes the derivation; both are in cw24_parts_verify.luau.
 --
+-- THE PHASE IS A READING TOO, and it is the one that was wrong. A regular polygon
+-- rotated by half a step has the same apothem, the same chord, the same area and the
+-- same silhouette radius -- so "the collar uses the ring's apothem" describes TWO
+-- different walls, and only one of them joins. cw24_phase.luau measured which one is
+-- in this place: the 18-gon puts a VERTEX at azimuth 0 (720 inward rays, all 18 maxima
+-- at 0.0000 mod 20) and its 18 face-centred panels therefore sit at 10 mod 20. A shell
+-- built at k*2*pi/n puts a FACE at azimuth 0 -- half a step out -- so the first version
+-- put the collar's faces where the ring's corners are, the ring's corners stood 0.98
+-- studs proud of the collar, and the collar's own corners floated 0.98 studs clear of
+-- the ring's faces. Every check in this file passed anyway, because the phase check
+-- compared the panels against their own lattice (phi % step), which any rotation
+-- satisfies. A check that cannot fail is not evidence.
+--
+-- So the phase and the apothem are both read off the ring's SURFACE at build time, and
+-- the operator's rule -- 3 collar panels meet 4 wall panels, 18 * 4/3 = 24 -- is now
+-- written as a test of that relation (a collar vertex every 60 degrees meets a wall
+-- vertex) rather than as a number anyone is asked to trust.
+--
 -- The three sections, all in the mesh's coordinates (origin at the ring's axis,
 -- y = 0 at the platform top, which is where the collar's base sits):
 --
@@ -48,10 +66,10 @@ local NAME = "ChamberWall24"
 local PARK = "ChamberWall24_mesh_20261004"
 local CENTRE = Vector3.new(-12.1999, 47.4000, -85.3624)
 
--- Measured inputs. A18 is a design number whose acceptance test is a DELTA against
--- the ring that is already in the place, not a check against itself (see
--- cw24_verify.luau, "the join"). A24 is a pure design choice.
-local A18 = 63.712
+-- A24 is a pure design choice: how far out the new wall stands. WALL, the three heights
+-- and TUCK are choices. A18 and the phase are NOT -- both are read off the ring's own
+-- surface below, because a chosen value with a tolerance around it is a weaker
+-- statement than the reading, and the tolerance is exactly where the half-step hid.
 local A24 = 68.000
 local WALL = 4.00
 local Z_COLLAR = 1.20
@@ -99,6 +117,101 @@ say("  Material %s  Color %.3f %.3f %.3f  Reflectance %.3f  surfaces %s/%s/%s",
 	tostring(template.Material),
 	template.Color.R, template.Color.G, template.Color.B, template.Reflectance,
 	tostring(template.TopSurface), tostring(template.FrontSurface), tostring(template.BottomSurface))
+
+-- ====================================================== measure the ring's surface
+
+-- Phase and apothem come off the SURFACE, not off any part's Position or Size. A Part's
+-- Size is a statement about its own local frame -- the ring's 18 panels do not share one
+-- orientation, so a "position minus half the size" reading would be a guess dressed as a
+-- measurement (CLAUDE.md 0.18). A 720-ray inward sweep has no local frame to get wrong:
+-- its minima ARE the face centres and its maxima ARE the vertices.
+--
+-- It is also self-checking, which is the whole point. If the phase were off by half a
+-- step the minima would land on the vertices instead, and every one of the three
+-- assertions below would fire: 18 minima 20 deg apart, all at the same radius, 10 deg
+-- from 18 maxima that are all at rmin/cos(pi/18). There is no way for this to quietly
+-- agree with a wrong answer, because a wrong answer does not have that shape.
+local STEP18 = 2 * math.pi / 18
+local STEP24 = 2 * math.pi / 24
+
+local RING_PROBE_Y = 47.075
+local NRAY = 720
+
+local ringRay = RaycastParams.new()
+ringRay.FilterType = Enum.RaycastFilterType.Include
+ringRay.FilterDescendantsInstances = { ring }
+ringRay.IgnoreWater = true
+
+local prof = {}
+local miss = 0
+for k = 0, NRAY - 1 do
+	local th = (k / NRAY) * 2 * math.pi
+	local dir = Vector3.new(math.cos(th), 0, math.sin(th))
+	local o = Vector3.new(CENTRE.X + dir.X * 100, RING_PROBE_Y, CENTRE.Z + dir.Z * 100)
+	local h = workspace:Raycast(o, -dir * 200, ringRay)
+	if h then
+		prof[k] = (Vector3.new(h.Position.X, RING_PROBE_Y, h.Position.Z)
+			- Vector3.new(CENTRE.X, RING_PROBE_Y, CENTRE.Z)).Magnitude
+	else
+		prof[k] = nil
+		miss += 1
+	end
+end
+if miss > 0 then
+	return string.format("only %d of %d probe rays hit the ring -- refusing to build off a partial reading",
+		NRAY - miss, NRAY)
+end
+
+local rMin, rMax = math.huge, 0
+for k = 0, NRAY - 1 do
+	rMin = math.min(rMin, prof[k])
+	rMax = math.max(rMax, prof[k])
+end
+
+local faceAz, vertexAz = {}, {}
+for k = 0, NRAY - 1 do
+	local p, n = prof[(k - 1) % NRAY], prof[(k + 1) % NRAY]
+	local th = (k / NRAY) * 2 * math.pi
+	if prof[k] < p and prof[k] < n then faceAz[#faceAz + 1] = th end
+	if prof[k] > p and prof[k] > n then vertexAz[#vertexAz + 1] = th end
+end
+
+local function offDeg(d, step)
+	local rem = d % step
+	return math.deg(math.min(rem, step - rem))
+end
+
+if #faceAz ~= 18 or #vertexAz ~= 18 then
+	return string.format("the ring's profile shows %d face minima and %d vertices, not 18 and 18 -- refusing to build on a reading that does not have the shape of the ring",
+		#faceAz, #vertexAz)
+end
+local ringPhase = faceAz[1]
+for i, a in ipairs(faceAz) do
+	if offDeg(a - ringPhase, STEP18) > 0.05 then
+		return string.format("ring face minima are not 20 deg apart (%.4f deg off at #%d) -- refusing to build",
+			offDeg(a - ringPhase, STEP18), i)
+	end
+end
+for _, a in ipairs(vertexAz) do
+	if offDeg(a - ringPhase - STEP18 * 0.5, STEP18) > 0.05 then
+		return string.format("a ring vertex is not half a step from the face lattice -- refusing to build")
+	end
+end
+if math.abs((rMax / rMin) - 1 / math.cos(math.pi / 18)) > 1e-4 then
+	return string.format("the ring's profile is not a regular 18-gon: vertex/face ratio %.6f, cos(pi/18)^-1 %.6f",
+		rMax / rMin, 1 / math.cos(math.pi / 18))
+end
+
+local A18 = rMin
+
+say("")
+say("ring measured off its surface, not assumed:")
+say("  face minima at %+.4f deg mod 20 -> its VERTICES are at %+.4f deg mod 20 (that is the phase)",
+	math.deg(ringPhase) % 20, (math.deg(ringPhase) + math.deg(STEP18) * 0.5) % 20)
+say("  apothem %.4f (face plane)  circumradius %.4f (the ring's outermost extent)",
+	rMin, rMax)
+say("  ratio %.6f vs 1/cos(pi/18) %.6f, %d minima / %d vertices, all 20 deg apart",
+	rMax / rMin, 1 / math.cos(math.pi / 18), #faceAz, #vertexAz)
 
 local parent = ring.Parent
 if not parent then
@@ -166,13 +279,16 @@ end
 -- A vertical polygon shell: n panels whose outer faces are the polygon's faces.
 -- The chord is the full 2*a*tan(pi/n), which is what makes adjacent panels meet
 -- at the vertices instead of leaving a notch between them.
-local function shell(n, apothem, yBase, height, prefix)
+-- `phase` is the azimuth of panel 1's FACE CENTRE. It is a parameter and not k*2*half
+-- because the join is a relation to the ring, not a property of this function: built at
+-- k*2*pi/n every shell puts a face on azimuth 0, and the ring keeps a vertex there.
+local function shell(n, phase, apothem, yBase, height, prefix)
 	local half = math.pi / n
 	local chord = 2 * apothem * math.tan(half)
 	local rMid = apothem - WALL * 0.5
 	local parts = {}
 	for k = 0, n - 1 do
-		local phi = k * 2 * half
+		local phi = phase + k * 2 * half
 		local nrm = Vector3.new(math.cos(phi), 0, math.sin(phi))
 		local pos = CENTRE + nrm * rMid + Vector3.new(0, yBase + height * 0.5, 0)
 		-- CFrame.Angles(0, yaw, 0) sends local +Z to (sin yaw, 0, cos yaw); we want
@@ -188,11 +304,20 @@ end
 say("")
 say("building %s under %s", NAME, parent:GetFullName())
 
--- ---- collar: the 18-gon, continuing the ring's own surface
-local collar = shell(18, A18, 0, Z_COLLAR, "Collar")
+-- ---- collar: the 18-gon, continuing the ring's own surface. Faces on faces: the
+-- collar's panels sit exactly where the ring's panels sit, so the collar's vertices
+-- land on the ring's vertices (63.7114 -> 64.6951, both read off the surface above).
+-- This one argument is the whole fix.
+local collar = shell(18, ringPhase, A18, 0, Z_COLLAR, "Collar")
 
--- ---- wall: the 24-gon, above the flare
-local wallSec = shell(24, A24, Z_BAND, Z_TOP - Z_BAND, "Wall")
+-- ---- wall: the 24-gon, above the flare. Half an 18-step plus half a 24-step puts the
+-- wall's VERTEX on the ring's vertex lattice -- which is the same statement as the
+-- operator's own, 3 collar panels meeting 4 wall panels (18 * 4/3 = 24). Written as the
+-- phase it is an azimuth; written as the relation it is 60 deg of collar vertex
+-- coinciding with a wall vertex, and that is asserted directly below rather than
+-- trusted to the arithmetic here.
+local wallPhase = ringPhase + STEP18 * 0.5 + STEP24 * 0.5
+local wallSec = shell(24, wallPhase, A24, Z_BAND, Z_TOP - Z_BAND, "Wall")
 
 -- ---- band: the flare between them. Each panel is the same kind of box, leaned by
 -- the angle the two rims subtend. Its outer face is the plane through
@@ -219,7 +344,7 @@ say("Band: lean %.2f deg, face length %.4f (tucked %.2f into the collar), perpen
 local half24 = math.pi / 24
 local bandChord = 2 * A24 * math.tan(half24)
 for k = 0, 23 do
-	local phi = k * 2 * half24
+	local phi = wallPhase + k * 2 * half24
 	local nrm = Vector3.new(math.cos(phi), 0, math.sin(phi))
 	panel("Band" .. tostring(k + 1),
 		CENTRE + nrm * rMid + Vector3.new(0, yMid, 0),
@@ -248,25 +373,68 @@ local function outerFaceCentre(p)
 	return p.CFrame * Vector3.new(0, 0, p.Size.Z * 0.5)
 end
 
-local function checkShell(parts, n, apothem, yBase, height, label)
+local function checkShell(parts, n, phase, apothem, yBase, height, label)
 	for _, p in ipairs(parts) do
 		local c = outerFaceCentre(p)
 		local flat = Vector3.new(c.X - CENTRE.X, 0, c.Z - CENTRE.Z)
 		local phi = math.atan2(flat.Z, flat.X)
 		local step = 2 * math.pi / n
-		local rem = phi % step
-		local err = math.min(rem, step - rem) * 180 / math.pi
+		-- Anchored at the shell's OWN phase, not at azimuth 0. The property being
+		-- asserted is even spacing; anchoring at 0 would also assert something nobody
+		-- wants -- that the shell is rotated a particular way -- and the join is decided
+		-- elsewhere, against the ring.
+		local err = offDeg(phi - phase, step)
 		want(math.abs(flat.Magnitude - apothem) < 1e-3,
 			"%s %s outer face at %.5f (design %.5f)", label, p.Name, flat.Magnitude, apothem)
-		want(err < 1e-3, "%s %s corner phase off by %.4f deg", label, p.Name, err)
+		-- Say exactly what this does and does not claim. It claims the panels are evenly
+		-- spaced about the axis -- a real property, and one a mistyped chord would break.
+		-- It is NOT the join check and never was: every rotation of a regular polygon is
+		-- evenly spaced. This line passed on the half-step-rotated build. The join check
+		-- is the relative one below.
+		want(err < 1e-3, "%s %s is off its own %d-fold lattice by %.4f deg", label, p.Name, n, err)
 		want(math.abs(c.Y - (CENTRE.Y + yBase + height * 0.5)) < 1e-3,
 			"%s %s outer face centre y %.4f (design %.4f)", label, p.Name, c.Y,
 			CENTRE.Y + yBase + height * 0.5)
 	end
 end
 
-checkShell(collar, 18, A18, 0, Z_COLLAR, "collar")
-checkShell(wallSec, 24, A24, Z_BAND, Z_TOP - Z_BAND, "wall")
+checkShell(collar, 18, ringPhase, A18, 0, Z_COLLAR, "collar")
+checkShell(wallSec, 24, wallPhase, A24, Z_BAND, Z_TOP - Z_BAND, "wall")
+
+-- ---- the join: measured against the ring, not against itself.
+-- This is the check whose absence let the half-step ship. Nothing above compares the
+-- new work to the thing it continues, so nothing above could see a rotation.
+local function azOfWorld(v)
+	return math.atan2(v.Z - CENTRE.Z, v.X - CENTRE.X)
+end
+
+for _, p in ipairs(collar) do
+	local off = offDeg(azOfWorld(outerFaceCentre(p)) - ringPhase, STEP18)
+	want(off < 1e-3,
+		"COLLAR NOT JOINED: %s sits %.4f deg off the ring's own panels -- a half step reads as 10.0000 here",
+		p.Name, off)
+end
+for _, p in ipairs(wallSec) do
+	local off = offDeg(azOfWorld(outerFaceCentre(p)) - wallPhase, STEP24)
+	want(off < 1e-3, "wall %s sits %.4f deg off the wall's own lattice", p.Name, off)
+end
+
+-- The operator's rule as a test of the RELATION rather than of a number: every 60 deg
+-- of collar vertex must land on a wall vertex, i.e. every 3 collar panels meet 4 wall
+-- panels. This is the assertion that would have caught the original defect, and it
+-- reads 10.0000 deg -- not 0 -- when the phase is wrong.
+local collarVertexAz = ringPhase + STEP18 * 0.5
+local wallVertexAz = wallPhase + STEP24 * 0.5
+for k = 0, 5 do
+	local cv = collarVertexAz + k * (math.pi / 3)
+	local off = offDeg(cv - wallVertexAz, STEP24)
+	want(off < 1e-3,
+		"3:4 JOIN OFF: collar vertex at %.4f deg misses the nearest wall vertex by %.4f deg",
+		math.deg(cv), off)
+end
+say("")
+say("join: collar faces on the ring's faces, wall vertices on the ring's vertex lattice,")
+say("      every 60 deg of collar vertex meeting a wall vertex (18 * 4/3 = 24).")
 
 -- The band cannot be checked by radius alone: its outer face is a tilted plane, so
 -- an apothem is only meaningful at a given height. Check that the two design points
@@ -277,10 +445,8 @@ for _, p in ipairs(model:GetChildren()) do
 		local c = outerFaceCentre(p)
 		local flat = Vector3.new(c.X - CENTRE.X, 0, c.Z - CENTRE.Z)
 		local nrm = flat.Unit
-		local step = 2 * math.pi / 24
-		local rem = math.atan2(flat.Z, flat.X) % step
-		want(math.min(rem, step - rem) * 180 / math.pi < 1e-3,
-			"band %s corner phase off", p.Name)
+		local off = offDeg(azOfWorld(c) - wallPhase, STEP24)
+		want(off < 1e-3, "band %s sits %.4f deg off the wall's own lattice", p.Name, off)
 		for _, q in ipairs({ { A18, Z_COLLAR }, { A24, Z_BAND } }) do
 			-- the design point, in world space, at this panel's azimuth
 			local w = CENTRE + nrm * q[1] + Vector3.new(0, q[2], 0)

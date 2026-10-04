@@ -23,7 +23,10 @@ local PARK = "ChamberWall24_mesh_20261004"
 local CENTRE = Vector3.new(-12.1999, 47.4000, -85.3624)
 
 local N18, N24 = 18, 24
-local A18, A24 = 63.712, 68.000
+-- A18 is the ring's apothem as measured off its own surface, not a number anyone chose.
+-- This file re-measures it live further down and requires the recorded value to agree
+-- within 0.005, so this line is a record and not an input.
+local A18, A24 = 63.7114, 68.000
 local WALL = 4.00
 local Z_COLLAR, Z_BAND, Z_TOP = 1.20, 4.20, 13.20
 local LEAN = math.atan2(A24 - A18, Z_BAND - Z_COLLAR)
@@ -108,13 +111,18 @@ want(notQuery == 0, "all 66 parts answer raycasts (CanQuery) -- %d do not", notQ
 
 -- The finish must match the ring, or the wall reads as a different object sitting
 -- on top of it. Compare against the ring rather than against a remembered colour.
+-- The same walk also collects the ring's own panel azimuths, because the ring is the
+-- reference for two things -- its finish and its PHASE -- and one walk that answers
+-- both is one place to be wrong instead of two.
 local ringPart
+local ringFaceAzs = {}
 for _, d in ipairs(workspace:GetDescendants()) do
 	if d.Name == "18" and d:IsA("Folder") and #d:GetChildren() > 5 then
 		for _, c in ipairs(d:GetChildren()) do
 			if c:IsA("BasePart") and c.Name == "Part" then
-				ringPart = c
-				break
+				ringPart = ringPart or c
+				ringFaceAzs[#ringFaceAzs + 1] =
+					math.atan2(c.Position.Z - CENTRE.Z, c.Position.X - CENTRE.X)
 			end
 		end
 	end
@@ -131,6 +139,44 @@ if ringPart then
 		ringPart.Color.R, ringPart.Color.G, ringPart.Color.B)
 else
 	say("(the ring was not found, so the finish was not compared against it)")
+end
+
+-- ============================================================ the ring's PHASE
+
+-- The one thing every radius check in this file is blind to. A regular polygon
+-- ROTATED BY HALF A STEP has the same apothem, the same chord, the same area and the
+-- same silhouette: the collar's outer face at 63.7114 against the ring's 63.7114 is
+-- satisfied by BOTH rotations, so it is not a join check and never was. The join is
+-- an angle, and the only authority for it is the ring that is already in the place.
+--
+-- Reduced to one number: the unwrapped mean of the ring's 18 face azimuths. The
+-- unwrap matters -- a plain mean of angles that straddle +-180 is meaningless.
+local ringFaceAz
+if #ringFaceAzs > 0 then
+	local step18 = 2 * math.pi / N18
+	local base = ringFaceAzs[1]
+	local sum = 0
+	for _, a in ipairs(ringFaceAzs) do
+		local d = a - base
+		sum += d - math.floor(d / step18 + 0.5) * step18
+	end
+	ringFaceAz = base + sum / #ringFaceAzs
+end
+want(ringFaceAz ~= nil, "the ring's phase was read off its own panels (%s)",
+	ringFaceAz and string.format("%.4f deg", math.deg(ringFaceAz)) or "MISSING")
+-- And the wall's phase is DERIVED from it, not chosen: half an 18-step puts a VERTEX
+-- where a face was (so the collar's faces inherit the ring's faces), then half a
+-- 24-step puts the wall's own vertices back on the ring's -- and only every third
+-- ring vertex can carry one, because 3 * 20 = 4 * 15 = 60. That relation is the
+-- operator's own "18 * (4/3) = 24" and it is checked as a count below.
+local wallFaceAz = ringFaceAz and (ringFaceAz + math.pi / N18 + math.pi / N24)
+if ringFaceAz then
+	say("ring phase: %d face azimuths, mean %.4f deg; its vertices fall at %.4f deg",
+		#ringFaceAzs, math.deg(ringFaceAz), math.deg(ringFaceAz) + 180 / N18)
+	say("            collar faces belong at %.4f deg, wall faces at %.4f deg",
+		math.deg(ringFaceAz), math.deg(wallFaceAz))
+else
+	say("(the ring's phase could not be read, so the join is not checked at all)")
 end
 
 local function include(inst)
@@ -153,19 +199,27 @@ end
 local function flat(v)
 	return Vector3.new(v.X - CENTRE.X, 0, v.Z - CENTRE.Z)
 end
-local function phaseDeg(p, n)
+-- How far this panel's face centre is from a GIVEN azimuth, taken around the nearest
+-- multiple of the shell's step. The phase is a parameter and not a constant, and that
+-- is the whole correction: the previous version was `math.atan2(...) % step`, which
+-- measures a panel against azimuth 0 -- a rotation nobody asked for -- and therefore
+-- reports 0 for every rotation of the shell. It answered "is this shell regularly
+-- spaced", which is true of all 18 rotations, while the question was "is this shell
+-- the one that joins" (CLAUDE.md 0.18: a check that cannot fail is not evidence).
+local function phaseErr(p, phase, step)
 	local f = flat(faceCentre(p))
-	local step = 360 / n
-	local d = math.deg(math.atan2(f.Z, f.X)) % step
-	return math.min(d, step - d)
+	local d = math.atan2(f.Z, f.X) - phase
+	local rem = d % step
+	return math.min(rem, step - rem)
 end
 
-local function checkVertical(list, n, apothem, yBase, height, label)
+local function checkVertical(list, n, phase, apothem, yBase, height, label, phaseName)
+	local step = 2 * math.pi / n
 	local worstApothem, worstPhase, worstY = 0, 0, 0
 	for _, p in ipairs(list) do
 		local f = flat(faceCentre(p))
 		worstApothem = math.max(worstApothem, math.abs(f.Magnitude - apothem))
-		worstPhase = math.max(worstPhase, phaseDeg(p, n))
+		worstPhase = math.max(worstPhase, phaseErr(p, phase, step))
 		worstY = math.max(worstY, math.abs(faceCentre(p).Y - (CENTRE.Y + yBase + height * 0.5)))
 		-- and the face must actually point outward, not merely be at the right radius.
 		-- ZVector is +Z; LookVector is MINUS Z (camera convention) and would point
@@ -178,8 +232,11 @@ local function checkVertical(list, n, apothem, yBase, height, label)
 	end
 	want(worstApothem < 1e-3, "%s: every outer face is at apothem %.4f (worst off by %.6f)",
 		label, apothem, worstApothem)
-	want(worstPhase < 1e-3, "%s: every face centre sits on a face centre (worst phase %.5f deg)",
-		label, worstPhase)
+	-- 0.01 deg is a thousandth of the half-step error this is here to catch, and it is
+	-- comfortably above the scatter in the ring's own authored panels (~0.002 deg),
+	-- which is the floor: the reference is a real object, not a number.
+	want(worstPhase < 0.01, "%s: every face centre sits on %s (worst %.5f deg off)",
+		label, phaseName, worstPhase)
 	want(worstY < 1e-3, "%s: every face centre is at its section's mid height (worst off by %.6f)",
 		label, worstY)
 end
@@ -188,8 +245,18 @@ function dot2(a, b)
 	return (a.X * b.X + a.Z * b.Z) / (math.sqrt(a.X * a.X + a.Z * a.Z) * math.sqrt(b.X * b.X + b.Z * b.Z))
 end
 
-checkVertical(groups.Collar, N18, A18, 0, Z_COLLAR, "collar")
-checkVertical(groups.Wall, N24, A24, Z_BAND, Z_TOP - Z_BAND, "wall")
+-- A missing ring degrades these to the old azimuth-0 question instead of erroring, so
+-- the rest of the geometry is still reported -- but the miss is already on the record
+-- above, and the phase name says so out loud rather than being quietly mislabelled.
+local collarPhase, collarPhaseName = ringFaceAz or 0, "the ring's own face lattice"
+local wallPhaseV, wallPhaseName = wallFaceAz or 0, "its 4/3-derived face lattice"
+if not ringFaceAz then
+	collarPhaseName = "azimuth 0 -- the ring is MISSING, see the failure above"
+	wallPhaseName = collarPhaseName
+end
+
+checkVertical(groups.Collar, N18, collarPhase, A18, 0, Z_COLLAR, "collar", collarPhaseName)
+checkVertical(groups.Wall, N24, wallPhaseV, A24, Z_BAND, Z_TOP - Z_BAND, "wall", wallPhaseName)
 
 -- The band. Its outer face is a tilted plane, so an apothem only means something at
 -- a stated height; the claim worth checking is that the rims it was designed to
@@ -199,7 +266,7 @@ local worstOnFace, worstLean, worstPhaseB = 0, 0, 0
 for _, p in ipairs(groups.Band) do
 	local c = faceCentre(p)
 	local nrm = flat(c).Unit
-	worstPhaseB = math.max(worstPhaseB, phaseDeg(p, N24))
+	worstPhaseB = math.max(worstPhaseB, phaseErr(p, wallPhaseV, 2 * math.pi / N24))
 	for _, q in ipairs({ { A18, Z_COLLAR }, { A24, Z_BAND } }) do
 		local w = CENTRE + nrm * q[1] + Vector3.new(0, q[2], 0)
 		local d = w - c
@@ -211,7 +278,8 @@ for _, p in ipairs(groups.Band) do
 	local horiz = math.sqrt(n3.X * n3.X + n3.Z * n3.Z)
 	worstLean = math.max(worstLean, math.abs(horiz - math.cos(LEAN)), math.abs(n3.Y + math.sin(LEAN)))
 end
-want(worstPhaseB < 1e-3, "band: every panel sits on a 15 deg face centre (worst %.5f deg)", worstPhaseB)
+want(worstPhaseB < 0.01, "band: every panel sits on the wall's own face lattice (worst %.5f deg off)",
+	worstPhaseB)
 want(worstOnFace < 2e-3, "band: both design rims lie on every outer face (worst %.6f studs)", worstOnFace)
 want(worstLean < 1e-3, "band: every panel is leaned %.2f deg (worst off by %.6f)",
 	math.deg(LEAN), worstLean)
@@ -266,6 +334,47 @@ end
 say("outward growth: %.4f studs of apothem over %.2f studs of height (%.2f deg lean)",
 	A24 - A18, Z_BAND - Z_COLLAR, math.deg(LEAN))
 
+-- The operator's own statement of the join, counted rather than derived: from one ring
+-- vertex to the next (60 deg) there are 3 collar panels and 4 wall panels -- 18 * 4/3 =
+-- 24 -- and of the ring's 18 vertices exactly 6 carry a wall vertex, because
+-- 3 * 20 = 4 * 15 = 60. Both counts are needed and neither is enough: a count cannot
+-- see a ROTATION (any 15 deg lattice has 4 points in any 60 deg window, so this reads
+-- 4 whether or not the wall is phased right), while the phase check above cannot see
+-- how many panels there are. Two questions, two instruments.
+if ringFaceAz and #groups.Wall == N24 then
+	local function azDeg(p)
+		local f = flat(faceCentre(p))
+		return math.deg(math.atan2(f.Z, f.X))
+	end
+	local vertexDeg = math.deg(ringFaceAz) + 180 / N18
+	local function countIn(list, span)
+		local c = 0
+		for _, p in ipairs(list) do
+			if ((azDeg(p) - vertexDeg) % 360) < span then c += 1 end
+		end
+		return c
+	end
+	local nCollar = countIn(groups.Collar, 60)
+	local nWall = countIn(groups.Wall, 60)
+	want(nCollar == 3, "one 60 deg sector of the ring carries 3 collar panels (%d)", nCollar)
+	want(nWall == 4, "and 4 wall panels (%d) -- 18 * (4/3) = 24", nWall)
+	-- Which ring vertices a wall vertex lands on: this one DOES see the rotation, but
+	-- only as 0 vs 6 -- the ring's vertices mod 15 take three values, six each, so a
+	-- shift of exactly 5 or 10 deg still reads 6. The phase check above is what pins
+	-- the rotation; this is what shows the 4/3 rule happening.
+	local carried = 0
+	for k = 0, N18 - 1 do
+		local rv = vertexDeg + k * (360 / N18)
+		local best = math.huge
+		for _, p in ipairs(groups.Wall) do
+			local d = (azDeg(p) + 180 / N24 - rv) % (360 / N24)
+			best = math.min(best, math.min(d, 360 / N24 - d))
+		end
+		if best < 0.01 then carried += 1 end
+	end
+	want(carried == 6, "%d of the ring's 18 vertices carry a wall vertex (6 by 18/3)", carried)
+end
+
 -- ============================================================ the shell has no gaps
 
 -- Six heights across the three sections, 720 rays each. Every one must hit, and
@@ -317,10 +426,17 @@ want(cornerCollar - cornerBand < 0.5, "and it is bounded under half a stud (%.4f
 	cornerCollar - cornerBand)
 
 -- And the nub is transient, which is the other half of the claim. Measure the band's
--- surface in the exact direction of a collar CORNER (20 deg, a vertex of the 18-gon
--- and 5 deg off the nearest band face centre) and find the height at which it has
--- overtaken the corner's own radius. A bound is asserted rather than the computed
--- 0.5153, because the arithmetic there is mine while the measurement is the place's.
+-- surface in the exact direction of a collar CORNER -- a ring vertex, read off the
+-- ring instead of hardcoded, because which azimuth that is is a reading and not a
+-- choice (CLAUDE.md 0.18) -- and find the height at which the band has overtaken the
+-- corner's own radius. A bound is asserted rather than the figure the arithmetic
+-- predicts, because that arithmetic is mine while the measurement is the place's.
+local cornerDeg = ringFaceAz and (math.deg(ringFaceAz) + 180 / N18) or 20
+-- The angle between that corner and the nearest wall face centre is the whole reason
+-- the nub exists at all, and it is a consequence of the 18:24 ratio rather than an
+-- input: 10 deg from the collar's own face, 5 or 10 from the wall's. Printed because
+-- the shape of the seam is what this section is about.
+local offWallFace = math.abs(((cornerDeg - math.deg(wallFaceAz or 0) + 180 / N24) % (360 / N24)) - 180 / N24)
 local function radialAt(y, deg)
 	local th = math.rad(deg)
 	local dir = Vector3.new(math.cos(th), 0, math.sin(th))
@@ -330,38 +446,52 @@ local function radialAt(y, deg)
 end
 local crossover, hc = nil, 0.0
 while hc < 2.0 do
-	local r = radialAt(Z_COLLAR + hc, 20)
+	local r = radialAt(Z_COLLAR + hc, cornerDeg)
 	if r and r >= cornerCollar then
 		crossover = hc
 		break
 	end
 	hc += 0.005
 end
-say("     the band overtakes that corner %.3f studs above the seam (world y %.3f)",
+say("     the corner is at %.4f deg, %.4f deg off the nearest wall face centre",
+	cornerDeg, offWallFace)
+say("     the band overtakes it %.3f studs above the seam (world y %.3f)",
 	crossover or -1, CENTRE.Y + Z_COLLAR + (crossover or 0))
 want(crossover ~= nil and crossover > 0.2 and crossover < 1.0,
 	"the nub is gone within a stud of height (%s)", crossover and string.format("%.3f", crossover) or "never")
 
 -- ============================================================ now it is solid, and that is testable
 
-local function downAt(rho, y0, len)
-	local o = Vector3.new(CENTRE.X + rho, CENTRE.Y + y0, CENTRE.Z)
+-- `deg` is not cosmetic: every one of these distances is a distance to a FACE, so a
+-- ray aimed 12.5 deg off the nearest face centre measures apothem/cos(12.5) and lands
+-- a whole stud away from the design plane. The azimuth is an argument so that the
+-- caller has to say which surface it means (CLAUDE.md 0.18 -- the wrong surface does
+-- not error, it answers confidently).
+local function downAt(rho, y0, len, deg)
+	local th = math.rad(deg or 0)
+	local dir = Vector3.new(math.cos(th), 0, math.sin(th))
+	local o = Vector3.new(CENTRE.X + dir.X * rho, CENTRE.Y + y0, CENTRE.Z + dir.Z * rho)
 	local h = workspace:Raycast(o, Vector3.new(0, -len, 0), params)
 	return h and h.Position.Y or nil
 end
-local function inwardAt(y, rho)
-	local o = Vector3.new(CENTRE.X + rho, CENTRE.Y + y, CENTRE.Z)
-	local h = workspace:Raycast(o, Vector3.new(-rho * 2, 0, 0), params)
+-- A wall/band FACE CENTRE direction: where every radial distance to those panels is
+-- the apothem itself. Read from the phase, never assumed to be +X.
+local faceDeg = (wallFaceAz and math.deg(wallFaceAz) or 0) + 180
+local function inwardAt(y, rho, deg)
+	local th = math.rad(deg or 0)
+	local dir = Vector3.new(math.cos(th), 0, math.sin(th))
+	local o = Vector3.new(CENTRE.X + dir.X * rho, CENTRE.Y + y, CENTRE.Z + dir.Z * rho)
+	local h = workspace:Raycast(o, -dir * (rho * 2), params)
 	return h and (rho - h.Distance) or nil
 end
 
-local hCollar = inwardAt(0.60, 90)
+local hCollar = inwardAt(0.60, 90, math.deg(ringFaceAz or 0))
 want(hCollar ~= nil and math.abs(hCollar - A18) < 0.01,
 	"a ray into the collar stops at rho %.4f (design %.4f)", hCollar or -1, A18)
-local hWall = inwardAt(8.70, 90)
+local hWall = inwardAt(8.70, 90, faceDeg)
 want(hWall ~= nil and math.abs(hWall - A24) < 0.01,
 	"a ray into the wall stops at rho %.4f (design %.4f)", hWall or -1, A24)
-local hTop = downAt(66.0, 20, 12)
+local hTop = downAt(66.0, 20, 12, faceDeg)
 want(hTop ~= nil and math.abs(hTop - (CENTRE.Y + Z_TOP)) < 0.01,
 	"the wall's top rim is at world y %.4f (design %.4f)", hTop or -1e9, CENTRE.Y + Z_TOP)
 
@@ -374,12 +504,17 @@ want(hHole == nil, "the middle is still open -- a downward ray at rho 55 hits no
 -- not exposed anywhere: the band's inner surface springs from the collar's own inner
 -- rim (both at apothem A18 - WALL), so above the seam there is no ledge at all. A
 -- ray that lands on the band's inner slope instead was the geometry being right and
--- the question being wrong (CLAUDE.md 0.18). +X is a band face centre, so the
--- measurement is exact rather than taken between two panels.
+-- the question being wrong (CLAUDE.md 0.18).
+--
+-- Aimed at a wall FACE CENTRE (-X here, the one 180 deg from the wall's own phase),
+-- because that is where the inner face is its own apothem from the axis; anywhere else
+-- the ray meets the same plane at apothem/cos(delta) and the design figure would be
+-- wrong by more than a stud. This used to read +X, which was a face centre only under
+-- the OLD phase -- a hardcoded azimuth that quietly stopped meaning what it said.
 local innerRadial = (A18 - WALL)
 local slope = (A24 - A18) / (Z_BAND - Z_COLLAR)
 local wantY = CENTRE.Y + Z_COLLAR + (62.0 - innerRadial) / slope
-local hInner = downAt(62.0, 20, 40)
+local hInner = downAt(62.0, 20, 40, faceDeg)
 want(hInner ~= nil and math.abs(hInner - wantY) < 0.01,
 	"at rho 62 the ray lands on the band's inner face at y %.4f (design %.4f)", hInner or -1e9, wantY)
 say("     (the collar's top is covered there: its inner rim IS the band's springing line)")

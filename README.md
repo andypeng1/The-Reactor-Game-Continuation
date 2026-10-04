@@ -780,28 +780,41 @@ See CLAUDE.md 0.19, DECISIONS 263 to 266, PROGRESS.md Phase 83.
 ### `ChamberWall24` - the 18-sided ring, widened to 24
 
 Built in Blender by `_tools/blender/chamber_wall_24.py`, verified by
-`_tools/blender/chamber_wall_24_check.py`. The colour pass
-`_tools/apply_chamber_wall_materials.luau` is **obsolete** - it coloured the *imported* asset, and
-the wall no longer comes in through the importer.
+`_tools/blender/chamber_wall_24_check.py` (76 checks, 0 failed, on both the `.fbx` and the `.glb`;
+four mutations each turn their own named assertion red). The colour pass
+`_tools/apply_chamber_wall_materials.luau` is **obsolete** - it coloured the *imported* asset for the
+two builds that are no longer in the world; the material is set in Blender now, and the import is the
+operator's.
 
-**Landed in Studio as 66 Parts, not as an import** (Phases 87 and 88). The `.fbx` remains the
-Blender-side acceptance input; dragging it into Studio is **no longer the route** - it was measured
-at 1.0769x design scale and 0.873 off centre, and it did not join. The wall is
-`Workspace.Folder.Folder.Folder.ChamberWall24`: 18 collar + 24 band + 24 wall panels, every one
-`Anchored`/`CanCollide`/`CanQuery`, so the visible shape and the collision body are the same parts.
-Built by `_tools/build_chamber_wall_24_parts.luau` (with a 198-check self-test that destroys the
-model rather than let a bad one into the world), verified by `_tools/cw24_parts_verify.luau`
-(117 checks, 0 failed; a 7-height x 720-azimuth sweep is 5040/5040 rays with no miss).
-The earlier single-**MeshPart** build (`_tools/build_chamber_wall_24.luau`) is **parked, not deleted**,
-at `ServerStorage.ChamberWall24_mesh_20261004` - its `CollisionFidelity` could not be written, so its
-collision body was the convex hull of a ring, i.e. a solid disk. `docs/TODO.md` 3.5 and
-`docs/SNIPPETS.md` 5.18/5.19 carry the details.
+**The deliverable is a Blender reference, and the operator does the join himself** (Phase 89).
+His instruction: "take that 18-gon into Blender and do the join there, I will use it as a reference
+and build it myself". That supersedes Phases 87 and 88, where I built it inside Studio - first as a
+single MeshPart, then as 66 Parts. **Neither is in the world now**; the 66-Part model is parked at
+`ServerStorage.ChamberWall24_mesh_20261004` (the MeshPart) and `ServerStorage.Wall24_import_20261004`
+(the operator's own manual drag, 1.0769x oversized and 3 studs short of joining).
+Phase 89 deleted nothing. `docs/TODO.md` 3.5 and `docs/SNIPPETS.md` 5.20 carry the details.
+
+**What he rejected, and why it was a reading error rather than a measurement error:** the Phase 88
+wall put the collar's *outer face* on the ring's **apothem** (63.7120), so the ring's 18 **corners**
+(64.6951) stood proud of the wall. Phase 88's own comment measured that shoulder as 0.3002 studs and
+recorded it as intentional. But "最外围" is the **corner** radius, and a regular n-gon has two radii:
+the face plane (apothem) and the corners (circumradius), differing by `1/cos(pi/n)`. Every one of
+Phase 88's 5040 raycasts passed, because a raycast asks "is the radius right" and the mistake was
+"**which** radius" (CLAUDE.md 0.18, fifth face; DECISIONS 293).
+
+**The corrected join, and it is provably minimal.** A concentric regular m-gon of inradius `R`
+contains a concentric regular n-gon of circumradius `R'` iff `R >= R'`, so putting the wall's inner
+face plane at `R = R' = 64.6951` is the *smallest* wall that does not intersect the ring - it touches
+the ring's corners at six azimuths (0 + 60k, because the 24-gon's vertices are at 0 + 15k) and stands
+off by at most 0.9837 studs at the ring's face planes. The alternative - putting the 24-gon's
+*vertices* on the ring's corners - gives an inner apothem of 64.1514, and the ring's corner at
+azimuth 20 (64.6951) then pokes through it by 0.48 studs. The 3:4 rule is `3 * 20 = 4 * 15 = 60`:
+three ring panels and four wall panels per 60-degree sector.
 
 The target is the platform rim in The Reactor [Rebuild]: `Workspace.Folder.Folder.Folder.18`, an
-18-sided ring nineteen parts long, apothem **63.712**, with a **vertex** on +X (720 inward
-raycasts from outside read 63.711 / 64.695, no misses, and the profile breaks at 0, 20, 40 degrees).
-The deliverable is a 24-sided wall at apothem **68.000** plus the 84 triangles that bridge the two.
-It sits flush on the existing platform top plane, `y = 47.400`.
+18-sided ring nineteen parts long, apothem **63.7114** with corners at **64.6951** and a **vertex** on
++X (1440 inward raycasts at 0.25 degrees, zero misses; the ratio 1.015439 matches `1/cos(pi/18)` =
+1.015427). It sits flush on the existing platform top plane, `y = 47.400`.
 
 Three things are measured and one is chosen, and the code keeps them visibly apart (DECISIONS 274).
 Measured: the inner ring's apothem, its vertex phase, and the platform top plane. Chosen: the
@@ -824,16 +837,27 @@ Four things here were measured rather than assumed:
     bridging and the band's two edges after; `--wrong-pair` is the mutation that proves the
     assertion is load-bearing.
 
-**If a `.fbx` or `.glb` from this family does get imported anywhere, use the `.fbx`, not the `.glb`**:
-Roblox's glTF path reads 10 studs per file unit while the FBX path honours the 5.902 these files were
-written at, so the glb lands **1.6943x** too large. (The checker re-imports on the Blender side, where
-this still matters; the wall itself no longer goes through the importer at all.)
+**Import the `.fbx`, never the `.glb`**: Roblox's glTF path reads 10 studs per file unit while the FBX
+path honours the 5.902 these files were written at, so the glb lands **1.6943x** too large.
+Placement: bottom centre to `(-12.200, 47.400, -85.362)`, **scale 1.0**, no rotation, expected
+`138.58 x 13.85 x 138.58`. The phase needs no correction - the 18-gon vertex set (0 + 20k), the
+24-gon vertex set (0 + 15k) and the panel set (10 + 20k) are all invariant under a 180-degree
+rotation, which is exactly what the FBX importer's `(x,y,z) -> (-x,z,y)` is. The reference file also
+carries the ring itself (`ChamberRing18_ref`), deliberately **unbevelled**: the plate's top edge is
+the thing being joined to, and bevelling it insets the cap by 0.05 and makes the measured corner read
+64.6435 instead of 64.6943. The instrument is not allowed to round off what it measures.
 
-Two facts about the checker worth carrying: it re-imports the exported file and reads it back, so
-the build loop is never the evidence, and it exits 1 on failure. And it normalises shapes by
-dividing **each side by its own max** - the first version of the colour script divided both sides by
-the scene's widest part, which cancels only when the import happens to be at design scale and
-refused all four parts at 1.6943x while printing ratios identical to the design table (DECISIONS 275).
+**Three facts about the checker worth carrying.** It re-imports the exported file and reads it back,
+so the build loop is never the evidence. It normalises shapes by dividing **each side by its own max**
+- the first version of the colour script divided both sides by the scene's widest part, which cancels
+only when the import happens to be at design scale and refused all four parts at 1.6943x while
+printing ratios identical to the design table (DECISIONS 275). And it **exits 1 on failure only if it
+reaches its own exit** - measured on Blender 5.1.2, an uncaught exception under
+`--background --python` exits **0**, so a crash and a pass were byte-identical at the shell until a
+`try/except BaseException` was added. Related: `all([])` is True and `max(())` raises, so any
+assertion whose subject is a *missing* thing passes vacuously or dies silently; guard with `bool(x)`.
+Mutations must be written `--python s.py -- --flag`; with `--python s.py --flag` Blender treats the
+flag as a file to open, complains, and then **runs to completion anyway** (DECISIONS 295/296).
 
 `_tools/blender/transition_pillar.py` is the same family of work - an 18-sided base bridged to a
 24-sided top - and is likewise built and verified but not imported. See PROGRESS.md Phases 84 and 86,

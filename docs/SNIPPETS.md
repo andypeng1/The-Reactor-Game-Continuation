@@ -1091,3 +1091,123 @@ local thickness = WALL * math.cos(lean)    -- ★ 4.00 * cos(55.02) = 2.2930，�
 3. **同名的旧件搬走、不删** —— 它是**已验过的那一版**（`ServerStorage.<name>_<date>`）。
 4. **接缝要在两侧各量一次**，用**同类仪器**：环自己量到 63.7114，
    新件量到 63.7120，差 **0.0006** —— 和自己比不算数，和**已经在那里的东西**比才算。
+
+## 5.20 给一个**已经存在**的壳外面套一个正 m 边形，并证明接上了 ★ Phase 89
+
+被接的是 `Workspace.Folder.Folder.Folder.18`（18 边形环），要套的是 24 边形墙。
+用户的话是判据：「依据 18 那个 part 的**最外围**来扩，每三个 part 接 4 个墙壁，
+这样就是 18\*(4/3) = 24」。
+
+### 一、先把「最外围」拆成两个数，因为正 n 边形有**两个**半径
+
+```python
+RING_A = 63.7114    # MEASURED -- the face plane (apothem); 1440-ray inward sweep, rmin
+RING_R = 64.6951    # MEASURED -- the corners (circumradius), same sweep, rmax
+                    # RING_R / RING_A = 1.015439 ; 1/cos(pi/18) = 1.015427  <- agrees
+WALL   = 4.00       # FREE -- how far the new wall stands out
+```
+
+`最外围` 是 **`RING_R`**。读成 `RING_A` 的话，环的 18 个角从新墙里戳出来（Phase 88 的错）。
+
+### 二、内面平面放在 `RING_R`，而这是**最小**的（不是保守取大）
+
+外接 m 边形（inradius `R`）包含同心正 n 边形（circumradius `R′`）**当且仅当 `R ≥ R′`**：
+
+```python
+A24_IN  = RING_R                    # 64.6951 -- touches the ring's corners at 0,60,...,300
+A24_OUT = A24_IN + WALL             # 68.6951
+```
+
+另一条看起来更「整」的路**不成立**：把 24 边形的**顶点**放在环的角上 →
+`a24 = 64.6951*cos(pi/24) = 64.1514`，于是方位 20° 的那个环角（64.6951）
+从墙内面（64.2125）里**戳出 0.48 stud**。
+
+### 三、3:4 在方位上：3×20° = 4×15° = 60°
+
+```python
+M, N = 24, 18
+ring_corners = [0 + 360*k/N for k in range(N)]      # 0 + 20k
+ring_faces   = [10 + 360*k/N for k in range(N)]     # 10 + 20k  (the panel centres)
+wall_corners = [0 + 360*k/M for k in range(M)]      # 0 + 15k
+wall_faces   = [7.5 + 360*k/M for k in range(M)]    # 7.5 + 15k
+# one 60 deg sector: ring faces 3, wall faces 4; and 6 of the ring's 18 corners
+# (0 + 60k) carry a wall corner. Both are COUNTED in the checker, not derived.
+```
+
+### 四、apothem 要按**壳自己的相位**取面法线去拟合
+
+顶点在 `phase + 360k/n` 的正 n 边形，**面法线**在 `phase + 180/n + 360k/n`。
+拿顶点方向投影，量回来的是 **circumradius**（一个响亮的错答案，§0.18）：
+
+```python
+def apothem(points, n, corner_phase=0.0):
+    vals = []
+    for k in range(n):
+        a = math.radians(corner_phase + 180.0 / n + 360.0 * k / n)
+        vals.append(max(p[0]*math.cos(a) + p[1]*math.sin(a) for p in points))
+    return sum(vals)/len(vals), max(vals)-min(vals)   # (value, spread)
+
+def fit_apothem(ring, n):
+    """Anchored to the ring's OWN phase on purpose. A fit pinned to the world
+    lattice answers 'the circumradius' when the ring is rotated half a step --
+    a loud answer to a question nobody asked."""
+    ph = sum(off_grid(azim(p), 360.0/n) for p in ring) / len(ring)
+    a, spread = apothem(ring, n, corner_phase=ph)
+    return a, spread, ph
+```
+
+`spread` 和值同等重要：它说这壳**是不是**正 n 边形（本机实测 0.0000）。
+
+### 五、转**半格**过掉每一个半径检查 —— 所以相位只能锚在**被接的那件**上
+
+正 n 边形转 `360/2n` 度：apothem、弦长、面积、轮廓半径**全不变**。
+`collar 63.7120 对 ring 63.7114，delta 0.0006` **在相位差 10° 时照样通过**。
+所以：
+
+```python
+w24_ph = phase_of(c24_in, M) + 180.0 / M     # the WALL's face normals
+worst = max(rad(p)*math.cos(math.radians(
+            abs(off_grid(azim(p) - w24_ph, 360.0/M)))) for p in ring_pts)
+ok("J3 no ring vertex inside the wall", worst <= a24_in + TOL)
+```
+
+而「接上了没有」的**三条数**（本机实测）：
+
+| 接缝 | 问题 | 实测 |
+|---|---|---|
+| **J1** | 墙的**内脚环**逐点等于环顶面的轮廓? | 最差顶点间隙 **0.00000 stud** |
+| **J2** | 墙**内面平面** = 环的最外围? | **64.6951**（在环的面平面处让开 0.9837）|
+| **J3** | 环的每个顶点都在墙的**空腔**里? | 最坏 `r·cos` **64.6327** ≤ 64.6951 |
+| **J4** | 60° 扇区里环 3 / collar 3 / 墙 4，且 6 个角对齐? | 全中 |
+
+### 六、**两件载体交付同一个几何时，别数面** —— glTF 没有多边形这个概念
+
+glTF 把每个面三角化，FBX 这条路回读也是三角化的，于是「42 个外面」
+从一份文件读成 84、另一份读成 126 —— **两个数都是关于格式的，不是关于墙的**。
+改成数**顶点**和**每张命名面的三角形数**（collar 外 = 36，墙外 = 48），两种格式才对得上。
+跨格式比较前先**按位置焊接**（glTF 会把属性不同的角拆成独立顶点，
+不焊就会把 `open_edges` 读成几百，而那是**关于问法的**）。
+
+### 七、`--background --python` 的检查器：**崩溃的退出码是 0**
+
+```python
+try:
+    for tag, name, loader in (("FBX", NAME + ".fbx", load_fbx),
+                              ("GLB", NAME + ".glb", load_glb)):
+        check(tag, os.path.join(OUT_DIR, name), loader)
+    done()
+except SystemExit:
+    raise                      # done()/need() 自己的 sys.exit 要放行
+except BaseException:
+    traceback.print_exc()
+    print("CHECK CRASHED -- treated as a failure")
+    sys.exit(1)
+```
+
+实测（Blender 5.1.2）：`raise` → **rc=0**；`sys.exit(1)` → rc=1。
+所以**没有这个 try，一次崩溃和一次全过在 shell 眼里逐字节同形**。
+配合：空集合的两条反方向谎言（`all([])` 为真、`max(())` 抛）——
+凡以「缺失的东西」为主语的断言，先 `bool(x)`。
+
+变异要写成 `--python s.py -- --flag`；`--python s.py --flag` 会让 Blender
+把 `--flag` 当成**要打开的文件**，然后**照常跑完**。
