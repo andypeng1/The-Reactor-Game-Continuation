@@ -839,7 +839,12 @@ wall 停在 68.0000、墙顶 y 60.6000、**rho 55 仍然 MISS**（腔室没被�
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒 Ctrl+S。
 **自动 `add`+`commit` 也已开**（2026-10-01 原话 `AUTO COMMIT+ADD PERMANENTLY ON`）：
-每轮改完**直接 `git add -A` + commit**（带 `Co-Authored-By:`），**不再问**；**push 不在授权里**。
+每轮改完**直接 `git add -A` + commit**（带 `Co-Authored-By:`），**不再问**。
+**`push` 也已永久授权**（2026-10-04 原话「**始终允许自动push**」，推翻此前「push 不在授权里」）：
+每轮 commit 完**直接 push**，不再问。**但 §0.6/Phase 51 那些坑还在** ——
+`github.com:443` **间歇不通**，`git push` 会 non-fast-forward：**先比 `^{tree}` 再
+`git rebase origin/main`，不要 `reset --hard`**；直连连不上时走 Git Data API
+（`_tools/_attic/scratch/api_push.py`），**动 ref 前断言服务器 tree sha == 本地 `HEAD^{tree}`**。
 
 **文档只写磁盘（2026-09-26 起）：** 见 §0.0 —— 不再镜像回 Studio，
 盘上的 `.md` 就是**唯一副本**，`_tools/verify_docs.py` 已归档到 `_tools/_attic/mirror/`。
