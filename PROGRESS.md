@@ -7379,3 +7379,67 @@ x **-68.85..-59.20** / y **0.00..9.10** / z **25.42..33.70**（9.65 x 9.10 x 8.2
 - 肋的截面还是矩形，没做面片级。
 - **没量 Blender 单位 -> stud 的换算**（glTF 米制 / FBX 自己的约定 / Roblox 导入系数）。
   脚本头部已写明「不要假设 1.0，导入一次读 MeshPart.Size 把系数告诉我」。
+
+## Phase 80 (2026-10-04) - RadiationScrubberUnit：按我自己的想法做的第一个东西
+
+用户给了三件：① 报回尺寸 `1190.965, 2048, 1190.966`；② 「卡顿优化太明显了，完全没有
+丝毫卡顿」；③ 「你做个 RadiationScrubberUnit 我看看（按照你自己的理解）」+「blender-mcp 整上」。
+
+### 80.1 5.902 与那个 2048
+
+比值三个轴一致 = **5.902**，纯缩放没换轴。**2048 是 Roblox 单件上限，而
+`347 x 5.902 = 2047.99` —— 我的外壳卡在上限上差 0.01**，再高一点读回来就是夹过的数，
+而夹过的尺寸看不出是夹过的。已钉进 `trg.py:STUDS_PER_UNIT`，取舍 **258**。
+
+### 80.2 「完全没有丝毫卡顿」是这轮最硬的证据
+
+2002 Part → 1 mesh，tri 数涨了 2.8 倍，而**不卡了**。这条把瓶颈钉在 **draw call**
+不在面数上，而且它是**操作员在游戏里看到的**，不是我推的。比我任何推理都值钱。
+
+### 80.3 blender-mcp 接上了
+
+- addon（`ahujasid/blender-mcp`，用户点名）在 **Blender 5.1 上 `REGISTER_OK`**
+  —— 这是之前唯一的未知（它 `bl_info` 写的最低 3.0）。已装进
+  `%APPDATA%\Blender Foundation\Blender\5.1\scripts\addons\addon.py`
+- server：`pip install blender-mcp`（这台没有 uv）→
+  `C:\Users\andypeng1NB\AppData\Roaming\Python\Python314\Scripts\blender-mcp.exe`
+- 已 `claude mcp add blender` 进 `~/.claude.json`（project scope）。
+  **要用还得两步**：Blender 里勾上 addon + `N` 面板 Connect（起 9876），
+  以及**重启这个 Claude 会话**。
+- 走这条路的**真实理由**不是「我能看视口」（我看不了图），是**操作员开着 Blender
+  当我的眼睛** —— 我跑一段代码，他看，他说「太胖了」。那是我唯一缺的仪器。
+
+### 80.4 新增 `_tools/blender/trg.py`（共用库）
+
+`revolve`（任意母线车削，r=0 的点收成极点所以封头是封头不是截断的筒）、
+`sweep_arc`（弯管）、`tube`（任意方向直管，**故意不用 `create_cone`** ——
+它的 radius 参数名在 Blender 版本间改过，而**半径错了不报错，只给你一个显得很像故意的形状**）、
+`panel_arc`（弧形板：平面 box 贴在 r=2.62 的筒上，边缘会差四分之一 stud，看得见）、
+`finish`（**只倒角真正是角的边** —— 按 face angle 过滤。第一版对 64 边圆柱的每条边都倒，
+那是把面数花在没有角的地方）、`measure`、`export`、`render`。
+
+### 80.5 我做的东西
+
+`_tools/blender/radiation_scrubber.py`。**设计理由全部写在文件头**（是设计，不是测量）。
+要点：立式压力容器而不是框架柜（净化器本来就是个容器）；中段**带螺栓圈的法兰**是
+唯一一个机制手势（说明「这里能开，滤芯在里面」）；排气走**真弯管**；**不对称**
+（+Y 进气 / -Y 操作面 / +X 排气）；面板是**弧形板**不是贴上去的平盒子。
+
+**实测** `6.92 x 6.60 x 9.67`（z -0.02..9.65），**5550 verts / 5500 polys / 10956 tris**，
+`open_edges = 0`。三视图 + iso 在 `D:\BlenderRobloxTestProjects\RadiationScrubberUnit_*.png`。
+
+**对面数的读数**：scrubber 的形状比 ChamberGrate 复杂得多，tris 只有它的**六分之一**。
+**曲面是更便宜的表示，不是更贵的** —— 这条否掉了我自己前面的推理，取舍 **259**。
+
+### 80.6 我自己的评价（看不到，所以这是预测不是结论）
+
+**我认为好的是**：母线一次车出来所以全身无接缝；中段螺栓圈是唯一一个机制手势，
+没有被稀释。
+**我怀疑弱的是**：剪影大概很平 —— 一个带封头的圆筒加一根管子；5 条一样的格栅条
+是我「循环」的本能不是设计；三个灯排一排是最没有想象力的一种解法；比例是我**选**的
+不是**配**的。预测对了还是错了，得看三张 PNG。
+
+### 没做的
+- 没量 glb 那条路的换算（只量了 FBX）。`expected_studio_size` 那行是 FBX 的假设。
+- 没真的**看**那三张渲染（292 / 316 / 284 KB，从大小推不是空白，但这是推断）。
+- `D:\_tmp_bmcp\addon.py` 那份临时副本还在原地没删（安装失败时的备选）。
