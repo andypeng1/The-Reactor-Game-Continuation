@@ -149,3 +149,29 @@ Data/_transfer/
 #     src/ or Data/ with its existence stated in PROGRESS -- not left in a
 #     directory the tool rewrites. ---
 build-library/
+
+# --- the operator's reference track (asstes/music/ReactorStartup.mp3) is a
+#     Portal 2 "Reconstructing More Science" remix -- someone else's master
+#     recording, renamed.  This repo is PUBLIC (Phase 51), so it is not ours to
+#     publish, and the file is past the size where "just commit it" is free at
+#     4.2 MB.  It stays on disk and is the thing the analysis measures; the
+#     track generated against it (asstes/music/ReactorShift.*) is original
+#     material and IS tracked. ---
+asstes/music/ReactorStartup.mp3
+asstes/music/ReactorStartup.report.txt
+
+# --- _tools/music/out/ is the render chain's scratch: the 46 MB intermediate
+#     .wav that gets encoded to ogg/mp3, and stems.npz, the cached mono stems
+#     that make stereo re-assembly cost seconds instead of a six-minute
+#     re-render.  Both are reproducible from make_song.py in one command, both
+#     are far past the size where "just commit it" is free, and stems.npz in
+#     particular is a cache whose whole purpose is to be thrown away and
+#     rebuilt.  The delivered encodes live in asstes/music/ and are tracked. ---
+_tools/music/out/
+
+# --- the intro film render's scratch.  1051 PNGs, ~300 MB, written by
+#     _tools/intro_render.js and deleted by it on the way out -- ignored as well
+#     so that a run killed halfway leaves nothing staged.  Same rule as
+#     _tools/_harness_out/ above.  The mp4 it produces at the end is the
+#     deliverable and IS tracked; only the frames on the way to it are not. ---
+_tools/_frames/

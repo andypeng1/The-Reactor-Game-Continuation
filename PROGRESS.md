@@ -8862,3 +8862,92 @@ shipped HTML 做**文本**断言，并标了 `(source)`，不许它冒充"渲染
 不混进"实测"里。取舍 **304**。
 **拼写错误（`ACCEPETED` / `INFASTRUCTURE` / `MANFUACTURING`）是数据不是 bug** ——
 采集里就是那样，改"对"了才是改错了。取舍 **305**。
+
+## Phase 92（2026-10-05）—— 把片头渲染成视频：`intro/THE_REACTOR_GAME_intro.mp4`
+
+用户原话「**渲染成视频格式**」。**交付物**：`intro/THE_REACTOR_GAME_intro.mp4` ——
+**5,932,568 字节（5.66 MiB）**、1920×1080、H.264 High、yuv420p、30 fps、
+**1051 帧 / 35.033 秒**、1.35 Mbps、**无声**。`intro/index.html` 一个字节没改**语义**
+（只修了两个真缺陷，见 92.3）。
+
+### 92.1 它不是录屏，是逐帧驱动
+
+**因为片子是 `render(t)`（303），"渲成视频"就是逐帧 `render(i/fps)` + 截图。**
+没有时钟要抢、没有帧会丢、同一条命令跑两遍出同一个文件。实时抓屏只会更差 ——
+它采样的恰是片子当初特意不依赖的那个节奏（页面自己的 `requestAnimationFrame`）。
+
+`_tools/intro_render.js`：**CDP over Node 自带的 `WebSocket`**（Node ≥22，无需依赖）。
+三个必须做对的地方：
+
+| # | 做法 | 为什么 |
+|---|---|---|
+| ① | `Page.addScriptToEvaluateOnNewDocument` 把 `requestAnimationFrame` 打成空函数 | 页尾自启动的自动播循环（第 935 行）会在我背后**覆写已经驱动的帧**。必须**在页面脚本跑之前**注入 —— 等到 `Page.loadEventFired` 再打就晚了 |
+| ② | `Emulation.setDeviceMetricsOverride(1920, 1080, 1)` | 视口恰好 = 设计空间 → `fit()` 算出的 scale 恰好 1，没有黑边要裁 |
+| ③ | `#player` / `#bigplay` / `#hint` 渲染前 `display:none` | **播放器是 UI，不是片子** |
+
+**视口是钉住的，不是量出来的** —— 1920×1080 由 `#stage` 的设计尺寸决定，
+不是"我这台机器窗口多大"。取舍 **310**。
+
+### 92.2 两个检查器，两类缺陷 —— 合起来才够
+
+这一轮最重要的一件事**不是视频**，是发现**原来那套验证有一个结构性的盲区**。
+
+| 检查器 | 持有什么 | 结构上看不见什么 |
+|---|---|---|
+| `_tools/intro_check.js`（桩 DOM） | 时间与逻辑 —— 每一刻该在的东西在不在 | **排版**。桩 DOM 里 `getBoundingClientRect()` 是假的，**没有布局可错** |
+| `_tools/intro_render.js --check`（真无头 Chrome） | **布局** —— 位置/尺寸/有没有被裁掉 | 需要"页面里没有的东西"的断言 |
+
+**第一阶段 91 写"没有无头浏览器"那一句，今天作废。** 本机有 Chrome
+（`C:\Program Files\Google\Chrome\Application\chrome.exe`），CDP 直接连。
+`--check` 让浏览器把 39 个时刻的**原始测量**（lit / visible / live / 底边 / 块顶 / 行高）
+当 JSON 吐回来，**判定在 Node 的 `judge()` 里** —— 浏览器当尺子，判据在别处，
+因为**量了又判的人会悄悄改判据**（取舍 **309**）。
+
+### 92.3 渲染过程中抓到的四个缺陷
+
+| # | 缺陷 | 症状（量出来的） | 修法 |
+|---|---|---|---|
+| 1 | **`#diagList` 锚在 `bottom:0`** | t=3.3 lit=1 **vis=0**；t=4.5 lit=9 **vis=0**；t=6.0 lit=18 **vis=0**；t=7.5 lit=28 vis=2。**面板前 7 秒是空的**，之后最多 2 行（能装 23 行） | 改成 `top:0`。1215px 的块锚底 → 顶端落在 **−346px**，前 25 行在面板外 |
+| 2 | 同一个根因的**第二半**：滚动变换**减第二次** | 往上推的位移与"锚底"造成的偏移**相加**而不是抵消 —— 错得越多越像故意的 | 同 ①（锚正之后 `-max(0, shown*rowH - windowH)` 才是它注释里说的那个意思） |
+| 3 | **行高 `27` 写了两遍** | `.drow` 的 `line-height` 与滚动算术各一份；**改字号那天会静默错位** | 读 `diagNodes[0].offsetHeight`，桩 DOM 才回落到作者写的数 |
+| 4 | **我自己的断言 L3 问错了面** | 第一版量"最新**亮透**的行"的底边是否贴底 → t=7.25 红在"偏 27px" | 改量**最后一条 `opacity>0` 的行**的底边。索引用 `floor(clock)` 推而淡入 0.05 s，所以"亮透的"天然落后一行 —— **差的正好一行** |
+
+**①②③ 在桩 DOM 里 100% 全绿**：`intro_check.js` 那 24 条断言每一句都是真的 ——
+`node.style.opacity` 确实是 `1`，45 行一行不少 —— **而屏幕上最多 2 行**。
+**这是 §0.2 换了第七张脸**：那一课是"读模块状态 ≠ 读实例状态"，这一课是
+"**读实例状态 ≠ 读屏幕**"。取舍 **307/308**。
+
+修完之后实测：t=3.3 → 1/1、t=4.5 → 9/9、t=6.0 → 18/18、t=7.5 → 28 lit/24 vis、
+t=10.2 → 45 lit/24 vis，**`.live` 每个采样点都在窗内**。
+
+### 92.4 验证（四条通道，每条都知道自己管什么）
+
+```
+D:\nodejs\node _tools/intro_check.js                  -> 24 ok / 0 failed
+D:\nodejs\node _tools/intro_render.js --check         ->  5 ok / 0 failed
+python         _tools/intro_mutants.py                -> 10/10 变异红 + 1/1 FOLLOW 绿
+ffprobe        intro/THE_REACTOR_GAME_intro.mp4       -> 1051/1051 帧
+```
+
+- **`intro_mutants.py` 现在驱动两个 harness**，`MUTANTS` 由 4 元组扩成 **6 元组**
+  （多一个 harness、多一条缺陷说明）。新增两条**布局变异**（`diag-anchor`、
+  `diag-noscroll`）各自红在 `L1` / `L3` 上 —— **它们就是这一轮的真缺陷**，不是合成 typo。
+- **新增 FOLLOW 类**（取舍 **311**）：`diag-rowsize`（`.drow` 的 `line-height` 27 → 40）
+  **必须保持绿**。它证明"行高是量出来的"这条性质**有区分力**：
+  哪天有人把字面量写回去，它就开始红。**一条对什么都会红的检查和对什么都不会红的
+  检查一样没用**（同 302 的"把没有的也写下来"）。
+- **交付物独立复验**：`ffprobe` 数帧 + **把帧从 mp4 里抽回来重新看图**
+  （t=4.5 现在有那 9 行、t=10.2 二十多行含 `[ERR] Good luck, You'll need it.`），
+  没有压缩伪影。**图证明"看起来对"，读数证明"真的是那个值"**（§0.14b）。
+
+**成本**：1051 帧抓取 **331.2 s**（3.17 fps）+ 编码 **39.2 s** ≈ **6.2 分钟**。
+
+### 92.5 交付与仓库
+
+`intro/THE_REACTOR_GAME_intro.mp4` **进仓库**（5.66 MiB）；通往它的 **1051 张 PNG
+不进** —— `_tools/_frames/` 已进 `.gitignore`（~300 MB 过程产物，
+`intro_render.js` 跑完自己删；忽略它只是为了**跑到一半被杀时不留东西在暂存区**，
+同 `_tools/_harness_out/` 的理由）。取舍 **312**。
+
+**重跑**：`D:\nodejs\node _tools/intro_render.js`（`--fps 60` / `--out X.mp4` 可调）。
+**只有片子那一刻的字节变了，mp4 才会变** —— 这就是纯函数的钱在最后一步兑现。

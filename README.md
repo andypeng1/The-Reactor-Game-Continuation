@@ -950,31 +950,59 @@ overclaim which capture it came from (DECISIONS 304). The spelling errors
 (`ACCEPETED`, `INFASTRUCTURE`, `MANFUACTURING`) are data, not bugs; "fixing" them would make
 every "verbatim" claim false (DECISIONS 305).
 
-**Verified without a browser, on the half a browser is not needed for.** `_tools/intro_check.js`
-builds a throwaway DOM, evaluates the shipped file's **own `<script>` bytes**, and reads the
-resulting inline styles back at chosen instants - the same "read instance state, not module
-state" rule as CLAUDE 0.2. It reports **24 ok / 0 failed**, including a 0.05 s sweep of the
-whole timeline asserting no `NaN`/`undefined` reaches any style. `_tools/intro_mutants.py`
-then puts each of the defects back into a copy and requires the *named* assertion to go red:
-**8/8 caught, and each mutant reddens exactly one check** - one red is what makes an assertion
-precise, since a mutant that reddens five leaves you not knowing which property it broke
-(DECISIONS 306). Three real defects were caught this way, all of the "nothing anywhere reports
-it" kind: the boot command was permanently stuck half-typed, the pane frame was still half-lit
-when the black hold began, and the fade-out ran past the end of the film so it never actually
-went black.
+**Verified on two channels, because the film has two halves and each channel can only hold
+one of them.** `_tools/intro_check.js` builds a throwaway DOM, evaluates the shipped file's
+**own `<script>` bytes**, and reads the resulting inline styles back at chosen instants - the
+same "read instance state, not module state" rule as CLAUDE 0.2. It reports **24 ok / 0 failed**,
+including a 0.05 s sweep of the whole timeline asserting no `NaN`/`undefined` reaches any style.
+It cannot see **layout**: a stub DOM has no `getBoundingClientRect()` to be wrong about.
+`_tools/intro_render.js --check` is the other half - a real headless Chrome, driven over CDP,
+sampling the actual box metrics every 0.25 s from t=3.0 to 12.5 and judging 5 assertions,
+**5 ok / 0 failed**. The browser is the instrument and the pass/fail rule lives in Node,
+because a measurement that also decides what counts as correct tends to quietly redefine
+correct (DECISIONS 309). `_tools/intro_mutants.py` now drives **both** harnesses and requires
+the *named* assertion to go red: **10/10 caught, each reddening exactly one check** - one red
+is what makes an assertion precise (DECISIONS 306) - plus one **FOLLOW** mutant that must stay
+green, since a check that fires on everything is as useless as one that never fires
+(DECISIONS 311).
+
+**Four real defects were caught, all of the "nothing anywhere reports it" kind.** Three in the
+stub-DOM half: the boot command permanently stuck half-typed, the pane frame still half-lit
+when the black hold began, and the fade-out running past the end of the film so it never
+actually went black. The fourth was **invisible to every one of those 24 assertions**:
+`#diagList` was anchored to `bottom:0`, so a 1215px block inside a 630px window began 346px
+*above* the pane and the scroll transform subtracted a second time - the pane was empty for the
+first seven seconds and never showed more than 2 of the 23 rows that fit. Every row really was
+`opacity:1`, which is all the stub harness asks. **Reading instance state is not the same as
+reading the screen** - CLAUDE 0.2 in a new costume (DECISIONS 307).
 
 Both intro harnesses are **deliberately not wired into `_tools/run_tests.sh`**: that gate is
 about the injected Luau recorder/watcher/boot scripts, and these need `D:\nodejs\node`, which
 is not on PATH on this machine (CLAUDE 0.6). Run them by hand:
 
     "D:\nodejs\node" _tools/intro_check.js
+    "D:\nodejs\node" _tools/intro_render.js --check
     python _tools/intro_mutants.py
 
-**What is not verified:** everything CSS decides - layout, blending, whether the noise tiles,
-whether fonts resolve - because there is no headless browser here, and those four facts are
-asserted against the shipped HTML as text and labelled `(source)` so they cannot pass as a
-render. The film is also silent by request (no audio from `asstes/`); section 6.13 of the file
-is left empty with the t-driven hook written down, because a "have I played this already" flag
-would turn scrubbing into a random walk.
+**The video.** `intro/THE_REACTOR_GAME_intro.mp4` is the same film as a file: **5,932,568 bytes
+(5.66 MiB)**, 1920x1080, H.264 High, `yuv420p`, 30 fps, **1051 frames**, **35.033 s**, silent.
+It is rendered by `_tools/intro_render.js`, and **it is not a screen recording** - since the film
+is `render(t)`, a frame-exact render is just "call `render(i/fps)`, screenshot, next i", so
+there is no clock to race, nothing can be dropped, and the same command writes the same bytes.
+Realtime capture would be strictly worse because it samples the page's own
+`requestAnimationFrame` cadence, which is exactly the timing the film was built not to depend
+on. Two details make it work: `requestAnimationFrame` is stubbed out **before the page script
+runs** (`Page.addScriptToEvaluateOnNewDocument`), or the page's own autoplay loop keeps
+overwriting driven frames behind the renderer; and the viewport is pinned to exactly 1920x1080
+(`Emulation.setDeviceMetricsOverride`) so `fit()` computes scale 1 and there is no letterbox to
+crop. The 1051 intermediate PNGs (~300 MB) are scratch and gitignored; the mp4 is the
+deliverable and is tracked (DECISIONS 310, 312). Re-render with
+`"D:\nodejs\node" _tools/intro_render.js` (~6.2 min).
 
-See PROGRESS.md Phase 91, DECISIONS 303 to 306.
+**What is not verified:** pixel-level font/blending behaviour is still not independently
+re-checked, the mouse and keyboard controls have only been code-reviewed, and the film has only
+been seen in one Chromium. The film is silent by request (no audio from `asstes/`); section 6.13
+of the file is left empty with the t-driven hook written down, because a "have I played this
+already" flag would turn scrubbing into a random walk.
+
+See PROGRESS.md Phases 91 and 92, DECISIONS 303 to 312.

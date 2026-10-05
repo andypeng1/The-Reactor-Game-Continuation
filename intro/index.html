@@ -173,7 +173,15 @@ body{
 
 /* 诊断滚动区 */
 #scroll{position:absolute;left:16px;right:16px;top:50px;bottom:14px;overflow:hidden}
-#diagList{position:absolute;left:0;right:0;bottom:0}
+/* top:0, NOT bottom:0. The block is 45 rows tall (1215px) inside a 630px
+   window, so anchoring it to the BOTTOM puts its top edge at -585 and pushes
+   every early row out of sight above the pane -- and then the scroll transform
+   below subtracts *again*, so the two motions add instead of cancelling. That
+   bug is invisible to any check that reads style.opacity (the rows really are
+   opacity:1); it only exists in layout. Anchored to the top, the block grows
+   downward from the pane top and -max(0, shown*rowH - windowH) is the plain
+   "pin the newest line to the bottom" scrollback the comment below claims. */
+#diagList{position:absolute;left:0;right:0;top:0}
 .drow{
   font-size:19px;line-height:27px;white-space:nowrap;
   color:var(--ready);opacity:0;
@@ -732,10 +740,16 @@ function render(t){
     node.style.opacity = on*(1-off);
     node.classList.toggle('live', i===newest && p>=at);
   });
-  // 滚动：最新一行钉在底部（游戏用 CanvasPosition 钉底，这里等价）
+  // 滚动：最新一行钉在底部（游戏用 CanvasPosition 钉底，这里等价）。
+  // 内容比窗口矮的时候不许滑 —— 那正是 ScrollingFrame 的行为，也是"前几行
+  // 从顶上开始写"的样子；只有写满了才开始往上滚。
+  // rowH 量出来、不写死：它同时活在 .drow 的 line-height 里，两边各写一份
+  // 的话，改字号那天滚动会静默错位。拿不到布局（无头检查器的桩 DOM）才回落到
+  // 作者写的那个数，和上一行的 clientHeight 同一个写法。
   const shown = clamp(newest+1, 0, diagNodes.length);
+  const rowH = diagNodes[0].offsetHeight || 27;
   const scrollH = $('scroll').clientHeight || 690;
-  $('diagList').style.transform = `translateY(${-Math.max(0, shown*27 - scrollH)}px)`;
+  $('diagList').style.transform = `translateY(${-Math.max(0, shown*rowH - scrollH)}px)`;
 
   /* ---- 6.6 右栏开机日志 --------------------------------------------- */
   logNodes.forEach((node,i)=>{
