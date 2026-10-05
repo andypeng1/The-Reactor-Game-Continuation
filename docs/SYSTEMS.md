@@ -520,3 +520,38 @@ label 的 `Visible`。属性不相交 —— 这是它能成为第二个写入�
 两个变异各在预期的秒数段变红；跑完标签全部回到隐藏、临时件销毁
 （`PROGRESS.md` 67.4）。**没在真 playtest 里看过一眼**，也没验世界侧（67.5）。
 
+### 2.15 `intro/index.html` —— 浏览器可播的 35 秒无声片头（2026-10-05，Phase 91）
+
+**不在游戏里，不在 Studio 里** —— 这是一个**独立交付物**，双击就能用浏览器打开。
+它是本仓库里唯一一件「渲染在浏览器而不是 Roblox」的东西，所以它有自己的验证链。
+
+| 项 | 值 |
+|---|---|
+| 交付 | `intro/index.html`（单文件）+ `intro/SHOTLIST.md`（**脚本本体**：分镜 / 时间轴 / 逐行出处） |
+| 片长 | 35.00 s，**无声**（操作员明确要求不用 `asstes/` 里的音乐） |
+| 依赖 | 无。无构建、无 CDN、无 web font、无音频；素材**复制**在 `intro/assets/`（原始目录名带空格，引用会踩 URL 编码） |
+| 架构 | **整片是 `render(t)`** —— t 的纯函数，没有状态机、不记上一帧 |
+| 设计空间 | 固定 1920×1080 的 `#stage`，按 `min(w/1920, h/1080)` 等比缩放居中 |
+| 结构 | `#film` **故意拆出 `#stage`**：CRT 收线只压 `#film`，播放器不被压扁 |
+| 文案 | 24 行 **V**（逐字采集）/ 8 行 **G**（游戏别处原文）/ 13 行 **R**（重建）；6 条日志全 V；3 条规格卡是全片唯一非原文 |
+| 验证 | `_tools/intro_check.js` **24 ok / 0 failed**；`_tools/intro_mutants.py` **8/8**，每个变异只红一条 |
+
+**为什么是纯函数**：拖进度条要**真的跳**（不是快进）、循环要**逐字节可复现**、
+出场时间要能**在 `T` 表里读到**。这与 `GameState` 的单一真相源同源（`DECISIONS_2` **303**）。
+
+**文字不是编的**：节奏抄操作员自己的 `Addition/Shift4.luau`；文字来自
+`Data/flow/original_*` 与 `Data/auxcollection/startup/ScreenChanges.txt`（都 gitignored，
+**逐字抄进代码就是留档**）。出处分三档而不是两档 —— G 并进 V 就是过度声称（**304**）；
+拼写错误（`ACCEPETED` / `INFASTRUCTURE`）是**数据**不是 bug（**305**）。
+
+**验证的边界**：`intro_check.js` 验的是**纯函数那一半** —— 假 DOM、求值 file 自己的
+`<script>` 字节、在选定时刻读内联样式回（同 §0.2 的「读实例、不读模块」）。
+**CSS 才能判的那一半（排版 / 混合 / 平铺 / 字体）它看不见**，所以那几条是对 shipped HTML
+做**文本**断言并标 `(source)`。三个真缺陷是这么抓到的，全是「没有任何东西会报错」那种：
+开机令永久停在半句、黑场开始时边框还亮一半、淡出越过了片长所以**从来没真的黑过**。
+
+**两个 harness 故意不挂进 `_tools/run_tests.sh`** —— 那个 gate 管的是注入 Luau 脚本，
+这两个要 `D:\nodejs\node`（不在 PATH，§0.6）。手动跑：
+`"D:\nodejs\node" _tools/intro_check.js` / `python _tools/intro_mutants.py`。
+细节 `PROGRESS.md` 91，取舍 **303..306**。
+

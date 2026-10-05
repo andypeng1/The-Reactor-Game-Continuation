@@ -918,3 +918,63 @@ delta `4.53e-08` - and the tolerance is `1e-6` relative because **Blender stores
 float32**, so a 1e-9 tolerance tests the storage format, not the geometry.
 
 See PROGRESS.md Phase 90, DECISIONS 297 to 302, docs/SNIPPETS.md 5.21.
+
+---
+
+## The intro film - `intro/`
+
+`intro/index.html` is a **35-second, silent, TRG-style boot/loading intro** for this project.
+It is one file with no build step, no CDN, no web font and no audio, so it opens by
+double-clicking it (`intro/assets/` is copied, not referenced - the source directory name
+contains spaces). Press space to play.**Its script is `intro/SHOTLIST.md`.**
+
+**The whole film is `render(t)`, a pure function of one clock.** There is no state machine
+and nothing remembers the previous frame, so scrubbing the bar is a real seek rather than a
+fast-forward, a loop is byte-identical to the first pass, and every element's entrance time
+is readable in the `T` table instead of being recovered by tracing code. That is the same
+discipline as `GameState` being the single source of truth (DECISIONS 303).
+
+`#stage` is a fixed 1920x1080 design space scaled to fit, so every window shows the same
+picture. `#film` is deliberately split out of `#stage`: the end-of-film CRT collapse applies
+`scaleY` to `#film` only, so the player controls are not squashed with it.
+
+**The text is not invented.** The choreography is the operator's own `Addition/Shift4.luau`
+(the two `Quad/Out` `UDim2` tweens, the 45 rows revealed one at a time, the collapse, and the
+"black for a bit of time" hold). The words come from capture: 24 of the 45 diagnostic rows
+are **verbatim** from `Data/flow/original_*` and `Data/auxcollection/startup/ScreenChanges.txt`,
+and all 6 boot-log lines are verbatim from `BootFrame.LogFrame.TitleText1..6`. Those directories
+are gitignored, so copying the lines into the source **is** the archive. Provenance is recorded
+per line in three grades rather than two - **V** verbatim from capture, **G** a genuine game
+string captured elsewhere, **R** reconstructed (13 rows) - because folding G into V would
+overclaim which capture it came from (DECISIONS 304). The spelling errors
+(`ACCEPETED`, `INFASTRUCTURE`, `MANFUACTURING`) are data, not bugs; "fixing" them would make
+every "verbatim" claim false (DECISIONS 305).
+
+**Verified without a browser, on the half a browser is not needed for.** `_tools/intro_check.js`
+builds a throwaway DOM, evaluates the shipped file's **own `<script>` bytes**, and reads the
+resulting inline styles back at chosen instants - the same "read instance state, not module
+state" rule as CLAUDE 0.2. It reports **24 ok / 0 failed**, including a 0.05 s sweep of the
+whole timeline asserting no `NaN`/`undefined` reaches any style. `_tools/intro_mutants.py`
+then puts each of the defects back into a copy and requires the *named* assertion to go red:
+**8/8 caught, and each mutant reddens exactly one check** - one red is what makes an assertion
+precise, since a mutant that reddens five leaves you not knowing which property it broke
+(DECISIONS 306). Three real defects were caught this way, all of the "nothing anywhere reports
+it" kind: the boot command was permanently stuck half-typed, the pane frame was still half-lit
+when the black hold began, and the fade-out ran past the end of the film so it never actually
+went black.
+
+Both intro harnesses are **deliberately not wired into `_tools/run_tests.sh`**: that gate is
+about the injected Luau recorder/watcher/boot scripts, and these need `D:\nodejs\node`, which
+is not on PATH on this machine (CLAUDE 0.6). Run them by hand:
+
+    "D:\nodejs\node" _tools/intro_check.js
+    python _tools/intro_mutants.py
+
+**What is not verified:** everything CSS decides - layout, blending, whether the noise tiles,
+whether fonts resolve - because there is no headless browser here, and those four facts are
+asserted against the shipped HTML as text and labelled `(source)` so they cannot pass as a
+render. The film is also silent by request (no audio from `asstes/`); section 6.13 of the file
+is left empty with the t-driven hook written down, because a "have I played this already" flag
+would turn scrubbing into a random walk.
+
+See PROGRESS.md Phase 91, DECISIONS 303 to 306.
