@@ -186,6 +186,11 @@ body{
   font-size:19px;line-height:27px;white-space:nowrap;
   color:var(--ready);opacity:0;
   text-shadow:0 0 10px rgba(82,218,226,.30);
+  /* 两条开机记录比面板宽（最长那条超 446 px），`#scroll` 一裁就成了**断在词中间**
+     而且**没有任何记号**。不换行 —— 下面 `diag-rowsize` 那条 FOLLOW 盯着行高必须
+     是一条常量，换行会让它随时变高，滚动算式就得改成逐行累加。
+     所以只加省略号：**裁掉的字仍然裁掉，但读者知道那里有字**。 */
+  overflow:hidden;text-overflow:ellipsis;
 }
 /* 前缀按类型上色。游戏里整行同色，但前缀本来就是分类标签，
    让分类可读、正文照旧 —— 这是本片头里少数几处刻意的"加戏"。 */
@@ -294,6 +299,10 @@ body{
   background:url("assets/sm-core.png") center/contain no-repeat;
   filter:invert(1);opacity:.10;
 }
+/* 下面四件（band / title / rule / subtitle）的位置和字号，CSS 里写的是 **hero
+   态**：大字居中偏下。片头后半段它们会整块抬到顶部当页眉（HERO/MAST 在 JS 里），
+   JS 每帧改 top / font-size / height，所以这里这份是"没有 JS 也立得住"的那一套。
+   两套值必须一起改 —— 它们描述的是同一块版面。 */
 #titleBand{
   position:absolute;left:0;top:436px;height:64px;width:0;
   background:url("assets/stripes.png") repeat-x left center;background-size:auto 64px;
@@ -604,12 +613,21 @@ const BOOTLOG = [
 ];
 
 /* 三条规格卡 —— 这是全片唯一一组"不是游戏原文"的文案。
-   写的是三大控制手段本身（Wiki 反复确认过：没有控制棒）。 */
+   写的是三大控制手段本身（Wiki 反复确认过：没有控制棒）。
+   间隔 1.2 s（原来是 1.4）：三条一样长，但第三条到 32.0 就得让位给片尾那句话，
+   按 1.4 排 sp3 只有 1.7 s 在场 —— 三条里最要紧的一条反而最短。 */
 const SPECS = [
   {el:'sp1', at:27.20, y:318},
-  {el:'sp2', at:28.60, y:430},
-  {el:'sp3', at:30.00, y:542},
+  {el:'sp2', at:28.40, y:430},
+  {el:'sp3', at:29.60, y:542},
 ];
+
+/* 标题卡的两套几何。hero = 大字居中（也是 CSS 里那一套），masthead = 收到
+   顶部当页眉。为什么非要有第二套：hero 那条 400..570 的带子把后面所有字都
+   罩住了 —— 三条规格的 sp2(430)/sp3(542)、片尾那句(492)、页脚(566) 全落在
+   里面，而"被盖住"是量不出来的那种错（都在盘上、都 opacity:1）。 */
+const HERO = {titleTop:400, titleSize:170, track:0.055, bandTop:436, bandH:64, ruleTop:576, subTop:600};
+const MAST = {titleTop:104, titleSize: 76, track:0.150, bandTop:192, bandH:30, ruleTop:244, subTop:266};
 
 /* 实时读数，值是"冷堆"的量级 —— 开机的读数本来就该长这样。
    台阶式，到位之后闪一下，那个闪就是"读数到顶"的记号。 */
@@ -811,15 +829,29 @@ function render(t){
   $('titleBand').style.width = (1920 * quadOut(ramp(p, T.titleIn-0.25, T.titleIn+0.7))) + 'px';
   // 标题：从下方 34 px 推上来 + 字距收拢，标准片头做法
   const tp = quadOut(ramp(p, T.titleIn+0.05, T.titleIn+0.95));
+  // hd: 0 = hero，1 = 页眉。收在第一条规格落下来之前（specIn-0.15），
+  // 所以后面三张卡面对的中段是空的 —— 不靠谁去"让"，是那块字根本不在那儿了。
+  const hd  = quadOut(ramp(p, T.specIn-1.05, T.specIn-0.15));
+  const mix = (a, b) => a + (b - a) * hd;
   $('title').style.opacity = tp;
+  $('title').style.top = mix(HERO.titleTop, MAST.titleTop) + 'px';
+  $('title').style.fontSize = mix(HERO.titleSize, MAST.titleSize) + 'px';
   $('title').style.transform = `translateY(${(1-tp)*34}px)`;
-  $('title').style.letterSpacing = (0.055 + 0.10*(1-tp)) + 'em';
+  $('title').style.letterSpacing = mix(HERO.track + 0.10*(1-tp), MAST.track) + 'em';
+  $('titleBand').style.top = mix(HERO.bandTop, MAST.bandTop) + 'px';
+  $('titleBand').style.height = mix(HERO.bandH, MAST.bandH) + 'px';
+  // 条纹底图跟着一起缩，否则 30 px 的盒子里还塞着 64 px 的图案，被裁成半截
+  $('titleBand').style.backgroundSize = `auto ${mix(HERO.bandH, MAST.bandH)}px`;
+  $('subtitleRule').style.top = mix(HERO.ruleTop, MAST.ruleTop) + 'px';
   $('subtitleRule').style.width = (760 * quadOut(ramp(p, T.titleIn+0.55, T.titleIn+1.35))) + 'px';
+  $('subtitle').style.top = mix(HERO.subTop, MAST.subTop) + 'px';
   $('subtitle').style.opacity = ramp(p, T.titleIn+0.9, T.titleIn+1.5);
   $('coreSpin').style.transform = `translate(-50%,-50%) rotate(${(p-T.titleIn)*4.2}deg)`;
 
   /* ---- 6.11 规格三条 ------------------------------------------------- */
-  $('specCard').style.opacity = ramp(p, T.specIn, T.specIn+0.4) * (1 - ramp(p, T.endIn-0.3, T.endIn+0.5));
+  // 三条在片尾那句话起来之前**先退干净**（32.10 归零，而 endMsg 32.15 才起）——
+  // 否则两段字会在同一段 x 上交叉淡入淡出，中间那 0.8 s 谁也读不清。
+  $('specCard').style.opacity = ramp(p, T.specIn, T.specIn+0.4) * (1 - ramp(p, T.endIn-0.6, T.endIn+0.1));
   for (const s of specNodes){
     const k = quadOut(ramp(p, s.at, s.at+0.55));
     s.node.style.opacity = k;

@@ -51,6 +51,8 @@ NOPROP = "G1b the controls stop click propagation to #stage"
 SIBLING = "G1 #player is a sibling of #film, not inside it"
 ONSCREEN = "L1 lit rows are on screen (up to a full pane)"
 PANE_BOTTOM = "L3 the newest row rides the bottom once full"
+COLLIDE = "L5 no two visible text blocks collide (back half)"
+CLIPPED = "L6 nothing is cut off without saying so"
 
 # (name, harness, find, replace, assertion that must go red -- or None to
 #  require the mutant STAYS green, which is how we show a check has real
@@ -99,6 +101,31 @@ MUTANTS = [
      "$('diagList').style.transform = 'translateY(0px)';",
      PANE_BOTTOM, "without the transform the newest line runs off the bottom "
                   "instead of staying on the pane's bottom edge"),
+
+    # The defect the operator reported by eye: the 170px `THE REACTOR GAME` sat
+    # on top of the three spec lines and the sign-off for the whole last third.
+    # `hd = 0` is not a synthetic tweak -- it is the film exactly as it shipped.
+    ("layout", "title-stays-hero",
+     "const hd  = quadOut(ramp(p, T.specIn-1.05, T.specIn-0.15));",
+     "const hd  = 0;",
+     COLLIDE, "the shipped film: no masthead, so the hero title covers sp2, sp3 "
+              "and the [ERR] line for the last 12 seconds"),
+    ("layout", "mast-too-low",
+     "const MAST = {titleTop:104,",
+     "const MAST = {titleTop:300,",
+     COLLIDE, "the masthead settles low enough to land on the first spec line -- "
+              "the same defect, smaller"),
+
+    # Found by the eye, not by a check: two boot rows are wider than the pane,
+    # `#scroll` clips them, and the longest one loses 446px -- the row stays on
+    # screen, fully lit, and simply is not all there. The shipped film is the
+    # mutant; `overflow:hidden;text-overflow:ellipsis` is the fix.
+    ("layout", "clip-unmarked",
+     "  overflow:hidden;text-overflow:ellipsis;",
+     "  overflow:visible;",
+     CLIPPED, "the shipped film: a row 446px too wide is chopped mid-word with "
+              "no mark, and every other check is green because the row is on "
+              "screen and opacity 1"),
 ]
 
 # A mutant that MUST stay green.  .drow's line-height is the same 27 the scroll
@@ -110,6 +137,19 @@ FOLLOW = [
      ".drow{\n  font-size:19px;line-height:27px;white-space:nowrap;",
      ".drow{\n  font-size:19px;line-height:40px;white-space:nowrap;",
      "row height is measured, not assumed"),
+    # L5 must be about WHERE the block is, not how big the type is. A bigger
+    # masthead is a taste call; if this one fires, L5 has slack it should not have.
+    ("layout", "mast-bigger-type",
+     "titleSize: 76,",
+     "titleSize:100,",
+     "the masthead's type size is a taste call, not a correctness one"),
+    # L6 must be about MARKING a cut, not about never cutting. A larger diag font
+    # cuts more rows; if this fires, L6 has leaked into a taste call.
+    ("layout", "diag-bigger-type",
+     ".drow{\n  font-size:19px;line-height:27px;",
+     ".drow{\n  font-size:21px;line-height:27px;",
+     "how big the terminal text is, is a taste call -- cutting more is fine as "
+     "long as every cut is marked"),
 ]
 
 

@@ -958,15 +958,17 @@ including a 0.05 s sweep of the whole timeline asserting no `NaN`/`undefined` re
 It cannot see **layout**: a stub DOM has no `getBoundingClientRect()` to be wrong about.
 `_tools/intro_render.js --check` is the other half - a real headless Chrome, driven over CDP,
 sampling the actual box metrics every 0.25 s from t=3.0 to 12.5 and judging 5 assertions,
-**5 ok / 0 failed**. The browser is the instrument and the pass/fail rule lives in Node,
-because a measurement that also decides what counts as correct tends to quietly redefine
+plus two later sweeps: every 0.25 s across 22.0..34.2 for **L5** (do two visible text blocks
+ever overlap) and every 0.5 s across the whole film for **L6** (is anything cut off without
+saying so). **7 ok / 0 failed**. The browser is the instrument and the pass/fail rule lives in
+Node, because a measurement that also decides what counts as correct tends to quietly redefine
 correct (DECISIONS 309). `_tools/intro_mutants.py` now drives **both** harnesses and requires
-the *named* assertion to go red: **10/10 caught, each reddening exactly one check** - one red
-is what makes an assertion precise (DECISIONS 306) - plus one **FOLLOW** mutant that must stay
-green, since a check that fires on everything is as useless as one that never fires
-(DECISIONS 311).
+the *named* assertion to go red: **13/13 caught, each reddening exactly one check** - one red
+is what makes an assertion precise (DECISIONS 306) - plus three **FOLLOW** mutants that must
+stay green, since a check that fires on everything is as useless as one that never fires
+(DECISIONS 311, 325).
 
-**Four real defects were caught, all of the "nothing anywhere reports it" kind.** Three in the
+**Six real defects were caught, all of the "nothing anywhere reports it" kind.** Three in the
 stub-DOM half: the boot command permanently stuck half-typed, the pane frame still half-lit
 when the black hold began, and the fade-out running past the end of the film so it never
 actually went black. The fourth was **invisible to every one of those 24 assertions**:
@@ -976,6 +978,23 @@ first seven seconds and never showed more than 2 of the 23 rows that fit. Every 
 `opacity:1`, which is all the stub harness asks. **Reading instance state is not the same as
 reading the screen** - CLAUDE 0.2 in a new costume (DECISIONS 307).
 
+**The last two the operator found by eye**, and both had every check green when he did
+(Phase 94). `THE REACTOR GAME` at 170px owns y 400..570, and the three spec lines, the
+sign-off and the footer all sit inside that band - so the title simply covered them. The
+stub DOM has no layout to be wrong about, and the layout harness was asking whether the title
+was *laid out*, which that 1920x170 band does perfectly: **every element being right, and two
+elements colliding, are two different questions** (CLAUDE 0.2, eighth costume). The fix is
+two geometries for `#title` (`HERO` -> `MAST`): the big centred read first, then it lifts and
+shrinks into a top masthead 0.15 s before the first spec line inks in, which is not the cards
+"making room" - the band is simply no longer there. Then, following the same thread, two boot
+rows turned out to be wider than the pane: the longest one's ink reaches x=1671 against a pane
+edge at 1225, so **446px of it was chopped mid-word with no mark** - on screen, `opacity: 1`,
+green on every existing check. The fix is one declaration
+(`overflow:hidden;text-overflow:ellipsis`); not wrapping, because the scroll arithmetic needs
+the row height to stay one constant, and not a smaller font, because that trades the scrolling
+terminal for a static list - **changing what the film looks like is not the same as fixing what
+it hides** (DECISIONS 322..326).
+
 Both intro harnesses are **deliberately not wired into `_tools/run_tests.sh`**: that gate is
 about the injected Luau recorder/watcher/boot scripts, and these need `D:\nodejs\node`, which
 is not on PATH on this machine (CLAUDE 0.6). Run them by hand:
@@ -984,8 +1003,10 @@ is not on PATH on this machine (CLAUDE 0.6). Run them by hand:
     "D:\nodejs\node" _tools/intro_render.js --check
     python _tools/intro_mutants.py
 
-**The video.** `intro/THE_REACTOR_GAME_intro.mp4` is the same film as a file: **5,932,568 bytes
-(5.66 MiB)**, 1920x1080, H.264 High, `yuv420p`, 30 fps, **1051 frames**, **35.033 s**, silent.
+**The video.** `intro/THE_REACTOR_GAME_intro.mp4` is the same film as a file: **5,881,392 bytes
+(5.61 MiB)**, 1920x1080, H.264 High, `yuv420p`, 30 fps, **1051 frames**, **35.033 s**, silent.
+(Re-rendered after Phase 94's layout fixes - same format, same frame count; the first cut was
+5,932,568 bytes, a difference no viewer could see.)
 It is rendered by `_tools/intro_render.js`, and **it is not a screen recording** - since the film
 is `render(t)`, a frame-exact render is just "call `render(i/fps)`, screenshot, next i", so
 there is no clock to race, nothing can be dropped, and the same command writes the same bytes.

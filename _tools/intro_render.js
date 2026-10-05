@@ -92,7 +92,88 @@ const MEASURE = `(() => {
   const ttl = document.getElementById('title').getBoundingClientRect();
   render(33.0);
   const err = document.getElementById('endMsg').getBoundingClientRect();
-  return JSON.stringify({sweep, title:{w: ttl.width, h: ttl.height, y: ttl.top}, end:{w: err.width, h: err.height}});
+
+  // ---- the back half: does any visible text land on any other visible text?
+  // This is the property the film shipped broken (the 170px title sat on top of
+  // the three specs and the sign-off for the whole last third) and NO stub-DOM
+  // check could see it: every element really was opacity:1 at the right time.
+  const TEXT = ['title','subtitle','endMsg','endTag'];
+  const back = [];
+  for (let t = 22.0; t <= 34.21; t += 0.25) {
+    render(Math.round(t * 100) / 100);
+    const items = [];
+    const push = el => {
+      // effective opacity = the element's own times every ancestor's, because
+      // the cards fade as a GROUP -- a child's own opacity stays 1 the whole way.
+      let o = 1;
+      for (let n = el; n && n !== document.body; n = n.parentElement)
+        o *= parseFloat(getComputedStyle(n).opacity);
+      if (o <= 0.35) return;                       // not "visible" for this test
+      // the GLYPH box, not the border box. #title is left:0;right:0, so its
+      // border box is the whole 1920 width; comparing those would say two
+      // centred lines collide whenever they merely share a row of the screen.
+      const rg = document.createRange();
+      rg.selectNodeContents(el);
+      const b = rg.getBoundingClientRect();
+      items.push({id: el.id, top:b.top, bottom:b.bottom, left:b.left, right:b.right});
+    };
+    for (const id of TEXT) push(document.getElementById(id));
+    for (const s of document.querySelectorAll('#specCard .spec')) push(s);
+    const t0 = Math.round(t * 100) / 100;
+    let pairs = 0, worst = null;
+    for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+      const a = items[i], b = items[j];
+      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (ox <= 0 || oy <= 0) continue;
+      pairs++;
+      if (!worst || ox * oy > worst.area)
+        worst = {t: t0, a: a.id, b: b.id, area: ox * oy, oy};
+    }
+    back.push({t: t0, n: items.length, pairs, worst});
+  }
+  // ---- clipped text: can the viewer READ what the film drew? ----
+  // The property is NOT "nothing is ever cut". A terminal pane legitimately cuts
+  // a long line at its edge. The property is "nothing is cut WITHOUT SAYING SO":
+  // an element whose ink runs past the box that clips it must be ellipsising.
+  // Found by the eye (a row chopped mid-word at the pane edge); no vertical or
+  // opacity check can see it -- the row is on screen, fully lit, and 446px of it
+  // simply is not there.
+  const clip = [];
+  for (let t = 0.0; t <= 34.51; t += 0.5) {
+    render(Math.round(t * 100) / 100);
+    const seen = [];
+    for (const el of document.querySelectorAll('#film *')) {
+      let hasText = false;
+      for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue.trim()) hasText = true;
+      if (!hasText) continue;
+      let o = 1;                       // same effective-opacity rule as L5
+      for (let n = el; n && n !== document.body; n = n.parentElement)
+        o *= parseFloat(getComputedStyle(n).opacity);
+      if (o <= 0.35) continue;
+      const rg = document.createRange();
+      rg.selectNodeContents(el);
+      const b = rg.getBoundingClientRect();
+      if (!b.width) continue;
+      let anc = null;                  // nearest box that can clip, self included
+      for (let n = el; n && n !== document.body; n = n.parentElement)
+        if (getComputedStyle(n).overflow !== 'visible') { anc = n; break; }
+      if (!anc) continue;
+      const a = anc.getBoundingClientRect();
+      const cut = Math.max(0, b.right - a.right, a.left - b.left,
+                              b.bottom - a.bottom, a.top - b.top);
+      if (cut <= 0.5) continue;
+      seen.push({id: el.id || (el.className + '') || el.tagName, cut: Math.round(cut),
+                 marked: getComputedStyle(el).textOverflow === 'ellipsis',
+                 text: (el.textContent || '').trim().slice(0, 46)});
+    }
+    if (seen.length) clip.push({t: Math.round(t * 100) / 100, n: seen.length,
+      unmarked: seen.filter(s => !s.marked).length,
+      worst: seen.sort((x, y) => y.cut - x.cut)[0]});
+  }
+
+  return JSON.stringify({sweep, back, clip,
+    title:{w: ttl.width, h: ttl.height, y: ttl.top}, end:{w: err.width, h: err.height}});
 })()`;
 
 function bail(msg){ console.error('FAIL ' + msg); cleanup(1); }
@@ -183,6 +264,30 @@ function judge(m){
       `title ${m.title.w.toFixed(0)}x${m.title.h.toFixed(0)}`);
   add('L4 the sign-off is laid out at t=33', m.end.w > 100 && m.end.h > 10,
       `endMsg ${m.end.w.toFixed(0)}x${m.end.h.toFixed(0)}`);
+
+  // L5: the back half must not stack text on text. The `co.length > 0` half is
+  // the empty-set lesson (CLAUDE.md 0.6): "no two things collide" is free on a
+  // sweep where only one thing was ever on screen, so the check has to show it
+  // had material to collide.
+  const overlap = m.back.filter(r => r.pairs > 0);
+  const co      = m.back.filter(r => r.n >= 2);
+  const first   = overlap[0];
+  add('L5 no two visible text blocks collide (back half)',
+      overlap.length === 0 && co.length > 0,
+      !co.length ? 'NEVER TWO BLOCKS ON SCREEN AT ONCE -- this test has no force'
+      : first ? `first at t=${first.t}: ${first.worst.a} over ${first.worst.b} by ${first.worst.oy.toFixed(0)}px (${first.worst.area.toFixed(0)}px2)`
+              : `${co.length}/${m.back.length} instants carry 2+ blocks, 0 colliding`);
+
+  // L6: a cut must be MARKED. `clip.length > 0` is the same empty-set guard as
+  // L5 -- if the film never cut anything the rule would be free, so the check
+  // has to show it had something to cut.
+  const uncut = m.clip.filter(r => r.unmarked > 0);
+  const c0    = uncut[0];
+  add('L6 nothing is cut off without saying so',
+      uncut.length === 0 && m.clip.length > 0,
+      !m.clip.length ? 'NOTHING WAS EVER CUT -- this test has no force'
+      : c0 ? `first at t=${c0.t}: ${c0.worst.id} cut ${c0.worst.cut}px unmarked -- '${c0.worst.text}'`
+           : `${m.clip.length} instants cut something, every one marked`);
 
   return out;
 }

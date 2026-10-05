@@ -2,7 +2,7 @@
 
 > 产物两件：
 > **`intro/index.html`**（单文件，双击即可用浏览器打开，可拖进度条）
-> 和 **`intro/THE_REACTOR_GAME_intro.mp4`**（同一个片子的视频版，5.66 MiB，1920×1080，无声 ——
+> 和 **`intro/THE_REACTOR_GAME_intro.mp4`**（同一个片子的视频版，5.61 MiB，1920×1080，无声 ——
 > 由 `_tools/intro_render.js` 逐帧渲染，见 §7）。
 > 本文件是它的**分镜脚本**：每一镜的时间、画面、出场文字，以及**每一行文案的出处**。
 > 生成：2026-10-05（§5 与 §7 于 Phase 92 重写）。
@@ -58,10 +58,24 @@
 | `logoIn` | 18.20 | 厂标入场 |
 | `logoMove` | 20.30 | 缩到 0.55 并滑到左下当水印 |
 | `titleIn` | 22.40 | 标题条 |
-| `specIn` | 27.20 | 三条规格 |
-| `endIn` | 32.00 | `[ERR] Good luck, You'll need it.` |
+| `specIn` | 27.20 | 三条规格（间距 1.2 s：27.20 / 28.40 / 29.60） |
+| `endIn` | 32.00 | `[ERR] Good luck, You'll need it.`（规格在 32.10 归零，它 32.15 起） |
 | `collapse` | 34.30 | CRT 塌成一条线 |
 | `off` | 34.90 | 全黑，片尾 |
+
+**标题不在 `T` 表里，它有两套几何**（`HERO` / `MAST`，都在 `index.html`）：
+
+| 态 | 什么时候 | 值 |
+|---|---|---|
+| **hero** | 22.40 起 | `top 400 / 170px / 字距 .055 / 条纹带 436+64 / 横线 576 / 副题 600` |
+| → 收成页眉 | **26.15 .. 27.05** | `quadOut`，`hd` 0→1 |
+| **masthead** | 27.05 起 | `top 104 / 76px / 字距 .150 / 条纹带 192+30 / 横线 244 / 副题 266` |
+
+**为什么非要有第二套**：hero 那条 400..570 的带子把后面**所有**字都罩住了 ——
+`sp2`(430..484)、`sp3`(542..596)、片尾那句(492..543)、页脚(566..584) 全落在里面。
+**"被盖住"是量不出来的那种错**（所有元素都在盘上、`opacity` 都是 1）。
+大字先做它那一下，然后**抬上去缩成页眉**，把中段让给后面的字 ——
+**不是谁去"让"，是那块字根本不在那儿了**（DECISIONS_2 322）。
 
 ---
 
@@ -79,8 +93,8 @@
 | **S4** | 16.40–18.20 | **全黑**（约 1.8 秒） | —— | 操作员原话："the screen is supposed to go black for a bit of time"。**没有断言** —— 这是一个"没有东西"的镜，只能验它前后两边 |
 | **S5** | 18.20–20.30 | 厂标（SM 六边形）淡入 + 一圈"叮"的圆环收拢 | `SYNTHESIS MANUFACTURING CORPORATION` | 收拢的动作是个纯 CSS 环，没有声音 |
 | **S6** | 20.30–22.40 | 厂标缩到 0.55、滑到左下角，变成常驻**水印** | 同上 | 水印落点避开了 HUD 时间码（都在左下；相差 150px 而不是 52px） |
-| **S7** | 22.40–27.20 | 标题条压满全宽（危险条纹）+ 转动的堆芯徽记 | `THE REACTOR GAME` / `SUBSPACE REACTOR INSTALLATION · OPERATOR SHIFT SIMULATION` | 底栏那句在此时翻成琥珀色 —— 全片唯一的"实时"提示 |
-| **S8** | 27.20–32.00 | 三条规格卡依次升起 | `NO CONTROL RODS` / `THREE INDIRECT SYSTEMS` / `ONE SHIFT TO GET IT RIGHT` | **全片唯一不是游戏原文的文案**（见 §3.3） |
+| **S7** | 22.40–27.20 | 标题条压满全宽（危险条纹）+ 转动的堆芯徽记。**末尾 0.9 s（26.15–27.05）整块抬上去缩成页眉** | `THE REACTOR GAME` / `SUBSPACE REACTOR INSTALLATION · OPERATOR SHIFT SIMULATION` | 底栏那句在此时翻成琥珀色 —— 全片唯一的"实时"提示。**缩小不是"让位"，是那块字不再占中段**（§1 的两套几何） |
+| **S8** | 27.20–32.00 | 三条规格卡依次升起（**间距 1.2 s**），退场在 32.10 归零 | `NO CONTROL RODS` / `THREE INDIRECT SYSTEMS` / `ONE SHIFT TO GET IT RIGHT` | **全片唯一不是游戏原文的文案**（见 §3.3）。此镜开始时标题**已经在页眉位** —— 中段 300..620 是空的 |
 | **S9** | 32.00–35.00 | `[ERR]` 那行 → CRT 塌成一条线 → 那条线也收成一个点 → 全黑 | `[ERR] Good luck, You'll need it.` / `ICARUS INSTALLATION · SECTOR 04 · REPORT FOR DUTY` | 塌线只压 `#film`，**不碰播放器** |
 
 HUD（左上两行 tag、右上 REC、左下 `T+00:00:00` 时间码）在 S1 起亮、S3 灭 ——
@@ -234,8 +248,8 @@ HUD（左上两行 tag、右上 REC、左下 `T+00:00:00` 时间码）在 S1 起
 
 ```
 D:\nodejs\node _tools/intro_check.js               # 24 ok / 0 failed
-D:\nodejs\node _tools/intro_render.js --check      #  5 ok / 0 failed
-python         _tools/intro_mutants.py             # 10/10 变异各红在自己那条 + 1/1 FOLLOW 绿
+D:\nodejs\node _tools/intro_render.js --check      #  7 ok / 0 failed
+python         _tools/intro_mutants.py             # 13/13 变异各红在自己那条 + 3/3 FOLLOW 绿
 ```
 
 - **`intro_check.js`** 造一个刚够用的假 DOM，把 `index.html` **自己的 `<script>` 字节**
@@ -243,11 +257,23 @@ python         _tools/intro_mutants.py             # 10/10 变异各红在自己
   **COVERAGE**（第 t 秒这一幕该在，因为分镜这么说）和 **GUARD**（这个缺陷不许回来）。
   另外整条时间轴按 0.05 s 扫一遍，断言没有任何 `NaN`/`undefined` 进到样式里。
 - **`intro_render.js --check`** 让浏览器在 t=3.0..12.5 上每 0.25 s 采一次，
-  读回 `getBoundingClientRect()` 与行高，判 5 条 `L*` 断言。
+  读回 `getBoundingClientRect()` 与行高，判 5 条 `L*` 断言；
+  **另在后半段（22.0..34.2 每 0.25 s）与全程（0..34.5 每 0.5 s）各扫一遍**，
+  判 `L5`（有没有两块字压在一起）和 `L6`（有没有字被裁掉而没记号）。
   **浏览器是尺子，判定写在 Node 里** —— 量了又判的人会悄悄改判据（DECISIONS_2 309）。
 - **`intro_mutants.py`** 驱动**两个** harness，每个变异断言**指定那一条**变红。
   **只红一条才说明断言是精确的。** 另有一类 **FOLLOW**：必须**保持绿**
-  （`diag-rowsize`：行高 27→40）—— 一条对什么都会红的检查和对什么都不会红的检查一样没用。
+  （`diag-rowsize` 行高 27→40、`mast-bigger-type` 页眉字号 76→100、
+  `diag-bigger-type` 诊断字号 19→21）—— **一条对什么都会红的检查，
+  和对什么都不会红的检查一样没用**（DECISIONS_2 302 / 325）。
+
+**`L5` 和 `L6` 这两条都是"用户用眼睛报出来的那个错"逼出来的**（Phase 94）：
+
+- **`L5`** 数的是**同屏两两相交面积**，有效不透明度 = 自己的 × **每一层祖先的**
+  （三张卡是整组淡入的），墨用 `Range.selectNodeContents()` 拿而**不用边框盒**
+  —— `#title` 的边框盒是整个 1920，量它永远红（DECISIONS_2 324）。
+- **`L6`** 断言的是"**裁了要有记号**"（`text-overflow:ellipsis`），**不是"不许裁"**
+  —— 终端面板在边缘裁一条长行是对的。`diag-bigger-type` 那条 FOLLOW 专门钉住这一点。
 
 **本轮真的抓到并修掉的四个片子缺陷**（前三条的细节见 PROGRESS Phase 91，
 第四条是 Phase 92 新发现的两个之一）：
@@ -297,7 +323,7 @@ D:\nodejs\node _tools/intro_render.js --check            # 只跑排版断言，
 | 尺寸 / 编码 | 1920×1080、H.264 **High**、`yuv420p` |
 | 帧率 / 帧数 | 30 fps、**1051 帧写入 = 1051 帧读回** |
 | 时长 | **35.033 s**（= 1051/30） |
-| 体积 / 码率 | **5,932,568 字节（5.66 MiB）** / 1.35 Mbps |
+| 体积 / 码率 | **5,881,392 字节（5.61 MiB）** / 1.34 Mbps |
 | 音频 | **无** |
 
 **三个必须做对的地方**（都在 `intro_render.js` 的注释里）：
