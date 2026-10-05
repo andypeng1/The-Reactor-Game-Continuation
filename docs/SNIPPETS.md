@@ -1274,3 +1274,46 @@ return mat.diffuse_color
 
 **⑥ 变异要覆盖每条规格**，其中 `--swap-rgb`（只换颜色，不换面用哪个 slot）**是专为颜色那条加的** ——
 `--swap-mats`（换面用哪个 slot，颜色不变）**逼不红**它。**专为它造一个变异，别让那条断言装饰着。**
+
+## 5.22 量「一个声部比其它一切响多少」：底必须**定义上**不含它 ★ Phase 95
+
+一个「余量」是 `A - B`，而**分母是选出来的**。这里的三条，任何「减去背景」的量法都用得上。
+
+**① 底不能是「混合减去被测对象」—— 那减掉的是它的第二份拷贝。**
+我的编曲把 lead 混进 `mix` 之后，`mix - lead_isolated` 里剩下的**还有 lead 本身**。
+正确做法是让**装配**给你一个定义上无 lead 的底。前提是装配对电平**线性**：
+
+```python
+NONE_ = ms.assemble(ms.with_lead(base, 0.0, 0.0))   # 定义上无旋律的伴奏
+DRY_  = ms.assemble(ms.with_lead(base, ms.LEAD_DRY, 0.0))
+WET_  = ms.assemble(ms.with_lead(base, 0.0, ms.LEAD_SEND))
+LEAD_ = [DRY_[i] - NONE_[i] + WET_[i] - NONE_[i] for i in (0, 1)]
+```
+（**干**与**湿**分开装配再相减，是因为 wet 会进混响总线；直接 `assemble(base)` 会把
+混响也算进「其余一切」里。）
+
+**② 功率：先把信号加起来，再量。** 两个**分别**量的带功率之和 ≠ **和的**带功率 ——
+干湿在音符自己那条带里**相关**，这里差 **约 3 dB**。
+**「两半不相关」是你不知道、也不该假设的那件事。**
+
+**③ 幂等，否则双倍。** `with_lead` 返回的表里 lead 已清空，所以 `assemble` 自己调它时
+不会再叠一次：
+
+```python
+def with_lead(stems, dry=None, send=None):
+    d = LEAD_DRY if dry is None else dry
+    s = LEAD_SEND if send is None else send
+    return dict(stems, mono=stems["mono"] + d * stems["leadD"],
+                send=stems["send"] + s * stems["leadS"],
+                leadD=np.zeros(len(stems["mono"])), leadS=np.zeros(len(stems["mono"])))
+```
+
+**④ 缓存里存的是**单位电平**的那个声部，电平在装配时施加一次。**
+否则改了电平再 `--reuse`，**渲染、母带、检查、回放全都完美，而送出去的是旧电平**
+（§0.15 那一族最难认的一张脸，取舍 331）。
+配一条护栏：旧缓存缺 `leadD` 时**直接报错说清楚怎么修** ——
+不要让它被容忍过去，产出一首**什么都正常、就是没有旋律**的曲子。
+
+**⑤ 窄带 / 宽带是两个问题。** 窄带（基频 ±1/6 八度）问「听不听得出音高」，
+宽带（基频到 4×）问「听不听得出这个乐器」。
+实测：旋律可能**谐波不低而基频很低**（读成织体、不读成曲调），所以两条都要报。

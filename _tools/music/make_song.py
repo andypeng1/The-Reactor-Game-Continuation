@@ -135,11 +135,12 @@ PROG = [
     ("As", "A1", ["A2", "G3", "C4", "D4"]),
 ]
 
-# The lead figure.  Deliberately three notes and heavy repetition: the source
-# material is a machine facility, and a signal tone that keeps returning reads
-# as one.  (F, G, A, C, D -- the measured pentatonic core.)
-MOTIF = ["C5", "A4", "G4"]
-MOTIF_BEATS = [0.0, 1.5, 2.5]
+# The lead material lives in ONE place, further down: see "the lead" after
+# level_curve(), which also explains why it moved.  What used to stand here was
+# a single three-note motif scheduled identically on every even bar from 16 to
+# 96 -- the whole tune, 97 bars of it -- and that is literally what the
+# operator reported hearing.  The motif survives intact as theme A; it is no
+# longer the whole piece.
 
 # ---------------------------- the melody's level ----------------------------
 # The operator's second report was "I can hardly hear the melody", and the
@@ -156,6 +157,31 @@ MOTIF_BEATS = [0.0, 1.5, 2.5]
 #       dry 10x  2.5x       +5.4     +15.9    | 0.115  +0.801
 #       dry 12x  2.5x       +6.9     +17.4    | 0.115  +0.801
 #       dry 16x  1.0x       +9.3     +19.7    | 0.114  +0.803
+#
+# ---- [CORRECTION] that table was wrong, and the third report found it out. ----
+#
+# Those rows were not measurements of the raised lead; they were an
+# extrapolation: the isolated buffer's bandpower multiplied by dry^2.  The
+# multiplier is right (the mix is linear) but the baseline it multiplied was
+# not, so the whole column overstates the melody.  Re-measured against a rest
+# that genuinely contains no lead -- which at the time did not exist, because
+# the only stem set available still had the lead in it -- the SAME old motif at
+# the SAME 12x/2.5x sits at -4.5 dB narrow over 105 windows, not +6.9.  An
+# 11.4 dB error, and it went unnoticed because the number was plausible.
+#
+# The real state all along: the lead ran 3 to 4.5 dB UNDER its own accompaniment
+# in its own critical band.  That is exactly what "I can hardly hear the melody"
+# describes, and it is why raising it did not fix the complaint.
+#
+# So +6 dB IS a chosen criterion and the level below is set by MEASURING the
+# shipped line against a lead-free rest at each level (lead_margin.py):
+#
+#       1x  -3.1 |  2x  +1.3 |  3x  +4.5 |  4x  +6.8 |  6x +10.2 |  8x +12.6
+#
+# 4x is the first point that clears it.  The two lessons are worth more than
+# the number: a margin must be measured against an accompaniment that has no
+# melody in it, and an extrapolation is not a measurement no matter how
+# plausible its output.
 #
 # Shipped was 11.8 dB UNDER its own accompaniment in its own critical band --
 # below the masking threshold, which is why it read as texture rather than as a
@@ -182,8 +208,8 @@ MOTIF_BEATS = [0.0, 1.5, 2.5]
 # for a +12.0 dB level, i.e. the square law holds -- and it sounds in only 22%
 # of the track.  Sparse, and present while it is there.  To step it back,
 # 10x / 2.5x measures +5.4 dB narrow.
-LEAD_DRY = 1.02         # 0.085 * 12
-LEAD_SEND = 0.40        # 0.16 * 2.5
+LEAD_DRY = 4.08         # 0.085 * 48 = the 12x above, times the 4x that the
+LEAD_SEND = 1.60        # re-measurement says is needed to clear +6 dB narrow
 
 
 def chord_bar(bar):
@@ -327,6 +353,185 @@ def level_curve():
     for s, e, db in LEVELS:
         g[s:min(e, N_BARS)] = 10.0 ** (db / 20.0)
     return bar_env(dsp.smooth(g, 2))
+
+
+# ============================== the lead ==============================
+# The operator's third report was "I listened and it is just one melody
+# playing, with no climax".  He is describing the code that used to be here: a
+# single three-note figure, the same notes in the same order on every even bar
+# from 16 to 96.  The level architecture (SECTIONS, LEVELS) did have a shape --
+# a measured arc, a deep patch, a rebuild -- but shape in LEVEL is not shape in
+# MATERIAL, and a tune that never changes cannot have a climax.  A climax is a
+# change; if every bar is the same bar, there is nothing for it to be a
+# departure from.
+#
+# What is measurable here and what is not has to be kept apart, because this is
+# the third round in which the operator's ear found something the panel could
+# not:
+#
+#   MEASURABLE, and measured (see _tools/music/lead_margin.py): each note's
+#   margin over the accompaniment sounding at that instant -- "is it audible".
+#   That is the same per-note ruler the previous round used, and it must stay
+#   green here too, or the new material is inaudible and the development is
+#   academic.  It is re-run below.
+#
+#   NOT MEASURABLE HERE: whether the development READS as development.  "Is it
+#   varied" has no meter -- there is no number that says "enough variation".
+#   So what is guaranteed is only the mechanical part: the notes are not the
+#   same notes twice, the line climbs where a climax needs it to, and a second
+#   voice moves against it.  Whether that is a tune is the operator's call, and
+#   it will be stated as his call, not dressed up as a measurement.
+#
+# The vocabulary: F major pentatonic -- the five notes both key estimates
+# agreed on (module docstring) -- written as scale STEPS so a phrase can be
+# transposed by moving an index and never leaves the set.
+SCALE = ["F4", "G4", "A4", "C5", "D5", "F5", "G5", "A5", "C6"]
+
+# Theme A -- the machine's own signal tone, unchanged from the first version.
+# Three syncopated notes that fall back to where they started.  It is the
+# piece's identity and it is deliberately the plainest material here: the
+# point of a recognisable cell is that it can be quoted, answered and climbed.
+A_STEPS = [3, 2, 1]              # C5 A4 G4
+A_BEATS = [0.0, 1.5, 2.5]
+A_DURS = [0.50, 0.50, 0.75]
+
+# Theme B -- the contrast A cannot provide.  A ends where it began; B ASCENDS
+# and stays up, which is the shape a climax is made of.  Eight beats (two
+# bars) climbing the set to a held top note.  This is the only material in the
+# piece that finishes higher than it starts.
+B_STEPS = [1, 2, 3, 4, 5, 7]     # G4 A4 C5 D5 F5 A5 -- up to a held A5
+B_BEATS = [0.0, 1.0, 2.0, 3.0, 4.5, 6.0]
+B_DURS = [0.85, 0.85, 0.85, 1.30, 1.45, 2.30]
+# B2 is B moved up one scale step, so it tops out on C6, the ceiling of the
+# set.  Used for the last statement, so the piece finishes its climb at the top
+# rather than just below it.
+B2_STEPS = [2, 3, 4, 5, 6, 8]    # A4 C5 D5 F5 G5 C6
+
+# The counter-line: a slow sustained answer that runs against the plucked
+# motif in the second body.  It DESCENDS while A is a repeated upward cell, so
+# the two voices move in contrary motion and neither is "the tune, again".
+CTR_STEPS = [7, 6, 5, 4, 3]      # A5 G5 F5 D5 C5
+
+# Voice per role.  All three are the same `pluck` generator so the lead stays
+# ONE instrument -- the octave profile was matched with it, and changing the
+# timbre family would move a number already pinned.  Only the partial count
+# moves: the motif is bright and short, the climax rounder, the counter a swell.
+VOICE = {"a": dict(bright=5), "b": dict(bright=4), "ctr": dict(bright=2)}
+
+
+def section_of(bar):
+    for name, s, e, _g in SECTIONS:
+        if s <= bar < e:
+            return name
+    return "final"
+
+
+def lead_plan():
+    """The whole lead line, as (bar, beat, note, dur, tag) events.
+
+    Built in one place on purpose: the renderer and the margin ruler both read
+    THIS list, so a ruler cannot end up measuring its own private copy of the
+    schedule while believing it is measuring the piece.
+
+    The arc, in bar numbers (1 bar = 2.689 s; section names from SECTIONS):
+
+      15-34  groove    A stated, then answered a step out -- call and response
+      41-52  rebuild   A cut to its two-note head, climbing a step per group,
+                       closing on a rising run into the drop
+      52-55  climax    B, then B2 -- the ascent, over the quiet bed, right
+                       after the riser: the melodic lift
+      56-82  groove2   A returns under a descending counter-line (contrary
+                       motion); the last four bars restate B2 over A -- the
+                       final peak, landing on the loud body
+      82-90  outro     the melody drops out entirely -- the release
+      90-97  final     A augmented (notes ~twice as long), winding down
+    """
+    ev = []
+
+    def play(bar, steps, beats, durs, tag, shift=0):
+        """Place a phrase at (bar, beat 0), folding beats past 4 into the
+        following bars so a two-bar phrase is written as one list.  `shift`
+        transposes by scale steps, clamped to the set."""
+        for s, b, d in zip(steps, beats, durs):
+            i = min(max(int(s) + shift, 0), len(SCALE) - 1)
+            ev.append((bar + int(b // 4), float(b % 4), SCALE[i],
+                       float(d), tag))
+
+    # -- groove 15-34 (lead 0.45): A, answered out of phase -----------------
+    # Statements land on even bars -- the motif has always been on even bars
+    # and its syncopation needs the space after it.  Alternating the
+    # transposition 0/+1/0/-1 gives the call-and-response the first version did
+    # not have, using the same three notes, so the identity survives the
+    # development instead of being replaced by it.
+    seq = [0, 1, 0, -1, 0, 1, 0, -1]
+    for k, bar in enumerate(range(16, 34, 2)):
+        play(bar, A_STEPS, A_BEATS, A_DURS, "a", shift=seq[k % len(seq)])
+
+    # -- rebuild 41-52 (lead 0.28): a two-note cell climbing ----------------
+    # The cell is A's head (C5 A4).  Raising it one step every two bars lifts
+    # the tension across the whole rebuild; the last group is a run that lands
+    # on the downbeat of the climax instead of merely stopping.
+    for k, bar in enumerate(range(42, 52, 2)):
+        play(bar, A_STEPS[:2], [0.0, 1.5], [0.45, 0.60], "a", shift=k)
+    play(51, [2, 3, 4, 5], [0.0, 1.0, 2.0, 3.0], [0.40, 0.40, 0.40, 0.55], "a")
+
+    # -- climax 52-55 (lead 0.85): the ascent -------------------------------
+    play(52, B_STEPS, B_BEATS, B_DURS, "b")
+    play(54, B2_STEPS, B_BEATS, B_DURS, "b")
+
+    # -- groove2 56-82 (lead 0.45): A over a descending counter-line --------
+    seq2 = [0, 0, 1, 0, -1, 0, 1, -1, 0, 0]
+    for k, bar in enumerate(range(58, 78, 2)):
+        play(bar, A_STEPS, A_BEATS, A_DURS, "a", shift=seq2[k % len(seq2)])
+    # one long note every four bars, two bars long, so it is a swell and not a
+    # hit; it descends while the motif repeats, which is the contrary motion.
+    for k, bar in enumerate(range(59, 78, 4)):
+        play(bar, [CTR_STEPS[k % len(CTR_STEPS)]], [0.0], [2.0 * BAR], "ctr")
+
+    # -- final peak 78-81: B2 over A, both at once --------------------------
+    # The last four bars of the loud body.  Two statements together -- the
+    # rising theme on top, the returning motif beneath -- so the peak is the
+    # densest moment as well as the loudest, and the drop into the outro has
+    # something to fall from.
+    play(78, B2_STEPS, B_BEATS, B_DURS, "b")
+    for bar in (78, 80):
+        play(bar, A_STEPS, A_BEATS, A_DURS, "a", shift=1)
+
+    # -- final 90-97 (lead 0.35): A, augmented ------------------------------
+    # The same three notes at roughly twice the duration: recognised, but
+    # slowed, which is how a machine winds down rather than stops.
+    play(92, A_STEPS, [0.0, 3.0, 5.0], [1.00, 1.00, 1.60], "a")
+    play(95, [3], [0.0], [3.00], "b")     # C5 held, the signal fading out
+
+    return ev
+
+
+def render_lead(gb, dry=None, send=None):
+    """The lead voice alone, as (dry, send), so it can be measured apart from
+    the rest of the mix.
+
+    Split out of render_stems for two reasons.  First, the margin ruler has to
+    hear THIS lead against the rest of the piece, and the only honest way to do
+    that is to render the same plan through the same code -- not to re-derive
+    the notes from a private copy of the schedule, which would measure the
+    copy.  Second, the per-note dry/send split is what makes the wet/dry ratio
+    tunable, because the assembly is linear in the two.
+
+    Levels default to the shipped constants, so calling this with no arguments
+    gives the lead as it is actually heard; render_stems calls it at UNIT level
+    and caches that, so the level stays a knob (see with_lead)."""
+    d = LEAD_DRY if dry is None else dry
+    s = LEAD_SEND if send is None else send
+    dm = np.zeros(N)
+    sm = np.zeros(N)
+    for bar, beat, note, dur, tag in lead_plan():
+        gl = gb["lead"][bar] if 0 <= bar < N_BARS else 0.0
+        if gl <= 0.01:
+            continue
+        p = dsp.pluck(hz(note), dur, SR, **VOICE[tag])
+        add(dm, p, at(bar, beat), d * gl)
+        add(sm, p, at(bar, beat), s * gl)
+    return dm, sm
 
 
 def add(buf, sig, start_s, gain=1.0):
@@ -629,13 +834,28 @@ def render_stems():
                 add(mono, p, at(bar, i * 0.25), 0.048 * ga)
                 add(send, p, at(bar, i * 0.25), 0.06 * ga)
 
-        # lead figure every 2 bars
-        gl = gb["lead"][bar]
-        if gl > 0.01 and bar % 2 == 0:
-            for note, beat in zip(MOTIF, MOTIF_BEATS):
-                p = dsp.pluck(hz(note), 0.55, SR, bright=5)
-                add(mono, p, at(bar, beat), LEAD_DRY * gl)
-                add(send, p, at(bar, beat), LEAD_SEND * gl)
+        # (the lead is deliberately NOT scheduled here any more.  See the pass
+        # after this loop: a per-bar hook cannot carry theme B, which is two
+        # bars long, and it left the melody's description split between the
+        # loop and the ruler that measures it.)
+
+    # ---------- lead: a developed line, scheduled as a whole ----------
+    # Cached at UNIT level, NOT mixed in here.  See with_lead: the level is
+    # applied once, at assembly, so that changing it is a knob rather than a
+    # six-minute render followed by a silent chance to ship the old level.
+    lm, ls = render_lead(gb, dry=1.0, send=1.0)
+
+    # ---------- fills: the bar before each drop, accelerating ----------
+    # A climax has to be ARRIVED at.  Without a fill the densest bar is just a
+    # step, which is part of what "no climax" points at.  The roll doubles its
+    # rate across the bar (8ths then 16ths) and swells into the downbeat.
+    for fbar in (51, 77):
+        for i in range(16):
+            b = i * 0.5 if i < 8 else 4.0 + (i - 8) * 0.25
+            g = 0.030 + 0.055 * (i / 15.0)
+            tk = dsp.tick(0.055, SR, seed=95 + i)
+            add(mono, tk, at(fbar, b), g)
+            add(send, tk, at(fbar, b), 0.7 * g)
 
     # ---------- section markers ----------
     for bar in (12, 34, 52, 90):
@@ -666,8 +886,33 @@ def render_stems():
     # would only move a number I have already matched.
     a1 = air_bed(seed=77)
     a2 = air_bed(seed=78)
-    return dict(mono=mono, send=send, pad=pad,
+    return dict(mono=mono, send=send, pad=pad, leadD=lm, leadS=ls,
                 airC=0.5 * (a1 + a2), airD=0.5 * (a1 - a2))
+
+
+def with_lead(stems, dry=None, send=None):
+    """Fold the cached unit-level lead into mono/send at the current level.
+
+    This exists because of a trap that cost two rounds.  The lead used to be
+    mixed into the cached mono/send at whatever LEAD_DRY was when the cache was
+    built, so changing the level and running `--reuse` shipped the OLD level
+    and said nothing -- the §0.15 family of failure, except that this one
+    renders, masters, measures and plays back perfectly.  Kept out of the
+    cache, the level is a knob again: a sweep costs one assembly per point
+    instead of a six-minute render, which is the difference between measuring a
+    level and guessing at one.
+
+    `dry=0, send=0` is the exact accompaniment with no lead in it, which is
+    what a margin has to be measured against.
+
+    Idempotent: the result carries an empty lead, so assemble() -- which calls
+    this itself -- cannot fold the same lead in a second time.  Without that,
+    every caller that prepared stems by hand would silently get double lead."""
+    d = LEAD_DRY if dry is None else dry
+    s = LEAD_SEND if send is None else send
+    return dict(stems, mono=stems["mono"] + d * stems["leadD"],
+                send=stems["send"] + s * stems["leadS"],
+                leadD=np.zeros(len(stems["mono"])), leadS=np.zeros(len(stems["mono"])))
 
 
 # Width knobs.  The first version used two fully independent reverbs, one per
@@ -682,9 +927,13 @@ ASSEMBLE = dict(core=0.95, rev_amt=0.30, rev_diff=0.32, dly_amt=0.055,
 
 
 def assemble(stems, core=None, rev_amt=None, rev_diff=None, dly_amt=None,
-             pad_amt=None, air_amt=None, air_wid=None, ret_diff_ir=False):
+             pad_amt=None, air_amt=None, air_wid=None, ret_diff_ir=False,
+             lead_dry=None, lead_send=None):
     """Stereo assembly.  Returns (L, R), or the raw returns when
-    ret_diff_ir, which is how the width budget is measured term by term."""
+    ret_diff_ir, which is how the width budget is measured term by term.
+
+    The lead level enters HERE, from with_lead, not from the cache."""
+    stems = with_lead(stems, lead_dry, lead_send)
     p = dict(ASSEMBLE)
     for k, v in (("core", core), ("rev_amt", rev_amt), ("rev_diff", rev_diff),
                  ("dly_amt", dly_amt), ("pad_amt", pad_amt),
@@ -1077,6 +1326,14 @@ def load_stems():
     which is not being tuned."""
     z = np.load(STEMS)
     stems = {k: z[k].astype(np.float64) for k in z.files}
+    # A cache from before the lead was split out has no leadD/leadS, and the
+    # failure would otherwise be an opaque KeyError deep inside assemble -- or,
+    # worse, if it were silently tolerated, a track with no melody in it that
+    # renders and masters perfectly.  Say what is wrong and how to fix it.
+    if "leadD" not in stems:
+        raise SystemExit(
+            "the cache at %s predates the lead/level split (no leadD key).\n"
+            "Re-render it: python make_song.py --stems" % STEMS)
     a1 = air_bed(seed=77)
     a2 = air_bed(seed=78)
     return dict(stems, airC=0.5 * (a1 + a2), airD=0.5 * (a1 - a2))
@@ -1095,7 +1352,7 @@ def probe(stems):
     reading the final number only says which way to turn the screw, not which
     screw.  So each contributor is measured on its own."""
     print("== profile, dry mono core (no air, no EQ, no dynamics) ==")
-    mp = octave_profile(stems["mono"])
+    mp = octave_profile(with_lead(stems)["mono"])
     for i, (a, b) in enumerate(zip(OCT_EDGES[:-1], OCT_EDGES[1:])):
         print("    %5d-%-5d  %+6.1f  target %+6.1f  delta %+5.1f"
               % (a, b, mp[i], TARGET_DB[i], mp[i] - TARGET_DB[i]))

@@ -1027,3 +1027,65 @@ of the file is left empty with the t-driven hook written down, because a "have I
 already" flag would turn scrubbing into a random walk.
 
 See PROGRESS.md Phases 91 and 92, DECISIONS 303 to 312.
+
+## The music - `asstes/music/ReactorShift.{ogg,mp3}`
+
+An original track, **263.84 s**, 89.25 bpm, F major pentatonic, 97 bars. It is composed in
+Python by `_tools/music/make_song.py` (numpy only - no model, no torch, no sampled material)
+and encoded with ffmpeg. Two encodes are shipped because Roblox and browsers disagree about
+codecs; both are the same audio.
+
+**Its specification is a measurement, not a mood.** `asstes/music/ReactorStartup.mp3` is the
+reference the operator named (a Portal 2 remix), and every number in `make_song.TARGET` was
+measured off it with `_tools/music/analyze.py`: the per-octave profile, the 10 s block
+band shares, the p5/p95 dynamic arc, side/mid and L/R correlation. **No melody was
+transcribed from it** - it fixes the *shape*, not the notes. The reference and its report are
+**gitignored and never committed** (someone else's master, and this repository is public);
+only the original track and its own report are tracked.
+
+**The melody is a table, not a schedule buried in a render loop.** `lead_plan()` returns
+104 `(bar, beat, note, dur, tag)` events, and **the renderer and every ruler read that same
+table** - so a ruler cannot end up measuring a private copy of the composition. Five themes:
+`a` the three-note motif stated and then answered by transposition, `b` an ascending line
+(B2 tops out on C6), `ctr` a descending counter-line moving in contrary motion, plus two
+accelerating fills and a final augmented statement. The lead sounds in 38.3% of the piece
+and is deliberately absent for bars 81-91.
+
+**The level of that voice is a knob, not a cache artifact.** The cached stems hold the lead at
+*unit* level; `with_lead()` applies the level once at assembly, and is idempotent so nothing
+can fold the same lead in twice. Before this, changing the level and running `--reuse`
+re-rendered, re-mastered, re-measured and played back perfectly - while shipping the old level.
+
+**What the audio checks are.** `_tools/music/check_song.py` re-measures 13 properties on the
+**delivered mp3 and ogg themselves** (duration, peak, clipping, RMS, dynamic arc, octave bands
+and their mean, the texture of the 2-8 kHz top end, stereo width, correlation, DC, click
+steps, edge fades) against targets imported from `make_song.py` - deliberately imported rather
+than retyped, because a checker with its own copy of the spec certifies the wrong thing the day
+they disagree. Every check has a variant that must turn it red; `--variants` runs all 11 and
+fails if any leaves its target green.
+
+`_tools/music/lead_margin.py` answers a different question: **how far above its own
+accompaniment is the melody, per note, in the note's own critical band.** It is measured
+PRE-master, because the master EQ loop pins the octave profile and prominence is exactly what
+such a loop flattens. Two things define it, and both cost a round to learn: **the rest it
+divides by must contain no melody at all** - `with_lead(stems, 0, 0)`, which is exact because
+assembly is linear in stem levels - and **power is measured on the summed signal**, not as the
+sum of two separately measured bandpowers (those differ by 3 dB here because dry and wet are
+correlated in the note's own band). Measured now: median **+6.5 dB** narrow-band, **0 of 104
+events below 0 dB**, and **+12.8 dB in the climax against +6.4 in the groove**.
+
+**What is not verified: whether it sounds good.** Every figure above is a ruler reading. The
+ruler can show that the melody stands out of its accompaniment and that the middle of the
+track is unlike its ends (the 10 s block share of the mid band runs 14% -> 55% -> 23% across
+140-150 s, where the old version never left 3-21%) - it cannot show that this is a tune. That
+judgement belongs to the operator's ears, and it is the third time he has supplied it.
+Nothing has been changed in Roblox: there are no upload credentials here, and
+`Workspace.Sounds` is part of the world.
+
+Run it with `python _tools/music/make_song.py` (add `--stems` to re-render the cache, `--reuse`
+to assemble from it, `--probe` to print the raw profile). The three music harnesses are
+**deliberately not wired into `_tools/run_tests.sh`** - that gate is seconds; `check_song.py`
+is about ten minutes and `lead_margin.py` assembles four full mixes.
+
+See PROGRESS.md Phases 93 and 95, DECISIONS 313 to 321 and 327 to 333, and
+`docs/SYSTEMS.md` section 2.16.
