@@ -305,5 +305,23 @@
       而它要匹配的那两版（Phase 87 的 MeshPart、Phase 88 的 66 个 Part）**都已经不在世界里**。
       文件留在盘上作历史，别跑它。
 
+### 3.6 音乐（Phase 93）
+
+`asstes/music/ReactorShift.{ogg,mp3}`（**263.84 s / 89.25 bpm / F 大调五声**，按量出来的规格写的原创曲）
+**已经在盘上、已经进仓库、已经过了 13 项检查 + 11 个变异**（`_tools/music/check_song.py`）。
+
+- [ ] **进 Roblox 这件事没做，而且是卡在凭据上，不是卡在代码上。**
+      `ROBLOX_OPEN_CLOUD_API_KEY` 与 creator id **都没设**，所以 `upload_asset` 走不通。
+      **要接的话**：上传成 Audio 资产 → 拿 `rbxassetid`。**落地点没有现成的插槽** ——
+      普查在 `PROGRESS.md` 3650 行附近：`SoundService` 底下是 **7 条总线**
+      （其中 `MusicSounds` 实测 `Volume = 1`），`Workspace.Sounds` 里是 **226 个散件 Sound**，
+      **没有任何一个叫 `Music`**。所以「接哪儿」是个**新决定**，不是找一个空位填进去。
+      **动手前先问**：`Workspace.Sounds` 是**世界的一部分**（§0.12 第 3 条）。
+- [ ] **听感没验过，也验不了** —— texture 与旋律余量是**尺子**不是耳朵（取舍 313/317）。
+      「下雨感没了」「旋律清楚了」**只有操作员能判**；他下一次的听后感就是下一次测量。
+- [ ] **`_tools/music/` 的三个检查器没有进 `run_tests.sh`**：`check_song.py` 要
+      **10 分钟量一版**（解码两个格式 + 11 个变异各自跑一遍），和现在那条秒级流水线不是一个量级，
+      所以**故意没挂**。要挂的话得先给它一个 `--fast` 档（只跑真文件、跳过变异）。
+
 ---
 
