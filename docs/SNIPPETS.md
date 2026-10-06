@@ -1317,3 +1317,49 @@ def with_lead(stems, dry=None, send=None):
 **⑤ 窄带 / 宽带是两个问题。** 窄带（基频 ±1/6 八度）问「听不听得出音高」，
 宽带（基频到 4×）问「听不听得出这个乐器」。
 实测：旋律可能**谐波不低而基频很低**（读成织体、不读成曲调），所以两条都要报。
+
+## 5.23 把**误合并**的容器按索引拆回去：护栏 + 拆完再量几何 ★ Phase 96
+
+一个「把同名的根并进一个」的坏循环留下的容器，可以**按索引**拆回去 ——
+**前提是每一条边界都能先证明**。这比「看起来对」重要，因为**拆错就是又一次不可逆的搬运**。
+
+**① 三条护栏，任何一条不过就整个 `return`（一个孩子都不动）：**
+
+```lua
+local function split(nm, cuts, ownParts, ownFirst)
+    local rs = {}
+    for _, c in ipairs(W:GetChildren()) do if c.Name == nm then table.insert(rs, c) end end
+    table.sort(rs, function(a, b) return np(a) > np(b) end)     -- 最大的那个是被合并的目标
+    local big, kids = rs[1], rs[1]:GetChildren()
+    local empties = {}
+    for i = 2, #rs do if np(rs[i]) == 0 then table.insert(empties, rs[i]) end end
+
+    local total = 0
+    for _, n in ipairs(cuts) do total = total + n end
+    if total ~= #kids then return end                    -- ① 各块之和 = 孩子数
+    -- …逐块量部件数与包围盒…
+    if got[1] ~= ownParts then return end                -- ② 孩子还在追加顺序上
+    if #empties < #blocks - 1 then return end             -- ③ 有足够的同名空壳接住
+    for i = 2, #blocks do
+        for _, k in ipairs(blocks[i]) do k.Parent = empties[i - 1] end
+    end
+end
+```
+
+**② 拆完必须再量一次几何 —— 护栏只管算术。** 四个分块要**真的是四段相邻的几何**
+（`x163..178 / 178..193 / 193..208 / 208..223`，15 stud 一段首尾相接），
+而不是四个各占一角的杂乱集合。实测：
+
+```
+MainHallwaySegment   9 roots, big 224 孩子 / 1827 件, 空壳 3 → 459 + 456×3 = 1827 ✓
+HallwayRoomConnector 8 roots, big  74 孩子 /  102 件, 空壳 2 → 20 孩子 48 件 + 27 + 27 ✓
+```
+
+**③ 「同名空壳」是被合并方的残骸，也是接住它的容器。** 空壳**不要删** ——
+它们带着 `ParkedName`/`UnparkedAt` 属性，**`Model:GetPivot()` 在孩子被移走后仍然有效**，
+是唯一还能指出「丢了哪一份分组」的东西（取舍 336）。
+
+**④ 不是所有容器都能拆。** 当一个容器的**名字本身就没有信息**（45 个根**全叫 `Model`**）、
+零件上**没有任何父属记录**、只剩一堆**彼此只隔 2–15 stud** 的 pivot 时 ——
+最近的分配会跑通、会给出 45 个大小合理的容器、**什么都不报错**，而它**大概率是错的**。
+**那是「挑的数」，不是「量出来的数」**（取舍 274/340）。**这一格只能披露，不能补。**

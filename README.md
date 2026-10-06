@@ -109,6 +109,42 @@ Stats, Alarms, Lights, RoomLights, Sounds, ...) stay at the top level because th
 systems address them by path. Verified: bridgeResolved = 18 and the control test
 passes 13/13 after the reorganisation.
 
+### World health check, and the Phase 96 restore
+
+Phase 96 undid a lag-reduction "park" that had moved roughly 982 Workspace roots into
+`ServerStorage.ParkedFacility_20261006` and, on the way, merged same-named roots into one.
+The merge is what broke the control room - it destroyed *grouping*, which is what held the
+room together. Two facts make that recoverable only in part:
+
+- Roblox allows duplicate sibling names. Lua's `Parent` assignment never renames, so 109 roots
+  named `Model` coexisted happily; the merge was unnecessary as well as irreversible.
+- `Model:GetPivot()` survives child removal, so the 45 emptied shells still report their
+  original world pivots - the only pointer to what was lost, and a *point*, not data.
+
+Everything else was reconstructed and measured. Current numbers, all read from the place:
+
+| Check | Value |
+|---|---|
+| `Workspace` BaseParts (+ `ParkedFacility`, now empty) | **91,905** |
+| `Workspace` top-level roots (Part / Model / Folder) | **1,210** |
+| Control room seal - horizontal 720-ray fan from `(113, y, 0)` at y 281.5 / 283.0 / 286.0 | **0 / 2160 leaks** |
+| Ceiling above the console (upward rays from y 280.5, 20 probes) | **20 / 20 hit**, y 288-298 |
+| `MovingParts.ControlRoom{L,M,R}Shutter` | one each - `RoomShell`'s three literal paths resolve |
+| Scripts mentioning `ParkedFacility` / the merged containers | **0** |
+
+Two freshly merged hallway containers were split back by index with three guards (sum of blocks
+equals child count; the first block is still in append order; enough same-named empty shells to
+receive the rest) and then re-measured geometrically - four contiguous 15-stud blocks,
+x163..178 / 178..193 / 193..208 / 208..223. Four things could **not** be restored and are
+disclosed rather than guessed: the 45 merged `Model` roots (476 children, 1,539 parts), 53
+nodes whose original nesting is not recorded, the `Meshes` grouping folder (its contents are
+present as loose nodes - grouping lost, nothing visible lost), and 236 nodes left at the
+Workspace top level. None of these change rendering or physics; world CFrames are untouched.
+
+Method and per-ray evidence: `PROGRESS.md` Phase 96. Rules: `docs/SYSTEMS.md` section 2.17
+(how to answer "did I just break the world"), `docs/TODO.md` section 3.7 (the moving-things
+policy and the four outstanding accounts), `CLAUDE.md` section 0.22, `DECISIONS_2.md` 334-340.
+
 ## Control surfaces (ClickDetector)
 The five control desks, the HDEF generator and the METU ECC receptacles are driven by
 ClickDetectors (ConsoleBinder reuses the ones already in the place). Every press prints
