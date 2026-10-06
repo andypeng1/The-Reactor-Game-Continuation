@@ -6046,3 +6046,64 @@ remake 在 TRGWeb 的 `floor(T/50)` 之上加了 `+200`（`T>17500`）与 `+300`
 **判据**：看到"在旧公式上加一个修正项"，先问**修正项补的是旧公式缺的，还是它多出来的**。
 缺的能补，多出来的只会翻倍 —— 而**这两种在代码里长得一模一样**（一行 `if`，一个加法）。
 **唯一分得开的是把两个版本各自拿去撞数据**（这一轮：46 → 114）。
+## 372. 一张对账表也有盲区 —— 缺的那一行，正好制造出「手册只字未提」（Phase 98.15）
+
+`docs/airemake/INGAME_MANUAL.md` 的 "Reconciliation against the skeleton's Config" 有 12 行。
+我上一轮据此说过「手册对高压→温度的耦合只字未提」。**是错的。**
+
+手册第 **41** 条（`[TextLabel]`，全文）：
+
+> Hazardous Chamber Radiation and High Chamber Pressure will both decrease the H.D.E.F's integrity,
+> however **High Chamber Pressure will also cause an increase in Temp Fluctuation**.
+
+这就是 `Engine.luau:277`（`if s.pressure > c.Sim.HighPressure then s.temperature += floor(P/100)*scale`）。
+**机制在最高权威里逐字成立，而那一行不在对账表里** —— 表列了
+#84/#86/#18/#42-75/#137-73/#51/#31-140/#87/#44/#17-47/#27-34，**没有 #41**。
+
+所以「手册没说」这句话，读的是**表的覆盖度**，不是**手册的覆盖度**。同 §0.2：
+**没找 ≠ 没有。** 一张自己写的对账表，它的空白处长得和「来源本身是空白」一模一样。
+
+**How to apply:** 任何「来源 X 没说 Y」的结论，都要回到 X 的**全文**去查一次关键词，
+不能只读自己摘要出来的那张表。表的空行是**我的**省略，不是 X 的沉默。
+
+## 373. 定性句不能给定量机制背书 —— `verified` 是一个被高估的判决（Phase 98.15）
+
+对账表第 #51 行：手册说「in a higher state **the pressure will increase at a greater rate**」
+→ `Sim.State2Pressure=200`/`State3Pressure=300`/`State3Heat=700` → **verified in `Engine:226-227`**。
+
+那句话是**定性**的，而 `g[st] + s[st]·T`（110/350/800 + 0.01/0.0075/0.005）**同样满足它** ——
+两个模型都让「更高的状态涨得更快」。所以这条 `verified` 只证明**代码里有这个机制**，
+**没有**证明**这些数字**是原版的数字。
+
+数字的独立支持仍然是零：手册**不给数**（#31/140 的 outtake fans 也一样不给），
+`Config.luau` 的表头自己写着「Where neither has a value, the number is TRGWeb-derived and
+carries no independent support」。
+
+**How to apply:** 把「prose ↔ 代码」的对账拆成两问：**机制在不在**（prose 能判）和
+**数字对不对**（prose 判不了，要捕获或第二来源）。混在一格里写 `verified`，
+会把前者的成立读成后者的成立。
+
+## 374. 不是「谁旧」，是「哪一款」—— 两个游戏、两个压力模型（Phase 98.15）
+
+五条来源各自成体系，而且**内部自洽**：
+
+| 来源 | 压力步 | stall | 状态边界 | 风扇 |
+|---|---|---|---|---|
+| 原版捕获（placeId 17596243941） | `g+s·T`（4–10× 最优） | ~2200 | 17500 / 29500 | — |
+| 社区 wiki | `110/350/800 + 0.01/0.0075/0.005` | **2200** | **5,600** / 17,500 / 29,500 | **60 PSI/vent** |
+| `luau-windows/calculation.luau`（操作员） | 同上，逐字 | 2200 | 5600 / 17500 / 29499 | 60 |
+| `docs/airemake/INGAME_MANUAL.md`（最高权威） | 只说「higher state → greater rate」 | **~2300** | **17,000** / ~18000 / ~29000 | 不给数 |
+| `Data/TRGWeb.luau`（+ remake `Engine.luau`） | `floor(T/50)` +200/+300 | **2250** | 17500 / 29500 | **70** |
+
+**这不是版本差，是设计差。** AIRemake 把原版的压力模型换成了一套「状态 + 每 tick 常量」，
+并把它写进了自己的手册；remake 的引擎是照 AIRemake 的手册写的（`Config.luau` 表头写明了
+adjudication 顺序）。
+
+**形状上的证据**（Phase 98.15 新量）：捕获里那个高压耦合是**一次性跳变**（第一道门在
+≈11,300 处 `+288.8/+287.6`，第二道门在 29500 处 `+457.3/+461.7`，两趟都是一次性的），
+而 remake 写成了**每 tick 的斜坡**（`+200*scale`、`floor(P/100)*scale`）——
+这就是 state 2/3 残差最大的原因（每 tick 加一次 vs 只加一次）。
+
+**How to apply:** 撞上「两个都自洽的来源」时，先问**它们是不是在描述同一个东西**；
+不是的话，问题就不是「哪个数对」，而是「我在做哪一个」—— 那是操作员的决定（§1.4 第一条）。
+

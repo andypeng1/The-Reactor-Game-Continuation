@@ -10712,3 +10712,44 @@ remake 自己的公式撞上去是三个里最差的。所以它是**原版的**
 `trgweb_stall.py`（停堆塌陷定位）、`trgweb_engine_cmp.py`（三模型同台）。
 搭在 98.10 起的 `state1_gears.py` / `state1_pramp.py` 上。rc 全 0；
 脚本在会话 `tmp` 目录、**不进仓库**（同 98.10.7）。
+## Phase 98.15（2026-10-06）—— 三种压力模型里捕获选了哪一个；以及「换掉」不是修 typo，是换游戏
+
+**问题**：`trgweb只作为参考，参数吻合吗？` 收在「形状可搬、常数不可搬 —— 只报不改」，
+然后操作员问「**现在怎么搞**」。
+
+**① 三模型对撞**（同一个捕获，`|dP − pred|` 中位，PSI）：
+
+| 模型 | live `logs.txt` | arch `steps_all` |
+|---|---|---|
+| `calculation.luau` `g[st]+s[st]·T` | **11.4** | **14.3** |
+| TRGWeb `floor(T/50)` | 46.0 | 64.0 |
+| remake 现状 `floor(T/50)+200+300` | **114.0** | **153.0** |
+
+逐状态比值（实测/预测）：calc 0.959/0.969/**1.004**；trgweb 0.871/1.067/1.414；
+remake 0.871/**0.751**/0.818。**remake 是三个里最差的**，所以这份捕获**不是** remake 跑出来的
+—— 它是原版的地面真值（取舍 370/371）。
+
+**② 但 remake 的引擎不是「旧的 TRGWeb 拷贝」** —— 它的机制逐条被最高权威
+（`docs/airemake/INGAME_MANUAL.md`）corroborate：状态升级 ← #51、低压冷却 ← #18
+（"~2300PSI" + "temperature to rapidly drop"）、风扇 ← #31/140、以及**高压→温度 ← #41** ——
+而 #41 **不在我自己的对账表里**（取舍 **372**）。
+所以差异不在「代码写脏了」，在**两个游戏的设计不同**（取舍 **374**）。
+
+**③ 那条 `verified` 是被高估的判决**（取舍 **373**）：#51 的 prose 是**定性**的
+（"increase at a greater rate"），`g+s·T` 和 `floor(T/50)+200+300` **都满足它**。
+机制成立 ≠ 数字成立；手册对 `State2Pressure` / `FanPressure` 这类**一个数都不给**。
+
+**④ 形状证据**（Phase 98.13 的数复用）：原版的高压耦合是**一次性跳变**
+（1→2 门 ≈11,300 处 **+288.8 / +287.6**；2→3 门 29500 处 **+457.3 / +461.7**，两趟都一次性），
+remake 写成了**每 tick 斜坡**（`+200*scale` / `floor(P/100)*scale`）——
+这就是 state 2/3 残差最大的原因（每 tick 加一次 vs 只加一次）。
+
+**⑤ 交付**：只报不改（§1.4 第一条）。要不要把 `Engine.luau:273` 换成 `g+s·T`，
+是操作员的决定；已列成一张有限表交给他（`State2Pressure`/`State3Pressure`/`State3Heat` 的
+per-tick → one-shot、`FanPressure` 70→60、`PressureDivisor=50` 的整条形状）。
+
+**没验的**：手册**原件的世界内副本**没重读 —— Studio 没连上
+（第三方 MCP server 报 `has disconnected`，官方的 `list_roblox_studios` 回 `{"studios":[]}`）。
+`docs/airemake/INGAME_MANUAL.md`（2026-09-26 抽的）代打在位。
+风扇项两趟捕获都关着（风扇=0），所以 70 vs 60 **两趟都判不了**，只能靠 wiki/`calculation.luau`/Phase 50。
+
