@@ -1125,3 +1125,50 @@ is about ten minutes and `lead_margin.py` assembles four full mixes.
 
 See PROGRESS.md Phases 93 and 95, DECISIONS 313 to 321 and 327 to 333, and
 `docs/SYSTEMS.md` section 2.16.
+
+## The console in `luau-windows/`
+
+`luau-windows/calculation.luau` is the operator's own transcription of the reactor's pressure
+update, and `calculation.py` is the same thing in Python. Neither is a game system: they are a
+small standalone model of the tick, with Temperature, ActiveFan and PEALevel hard-coded.
+
+`luau-windows/gui.py` is a window onto that model. Run it with:
+
+```
+cd D:\rblxTRGproject\luau-windows
+python gui.py
+```
+
+One file, no third-party packages. The left column is the three hard-coded values turned into
+controls - PEA level and fan count as radio rows (one click, one level, and the selection stays
+visible), Temperature as a slider with a spinbox beside it, tick period as a second spinbox,
+plus Pause / Step / Reset. The right column shows Pressure, the per-tick delta, the core state
+and its band, Temperature, the tick count, elapsed time and the period, and then breaks the
+tick's own four terms apart: `p = g - 60n + s t + d`. The log at the bottom holds the `.luau`'s
+own `Pressure: N` output plus `#` commentary.
+
+**Two things about the Temperature control are worth knowing before touching it.** A `ttk`
+scale has neither a `-resolution` nor an `-increment` option - both were tried - so its steps
+are pixel-sized and a pixel is worth about `40000 / width` degrees (133 at the current 300 px).
+What makes the operator's "interval 1" true is the **spinbox**: it is the control you can hold
+an exact number in. Both write through one path, `_set_temperature`. Clicking or holding the
+scale's trough does step by exactly one, because Tk's own binding is
+`ttk::Repeatedly Increment $w ±1`; dragging the thumb is absolute, and a right-click in the
+trough jumps.
+
+**Readings are rounded for the eye and nothing else.** The model accumulates in full float,
+exactly as the `.luau` does, because rounding the model would let it drift away from the
+original - and that drift is precisely what the `.luau` comparison is blind to. The rounding
+is half-away-from-zero, deliberately not Python's `round()`: these values really do land on
+`.5`, and half-to-even would make one of them look unchanged every other tick.
+
+**The verification does not touch the operator's mouse.** He asked me to stop moving his
+cursor, so the harness drives the widgets through Tk's own `event_generate` (the same Tcl
+bindings run, and the window can stay invisible) and photographs them with `PrintWindow`,
+which asks the window to redraw itself - no raising, no focus stealing, no cursor. It is also
+more accurate, not less: `event_generate` works in widget-local coordinates, so the 58-pixel
+DPI inset that spoiled an earlier round of click testing cannot arise. The harness is in the
+job directory rather than the repo, since it measures this machine's Tk rather than the
+deliverable.
+
+See PROGRESS.md Phase 97 and DECISIONS 341 to 348.

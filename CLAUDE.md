@@ -1112,6 +1112,44 @@ SongGen / InspireMusic；music21 是乐理库不是生成器），它们**不采
 **转录里的计数不是 ground truth**（取舍 339）。细节 `PROGRESS.md` 96，取舍 **334..340**，
 `docs/SYSTEMS.md` §2.17、`docs/SNIPPETS.md` §5.23、`docs/TODO.md` §3.7，新增 §0.22。
 
+**Phase 97（2026-10-06）—— `luau-windows/gui.py`：一个 tkinter 控制台，而「加上 GUI 库」这句话被改口了两次。**
+用户先说「加上bootstrape那个GUI库…并且搞成模块化我可以自己添加新的控件」，我做了五个模块 + 注册表
++ 规格校验器；他看了一眼：「**停止，别搞这么复杂，就thinker的gui好了**」（thinker = tkinter）——
+**整批删掉，交付物变成一个文件**（取舍 **341**：一句话里的名词不都是规格）。
+`luau-windows/gui.py`，约 450 行、零第三方依赖，模型逐行抄自 `calculation.py`（那份 py 和 .luau
+**仍是参考**）。跑法：`cd D:\rblxTRGproject\luau-windows` 然后 `python gui.py`（`C:\Python314\python`）。
+左栏 CONTROLS = PEA 4 档**单选** / 风扇 0..6 **单选** / 温度 slider + spinbox / tick period spinbox /
+Pause Step Reset；右栏 VALUES = 八个读数 + `p = g - 60n + s t + d` 的**四项分解**；下栏 LOG。
+**六句能直接用的**：**① 「间隔 1」不是 slider 给的，是 spinbox 给的** ——
+**`ttk::scale` 既没有 `-resolution`（那是经典 `tk.Scale` 的）也没有 `-increment`**，
+逐字读过 Tk 9.0.4 的 `ttk/scale.tcl`：点/按住 **trough = ±1**（`ttk::Repeatedly Increment $w ±1`）、
+箭头 ±1、**中键右键 = 跳到点击处**、**拖 thumb = 绝对跟随**（此宽度 40000/300 ≈ **133 度/像素**）；
+承担「精确数字」的是 spinbox（`-increment=1` + `-format="%.0f"`），两者都走 `_set_temperature`
+这**唯一写点**（取舍 **342**）。**② 取整只贴在显示上**，模型一位不进 —— 把模型取整会让它漂离原版，
+而那个漂移**恰好在 .luau 对照里看不见**；且**不能用 Python 的 `round()`**（银行家舍入，而这里的数
+真的落在 .5 上，会读成「我输的数被吃了」）；唯一不取整的读数是 tick period（**时长不是读数**）（取舍 **343**）。
+**③ `identify` 的名字带主题前缀**（`Spinbox.uparrow` / `Horizontal.Scale.slider`），Tcl 那边用 glob 匹配，
+**问裸名字找不到 —— 而「找不到」读起来正是「这控件没有箭头」**（取舍 **344**，§0.20 同族）。
+**④ `event_generate` 只落在有焦点的 widget 上**，而 `ttk::spinbox::Press` 第一句就是 `focus $w` ——
+早先那批检查**是通过一个从没写下来的前置条件通过的**（前面那次箭头点击顺手给了焦点）。
+**是截图和读数互相矛盾才抓住的**（box 显示 `12345`，读数栏写着 `5600`）：读数自己看不出，因为它每次自洽。
+修法是显式 `focus_force()` + 补两个绑定变异证明两条绑定都承重（取舍 **345**）。
+**⑤ 读 `StringVar` 不等于读那件 widget** —— 变量会**留着模型写进去的字符串**，即使 widget 已经不听它了；
+这才是 `box-shares-slider-var` 变异**红在错的那一项**上的原因。**读变量是在给一个已经断线的显示报平安**
+（取舍 **346**，§0.2 同族）。**⑥ 注释里的数字会跟着旁边的布局陈旧**：那条「~293 px / 137 度」**当时是对的**，
+slider 旁边一个多余标签拿掉后变宽 7 px → 实测 **300×26 / 133.3 度**，**没有任何东西会因此报错**。
+现在写的是算式 + 一句「这个宽度是布局给的，不是选的」，旧读数作为**曾经的读数**留下（取舍 **347**，§0.18 同族）。
+**「你别老动我鼠标」**（用户原话）→ 合成鼠标（`SetCursorPos`/`mouse_event`）**全部退役**：
+驱动改 `event_generate`（同一件 widget、同一批 Tcl 绑定、窗口可 `-alpha 0.0` 隐身，
+**坐标是 widget 局部的，§0.11 那个 58 px 偏移在这条路上不存在**），
+截图改 `PrintWindow(..., 2)`（**请窗口自己画自己**，被遮住也能拍，**不抬窗不置顶不碰光标**）（取舍 **348**）。
+验证：`drive_console.py` **23 项 / FAILED: none**，`check_mutants.py` **10 ok / 0 bad**
+（8 个真变异各自红在指定那一项、2 个 FOLLOW 留绿）。**重拍之后照片和读数讲同一个故事**：
+box `12345` / 读数 `12345`、period `0.2` / `0.2`、PEA 停在 `3 (+75)` 而 `d` 项 **75**、
+风扇 `2` 而 `-60n` 项 **-120**，且 **110 + 123 + 75 − 120 = 188 = Delta**、`15 × 0.2 = 3 = Elapsed`。
+**没验的**：只在这台机器的默认 Tk 主题下看过；真人鼠标交互那一半读不到（§0.16，且现在不许动他的光标）。
+细节 `PROGRESS.md` 97，取舍 **341..348**，`docs/SYSTEMS.md` §2.18、`docs/TODO.md` §3.8、`README.md`。
+
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒 Ctrl+S。
 **自动 `add`+`commit` 也已开**（2026-10-01 原话 `AUTO COMMIT+ADD PERMANENTLY ON`）：

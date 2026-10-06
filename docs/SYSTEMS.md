@@ -673,3 +673,47 @@ label 的 `Visible`。属性不相交 —— 这是它能成为第二个写入�
    不证明**它们还在原来的分组里** —— 后者要么有 ground truth，要么只能披露（取舍 340）。
 
 细节 `PROGRESS.md` 96，取舍 **334..340**，片段 `docs/SNIPPETS.md` §5.23。
+
+### 2.18 `luau-windows/gui.py` —— 一个 tkinter 控制台（2026-10-06，Phase 97）
+
+**它不是游戏的一部分，也不是 Roblox 的一部分。** 它是 `luau-windows/calculation.py`
+（那个 .py 和它旁边的 .luau 是**参考**）的一个**观察窗口**：把原来写死的三个量
+（Temperature / ActiveFan / PEALevel）变成能改的控件，把五个量**实时**显示出来。
+**一个文件，零第三方依赖**（tkinter 是 CPython 自带）。
+
+```
+cd D:\rblxTRGproject\luau-windows
+python gui.py
+```
+
+| 区 | 控件 / 读数 |
+|---|---|
+| 左 CONTROLS | PEA 4 档**单选**（标题带 `+0 / +0 / +75 / +150`）· 风扇 0..6 **单选**（标题写 `each is -60`）· 温度 **slider + spinbox** · tick period spinbox · Pause / Step / Reset |
+| 右 VALUES | Pressure（大号）· Delta · Core state · State band · Temperature · Ticks · Elapsed · Tick period · 分隔线 · `p = g - 60n + s t + d` 的**四项分解** |
+| 下 LOG | 只追加的 `tk.Text`；`Pressure: N` 是 .luau 自己的输出，`#` 是注释 |
+
+**取整只贴在显示层**（取舍 343）：`snap()` 是 .5 远离零，**故意不是** `round()`
+（银行家舍入 + 这里的数真的会落在 .5）。模型一位不进，因为把模型取整会让它漂离原版，
+而那个漂移**恰好在 .luau 对照里看不见**。唯一不取整的读数是 tick period（时长不是读数）。
+
+**「间隔 1」的归属（取舍 342，逐字读过 Tk 9.0.4 的 `ttk/scale.tcl`）：**
+
+| 操作 | slider 的行为 |
+|---|---|
+| 点 / 按住 trough | **±1**（`ttk::Repeatedly Increment $w ±1`）—— 这就是用户要的那个 |
+| slider 上的箭头 | ±1（`<<PrevChar>>` / `<<NextChar>>`） |
+| 中键 / 右键在 trough 上 | **跳到点击处**（`Jump`） |
+| 拖 thumb | **绝对跟随指针**（`Drag`），此宽度 40000/300 ≈ **133 度/像素** |
+
+`ttk::scale` **没有 `-resolution`**（那是经典 `tk.Scale` 的）**也没有 `-increment`** ——
+所以那个能放**精确数字**的控件是 **spinbox**（`-increment=1` + `-format="%.0f"`），
+两者都通过 `on_temp` 写模型，`_set_temperature` 是唯一写点。
+
+**加东西（docstring 里也写了）**：加控件 = 摆在别的控件旁边 + 一个 `command` 写 `self.sim`
+再调 `self.on_input(...)`；加读数 = `_build_readouts` 里多一行 `add_readout`。**没有框架。**
+
+**验证**（harness 在作业目录，**不在仓库**——它们量的是这台机器的 Tk）：
+`drive_console.py` **23 项 / `FAILED: none`**；`check_mutants.py` **10 ok / 0 bad**
+（8 个真变异各自红在指定那一项、2 个 FOLLOW 留绿）。
+**驱动走 `event_generate`、截图走 `PrintWindow`——全程不动操作员的光标**（取舍 348）。
+细节 `PROGRESS.md` 97，取舍 **341..348**。

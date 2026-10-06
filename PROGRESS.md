@@ -9607,3 +9607,155 @@ x 163/178/193/208 是**四段首尾相接的 15 stud 走廊**；结束后
 
 **这一轮最贵的东西不是复原，是那两条量法** —— 它们都是「错的量法不报错」这一族
 （§0.18）：一条打错面向的射线，和一条**看起来像日志**的转录计数。
+
+## Phase 97（2026-10-06）—— `luau-windows/gui.py`：一个 tkinter 控制台，而「加上 GUI 库」这句话被改口了两次
+
+用户先说「加上bootstrape那个GUI库然后我可以实时看到各个数据的变化和快速切换pea和风扇等级
+并且搞成模块化我可以自己添加新的控件」，我照做了 —— 五个模块、注册表、规格校验器、拒绝测试。
+然后他看了一眼：「**停止，别搞这么复杂，就thinker的gui好了**」（thinker = tkinter）。
+**那五个模块整个删掉**，交付物变成**一个文件**。后面还有两句：「**可以可以我看了效果全部取整数，
+温度滑动间隔1**」和「**你别老动我鼠标**」（见 97.5）。
+
+### 97.1 交付的是什么
+
+`D:\rblxTRGproject\luau-windows\gui.py`，一个文件，约 450 行，**没有任何第三方库**
+（tkinter 是 CPython 自带的）。模型那一段**逐行抄自 `calculation.py`** ——
+那份 py 和它旁边的 `.luau` **仍然是参考**，gui.py 只是它的一个观察窗口。
+
+窗口三段：
+
+| 区 | 内容 |
+|---|---|
+| 左 CONTROLS | PEA 4 档**单选**、风扇 0..6 **单选**（标题直接写「each is -60」）、温度 slider + spinbox、tick period spinbox、Pause / Step / Reset |
+| 右 VALUES | Pressure（大号）、Delta、Core state、State band、Temperature、Ticks、Elapsed、Tick period；下面分隔线后是 `p = g - 60n + s t + d` 的**四项分解** |
+| 下 LOG | `tk.Text`，`state="disabled"`，只追加；`Pressure: N` 是 .luau 自己的输出，`#` 开头的是注释 |
+
+**「快速切换 PEA 和风扇」= 单选按钮**，一次点击一档，点完还能**看见**选了哪档
+（这是它比输入框强的地方）。**「模块化，我自己加控件」**：docstring 里写了两行做法 ——
+加一个控件就是把 widget 摆在别的控件旁边、给它一个 `command` 写 `self.sim` 然后调
+`self.on_input(...)`；加一个读数就是 `_build_readouts` 里多一行 `add_readout`。**没有框架。**
+
+### 97.2 取整只发生在**显示**那一层（取舍 343）
+
+`snap()` 是**四舍五入、.5 远离零**，**故意不是 Python 的 `round()`** ——
+后者是银行家舍入（`round(1.5)==2`、`round(2.5)==2`），而这里的数**真的会停在 .5**：
+slope 项是 `0.01 × 整数温度`，State 2 的 tick 每步 `0.0075 × T`，这种步长的和**恰好落在 .5 上**。
+用 `round()` 的话，同一个数会**隔一拍变一次**，读起来像「我输的数被吃了」。
+
+**模型本身一位不进**：`Pressure` 累加的是完整 float，和 `.luau` 一模一样。
+**取整只贴在 `shown()` 上** —— 把模型取整会让它慢慢漂离原版，而那个偏移
+**`.luau` 对照再也看不见**（§0.18 同族）。唯一的例外是 tick period，用 `luau_number()`
+按 `%.14g` 打 —— 那是个**时长**不是读数，取整之后 `0.25` 会印成 `0`。
+
+### 97.3 「间隔 1」不是 slider 给的，是 spinbox 给的（取舍 342）
+
+用户要「温度滑动间隔1」。**ttk 的 scale 做不到这件事**，而且是读过源码才知道的 ——
+`C:\Python314\tcl\libtk9.0.4.zip` → `tk_library/ttk/scale.tcl`：
+**`ttk::scale` 既没有 `-resolution` 也没有 `-increment`**（`-resolution` 是**经典 `tk.Scale`**
+的选项，两个都实测过）。所以 ttk slider 的步长是**像素级**的。
+
+**Tk 9.0.4 的 `ttk/scale.tcl` 逐字**（这决定了用户会看到什么）：
+
+```
+bind TScale <Button-1>        { ttk::scale::Press %W %x %y }
+bind TScale <B1-Motion>       { ttk::scale::Drag %W %x %y }
+bind TScale <ButtonRelease-1> { ttk::scale::Release %W %x %y }
+bind TScale <Button-2/3>      { ttk::scale::Jump %W %x %y }
+<<PrevChar>>/<<PrevLine>>  -> Increment -1 ;   <<NextChar>>/<<NextLine>> -> +1
+<<PrevWord>>/<<PrevPara>>  -> -10 ;           <<NextWord>>/<<NextPara>> -> +10
+Press: *track|*trough -> ttk::Repeatedly Increment $w ±1     (*slider -> dragging=1)
+Jump:  *track|*trough -> $w set [$w get $x $y]               (跳到点击处)
+Drag:  if dragging -> $w set [$w get $x $y]                  (绝对定位)
+```
+
+于是 slider 的实际行为是：**点/按住 trough = ±1**（`ttk::Repeatedly`，正好是用户要的「间隔1」）、
+**点 slider 上的箭头 = ±1**、**中键/右键在 trough 上 = 跳到点击处**、
+**拖 thumb = 绝对跟随指针**（这个宽度上 40000/300 ≈ **133 度每像素**）。
+**「间隔 1」由 spinbox 承担**：`-increment=1` + `-format="%.0f"`，是你能把一个**精确数字**
+放在里面的那个控件。两个控件都通过 `on_temp` 写模型，`_set_temperature` 是**唯一的写点**。
+
+**spinbox 的箭头也是自己算的**（`ttk/spinbox.tcl` 逐字）：`ttk::spinbox::Press` 先
+`focus $w`，然后按 `identify` 分派，`*spinbutton` 那一支用 `if {$y*2 >= [winfo height $w]}`
+在上下之间选；`Spin` 结尾是 `$w set [FormatValue $w …]` 再 **`uplevel #0 [$w cget -command]`**
+—— 所以**箭头每走一步 `command` 真的会跑**，`-format` 也真的管箭头的显示文本。
+同文件另一条：`ttk::Repeatedly` 先取消定时器、再排下一次、然后**立刻**执行脚本 ——
+所以「按下就松开」= **恰好一步**。
+
+### 97.4 两个 harness，和它们各自露出来的一个错
+
+`drive_console.py`（**23 项检查**，`FAILED: none`）和 `check_mutants.py`（**10 个变异**：
+**8 个真变异各自红在指定那一项上、2 个 FOLLOW 留绿**，`mutants: 10 ok, 0 bad, of 10`）。
+
+**两个 harness 缺陷都是「图片和数字互相矛盾」暴露的，不是读代码发现的：**
+
+1. **读 `StringVar` 不等于读那件 widget。** 我的检查读的是 `con.temp_box.get()`
+   （那个变量），变异 `box-shares-slider-var`（把 spinbox 的 `textvariable` 换成 slider 的
+   DoubleVar）**红了 —— 但红在了错的那一项上**。原因：`StringVar` 会**留着模型写进去的东西**，
+   即使 widget 已经不听这个变量了。**读变量是在给一个已经断线的显示报平安**
+   （§0.2 同族，取舍 346）。改成 `temp_spin.get()` 之后，它红在了该红的那一项上。
+2. **`event_generate` 只送到有焦点的 widget。** 早先版本靠 `event_generate("<Return>")`
+   测「打的数字按回车生效」，**通过了 —— 但那是因为前面的箭头点击顺手给了焦点**
+   （`ttk::spinbox::Press` 会 `focus $w`）。**没有一个字说过这个前提。**
+   截图 `shot_now.png` 把它抓了出来：两个 box 显示 `12345` / `0.2`，而读数那栏是
+   `Temperature 5600` / `Tick period 1`。改成显式 `focus_force()`（并写明「人本来就要先点一下
+   才能打字」），再补两个变异 `no-return-bind` / `no-focusout-bind` 证明**两条绑定都是承重的**
+   （取舍 345）。
+
+**另一个假通过更早**：`trough click right of thumb: +1 ok got 5603.0 want 5603.0` ——
+那次点击落在 `x=299`，`identify` 答的是 **`focus`**（widget 的焦点环），**什么都没发生**，
+而检查拿的 `before` 是它从没离开过的那个值。修法：`click()` 加了 `expect=` 参数，
+**先断言这一下真的落在它想落的元素上**，trough 的点击点挪到 `x=3` / `W-3`。
+实测区域表：`['focus 0..0', 'Horizontal.Scale.track 1..40', 'Horizontal.Scale.slider 41..52',
+'track 53..298', 'focus 299..299']`。
+
+**顺带一个命名坑（取舍 344）**：`identify` 返回的名字**带主题前缀** ——
+`Spinbox.uparrow`、`Horizontal.Scale.slider`，**不是** `uparrow` / `slider`。
+Tcl 那边是用 glob 匹配的（`switch -glob -- *uparrow`），所以**问裸名字会什么都找不到**，
+读起来正好是「这个控件没有箭头」。**同一个坑量第二遍**：`thumb local x range: not found`。
+
+### 97.5 「你别老动我鼠标」（取舍 348）
+
+我用 `SetCursorPos` + `mouse_event` 点过界面，**那动的是操作员自己的光标**。
+用户原话：「**你别老动我鼠标**」。全部改掉：
+
+- **驱动** → `event_generate("<Button-1>"/"<B1-Motion>"/"<ButtonRelease-1>")`，
+  送给**同一件 widget**，跑的是**同一批 Tcl 绑定**（`ttk::scale::Press/Drag/Release`、
+  spinbox 的箭头绑定），而窗口可以 `-alpha 0.0` **隐身**。坐标是 **widget 局部**的 ——
+  **§0.11 那个 58 px 的 DPI 偏移在这条路上根本不会出现，因为从头到尾没有产生过一个屏幕坐标。**
+- **截图** → `PrintWindow(hwnd, mdc, 2)`（`PW_RENDERFULLCONTENT`）画到一张自顶向下的
+  `CreateDIBSection` 上。它**请窗口自己画自己**，所以**被遮住也能拍、不抬窗、不置顶、不碰光标**。
+- 两个合成鼠标工具（`click_gui.py` / `drag_gui.py`）**退役**。
+
+### 97.6 照片和读数现在讲同一个故事
+
+修完 `shot_gui.py`（加 `focus_force`）之后重拍：Temperature box **12345** / 读数 **12345**、
+period box **0.2** / 读数 **0.2**、PEA 单选停在 **3 (+75)** 而 `d PEA gain` 项是 **75**、
+风扇单选 **2** 而 `-60n fan drag` 项是 **-120**。
+
+**算术当场对得上**：`110 + 123 + 75 - 120 = 188` = `Delta this tick`；
+LOG 最后一行 `Pressure: 8827` = 读数 `Pressure 8827`；
+`Ticks 15` × `period 0.2` = `Elapsed 3`。
+
+**这张图还顺手改了我写在注释里的一个数（取舍 347）。** 注释原来写「one pixel of these
+**~293** is about **137** degrees」—— 实测这个 widget 是 **300×26**，`40000/300 = **133.3**`
+度每像素。那两个数不是错的当时，是**陈旧**：slider 旁边原来有一个多余的 `temp_value` 标签，
+它拿掉之后 slider 变宽了 7 px，而**没有任何东西会因此报错**（§0.18 同族）。
+注释改成写出算式 + 写出「这个宽度是布局给的、不是选的」，并把旧读数作为**曾经的**读数留下。
+
+**一个我自己的错，记在这里**：我第一眼把 `shot_now.png` 的黑边当成窗口内容，
+按 1045 px 宽去换算 slider，算出 231 px、和 300 对不上。**那张图的窗口只有 ~825 px 宽，
+其余是黑底** —— 我又一次差点让一把量错的尺子给出一个自信的结论（§0.18）。
+
+### 97.7 本机跑法
+
+```
+cd D:\rblxTRGproject\luau-windows
+python gui.py
+```
+
+`python` 是 `C:\Python314\python`（§0.6）。两个 harness 在作业目录里，不在仓库里
+（它们量的是这台机器上的 Tk，不是交付物的一部分）：
+`drive_console.py` 直接跑，`check_mutants.py` 给 `drive_console.py` 喂变异副本。
+
+**没验的**：Tk 主题换掉之后的样子（只在这台机器的默认主题下看过）、
+窗口被**真人**用鼠标拖过之后的状态（§0.16 那一半依然读不到，而且现在**不许动他的鼠标**）。
