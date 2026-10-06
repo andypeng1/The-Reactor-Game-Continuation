@@ -37,10 +37,16 @@ folded into the answer:
   2. ROW 1 HAS NO PREVIOUS SAMPLE, so it has no c and no d.  That is the
      `/nil/` in the operator's own table, and it is why the table has one more
      row than there are steps.
-  3. 「连续升高」 HAS TWO READINGS.  A = every step whose dTemp is positive,
-     isolated rises included.  B = only steps inside a maximal run of two or
-     more consecutive rises (a lone rise is not 连续).  Both are emitted; a
-     zero step breaks a run in both.
+  3. 「连续升高」 = ONLY THE STEPS INSIDE A RUN.  The wording admits two readings
+     and both were computed and reported: A = every step whose dTemp is positive,
+     lone rises included; B = only steps inside a maximal run of two or more
+     consecutive rises, so a lone rise is not 连续.  The operator then chose --
+     「只算连续升高处」 -- so B is the answer, and A is kept beside it as the
+     threshold-1 variant so the 26 steps the run test drops stay countable.
+     A zero step breaks a run in either reading.
+     The run test is keyed on the TEMPERATURE delta (`c`): 「升温」 names the
+     temperature column.  Keying it on the pressure delta instead gives 81 steps
+     rather than 83, so the key is load-bearing, not a detail.
 
 Usage:  python analyze_fluc_steps.py [logs.csv] [outdir]
 """
@@ -177,10 +183,20 @@ def main():
     print("   c == 0 (d undefined) : %d step%s%s"
           % (len(zero), "" if len(zero) == 1 else "s",
              "" if not zero else "   at %s" % ", ".join(s["t"] for s in zero)))
-    groups = [("all steps with c /= 0", [s for s in steps if s["c"] != 0]),
+    # ASCII only: the console here is GBK, and the report is read there.  The
+    # Chinese for this line lives in d_summary.txt, which is written as UTF-8.
+    print("   * = the chosen reading: only steps inside a run of >= 2 rises")
+    # B first, because it is the answer and not one of two options: the operator
+    # picked it with 「只算连续升高处」.  A is kept directly under it -- it IS B
+    # with the run threshold lowered to 1, so the two lines are the same
+    # measurement at two strictnesses and the gap between them is countable.
+    # The whole-step column is kept because `d` is defined on every step, not
+    # only on the rising ones, and a mean over a filtered set is worth reading
+    # next to the mean over the set it was filtered from.
+    groups = [("B  c > 0 inside a run >= 2 *",
+               [s for r in runs(steps, "c") for s in r]),
               ("A  c > 0 (every rise)", [s for s in steps if s["c"] > 0]),
-              ("B  c > 0 inside a run >= 2",
-               [s for r in runs(steps, "c") for s in r])]
+              ("all steps with c /= 0", [s for s in steps if s["c"] != 0])]
 
     def quant(vals, t):
         return vals[min(len(vals) - 1, int(t * (len(vals) - 1)))]
@@ -197,19 +213,21 @@ def main():
     # against the median.  Said out loud so the mean is not read as "the
     # typical step"; the median and the p10/p90 above are what describe one.
     posr = [s for s in steps if s["c"] > 0]
-    for label, sel in (("|c| <= 20", [s for s in posr if s["c"] <= 20]),
-                       ("|d| > 1", [s for s in posr if abs(s["d"]) > 1])):
-        print("   %-20s : %d of %d rising steps  -> mean is set by these"
-              % (label, len(sel), len(posr)))
+    bset = [s for r in runs(steps, "c") for s in r]
+    for label, pred in (("|c| <= 20", lambda s: s["c"] <= 20),
+                        ("|d| > 1", lambda s: abs(s["d"]) > 1)):
+        print("   %-10s : A %3d/%d   B %3d/%d   -> the mean is set by these"
+              % (label, sum(1 for s in posr if pred(s)), len(posr),
+                 sum(1 for s in bset if pred(s)), len(bset)))
 
     # 「平均」 also reads as one ratio over the whole group -- total pressure
     # change divided by total temperature change -- which is NOT the mean of
     # the per-step ratios and is not close to it.  Both are cheap, so both are
     # given rather than one being chosen on the reader's behalf.
     print("   pooled sum(dPres)/sum(c): %s"
-          % "   ".join("%s %+.5g" % (n, sum(s["dP"] for s in sel) / sum(s["c"] for s in sel))
-                       for n, sel in (("all", groups[0][1]), ("A", groups[1][1]),
-                                      ("B", groups[2][1]))))
+          % "   ".join("%s %+.5g" % (name.split()[0],
+                                     sum(s["dP"] for s in sel) / sum(s["c"] for s in sel))
+                       for name, sel in groups))
     print()
     for key, name in (("c", "dTemp"), ("dP", "dPres")):
         letter = "T" if key == "c" else "P"
@@ -263,6 +281,10 @@ def main():
         fh.write("source: %s   rows %d -> %d samples -> %d steps\n"
                  % (os.path.basename(src), len(body), len(samples), len(steps)))
         fh.write(LEGEND + "\n")
+        fh.write("*  = the reading the operator chose with 「只算连续升高处」:\n"
+                 "     a step counts only if it sits inside a maximal run of two\n"
+                 "     or more consecutive temperature rises.  A is the same\n"
+                 "     measurement with the run threshold lowered to 1.\n")
         fh.write("\n%-30s %6s %14s %14s %14s %14s %14s %14s\n"
                  % ("group", "n", "mean", "median", "p10", "p90", "min", "max"))
         for name, sel in groups:
@@ -276,11 +298,14 @@ def main():
                  "The mean is set by those steps\n(see |d| > 1 below); median/p10/p90 "
                  "describe a typical step.\n")
         posr = [s for s in steps if s["c"] > 0]
+        bset = [s for r in runs(steps, "c") for s in r]
         fh.write("c == 0 (d undefined): %d step%s\n"
                  % (len(zero), "" if not zero else "  at " + ", ".join(s["t"] for s in zero)))
-        fh.write("|c| <= 20: %d of %d rising steps; |d| > 1: %d of %d\n"
+        fh.write("|c| <= 20: A %d/%d, B %d/%d;   |d| > 1: A %d/%d, B %d/%d\n"
                  % (sum(1 for s in posr if s["c"] <= 20), len(posr),
-                    sum(1 for s in posr if abs(s["d"]) > 1), len(posr)))
+                    sum(1 for s in bset if s["c"] <= 20), len(bset),
+                    sum(1 for s in posr if abs(s["d"]) > 1), len(posr),
+                    sum(1 for s in bset if abs(s["d"]) > 1), len(bset)))
         fh.write("\n「平均」 read the other way -- ONE ratio over the whole group,\n"
                  "sum(dPres)/sum(c), not the mean of the per-step ratios:\n")
         for name, sel in groups:

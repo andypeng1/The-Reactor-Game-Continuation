@@ -133,12 +133,50 @@ def main():
         vals = sorted(s["d"] for s in sel)
         return sum(vals) / len(vals), vals[len(vals) // 2]
 
+    def q(vals, t):
+        return vals[min(len(vals) - 1, int(t * (len(vals) - 1)))]
+
     a_mean, a_med = group([s for s in dsteps if s["c"] > 0])
-    b_mean, _ = group([s for r in A.runs(dsteps, "c") for s in r])
+    b_sel = [s for r in A.runs(dsteps, "c") for s in r]
+    b_vals = sorted(s["d"] for s in b_sel)
+    b_mean = sum(b_vals) / len(b_vals)
     check("A mean -1.0608 vs median +0.01498",
           abs(a_mean + 1.0608425) < 1e-6 and abs(a_med - 0.0149812734) < 1e-9,
           "mean %+.6g median %+.6g" % (a_mean, a_med))
+
+    # B is the reading the operator chose -- 「只算连续升高处」 -- so its whole row
+    # is pinned rather than just its mean: these are the numbers that go out.
+    # The mean carries the same small-denominator caveat as A (c = 1 on one step
+    # gives d = -34), so the median is what describes a typical step.
     check("B mean -0.79845", abs(b_mean + 0.79845432) < 1e-6, "%+.6g" % b_mean)
+    check("B median +0.0636943, min -34, max +3.0769231",
+          abs(b_vals[len(b_vals) // 2] - 0.06369426752) < 1e-9
+          and b_vals[0] == -34 and abs(b_vals[-1] - 3.0769231) < 1e-7,
+          "%+.8g %+g %+g" % (b_vals[len(b_vals) // 2], b_vals[0], b_vals[-1]))
+    check("B p10 -1.3684211, p90 +0.3030303",
+          abs(q(b_vals, .1) + 1.3684211) < 1e-7 and abs(q(b_vals, .9) - 0.3030303) < 1e-7,
+          "%+.8g %+.8g" % (q(b_vals, .1), q(b_vals, .9)))
+    check("B sum(c) = +14225, sum(dP) = +199",
+          sum(s["c"] for s in b_sel) == 14225 and sum(s["dP"] for s in b_sel) == 199,
+          "%+d %+d" % (sum(s["c"] for s in b_sel), sum(s["dP"] for s in b_sel)))
+
+    # The run test is keyed on the TEMPERATURE delta, because 「升温」 names the
+    # temperature column.  All three candidate keys give a different set, so the
+    # key is doing work rather than being a detail of phrasing: keying on the
+    # pressure delta would answer a different question (81 steps) and keying on
+    # the file's own column a third (98).  This is what says the 83 above is the
+    # temperature reading specifically.
+    keys = {k: [s for r in A.runs(dsteps, k) for s in r] for k in ("c", "dP", "fluc")}
+    check("run key c/dP/fluc -> 83/81/98",
+          [len(keys["c"]), len(keys["dP"]), len(keys["fluc"])] == [83, 81, 98],
+          "%s" % {k: len(v) for k, v in keys.items()})
+    art = [s for s in dsteps if s["c"] > 0]
+    check("B drops 26 lone rises from A, sum +828",
+          len(art) - len(b_sel) == 26
+          and sum(s["c"] for s in art) - sum(s["c"] for s in b_sel) == 828,
+          "%d steps, sum %+d" % (len(art) - len(b_sel),
+                                 sum(s["c"] for s in art) - sum(s["c"] for s in b_sel)))
+
     # The two readings of 「平均」 disagree by a factor of ~17: where the mean is
     # set by the small denominators, the pooled ratio is not.  Both are right
     # answers to different questions, so the gap is the thing worth pinning.
@@ -146,6 +184,23 @@ def main():
         s["c"] for s in dsteps if s["c"] > 0)
     check("pooled sum(dPres)/sum(c) = -0.06384",
           abs(pooled + 0.063841095) < 1e-8, "%+.8g" % pooled)
+    b_pool = sum(s["dP"] for s in b_sel) / sum(s["c"] for s in b_sel)
+    check("B pooled sum(dPres)/sum(c) = +0.0139895",
+          abs(b_pool - 0.01398945518) < 1e-8, "%+.8g" % b_pool)
+
+    # Choosing B rather than A is not cosmetic: it decides the SIGN of the
+    # pooled ratio.  The 26 steps the run test drops are shallow in temperature
+    # (+828 over 26 steps) and steep in pressure (-1160), so including them
+    # drags sum(dPres)/sum(c) from +0.01399 to -0.06384.  Said out loud so the
+    # choice is not read as a rounding of the same result.
+    dropped = [s for s in art if id(s) not in {id(x) for x in b_sel}]
+    check("the 26 lone rises: sum c +828, sum dP -1160",
+          len(dropped) == 26 and sum(s["c"] for s in dropped) == 828
+          and sum(s["dP"] for s in dropped) == -1160,
+          "%d steps, c %+d, dP %+d" % (len(dropped), sum(s["c"] for s in dropped),
+                                       sum(s["dP"] for s in dropped)))
+    check("choosing B flips the pooled ratio's sign",
+          pooled < 0 < b_pool, "A %+.6g vs B %+.6g" % (pooled, b_pool))
 
     # ---- mutants: each must redden its own check --------------------------
     print()
@@ -233,6 +288,15 @@ def main():
     check("mut row1 gets c=0 -> red on shape",
           not (w["c"] is None and w["d"] is None),
           "row 1 c=%r d=%r" % (w["c"], w["d"]))
+
+    # 8. the run test keyed on the wrong column.  Both alternatives are numbers
+    #    a plausible implementation would actually produce, and both differ from
+    #    83 -- so "run key c/dP/fluc -> 83/81/98" is load-bearing, and the 83 is
+    #    pinned to the temperature reading rather than to "some run test".
+    check("mut run key on dP -> 81", len(keys["dP"]) == 81 and len(keys["dP"]) != 83,
+          "%d steps" % len(keys["dP"]))
+    check("mut run key on fluc -> 98", len(keys["fluc"]) == 98 and len(keys["fluc"]) != 83,
+          "%d steps" % len(keys["fluc"]))
 
     print()
     print("RESULT: %d ok, %d FAILED" % (len(passed), len(failed)))
