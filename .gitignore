@@ -189,3 +189,15 @@ _tools/_frames/
 luau-windows.zip
 luau-windows/*.exe
 luau-windows/lune-*.zip
+
+# --- Data/analyze/ is the operator's own analysis scratch: his capture of the
+#     original game's readouts (logs.csv, 444 rows), a four-number note, and
+#     whatever the analysis writes back beside them.  Same rule as
+#     Data/auxcollection/ above and for the same reason -- handed to me to read,
+#     not produced by the project, so it is not mine to publish.  `git add -A`
+#     runs unprompted here (auto-commit is on), so leaving this unlisted means
+#     the first `push` after any analysis publishes his data without anyone
+#     choosing to.  The DERIVED ANSWERS live in PROGRESS.md Phase 98; the reader
+#     that produces them is _tools/analyze_fluc_steps.py and IS tracked, so the
+#     numbers stay reproducible from the repo plus his file. ---
+Data/analyze/
