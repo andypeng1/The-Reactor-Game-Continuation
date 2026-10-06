@@ -48,26 +48,70 @@ folded into the answer:
      temperature column.  Keying it on the pressure delta instead gives 81 steps
      rather than 83, so the key is load-bearing, not a detail.
 
-Usage:  python analyze_fluc_steps.py [logs.csv] [outdir]
+TWO INPUT SHAPES, because both land in this directory.  `logs.csv` is the
+quoted four-column table; `logs.txt` is one labelled line per row:
+
+    [18:38:27] Temp:13050 F | Pres:6710 PSI | Fluc:354 F
+
+The same four quantities in both, so the walk, the dedupe and the ratio
+are identical and only the parse differs.  Output names follow the input
+name, so the two captures cannot overwrite each other -- with one
+exception: the historical default `logs.csv` keeps the three bare output
+names it has always had.
+
+Usage:  python analyze_fluc_steps.py [logs.csv|logs.txt] [outdir]
 """
 import csv
 import io
 import os
+import re
 import sys
 
 HEADER = ["n", "Time", "Temp", "Pres", "c", "fluc", "dPres", "d",
           "T_rise", "T_run", "P_rise", "P_run", "fluc_eq_c"]
+
+# The .txt has no header line, so these names are supplied rather than read.
+# They are the SAME four names the .csv writes in its header, which is why
+# the format cannot be told apart from them -- see load().
+SOURCE_COLS = ["Time", "Temp", "Pres", "Fluc"]
+DEFAULT_SRC = "logs.csv"
+
+# The .txt capture is one labelled line per row.  Anchored at both ends and
+# strict about the units on purpose: a line that only LOOKS similar must fail
+# the match rather than be parsed, because a silently dropped row moves every
+# number downstream and nothing else in this file would notice.
+TXTLINE = re.compile(
+    r"^\[(\d\d:\d\d:\d\d)\] Temp:(\d+) F \| Pres:(\d+) PSI \| Fluc:(\d+) F$")
 
 LEGEND = ("  a = Temp   b = Pres   c = dTemp (recomputed)   d = dPres / c\n"
           "  `fluc` is the file's own third column, kept beside c, not used as c.")
 
 
 def load(path):
-    """Rows are utf-8-sig (the file opens with a BOM) and CRLF-quoted."""
+    """Return (column names, body, format), body rows being 4-tuples of str.
+
+    The format is reported rather than inferred by the caller, because the
+    column NAMES cannot tell the two apart -- both are Time/Temp/Pres/Fluc.
+    What differs is that the CSV carries a header line and the .txt does
+    not, so the sniff is structural (does the first non-blank line parse as
+    a labelled row?) and not an extension check: a renamed copy still reads.
+    """
     with open(path, "rb") as fh:
         text = fh.read().decode("utf-8-sig")
+    body = []
+    for ln in text.split("\n"):
+        m = TXTLINE.match(ln.strip())
+        if m:
+            body.append(m.groups())
+    if body:
+        # Every non-blank line must parse -- a partial read is a wrong read.
+        blanks = [ln for ln in text.split("\n") if ln.strip()]
+        if len(blanks) != len(body):
+            raise ValueError("txt: %d of %d lines parsed; the rest are not "
+                             "the labelled form" % (len(body), len(blanks)))
+        return list(SOURCE_COLS), body, "txt"
     rows = list(csv.reader(io.StringIO(text)))
-    return rows[0], [r for r in rows[1:] if len(r) == 4 and r[0]]
+    return rows[0], [r for r in rows[1:] if len(r) == 4 and r[0]], "csv"
 
 
 def dedupe(body):
@@ -133,7 +177,17 @@ def main():
     src = sys.argv[1] if len(sys.argv) > 1 else r"D:\rblxTRGproject\Data\analyze\logs.csv"
     outdir = sys.argv[2] if len(sys.argv) > 2 else os.path.dirname(os.path.abspath(src))
 
-    header, body = load(src)
+    base = os.path.basename(src)
+    # Output NAMES follow the file name (a second capture must not become
+    # "the" answer silently); the ROW COUNT follows the format, because only
+    # the CSV spends a line on a header.
+    prefix = "" if base.lower() == DEFAULT_SRC else base.replace(".", "_") + "_"
+
+    # Named `kind`, not `fmt`: `fmt` is the number formatter that row_of()
+    # calls, and binding the format string to that name made every call in
+    # row_of a "csv"(90).  One name, one job.
+    header, body, kind = load(src)
+    is_txt = kind == "txt"
     samples = dedupe(body)
     rows = build_rows(samples)
 
@@ -155,9 +209,14 @@ def main():
 
     # ---------- report -----------------------------------------------------
     print("source      : %s" % src)
+    print("format      : %s" % ("txt (one labelled line per row)" if is_txt
+                                  else "csv (quoted header row)"))
     print("columns     : %s" % header)
     print(LEGEND)
-    print("rows        : %d" % (len(body) + 1))
+    # LINES, not rows: the CSV spends a line on a header and the .txt does
+    # not, so "rows" here and "444 rows" in check_fluc_steps.py are two
+    # different counts of the same file.  Name the one this one counts.
+    print("file lines  : %d" % (len(body) + (0 if is_txt else 1)))
     print("samples     : %d distinct  (%d repeats collapsed)"
           % (len(samples), len(body) - len(samples)))
     print("steps       : %d  (every sample except the first)" % len(steps))
@@ -256,7 +315,7 @@ def main():
                 int(s["P_rise"]), int(s["P_run"]),
                 "" if s["c"] is None else int(s["c"] == s["fluc"])]
 
-    all_path = os.path.join(outdir, "steps_all.csv")
+    all_path = os.path.join(outdir, prefix + "steps_all.csv")
     with open(all_path, "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(HEADER)
@@ -264,7 +323,7 @@ def main():
             w.writerow(row_of(s))
     print("wrote %s  (%d rows + header)" % (all_path, len(rows)))
 
-    rise_path = os.path.join(outdir, "rise_steps.csv")
+    rise_path = os.path.join(outdir, prefix + "rise_steps.csv")
     with open(rise_path, "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(HEADER)
@@ -275,11 +334,13 @@ def main():
 
     # The means on their own, because "样本平均" is a thing to pull into a
     # sheet and a mean buried mid-report is a mean someone re-derives by hand.
-    sum_path = os.path.join(outdir, "d_summary.txt")
+    sum_path = os.path.join(outdir, prefix + "d_summary.txt")
     with open(sum_path, "w", encoding="utf-8", newline="") as fh:
         fh.write("d = (b_n - b_(n-1)) / c_n,  c_n = a_n - a_(n-1)\n")
-        fh.write("source: %s   rows %d -> %d samples -> %d steps\n"
-                 % (os.path.basename(src), len(body), len(samples), len(steps)))
+        fh.write("source: %s   %d lines -> %d samples -> %d steps\n"
+                 % (os.path.basename(src),
+                    len(body) + (0 if is_txt else 1),
+                    len(samples), len(steps)))
         fh.write(LEGEND + "\n")
         fh.write("*  = the reading the operator chose with 「只算连续升高处」:\n"
                  "     a step counts only if it sits inside a maximal run of two\n"
