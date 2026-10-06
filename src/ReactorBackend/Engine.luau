@@ -49,7 +49,7 @@ function Engine:Reset(shift)
         -- what gives it a consequence.
         monitorPower=false, booted=false, shuttersOpen=false, lights=false, mute=false, sam=false,
         temperature=c.Sim.Ambient, pressure=c.Sim.Ambient, output=0, netOutput=0,
-        fluctuation=0, radiation=0, coreState=0, extraction=2, peaStress=0,
+        fluctuation=0, radiation=0, coreState=0, pressureState=1, extraction=2, peaStress=0,
         fans=array(6, function() return true end),
         cbl=array(3, function() return {level=2, pressure=0, stress=0, active=false, purgeUntil=0, fault=false} end),
         pumps=array(3, function() return {level=1, enabled=false, integrity=100} end),
@@ -269,12 +269,44 @@ function Engine:Step(dt)
     end
     for _, on in ipairs(s.fans) do if on then fans+=1 end end
     local before=s.temperature
+    -- Every gate below reads the value the step STARTED with, so a step is a function
+    -- of the state it entered on and not of its own output. That is the reading the
+    -- captures support: the pressure discontinuities sit at Tprev 17500 and 29500,
+    -- and the temperature gate sits at Pprev in (11258, 11470].
+    local pressureBefore=s.pressure
     s.temperature+=(heat*c.Sim.CBLHeat-cooling*c.Sim.PumpCooling+self.random(c.Sim.NoiseMin,c.Sim.NoiseMax))*scale
-    if not s.equinox then s.pressure+=(math.floor(s.temperature/c.Sim.PressureDivisor)-fans*c.Sim.FanPressure)*scale end
-    if s.temperature>c.Sim.State2 then s.pressure+=c.Sim.State2Pressure*scale end
-    if s.temperature>c.Sim.State3 then s.temperature+=c.Sim.State3Heat*scale; s.pressure+=c.Sim.State3Pressure*scale end
+    if not s.equinox then
+        -- Chamber pressure is a line in the entry temperature, one line per state, and
+        -- the state is LATCHED: calculation.luau's if/elseif has no else, so a machine
+        -- below State1 keeps whatever state it last had instead of falling back to 1.
+        -- That latch is what makes a cold core still read the band it was in.
+        --
+        -- This is not s.coreState, which is computed further down as a pure function of
+        -- the current temperature and which has a state 0 for the cold machine. They
+        -- are two different quantities that happen to share two thresholds, and only
+        -- this one drives the pressure slope.
+        -- The thresholds are calculation.luau's own. It writes `>= 17500` for
+        -- state 2 and `> 29499` for state 3; State3 is 29500, so the top branch is
+        -- `>=` and 29500 opens state 3 instead of staying in 2. Nothing measured
+        -- that -- neither capture has a step on 29500 (live jumps 28987 -> 29568,
+        -- archive 29368 -> 29888) -- so the file the operator named accurate is
+        -- what decides it, copied across threshold for threshold.
+        if before>=c.Sim.State3 then s.pressureState=3
+        elseif before>=c.Sim.State2 then s.pressureState=2
+        elseif before>=c.Sim.State1 then s.pressureState=1 end
+        s.pressure+=(c.Sim.StatePressure[s.pressureState]+c.Sim.StateSlope[s.pressureState]*before
+            +c.Sim.PressureBenefitPEA[s.extraction]-fans*c.Sim.FanPressure)*scale
+    end
+    -- The state escalation on the pressure side lives inside StatePressure/StateSlope as
+    -- the discontinuity between adjacent entries, so there is deliberately no
+    -- State2Pressure/State3Pressure bump here: adding one back would count the same
+    -- jump a second time.
+    if before>=c.Sim.State3 then s.temperature+=c.Sim.State3Heat*scale end
     if s.pressure<c.Sim.StallPressure then s.temperature-=c.Sim.StallCooling*scale end
-    if s.pressure>c.Sim.HighPressure then s.temperature+=math.floor(s.pressure/c.Sim.HighPressureDivisor)*scale end
+    -- Over-pressure heat is PER TICK, not a one-shot. Every step past the threshold
+    -- stays elevated in both captures (9/9 in each), so the constant is the measured
+    -- level shift between contiguous regimes rather than a spike size.
+    if pressureBefore>c.Sim.HighPressure then s.temperature+=c.Sim.HighPressureHeat*scale end
     s.temperature=math.max(c.Sim.Ambient,s.temperature); s.pressure=math.max(0,s.pressure)
     s.fluctuation=s.temperature-before
     s.coreState=s.temperature>c.Sim.State3 and 3 or (s.temperature>c.Sim.State2 and 2 or (s.temperature>=c.Sim.State1 and 1 or 0))

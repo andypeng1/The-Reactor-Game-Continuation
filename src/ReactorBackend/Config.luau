@@ -12,12 +12,51 @@ local Config = {
     Version = '0.2.0',
     Sim = {ReferenceTick=2.5, Step=1, MaxCatchupSteps=10, Ambient=20,
         StartupTemperature=9420, StartupPressure=5000, CBLHeat=65, PumpCooling=120,
-        FanPressure=70, PressureDivisor=50, NoiseMin=-50, NoiseMax=49,
+        -- FanPressure is 60, not 70: the wiki's Pressure page states that each vent
+        -- removes 60 PSI per core tick. It is unadjudicable from the captures -- both
+        -- have the fans off -- so the wiki is the only witness here, and the manual is
+        -- silent, which puts it a tier down rather than in doubt.
+        NoiseMin=-50, NoiseMax=49, FanPressure=60,
+        -- Chamber pressure is a per-state LINE, not a divisor. The operator's two
+        -- captures in Data/analyze are the original's own ground truth, and a per-state
+        -- fit of dP = g + s*Tprev returns 356/0.006502 and 788/0.005458 (live) and
+        -- 358/0.006423 and 791/0.005365 (arch) for states 2 and 3, both at R2 = 0.998.
+        -- Those two lines are therefore corroborated by measurement rather than
+        -- inherited from the prototype. State 1's own fit is NOT identifiable -- R2 is
+        -- 0.37 live and 0.007 arch, the band is only 4,400 F wide, and dP inside it is
+        -- quantised to an integer ramp -- and the two captures disagree there (g 36 vs
+        -- 203, s 0.0142 vs 0.0042), so state 1 keeps calculation.luau's value.
+        --
+        -- This is the one place the adjudication order in the header was never carried
+        -- out: floor(T/50) is TRGWeb's, and on both captures the engine built on it is
+        -- the WORST of the three models -- pooled median |residual| 114.0 / 153.0,
+        -- against calculation.luau's 11.4 / 14.3 and TRGWeb's 46.0 / 64.0. That is also
+        -- what proves these captures are not this remake's own output.
+        --
+        -- State2Pressure and State3Pressure are retired with it. The escalation is the
+        -- discontinuity between adjacent entries in the table below, and leaving the
+        -- bumps in place would apply the same jump twice.
+        StatePressure={110,350,800},      -- g[state], PSI per tick
+        StateSlope={0.01,0.0075,0.005},   -- s[state], PSI per tick per degree F
+        PressureBenefitPEA={0,0,75,150},  -- d[s.extraction]; extraction is validated 1..4
         -- State1 and StallPressure were 6000 and 2250: TRGWeb's numbers, replaced
         -- 2026-09-26 with the shipped game's. State2/State3/Meltdown already matched.
-        State1=5600, State2=17500, State3=29500, State3Heat=700,
-        State2Pressure=200, State3Pressure=300, StallPressure=2200,
-        StallCooling=750, HighPressure=13500, HighPressureDivisor=100,
+        State1=5600, State2=17500, State3=29500, StallPressure=2200,
+        StallCooling=750,
+        -- Both temperature effects below are PER TICK, not one-shot. Every step past the
+        -- threshold stays elevated in BOTH captures -- all nine steps past T>29499 are
+        -- high in each, and none decays back -- so the quantity the captures pin down
+        -- is the level shift between contiguous regimes, and that is what these are.
+        --
+        -- HighPressure was 13500, a number with no support anywhere. The bracket the
+        -- captures give is Pprev in (11258, 11470] and 11300 sits inside it. Its
+        -- divisor is retired: the shift is flat, not floor(P/100) -- scanning the
+        -- threshold from 10200 to 14000 leaves the residual sitting on the noise floor.
+        -- This constant is also the PEA stress-bonus threshold in Engine:Step; one
+        -- threshold with one meaning, so both readings move together.
+        HighPressure=11300, HighPressureHeat=298,
+        -- State3Heat was 700. Measured +457.3 F per tick (live) and +461.7 (arch).
+        State3Heat=460,
         StallTemperature=2000, MeltdownTemperature=39000,
         OutputDivisors={250,160,120,45}, OutputOffsets={50,100,250,400},
         ExtractionFraction=0.25, QuotaDivisor=60,

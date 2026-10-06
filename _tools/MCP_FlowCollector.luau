@@ -293,8 +293,8 @@ end
 -- A static ladder of temperature bands was tried first and it died, which is why the loop
 -- is worth the explanation. Under a constant +49 noise bias the band that holds at noise 0
 -- (H=11,K=6, a nominal -2 C/s) becomes +17.6 C/s, the core drifts 24000 -> 29000 over 400
--- ticks, and above HighPressure 13500 the engine's own `temp += floor(press/100)*scale`
--- term feeds back and runs away to meltdown. Closing the loop on the measured temperature
+-- ticks, and above HighPressure 11300 the engine's own over-pressure heat term
+-- (`temp += 298*scale`, flat, per tick) feeds back and runs away to meltdown. Closing the loop on the measured temperature
 -- absorbs any bias; a table of bands cannot.
 --
 -- The shift has two halves and they are NOT mirror images, which is the complexity worth
@@ -436,10 +436,12 @@ local function policy()
         end
     end
     if s.pressure > 12000 then act("atmosphere_vent") end
-    -- Above HighPressure 13500 the engine adds floor(pressure/100)*scale of HEAT back into
-    -- the core, so an E-VENT here is not merely relief, it is the only way to break a
-    -- runaway the AVB cannot break alone -- and during the equinox it is the only instrument
-    -- left at all.
+    -- Above HighPressure 11300 the engine adds a flat 298*scale of HEAT back into the
+    -- core every tick, so an E-VENT here is not merely relief, it is the only way to break
+    -- a runaway the AVB cannot break alone -- and during the equinox it is the only
+    -- instrument left at all. The 12000/13000 gates below are this collector's own policy
+    -- and not the engine's constant; both now sit past the engine's threshold, which is
+    -- exactly the relationship the old 12000/13000 pair assumed of 13500.
     if s.pressure > 13000 then
         for i = 1, 3 do
             if not s.emergencyUsed[i] then
