@@ -11265,3 +11265,151 @@ n≈20、跨度 ~150 下，两组均值之差的标准误 ≈9–10 F，所以 *
 **没验的**：Studio 没连上（§0.16），§4.4 的**实例那一半**没做；验的是**捕获自己的算术**。
 排除不掉的还有一条：那一列 `Pres` 是哪根管子读的（仪表值 vs 内部值）——**这份数据分不开**，
 98.18 末尾那条同样适用。
+**Phase 99（2026-10-07）—— 客户端状态采集器接进了**原版**游戏，以及两个量出来的缺陷。**
+
+### 99.1 通道
+
+操作员自己把注入器接到了第三方 MCP `roblox-mcp-difz`（npm v1.6.0 / MIT / 作者 `Difz25x`，
+HTTP+WS 在 `http://localhost:28429/mcp`，80 个工具）。注入靠一行
+`loadstring(game:HttpGet("http://127.0.0.1:28429/mcp.lua"))()`，之后客户端作为一个 worker
+连回 `ws://localhost:28429/ws`。**实测**：pid **16248**、`RobloxPlayerBeta`、2943 MB、
+workerId **`1791378630.3117762823334`**、transport `ws`、connected 1 / unconnected 0。
+
+这条通道的意义：它是**第三个 VM**，而且**不在 Studio 里** —— 它跑在真正的 Roblox 客户端进程中，
+是一个货真价实的 UNC 执行器（`executor=Solara`，即 Solara V3）。§0.16/§0.17 说「跑起来的游戏里
+发生了什么读不到」，说的是**Studio 的**两个 VM；这一条是它们之外的第三条路。
+
+**产物落点不是 sink。** 执行器有自己的文件系统，`D:\SCRIPT\SolaraV3\workspace\` 是一个**普通的
+Windows 目录**：Python 和 `cp` 直接往里写，脚本里的 `writefile`/`readfile`/`appendfile`/`isfile`/
+`listfiles` 打在同一个目录上。所以 Phase 54/70/71 那套 8765/8766 HTTP sink **一个都不需要**，
+字节也不进上下文。
+
+### 99.2 客户端上有什么
+
+`Workspace.Stats` 是**唯一**一个把反应堆数值暴露成机器可读对象的容器：**38 个后代** =
+**32 个 `ValueBase`** + 6 个文件夹（`Core` / `CBL1` / `CBL2` / `CBL3` / `Fans` / `HDEF`）。
+32/32 全部挂上（`# hooked 32 ValueBase objects under Workspace.Stats (of 38 descendants)`）。
+
+**`ValueBase`，不是 `ValueObject`。** 这个引擎里没有 `ValueObject` 这个类，
+`IsA('ValueObject')` **静默返回 false** —— 实测 `IntValue:IsA('ValueBase')=true`、
+`IntValue:IsA('ValueObject')=false`。第一版选择器就写的 `ValueObject`，
+于是 hook 到 0 个，而产物是一份**只有表头和心跳、正文为空**的文件 —— 和「这一班反应堆什么都没变」
+**逐字节同形**。这是这个文件存在的理由本身，所以 `hooked == 0` 时它 `error()` 而不是交付空日志。
+
+**事件通道的强度也是一条读数**：`GetPropertyChangedSignal('Value')` **每次真写都发一次、
+同值写不发** —— 实测写 `(1, 1, 2)` → `fires=2 seen=[1,2]`。所以**记录行缺席是证据**，
+而 1 Hz 轮询给不出这条证据。
+
+**属性通道是关的**：全客户端 **24,445 个属性**里，提到 coolant / pump / pea / cbl / stress /
+fluct / fan / qpu / hdef 的 **0 个**。冷却泵档位、PEA 应力、CBL 体内温度这些量**从来不进客户端**，
+它们只以**服务端已经渲染好的文本**到达。这就是面板快照这条路存在的理由。
+
+### 99.3 两个缺陷
+
+**① `panelLines` 的 `≤12` 上限按字母序丢。** 旧版在一台监视器亮灯数 >12 时只留
+**字母序前四条**，理由写在注释里：「for a monitor that lists its alarms [the first few are]
+enough to see which fired」。**两半都量出来是假的**：警报根本不在文本里（见 99.4），
+而上限丢掉的**正好是payoff**。实测损失：`MainControlRoomMonitor` 81 亮 → 丢 77 条，
+含 `PressureLabel` / `StressLabel` / `TempLabel` / `PEANameText`；
+`ThermalControlRoomMonitor` 丢掉 `Title=NET C-PUMP FLOW RATE` 和整条 `PUMP C1..C3` /
+`CHAMBER FAN 1..6` 名册。
+**修法**：上限整段删掉；body 按 `Name=Text` 去重（相同字符串不带额外信息），
+**重数保留成 `xN`**（`PowerControlRoomMonitor` 上三条一样的 `StressLabel=0 %` 是**三个 CBL 通道**，
+不是一条）。这个去重**不删任何被计数的东西**：印刷的 `%d` 仍然是 `nlit`（画出来的标签数），
+所以之前量到的 **81 / 58 / 59 / 39** 继续可读。
+**实测复验**：`TitleText=PUMP C1` / `PUMP C2` / `PUMP C3`、`PEANameText=P. E. A.`、
+`StressLabel=0 %`、`TitleText=CHAMBER FAN 1..6` **全部在场**；
+多重后缀实测 `TextLabel=ACTIVE x14`、`TextLabel=SEVERED x8`、`StatusLabel=OFF x6` /
+`StatusText=STATUS -  x6`、`PowerLabel=100% x3` / `Title=CBL PRESSURE x3`、
+`StateLabel=OFFLINE x2`、`TextLabel3=NOTICE: … x2`。
+
+**② 旧注释说「面板文本就是警报状态」，量出来是假的。** `AlertsControlRoomMonitor` 载 **39 条
+caption**，**39 条全部** `Visible=true` / `TextTransparency=0.00`，**警报响不响都一样** ——
+它们是**永久标签**。状态在**每条背后另一块 Frame（板）** 上，那块板还带着该警报的**严重度颜色**。
+**配对是量出来的**：按 `(AbsolutePosition, AbsoluteSize)` 取整到整数**逐位相同**配对，
+27 条 caption 各自配到一块**唯一**的板，剩下 **12 条**配不上 —— 那 12 条正好是非警报标签
+（公司文本、mainframe OS、三个大字状态词），**27 + 12 = 39 对得上**。
+
+**严重度图例（实测，逐字）**：`255,0,0` severe · `170,0,255` malfunction · `255,255,0` active ·
+`255,85,0` caution · `104,255,34` core active · `255,85,255` destabilisation · `0,170,255` stallout ·
+`255,255,255` white。
+
+**新通道 `alertLamps()`** 每条 caption 按**逐位相同的 rect** 找它的板，板索引**带重数** ——
+一块板被两条 caption 共用的，**当歧义丢掉而不是靠运气配上**（同 Blender 那几轮
+`bridge_loops` 的「先断言再动手」）。它发 `AlertsLamps.<亮>/<总>{文字=r,g,b; …}`，
+安静时发 `AlertsLamps.0/27{none visible}`，并**挂在 `~` 面板行的最后一段**，
+所以既不需要新的行图例，又和面板共用同一个时钟。
+
+**活体对照（同一个 tick）**：`AlertsControlRoomMonitor.39/39`（39 条 caption 全在画）
+**与** `AlertsLamps.0/27{none visible}`（27 块板全不亮）—— 一行里两个数就是整条结论。
+
+### 99.4 假设与否定，都写进交付的字节里
+
+**假设（源码里就标着是假设）**：板 `Visible` 变 true 就是游戏在说「这条警报在响」。
+它符合上面每一条读数、也是标准 annunciator 设计，**但没有一块板被看过它转变**，
+所以它还不是测量。**测试是一行**：开机，看 CBL ACTIVE / PUMP ACTIVE 亮不亮。
+
+**否定（不容怀疑的那条）**：caption 是**死的**，所以**只抓文本的快照说不出哪个警报响过**。
+旧版这个文件的注释声称的正好相反。
+
+### 99.5 面板 ≠ 状态，活体实例
+
+同一个 tick 的 `~` 行写着 `DescLabel=FATAL SYSTEM ERROR`、
+`DescriptionLabel=CORE COLLAPSE DETECTED - PLEASE WAIT WHILE THE REACTOR COMPLETES ITS
+AUTOMATED SHUTDOWN INSTRUCTIONS…`、`ShutdownText=ENERGY QUOTA MET`、`TitleLabel=FATAL SYSTEM ERROR`；
+而同一个 tick 的 `=` 行写着 `Core.TemperatureVal=0`、`Core.PressureVal=20`、`Core.OutputVal=0`、
+`Core.RadiationVal=0`、`GameActive=false`、`GameStart=true`、`ReportsDone=0`、
+`MainframeMeltdown=false`、`ActiveQPUs=6`。另：`TempLabel=NIL F` 是**面板**在说温度为 0。
+
+**通用形状**：一块屏幕可以**同时**把一个量渲染得很准、把一个状态渲染得很不准。
+
+### 99.6 两条量法（都是本轮挣到的）
+
+**① 观察窗口短于被观察者自己的周期，就分不出「活着」和「死了」。**
+`Heartbeat = 30`、`Flush = 1`。我在 12 秒里读了三次文件、每次都是 31,085 字节，
+差一点写下「采集器在 61 s 死了」。13:31 那个文件 **41,223 字节、还在长**。
+一个 30 秒周期的写者，**在 12 秒的窗口里必然是一条平线** —— 平线是它的正常形状。
+**先知道周期，再选窗口。**（同 §0.20/§0.21 一族。）
+
+**② 我自己的计数器数到了图例。** `sum(1 for l in lines if ' -> ' in l)` 得 **1** ——
+而全场唯一的那个 ` -> ` 在**表头**行 `# record: [HH:MM:SS] <rel-s> <path> <old> -> <new>` 里。
+**真记录行 0 条。** 一个跑在「表头把这个文件的记录格式原样引用了一遍」的文件上的计数器，
+**永远会数到至少 1**。同 359/360 一族：影子在栈帧里，而检查在看命名空间。
+
+### 99.7 这一轮**没有**建立的
+
+- **0 条记录行什么都没检验** —— 反应堆停在交班屏，32 个 `ValueBase` **整整 90 秒一动不动**
+  （三次快照的 33 对逐位相同）。所以这里的缺席**不是**对 hook 的检验，**是**对「停堆时客户端
+  状态全冻」的检验。hook 的第一次活体检验要等一个**在跑的反应堆**。
+- **警报假设**（99.4）。
+- **服务端代码**照旧读不到：客户端只持有**效果**和**已经渲染好的文本**（FilteringEnabled
+  就是那道墙）。**222 MB 的 `.rbxlx` dump**（UniversalSynSaveInstance 导的）是另一条路，
+  但它**已经关掉** —— 名字索引不可信（`NAME` 字段不是 CDATA 解包的）。那份源码语料是第三方的
+  游戏，而本仓库是公开的，**一个字节都不进仓库**。
+- Studio 没连上，§4.4 的**实例那一半**（模拟点击 → 检查部件位置/颜色）没做。
+
+### 99.8 身份与验证
+
+`_tools/TRG_original_state.luau` —— tag `s2`、**18,397 字节 / 476 行 /
+md5 `c5304940bde9cf8ac432b14cacdad27a`**、**0 个反斜杠**（§0.10：这个文件**故意一个反斜杠
+都不写**，换行用 `local NL = string.char(10)`，需要内嵌双引号的字符串改用单引号 Lua 语法）。
+上一个身份是 tag `s1` / 13,054 字节 / md5 `90f5e1eef4eeb1090519427c39cda3f7`。
+
+**验证链**：`D:\Lua\5.1\lua.exe` 语法 **PARSE OK** → Python 比**逐字节**
+（`bytes 18397 -> 18397  identical True`、`backslashes 0`）→ 在**活客户端**里
+`loadstring(readfile('TRG_original_state.luau'))()` 跑**交付物自己的字节**
+（`_G.TRG_STATE_AUTORUN = false`；`pcall(M.start)` → `tag=s2 start_ok=true`）。
+`M.start()` 没抛错本身也证实了上一轮那个 `hooked=0` 修复仍然成立（否则文件自己的 `error()`
+会拦住它）。产物 `trg_state_261007-132938.txt`：3 快照 + 3 面板行，头 10 行是图例，
+第 12 行 237 对。
+
+**行格式从第一份真捕获起冻结。** `s2` 只加了尾部那段 `AlertsLamps` —— 这**只因为**
+`s1` 底下**从来没有过一份真捕获**，所以世界上不存在一个 reader 会因此坏掉。
+
+### 99.9 下一步
+
+采集器已经在原版里跑着。**payoff 需要一个在跑的反应堆** —— 起一次机，同一个文件一次回答三件：
+板会不会亮、班中的面板长什么样、每个 tick 那 32 个 ValueBase 怎么动。
+`docs/TODO.md` §3.9 的 ①②（`(1999, 2127]` 那一格的慢降、CBL 1..5 每档 ≥10 tick）也一直在等
+一个**刚开机**的反应堆。
+

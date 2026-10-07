@@ -1439,3 +1439,41 @@ TRGWeb 的 0.020 差 45–55%**；最尖一条横跨 4130 F 而残差跨度只�
 `has disconnected`、官方回 `{"studios":[]}`），世界内手册原件没重读，盘上那份代打；
 风扇项两趟捕获全关（=0），70 vs 60 判不了。
 
+**Phase 99（2026-10-07）—— 客户端状态采集器接进了**原版**游戏（那个 90 个 Phase 都读不到的那一半），
+顺手把两个**量出来**的缺陷修掉。**
+操作员把注入器接到了第三方 MCP `roblox-mcp-difz`（HTTP/WS `localhost:28429`，worker 实测
+pid 16248 / `RobloxPlayerBeta` / transport `ws`），于是**第三个 VM** 通了 —— 它跑在**真正的
+Roblox 客户端**里，不是 Studio。交付 `_tools/TRG_original_state.luau`（tag `s2`、
+**18,397 字节 / 476 行 / md5 `c5304940bde9cf8ac432b14cacdad27a`**、**0 个反斜杠**，§0.10），
+注入**原版**（placeId `17596243941`）后写进**注入器自己的文件系统**
+`D:\SCRIPT\SolaraV3\workspace\` —— 那是个普通 Windows 目录，Python 直接读，
+**不需要 8765/8766 sink**。
+**六句能直接用的**：**① 客户端只有一个 38 件的 `Workspace.Stats`** —— 32 个 `ValueBase` + 6 个
+文件夹（`Core`/`CBL1..3`/`Fans`/`HDEF`），32/32 全挂上。**是 `ValueBase` 不是 `ValueObject`**
+（`IsA('ValueObject')` **静默**返回 false）。**② 一份文件两个时钟**：`=` 行是那 32 个的快照
+（33 对），`~` 行是面板文本（237 对）+ `AlertsLamps`。**③ 面板的 TEXT 不是警报状态** ——
+`AlertsControlRoomMonitor` 39 条 caption **全部** `Visible=true` / `TextTransparency=0.00`，
+**警报响不响都一样**；状态在**每条背后另一块 Frame** 上（27 条 caption 各自配到一块**同 rect** 的板，
+剩下 12 条正好是非警报标签，**27+12=39 对得上**）。新通道 `alertLamps()` 发
+`AlertsLamps.<亮>/<总>{文字=色}`，停堆时静态读出 **`0/27{none visible}`**。
+**④ 「板亮 = 该警报在响」是假设，就写成假设**（一行测试：开机看 CBL ACTIVE / PUMP ACTIVE 亮不亮）；
+**不容怀疑的是那条否定** —— caption 是死的，所以**只抓文本的快照说不出哪个警报响过**
+（旧注释在这里写反了）。**⑤ 同一个 tick 里面板与状态可以各说各话**：
+`DescLabel=FATAL SYSTEM ERROR` / `ShutdownText=ENERGY QUOTA MET` 而 `Core.TemperatureVal=0` /
+`Core.PressureVal=20` / `GameActive=false`；`TempLabel=NIL F` 是**面板**在说温度为 0。
+**⑥ 没有上传凭据也能验交付字节**：`D:\Lua\5.1\lua.exe` 过语法、Python 比**逐字节**、
+再在活客户端里 `loadstring` **交付物自己的字节**跑 `M.start()`（返回 `start_ok=true`）。
+**两个缺陷都是量出来的**：`panelLines` 原来在 >12 条亮时只留**字母序前四条**
+（`MainControlRoomMonitor` 81 亮 → 丢 77 条，含 `PressureLabel`/`StressLabel`/`TempLabel`/`PEANameText`；
+`ThermalControlRoomMonitor` 丢掉 `Title=NET C-PUMP FLOW RATE` 和整条 `PUMP C1..C3` /
+`CHAMBER FAN 1..6` 名册）—— 而**给它说话的注释两半都假**；去掉上限、body 按 `Name=Text` 去重留 `xN`
+（实测 `ACTIVE x14` / `SEVERED x8` / `StatusLabel=OFF x6` / `Title=CBL PRESSURE x3`），
+**三个老的亮灯计数逐位复现**（81/160、58/117、59/118、39/39）。**两条量法**：
+**观察窗口短于被观察者自己的周期，就分不出「活着」和「死了」**（`Heartbeat=30`，我拿 12 秒判过死，
+13:31 那文件 41,223 字节还在长）；**我自己的计数器数到了图例**
+（`' -> ' in l` 得 **1**，而全场唯一那个箭头在表头 `# record: … <old> -> <new>` 里，
+**真记录行 0 条**）。**没验的**：① 那 0 条记录行**什么都没检验** —— 反应堆停在交班屏，
+32 个 ValueBase **整整 90 秒一动不动**；② 警报假设；③ **服务端代码**照旧读不到
+（FilteringEnabled 就是那道墙），222 MB 的 `.rbxlx` dump 那条路因**名字索引不可信**
+（`NAME` 字段不是 CDATA 解包的）而关掉。细节 `PROGRESS.md` 99，取舍 **398..400**。
+

@@ -1280,3 +1280,96 @@ EVT1267 ANIM ...DisconnectFrame.Frame.Frame.TextLabel moved 5 times inside one p
 **上一版这里是「一次注入永远录不到两半，必须注入两次」，已作废。**
 **再上一版这里是「驱动器会替你按两次开关」，同样作废。**
 **再再上一版这里还有一台「只观察不按」的驱动器 —— `r60` 之后连它也没了。**
+
+---
+
+## 13. 另一条通道：客户端状态采集器（`_tools/TRG_original_state.luau`，tag `s2`）
+
+**这一节跟上面 12 节不是一回事 —— 它一台服务器都不要。**
+
+上面那些（`r60` / `w61` / 开机那份）走的是 **8765/8766 两个 HTTP sink**：脚本把字节
+POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那条路。** 它跑在**第三个 VM** 里 ——
+真正的 Roblox **客户端**进程（不是 Studio），通过一个真 UNC 执行器（`executor=Solara`）。
+
+### 13.1 它写到哪里
+
+**写进执行器自己的文件系统**：`D:\SCRIPT\SolaraV3\workspace\`。那是个**普通的 Windows 目录**
+—— Python 和 `cp` 直接往里写/读，脚本里的 `writefile` / `readfile` / `appendfile` /
+`isfile` / `listfiles` 打在同一个目录上。所以：
+
+- **不用起 8765**，**不用起 8766**，`start_services.bat` 不用跑；
+- 字节**不经过上下文**，全程在盘上；
+- 采集器**不需要 `HttpGet` 去取脚本**：脚本本体是你手动放进那个目录的。
+
+### 13.2 怎么注入
+
+1. 把仓库里的 `_tools/TRG_original_state.luau` 拷进 `D:\SCRIPT\SolaraV3\workspace\`
+   —— **用 `_tools` 旁边那个部署脚本**（`deploy_state.py`，在会话 tmp 里），它逐字节比、
+   核 md5、并断言**零反斜杠**（§0.10）；
+2. 在**已经进了原版游戏**的客户端里执行：
+   `loadstring(readfile('TRG_original_state.luau'))()`；
+3. 产物立刻出现在 `D:\SCRIPT\SolaraV3\workspace\trg_state_<日期>-<时分秒>.txt`。
+
+**先开机再注入，还是先注入再开机？** 两份都行，但**要抓开机那一刻就趁早注入** ——
+`GetPropertyChangedSignal('Value')` 只在**真写**时发（同值写不发），所以晚注入 =
+让掉它之前发生的那部分。
+
+### 13.3 它记什么
+
+**根是写死的 `Workspace.Stats`**（不是普查 —— 这一份和监视器不同，它钉一个容器）。
+客户端上那个容器是：**38 个后代 = 32 个 `ValueBase` + 6 个文件夹**
+（`Core` / `CBL1` / `CBL2` / `CBL3` / `Fans` / `HDEF`），32/32 全挂。
+**第一行会写 `# hooked 32 ValueBase objects under Workspace.Stats (of 38 descendants)`** ——
+这个数**每次跑都要一样**，不一样就是选择器坏了（挂到 0 个时它 `error()`，不交付空日志）。
+
+三种行，**共用同一个时钟**：
+
+| 前缀 | 内容 |
+|---|---|
+| `[HH:MM:SS] <rel-s> <path> <old> -> <new>` | **记录行**：某个 `ValueBase.Value` 真的变了（同值写不发） |
+| `[HH:MM:SS] <rel-s> = <path>=<value> …` | **快照行**：32 个值的全量（每 `Heartbeat` 秒一次，默认 30） |
+| `[HH:MM:SS] <rel-s> ~ <Monitor>{…} <AlertsLamps.n/m{…}>` | **面板行**：7 台监视器上画出来的文字 + 警报灯 |
+
+**表头全部以 `#` 开头。** 扫这个文件时**不要把表头当数据** ——
+`' -> ' in line` 这种计数器会数到表头里那句 `# record: … <old> -> <new>`（见 §0.20 一族）。
+
+### 13.4 面板 ≠ 状态
+
+**`~` 行读的是屏幕上的字，`=` 行读的是状态。两个可以同时一个准一个不准。**
+实测：停堆那一屏 `DescLabel=FATAL SYSTEM ERROR`、`ShutdownText=ENERGY QUOTA MET`，
+而同一拍 `Core.TemperatureVal=0`、`GameActive=false`。
+**要状态就读 `=` 行；要「玩家看到什么」才读 `~` 行。** 两者都不是对方的替代品。
+
+### 13.5 `AlertsLamps` 怎么读
+
+`AlertsControlRoomMonitor` 上 **39 条 caption 全部 `Visible=true`**、**警报响不响都一样**
+（它们是永久标签）。**警报状态在每条背后另一块 Frame（板）上。**
+所以 `AlertsLamps.<亮>/<总数>{文字=r,g,b; …}` 数的是**板**：
+
+- 安静时：**`AlertsLamps.0/27{none visible}`**；
+- 有警报时：亮的那几块列出来，颜色是**严重度图例**：
+  `255,0,0` severe · `170,0,255` malfunction · `255,255,0` active · `255,85,0` caution ·
+  `104,255,34` core active · `255,85,255` destabilisation · `0,170,255` stallout · `255,255,255` white。
+
+**「板亮 = 该警报在响」是假设，尚待证实**（一行测试：开机看 CBL ACTIVE / PUMP ACTIVE 亮不亮）。
+**不容怀疑的是那条否定**：caption 是死的，所以**只抓文本的快照说不出哪个警报响过**。
+
+### 13.6 停不下来、看不到、别当故障
+
+- **停它**：在同一个 VM 里 `loadstring(readfile('TRG_original_state.luau'))()` 拿到的返回值上
+  调 `M.stop()`；或者直接 `_G.TRG_STATE_AUTORUN = false` 再注入（`M.start()` 就不自己跑）。
+- **文件暂时不长了 ≠ 它死了。** 快照周期是 **30 秒**（`Heartbeat`），记录行只在**真写**时才发。
+  **一个 30 秒周期的写者，在 12 秒的窗口里必然是一条平线** —— 平线是正常形状。
+  判死活前先看 `mtime`，别拿短窗口下结论。
+- **`hooked 0 ...`** 是这个文件在喊「选择器写错了，不是树的问题」—— 它在 `error()` 之前
+  不会交付一份看起来正常的空日志。**看到这份错误去看 `trg_state_FATAL.txt`。**
+
+### 13.7 身份（注入前核这个）
+
+| 文件 | tag | 字节 | 行 | md5 |
+|---|---|---|---|---|
+| `_tools/TRG_original_state.luau` | **`s2`** | **18397** | 476 | **`c5304940bde9cf8ac432b14cacdad27a`** |
+
+**上一个身份**（已被取代）：tag `s1` / 13054 字节 / md5 `90f5e1eef4eeb1090519427c39cda3f7`。
+**换 tag 的理由**：`s2` 在面板行尾部加了一段 `AlertsLamps` —— 这**只因为** `s1` 底下
+**从来没有过一份真捕获**，世界上不存在一个读旧格式的 reader 会因此坏掉。**从 `s2` 起冻结。**
