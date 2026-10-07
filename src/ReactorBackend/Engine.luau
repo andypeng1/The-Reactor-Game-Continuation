@@ -269,10 +269,13 @@ function Engine:Step(dt)
     end
     for _, on in ipairs(s.fans) do if on then fans+=1 end end
     local before=s.temperature
-    -- Every gate below reads the value the step STARTED with, so a step is a function
-    -- of the state it entered on and not of its own output. That is the reading the
-    -- captures support: the pressure discontinuities sit at Tprev 17500 and 29500,
-    -- and the temperature gate sits at Pprev in (11258, 11470].
+    -- The state gate and the over-pressure gate below read the value the step STARTED
+    -- with, so they are functions of the state the step entered on and not of their own
+    -- output. That is the reading the captures support: the pressure discontinuities sit
+    -- at Tprev 17500 and 29500, and the temperature gate sits at Pprev in (11258, 11470].
+    -- The STALL gate is the exception and reads the post-step pressure -- see the note
+    -- on it. That asymmetry is not new: before the pressure rewrite BOTH temperature
+    -- gates read the post-step pressure, and the rewrite converted only one of them.
     local pressureBefore=s.pressure
     s.temperature+=(heat*c.Sim.CBLHeat-cooling*c.Sim.PumpCooling+self.random(c.Sim.NoiseMin,c.Sim.NoiseMax))*scale
     if not s.equinox then
@@ -302,6 +305,11 @@ function Engine:Step(dt)
     -- State2Pressure/State3Pressure bump here: adding one back would count the same
     -- jump a second time.
     if before>=c.Sim.State3 then s.temperature+=c.Sim.State3Heat*scale end
+    -- STALL reads the POST-step pressure, not the value the step entered on: at T=10000
+    -- the state-1 line's own +210 lifts a step entering at P=1990 to exactly 2200, so no
+    -- cooling fires and the deeper the hole the harder it cools. That is what the shipped
+    -- code has always done. It is left alone here because moving it changes where the
+    -- stall threshold bites (2200 at T=10000, ~1245 at T=31000). Filed as P12.
     if s.pressure<c.Sim.StallPressure then s.temperature-=c.Sim.StallCooling*scale end
     -- Over-pressure heat is PER TICK, not a one-shot. Every step past the threshold
     -- stays elevated in both captures (9/9 in each), so the constant is the measured
