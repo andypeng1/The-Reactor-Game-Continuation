@@ -1474,6 +1474,10 @@ Roblox 客户端**里，不是 Studio。交付 `_tools/TRG_original_state.luau`�
 （`' -> ' in l` 得 **1**，而全场唯一那个箭头在表头 `# record: … <old> -> <new>` 里，
 **真记录行 0 条**）。**没验的**：① 那 0 条记录行**什么都没检验** —— 反应堆停在交班屏，
 32 个 ValueBase **整整 90 秒一动不动**；② 警报假设；③ **服务端代码**照旧读不到
-（FilteringEnabled 就是那道墙），222 MB 的 `.rbxlx` dump 那条路因**名字索引不可信**
-（`NAME` 字段不是 CDATA 解包的）而关掉。细节 `PROGRESS.md` 99，取舍 **398..400**。
+（FilteringEnabled 就是那道墙），**222 MB 的 `.rbxlx` dump 也读不到 —— 这是 dump 自己写的**：
+171 个脚本里 **89 个 `Script` 全部是 148 字节的墓志铭**
+`-- [FilteringEnabled] Server Scripts are IMPOSSIBLE to save`（含 `MainframeRoomDecayField`
+和三个 `Reactor_Laser_Mk3`），剩下 82 个客户端件基本是 Roblox 自带的 PlayerModule，
+**`TRGWeb` / `core_temp` / `StallPressure` / `CBL` 命中数全是 0**；名字索引那个缺陷
+（`NAME` 没解 CDATA）只是次级的。细节 `PROGRESS.md` 99，取舍 **398..400**。
 

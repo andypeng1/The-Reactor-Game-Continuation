@@ -11384,8 +11384,14 @@ AUTOMATED SHUTDOWN INSTRUCTIONS…`、`ShutdownText=ENERGY QUOTA MET`、`TitleLa
 - **警报假设**（99.4）。
 - **服务端代码**照旧读不到：客户端只持有**效果**和**已经渲染好的文本**（FilteringEnabled
   就是那道墙）。**222 MB 的 `.rbxlx` dump**（UniversalSynSaveInstance 导的）是另一条路，
-  但它**已经关掉** —— 名字索引不可信（`NAME` 字段不是 CDATA 解包的）。那份源码语料是第三方的
-  游戏，而本仓库是公开的，**一个字节都不进仓库**。
+  但它**也读不到，而且这是 dump 自己写的**：171 个脚本里 **89 个 `Script` 全部是 148 字节的
+  墓志铭** `-- [FilteringEnabled] Server Scripts are IMPOSSIBLE to save`（含
+  `MainframeRoomDecayField` 和三个 `Reactor_Laser_Mk3`），剩下 82 个客户端件几乎全是
+  Roblox 自带的 PlayerModule / CameraModule，**`TRGWeb` / `core_temp` / `core_pressure` /
+  `StallPressure` / `FanPressure` / `CBL` 的命中数全是 0**（`GameActive` 那 1 处和
+  `Mainframe` 那 3 处都在默认模块里，与反应堆无关）。名字索引不可信（`NAME` 没解 CDATA）
+  只是**次级**缺陷 —— 它让文件名长成 `CDATA_<名>`，但它不是这条路死掉的原因。
+  那份源码语料是第三方的游戏，而本仓库是公开的，**一个字节都不进仓库**。
 - Studio 没连上，§4.4 的**实例那一半**（模拟点击 → 检查部件位置/颜色）没做。
 
 ### 99.8 身份与验证
