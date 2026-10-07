@@ -1481,3 +1481,33 @@ Roblox 客户端**里，不是 Studio。交付 `_tools/TRG_original_state.luau`�
 **`TRGWeb` / `core_temp` / `StallPressure` / `CBL` 命中数全是 0**；名字索引那个缺陷
 （`NAME` 没解 CDATA）只是次级的。细节 `PROGRESS.md` 99，取舍 **398..400**。
 
+
+
+**Phase 100（2026-10-07）—— 第二份注入件：驱动器 `TRG_original_drive.luau`（tag `d1`），
+以及「它为什么一次都没按过」。** 用户原话 `fireclickdetector`；`s2` 只读，所以要**我自己按**
+就得有第二份文件。**16762 字节 / 524 行 / 0 反斜杠 / 0 CRLF / md5
+`7293022574a3ed04f8e75f8b6ee7a85d`**，仓库与执行器**逐字节相同**；桩 `autoexec\trg_drive.lua`
+**598 字节 / md5 `a2c23b97c3d8da8458962e019cd3400c`**（**新建**，没动他的 `yeahMCP.lua`）。
+**五句能直接用的**：**① 它靠命令文件收活** —— 我在 Windows 侧写 `<seq> <verb> <args>` 进
+`trg_cmd.txt`，它在 Roblox 侧执行并把结果追加进 `trg_drive_log.txt`；seq 单调、
+**文件永不截断**、`trg_drive_state.txt` 存最后那个 seq（所以**重注不重放**）。
+动词 `census` / `stats` / `fire` / `fireall` / `near` / `ls` / `pos` / `stop`。
+**② 两种发法分开记**：`fireclickdetector(cd)`（UNC）与 `cd.MouseClick:Fire(lp)`
+（**只放客户端监听者，而逻辑在服务端**）在代码里同形、效果可以不同 —— 所以日志记的是
+**实际那句**，而它就是这个实验的读数。**③ 先传送、再发火** —— `fireclickdetector`
+**不移动角色**，距离检查看的仍是真实位置，隔一张地图按下去会被**无声拒绝**（同 §0.18 那一族：
+错的按法和错的量法一样安静）。**④ `fire NOCHANGE` 是真结果** ——
+`CHANGED` / `NOCHANGE` / `ERROR` 是三种现场，压成一个「失败」就丢了信息。
+**⑤ 它现在按不动，而缺的不是文件** —— 2026-10-07 复读 `bin\DEBUG.txt`
+（**2322610 字节 / 31877 行**）：`{"type":"task"}` **31 条**、全在 **13:10:32–13:29:37**，
+`registered` **1 次**，`mcp.lua` **0**，`WS_POLL` **25317**，`TRG_original_drive` **0**，
+`trg_cmd.txt` 15 字节（mtime 14:51:01），工作目录里 **`trg_drive_*` 一个都没有**
+（= **桩从没触发过** = 那次之后再没注入）。`execute-script` 被
+`No Roblox executor is connected.` **直接拒绝** —— **worker 掉了**（§13.8 第二次成立：
+**「WS 是 OPEN」推不出「工具能用」**）。**下一次注入它自己就开始跑**，
+第一件要看的是三个文件出没出现：`trg_drive_loop.txt`（**活着的证据，看 `mtime`，不看内容**）、
+`trg_drive_census.txt`、`trg_drive_autoexec.txt`（要有 `stub fired`、**没有** `LOAD FAIL`）。
+**没验的那一半：它一次都没按过任何东西** —— 没有一行 `fire CHANGED`、没有一个 `trg_drive_*`
+文件，所以「它怎么按」全是**读源码**得到的，不是看它跑出来的（§0.2）。细节 `PROGRESS.md` 100，
+取舍 **401..403**，`docs/RECORDER_HOWTO.md` **§13.9**（顺手把 §13.8 那行过期的
+`13:20:40` 改成 `13:29:37`），`docs/TODO.md` **§3.11**。

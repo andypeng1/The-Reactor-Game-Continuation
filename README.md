@@ -1172,3 +1172,39 @@ job directory rather than the repo, since it measures this machine's Tk rather t
 deliverable.
 
 See PROGRESS.md Phase 97 and DECISIONS 341 to 348.
+
+
+### Phase 100 - the driver: the half of the channel that presses things
+
+The state recorder (`_tools/TRG_original_state.luau`, tag `s2`) is read-only by construction:
+it never writes the world and it never presses anything. Pressing is what `fireclickdetector`
+is for, and `fireclickdetector` is an executor-side function - so it needed a second injected
+file. `_tools/TRG_original_drive.luau` (tag `d1`) lives in the same executor VM and is driven
+by a **command file**: I write `<seq> <verb> <args>` into `trg_cmd.txt` from Windows, it
+executes every sequence number it has not executed before, and appends the outcome to
+`trg_drive_log.txt`. The sequence is monotonic and the last one is persisted in
+`trg_drive_state.txt`, so a re-injection does not replay old commands; the command file is
+deliberately **never truncated**, because it is the durable record of what was asked, and a
+lost command would be invisible if it were cleared after reading.
+
+Verbs: `census` / `stats` / `fire` / `fireall` / `near` / `ls` / `pos` / `stop`.
+`fireclickdetector(cd)` and `cd.MouseClick:Fire(lp)` are logged **separately**, because the
+first goes through the executor and the second only fires the client's listeners while the
+game's logic runs on the server - the two look identical in code and can differ in effect.
+Every fire teleports the character next to the part first (`fireclickdetector` does not move
+the character, so any distance check still sees the real position and a click fired from
+across the map is rejected with no error anywhere), and every fire is followed by a
+measurement: `fire CHANGED ...` or `fire NOCHANGE ...`, read from `Workspace.Stats` by the
+driver itself. `NOCHANGE` is a real result - a negative measurement, not a failure.
+
+It has not pressed anything yet. The executor's MCP worker registered once, delivered 31
+tasks between 13:10:32 and 13:29:37, and has since lapsed: `execute-script` is refused with
+`No Roblox executor is connected.` while the WebSocket keeps polling (25317 `WS_POLL` lines).
+The files, the autoexec stub and the queued commands are all in place, and there is not a
+single `trg_drive_*` file in the workspace - the stub has never fired, because nothing has
+been injected since. Because on disk "never ran" and "ran and failed" are byte-identical, the
+stub writes a marker line before it loads. The next injection starts the driver on its own;
+see `docs/RECORDER_HOWTO.md` section 13.9 and `docs/TODO.md` section 3.11.
+
+**Not verified: it has never pressed anything.** Every statement above about *how* it presses
+comes from reading its source, not from watching it run.

@@ -488,3 +488,31 @@ SYSTEM REPAIR IN PROGRESS` —— **这三台为什么这么说，没定**（客
 **这把 §13.6 从「短窗口判不了死活」补成「长窗口也没数据，因为屏幕真的没变」。**
 **下一步不是再等**：得**重注一次**（让 worker 登记回来，诊断见 `RECORDER_HOWTO.md` §13.8）
 **并且开一个新班次**。
+
+
+### 3.11 驱动器跑起来之后的第一件活（Phase 100）
+
+`_tools/TRG_original_drive.luau`（tag `d1`）已经在位、桩已经装好、命令文件里排好了
+`1 census` / `2 pos`。**它一次都没跑过** —— 缺的是 worker（`RECORDER_HOWTO.md` §13.9.7）。
+下一次注入之后按这个顺序看，**每步一个读数，别跳**：
+
+| # | 看什么 | 怎么算数 |
+|---|---|---|
+| 1 | `workspace\trg_drive_loop.txt` 存在 | **看 `mtime` 在长**，不看内容 —— 短窗口分不出「活着」和「死了」（§13.6 / §0.19） |
+| 2 | `workspace\trg_drive_autoexec.txt` | 要有 `stub fired`；**有 `LOAD FAIL` 就是坏了** |
+| 3 | `workspace\trg_drive_census.txt` | 普查跑完才有；它列出**每一个** `ClickDetector` / `ProximityPrompt` |
+| 4 | `trg_drive_log.txt` | `#1 census` 和 `#2 pos` 两行都要在 |
+
+然后才是**真正要测的东西**：
+
+1. **开机拉杆** —— 从普查里找到开机拉杆那件（**靠 `label` 和 `mad` 两列，别猜名字**），
+   `fire <路径>`，看 `fire CHANGED` 还是 `fire NOCHANGE`。这一条同时验三件事：
+   我给的路径对不对、`fireclickdetector` 在这个执行器上到底有没有、**距离门是不是真的**。
+2. **`signal` vs 默认** —— 同一条路径各发一次（`fire <路径> signal`），两次结果**分别记**。
+   `MouseClick:Fire` 只放客户端监听者，而逻辑在服务端 —— **两次不一致本身就是发现**，
+   不是我这边坏了。
+3. **`stats` 前后各一次** —— 这是驱动器**自己的**读数，不等采集器那 30 秒的快照。
+   按一下、读数变了，才算真的按到了。
+
+§3.9 / §3.10 那几项（2200 的失速门、CBL 五档、警报板亮不亮）**都还在等一个新班次** ——
+驱动器能把它们从「等他按」变成「我来按」，但**得先让第 1 行那个文件存在**。

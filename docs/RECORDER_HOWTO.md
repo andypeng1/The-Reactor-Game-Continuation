@@ -1385,7 +1385,7 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 | daemon 服 `mcp.lua` | `curl http://127.0.0.1:28429/mcp.lua` → **HTTP 200 / 125977 字节** |
 | 执行器 → daemon 的 WS | `bin\DEBUG.txt` 里每秒一条 `[WS] WS_POLL pid=16248 state=OPEN` |
 | daemon 的登记表 | `list-roblox-processes` → **`status: unconnected` / `workerId: null`** |
-| 最后一次真的派活 | `DEBUG.txt` 里最后一条 `{"type":"task",…}` = **13:20:40** |
+| 最后一次真的派活 | `DEBUG.txt` 里最后一条 `{"type":"task",…}` = **13:29:37**（全档 **31** 条 `{"type":"task",…}`，跨 13:10:32–13:29:37；`{"type":"registered"…}` 只出现 **1** 次） |
 | MCP 工具面 | `resolve-path` / `execute-script` → `No Roblox executor is connected.` |
 
 **所以「WS 是 OPEN」推不出「工具能用」** —— 那只是执行器在轮询它自己的 socket。
@@ -1404,3 +1404,137 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 **`bin\UIDEBUG.txt` 帮不上忙，而且它会骗人**：那份只记 SolaraV3 自己的
 `periodic check: tick`（5 分钟一次），**一个字都不记脚本执行**。
 所以「UIDEBUG 里没有」= **没有信息**，不是「没跑」—— 拿它判注入跑没跑，等于拿一把不量这个的尺子。
+
+
+### 13.9 驱动器 `TRG_original_drive.luau`（tag `d1`）—— 「按东西」的那一半
+
+`13.1..13.8` 那份 `s2` **只读**：它从不写世界、也从不按任何东西。要让**我**去按开机拉杆、
+按控制台上的按钮，需要第二份文件 —— 它住在**同一个执行器 VM** 里、写**同一个目录**
+`D:\SCRIPT\SolaraV3\workspace\`，但它的活是**按**。它靠**命令文件**收活：我在 Windows 这一侧
+写一行，它在 Roblox 那一侧执行。
+
+**最重要的一句先放前面：它现在按不动，而缺的不是文件**（§13.9.7）。文件、注入点、命令都在位，
+差的是 **worker**（与 §13.8 同一件事）—— **下一次注入它自己就开始跑**。
+
+#### 13.9.1 身份（注入前核这个）
+
+| 项 | 值 |
+|---|---|
+| 仓库 | `_tools/TRG_original_drive.luau` |
+| 执行器 | `D:\SCRIPT\SolaraV3\workspace\TRG_original_drive.luau` |
+| 自动注入桩 | `D:\SCRIPT\SolaraV3\autoexec\trg_drive.lua` |
+| tag | `d1` |
+| 字节 / 行 | **16762** / **524** |
+| md5 | **`7293022574a3ed04f8e75f8b6ee7a85d`** |
+| 反斜杠 / CRLF | **0** / **0** |
+| 桩的字节 / md5 | **598** / **`a2c23b97c3d8da8458962e019cd3400c`** |
+| Lua 版本 | **5.1 兼容**（`goto` / `+=` / `//` 一个都不用，`D:\Lua\5.1\lua.exe` 要能过语法） |
+
+仓库那份与执行器那份**逐字节相同**（`verify_drive_id.py` 断言 `repo == exec`）。
+**反斜杠 0 是刻意的**（§0.10）：换行用 `string.char(10)`、回车用 `string.char(13)`、
+内嵌引号用单引号 Lua 语法。它**不经过 Studio**，但规矩照样守 —— 守一个不变式比守两个便宜。
+
+#### 13.9.2 它写哪六个文件（全在 `D:\SCRIPT\SolaraV3\workspace\`）
+
+| 文件 | 谁写 | 内容 |
+|---|---|---|
+| `trg_cmd.txt` | **我写**（Windows 侧） | 命令，一行一条：`<seq> <verb> <args>` |
+| `trg_drive_log.txt` | 它写（追加） | 每件事一行：`[HH:MM:SS] <rel-s> <text>` |
+| `trg_drive_census.txt` | 它写（覆盖） | 全世界 `ClickDetector` / `ProximityPrompt` 普查 |
+| `trg_drive_state.txt` | 它写（覆盖） | 只有一行：**已执行到的最大 seq** |
+| `trg_drive_loop.txt` | 它写（覆盖） | 只有一行，每 poll 重写 —— **它是活着的证明** |
+| `trg_drive_FATAL.txt` | 它写（追加） | `M.step()` 抛错才出现；**出现即故障** |
+
+`trg_cmd.txt` 是这六个里**唯一**由我写的 —— 别的五个都是它的输出。
+自动注入桩另写一个 `trg_drive_autoexec.txt`（§13.9.6）。
+
+#### 13.9.3 命令文件：seq 单调、文件**永不截断**
+
+格式 `^(%d+)%s+(.*)$`，例如 `1 census`、`2 pos`、`13 fire Workspace.X.CDPart`。
+执行规则是「**任何 seq 大于上次执行过的**」，于是：
+
+- **可以重复注入**：`trg_drive_state.txt` 存着最后的 seq，重注**不会**把老命令重放一遍；
+- **命令文件不清空**：它是「被要求过什么」的**耐久记录**。清空之后一条丢掉的命令
+  就**看不见了** —— 丢一条安静的命令和「没写过」在盘上同形（同 §0.18 那一族）；
+- 想重跑一条老命令：**写一个更大的 seq**，不要改老的。
+
+#### 13.9.4 动词表
+
+| 动词 | 参数 | 做什么 |
+|---|---|---|
+| `census` | — | 遍历全世界，把每个 `ClickDetector` / `ProximityPrompt` 写进普查文件 |
+| `stats` | — | 把 `Workspace.Stats` 下**每个 `ValueBase`** 记成一行 |
+| `fire` | `<路径> [signal\|cd] [距离]` | 传送到该件旁边，**按一下**（见 §13.9.5） |
+| `fireall` | `[路径前缀]` | 同上，按**一遍** |
+| `near` | `<路径> [半径]` | 列出附近的 `ClickDetector` |
+| `ls` | `<路径>` | 列一层子物体（上限 60 条） |
+| `pos` | — | 记一行角色当前位置 |
+| `stop` | — | 停循环 |
+
+路径是 `GetFullName()` 那种（根是 `game`，但不打印 `game`），逐段 `FindFirstChild`；
+**找不到时报出「哪一段」而不是光一个 `missing`** —— 一个不带位置的 `missing`
+是最贵的读数。普查那三列里 `label` 是按钮上**人认得出的字**、`mad` 是
+`MaxActivationDistance`，**找开机拉杆要靠这两列，不要靠猜名字**。
+
+#### 13.9.5 每次发火跟一次测量；两种发法**分开记**
+
+`fireclickdetector(cd)` 与 `cd.MouseClick:Fire(lp)` **不是一回事**：前者走执行器的 UNC 实现，
+后者只放**客户端**的监听者，而**游戏的逻辑在服务端**。两者在代码里长得一样、效果可以不同，
+所以日志记的是**实际用的那一句**：
+
+```
+fire MouseClick:Fire                          -- UNC 不在，退化成这样
+fire fireclickdetector                        -- 正常
+fire MouseClick:Fire (fireclickdetector ABSENT)
+fire ERROR <为什么>
+```
+
+发火**之前**先 `PivotTo` 把角色挪到该件旁边（`DefaultStuds = 4`，抬高 `RiseStuds = 3`）。
+理由写在文件里：**`fireclickdetector` 只发信号、不移动角色**，而任何距离检查看的仍是
+**真实位置** —— 隔着一张地图按下去会被**无声拒绝**，没有任何报错。发火之后
+`task.wait(SettleSeconds = 1.2)`，再记一行：
+
+```
+fire CHANGED  Core.TemperatureVal=... ...
+fire NOCHANGE Core.TemperatureVal=... ...
+```
+
+那两行是驱动器**自己的** `Workspace.Stats` 读数，不等采集器那 30 秒的快照。
+
+#### 13.9.6 它活着吗；怎么起、怎么停
+
+**活着的证据是 `trg_drive_loop.txt` 的 `mtime`，而且它是刻意单独一个文件。**
+循环每 `Poll = 0.5 s` 重写它一行（`now rel= seq= cmds=`）。日志不行 ——
+日志是**追加**的，窗口一短就看不出来；§13.6 那条在采集器上量到的教训（一个 30 秒周期的写者，
+在任何短于 30 秒的窗口里都是一条平线）在这里同样成立，所以活着的证明必须是
+**一个每拍重写的文件**。
+
+**怎么起**：`autoexec\trg_drive.lua` 在**注入那一刻**跑（这是唯一的自动点），
+或者手动 `loadstring(readfile('TRG_original_drive.luau'))()`。
+那个桩**先写标记、再 load** —— 「从没触发」和「触发了但 load 失败」在盘上本来逐字节相同
+（取舍 400），一行标记把它们分开。桩失败会在 `trg_drive_autoexec.txt` 留 `LOAD FAIL <原因>`。
+
+**怎么停**：往 `trg_cmd.txt` 写一句 `stop`（走同一个通道，**留下记录**），
+或注入前设 `_G.TRG_DRIVE_AUTORUN = false`，拿到一个**躺着不跑**的模块，需要时 `M.start()`。
+
+#### 13.9.7 它现在按不动，而缺的不是文件
+
+2026-10-07 复读 `bin\DEBUG.txt`（**2322610 字节 / 31877 行**，mtime 14:56:35）：
+
+| 读数 | 值 |
+|---|---|
+| `{"type":"task",…}` 行 | **31** 条，跨 **13:10:32 – 13:29:37** |
+| `{"type":"registered",…}` | **1** 次（登记过一次，之后再没登记） |
+| `mcp.lua` 命中 | **0** |
+| `WS_POLL` | **25317**（WS 一直在轮询它自己的 socket） |
+| `TRG_original_drive` 命中 | **0** |
+| `trg_cmd.txt` | **15 字节**，mtime 2026-10-07 14:51:01，内容 `1 census` / `2 pos` |
+| 工作目录里的 `trg_drive_*` | **一个都没有** |
+
+工作目录里一个 `trg_drive_*` 都没有 = **桩从来没触发过** = 从那次之后**没有任何一次注入**。
+而 `execute-script` 现在被 `No Roblox executor is connected.` **直接拒绝** —— worker 掉了
+（§13.8）。所以现在既按不了、也起不来；**这两件事的解法是同一个：注一次。**
+下一次注入之后，第一件要看的不是日志，是这三个文件**出没出现**：
+`trg_drive_loop.txt`（活着）、`trg_drive_census.txt`（普查跑完）、
+`trg_drive_autoexec.txt`（里面有 `stub fired`、**没有** `LOAD FAIL`）。
+**看 `mtime`，不要看一个短窗口**（§13.6 / §0.19）。
