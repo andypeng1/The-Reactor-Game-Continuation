@@ -1373,3 +1373,34 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 **上一个身份**（已被取代）：tag `s1` / 13054 字节 / md5 `90f5e1eef4eeb1090519427c39cda3f7`。
 **换 tag 的理由**：`s2` 在面板行尾部加了一段 `AlertsLamps` —— 这**只因为** `s1` 底下
 **从来没有过一份真捕获**，世界上不存在一个读旧格式的 reader 会因此坏掉。**从 `s2` 起冻结。**
+
+### 13.8 同一条通道的另一半：MCP worker 什么时候会掉、怎么知道
+
+**执行器身上有两个分开的东西：一条 WS（它在的）和一个 worker（它可能不在）。**
+两者可以同时「连接正常」和「工具全废」—— 实测 2026-10-07（`RobloxPlayerBeta` pid 16248）：
+
+| 现场 | 读数 |
+|---|---|
+| daemon 进程 | pid 9040，当天 12:56:57 起，听 `0.0.0.0:28429` + `[::]:28429` |
+| daemon 服 `mcp.lua` | `curl http://127.0.0.1:28429/mcp.lua` → **HTTP 200 / 125977 字节** |
+| 执行器 → daemon 的 WS | `bin\DEBUG.txt` 里每秒一条 `[WS] WS_POLL pid=16248 state=OPEN` |
+| daemon 的登记表 | `list-roblox-processes` → **`status: unconnected` / `workerId: null`** |
+| 最后一次真的派活 | `DEBUG.txt` 里最后一条 `{"type":"task",…}` = **13:20:40** |
+| MCP 工具面 | `resolve-path` / `execute-script` → `No Roblox executor is connected.` |
+
+**所以「WS 是 OPEN」推不出「工具能用」** —— 那只是执行器在轮询它自己的 socket。
+**worker 是另一件事**：要有脚本在 Roblox 里跑起来、把 `mcp.lua` 拉下去执行。
+
+**诊断顺序（三步，每步一个读数）：**
+1. `list-roblox-processes` —— **`workerId` 有值才叫活**（`unconnected` 别去猜，它就是没有）；
+2. 在 `bin\DEBUG.txt` 里搜 `mcp.lua` —— 这一趟 **0 条命中**，说明从头到尾没人取过它
+   （**daemon 能服 ≠ 有人取**）；
+3. 数 `{"type":"task"` 的最后一条时间，和最近一次成功的工具调用对表。
+
+**`autoexec\` 是自动注入点，但它在「注入那一刻」跑。** 这一趟操作员填的是标准 loader
+（`loadstring(game:HttpGet("http://127.0.0.1:28429/mcp.lua"))()` + 一行 print，80 字节，
+14:35:45 写入）—— **但写完之后没有任何一次注入发生**，所以 DEBUG 里一条 `mcp.lua` 都没有。
+
+**`bin\UIDEBUG.txt` 帮不上忙，而且它会骗人**：那份只记 SolaraV3 自己的
+`periodic check: tick`（5 分钟一次），**一个字都不记脚本执行**。
+所以「UIDEBUG 里没有」= **没有信息**，不是「没跑」—— 拿它判注入跑没跑，等于拿一把不量这个的尺子。
