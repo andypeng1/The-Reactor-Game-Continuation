@@ -492,14 +492,16 @@ SYSTEM REPAIR IN PROGRESS` —— **这三台为什么这么说，没定**（客
 
 ### 3.11 驱动器跑起来之后的第一件活（Phase 100 / 101）
 
-`_tools/TRG_original_drive.luau` 现在是 **tag `d5`**（**36865** 字节 / **1019** 行 /
-md5 **`85eacc71e65f280498a5dd5e65173654`**），桩也还在。
+`_tools/TRG_original_drive.luau` 现在是 **tag `d6`**（**38570** 字节 / **1042** 行 /
+md5 **`4ce909d36e485ba9a3d964fb1375f173`**），桩也还在。
 **`d3` 是 `d2` + 一处可观测性改动**（日志行末加 `via <verb|timer|idled>`，见 Phase 102）；
 **`d4` 是 `d3` + 第四条按压路 `pressAt`**（`VirtualInputManager` 点矩形，见 Phase 103）；
 **`d5` 是 `d4` + 一处坐标修复**（`clickPoint()`：`AbsolutePosition` 是 GUI 空间、
 `VirtualInputManager` 是屏幕空间，差 `GetGuiInset().Y = 58` —— **`d1`..`d4` 的每一次按压
-都落在目标上方 58 px**，见 Phase 104 / §3.11.8）
-—— 而 **`d5` 一次都没在活客户端里跑过**（§3.11.7 ② 解释了为什么）。
+都落在目标上方 58 px**，见 Phase 104 / §3.11.8）；
+**`d6` 是 `d5` + 一处读法更正**（那个差对**每个** ScreenGui 后代都要加，
+`IgnoreGuiInset` 只当标签 —— `d5` 把它读成了分支，见 Phase 105 / §3.11.8）
+—— 而 **`d5` 一次都没在活客户端里跑过**，`d6` 也一样（§3.11.7 ② 解释了为什么）。
 两条都只加东西，没动老路径。**已经在跑的那一份**取决于它是怎么起来的：
 `loadstring` 热重载可以换掉代码（而且**会留下旧实例的 hook**，见 §3.11.5），
 而 `autoexec\trg_drive.lua` 是在**注入那一刻**读盘上那份 `.luau` 的 ——
@@ -615,18 +617,51 @@ md5 **`85eacc71e65f280498a5dd5e65173654`**），桩也还在。
 **⑤ 轮询的坑**：`"unconnected": 1` **含** `connected":1`，所以拿子串当字段会在**断线时成立**。
 切出来再比。
 
-#### 3.11.8 `d5` 的坐标修复，以及它意味着什么（Phase 104）
+#### 3.11.8 `d6` 的坐标修复，以及它意味着什么（Phase 104 / 105）
 
-`d4` 之前（含 `d4`）的每一次合成按压**都偏了 58 px**，所以 §3.11.2 那条 `press` 路
+`d5` 之前（含 `d4`）的每一次合成按压**都偏了 58 px**，所以 §3.11.2 那条 `press` 路
 在**修好之前是按不到任何东西的** —— 它报的 `NOCHANGE` 有两个来源：**按钮是死的**，
-或者**根本没按到**，而旧代码分不开。`d5` 的 `clickPoint()` 把两半都读齐
-（`GuiService:GetGuiInset()` + `ScreenGui.IgnoreGuiInset`），并且**把用的哪个空间写进返回值**。
+或者**根本没按到**，而旧代码分不开。
+`d5` 把 `AbsolutePosition` 的 y 从**顶栏下面**换算到了屏幕空间（`+ GetGuiInset().Y`），
+但它**多做了一个判断**：它按 `ScreenGui.IgnoreGuiInset` 分流，把带旗的当「本来就在屏幕空间」。
+**那半个判断是错的**（Phase 105 / 取舍 422）：那个旗只挪 ScreenGui 自己的矩形，
+`GetGuiInset()` 对**每一个** ScreenGui 后代都要加。`d6` 的 `clickPoint()` 无条件加 inset，
+`IgnoreGuiInset` **只进标签不进分支**，`SurfaceGui`/`BillboardGui` 标成 `layout/<ClassName>`。
 
-**注入 `d5` 之后，第一件要看的**是 `press` 那一行带的空间名 ——
-**一个能按到的按钮应当报 `inset+0,58`**（这台客户端）。
+**注入 `d6` 之后，第一件要看的**是 `press` / `gui` 那一行带的空间名 ——
+**一个能按到的按钮应当报 `inset+0,58`**（这台客户端），带旗的报 `inset+0,58/ignoreinset`
+（**坐标和前者逐位相同，变的是名字**）。
 若报 **`nospace`**，说明那个按钮的 `LayerCollector` 祖先没解析到，按的坐标不可信 ——
 **别把那次 `NOCHANGE` 读成「按钮是死的」**（它什么都没量到）。
+若报 **`layout/…`**，那不是屏幕坐标，**按下去会落到别的地方**。
 
-配套：`_tools/build_drive_clickpoint_test.py`（11 例）+ `_tools/selftest_drive_clickpoint.py`
-（8 个变异），**已经挂在 `run_tests.sh` 里**（`set -e` 底下、没有 `|| true`）。
+**而「按到了」这件事仍然没被观察过**：`d6` 一次都没在活客户端里跑过；
+`pressAt` 在真 VM 里零次。反过来说，**上一次真的按下去的那一下是 `d4` 按的，它按空了** ——
+`PostShiftButton` 的真实屏幕区间是 y ∈ [624.4, 684.4]，cmd 44 打的是 y=596
+（`GetGuiObjectsAtPosition(476,538)` 回 `n=11 PostShift=false`）。**那一下什么都没结算**（§3.11.9）。
+
+配套：`_tools/build_drive_clickpoint_test.py`（12 例）+ `_tools/selftest_drive_clickpoint.py`
+（9 个变异），**已经挂在 `run_tests.sh` 里**（`set -e` 底下、没有 `|| true`）。
 改 `clickPoint()` 之后**先跑那两个**再注入。
+
+
+#### 3.11.9 `PostShiftButton` 那一下按空了（Phase 105）—— 而这件是好事
+
+**规矩**：`EndGameFrame1.ReportUI.Bottom` 上那对按钮 **`PostShiftButton` / `HoldButton`
+不能按** —— 它们**结算操作员的班次**（钱 / 进度），那是他的选择。
+`RestartButton` / `LeaveButton` / `ContinueButton` 是 `vis=false`，外面还有一块 `1727x997`
+的模态挡板。
+
+**而 cmd 44 已经对着 `PostShiftButton` 发过一次合成按压了**（`mouse@476,596`、
+`[00:12:04] rel 612.5`、回 `NOCHANGE`），发它的是 `d4`。
+**实测：那一下没按到。** 只读探针（不合成任何输入）读出
+`PostShift abs=446.600,566.400 size=60.000x60.000 vis=true`，真实屏幕区间 **y ∈ [624.4, 684.4]**；
+而 `GetGuiObjectsAtPosition(476,538)`（= 屏幕 y596 在 GUI 空间的位置）回
+`n=11 PostShift=false` —— 那里只有背景。**差 28.4 px，班次结算没有被触发。**
+
+顺带两条：`HoldButton` 现在也是 **`vis=true`**（Phase 104 记的「二选一」
+**不是客户端现在的状态**）；同一根 x 上 `(476,538)` 回 `n=11` 而 `(476,596)` 回 `n=15` ——
+两个空间**连内容都不同**，不只是差一个偏移。
+
+**下一次真按之前先想**：这条规矩没有豁免，`d6` 也不会让 `pressAt` 更准 ——
+它只会让**别的**按钮第一次真的能被按到。

@@ -12,8 +12,8 @@ they were plausible numbers, just in the wrong space.
 
 That is the §0.18 family in its purest form -- a wrong ruler does not error, it
 quietly hands you a value -- so the conversion is pinned by a test that has to
-be shown CAPABLE of failing.  _tools/selftest_drive_clickpoint.py breaks it
-seven ways and requires the matching case to be the one that turns red.
+be shown CAPABLE of failing.  _tools/selftest_drive_clickpoint.py breaks it one
+way per mutant and requires the matching case, and only that case, to turn red.
 
 WHY A STUB AND NOT THE GAME.  This file can be run any number of times, and the
 alternative -- measuring in the live client -- costs a shift the operator can
@@ -149,23 +149,46 @@ end
 
 local function run(name, btn, want) check(name, observe(btn), want) end
 
-local SG   = makeLC('ScreenGui', nil)    -- does not ignore the inset
-local SGI  = makeLC('ScreenGui', true)   -- already in screen space
-local SURF = makeLC('SurfaceGui', nil)   -- never had the concept
+local SG   = makeLC('ScreenGui', nil)    -- the flag is absent on the instance
+local SGF  = makeLC('ScreenGui', false)  -- the flag is set, to false
+local SGT  = makeLC('ScreenGui', true)   -- the flag is set, to true
+local SURF = makeLC('SurfaceGui', nil)   -- a LayerCollector, but not a screen
 local SGX  = makeLCNoFlag('ScreenGui')   -- the pcall's reason to exist
 
--- The rect below is the report screen's PostShiftButton, as read live.
+-- 447,566 is the report screen's PostShiftButton rounded up to whole pixels:
+-- the live read was 446.600,566.400 with size 60x60.  So it is the real button,
+-- but it is NOT the live number verbatim -- whole pixels are chosen here so the
+-- expected strings below are exact, and the flooring the subject does is
+-- exercised on its own by C10.
 run('C1 a ScreenGui that does not ignore the inset has the inset ADDED',
   makeBtn(Vector2.new(447, 566), Vector2.new(60, 60), SG),
   '477.000000,654.000000 inset+0,58')
 
-run('C2 a ScreenGui with IgnoreGuiInset is already in screen space',
-  makeBtn(Vector2.new(447, 566), Vector2.new(60, 60), SGI),
-  '477.000000,596.000000 screen/ignore-inset')
+-- C2 is the case d5 got wrong, and the whole reason d6 exists.  d5 read
+-- IgnoreGuiInset as "these children are already in screen space" and returned
+-- 596 here.  The live button sits at 672, not 614, so 596 was 58 px short -- and
+-- note the expected string: the NUMBER is identical to C1's.  The flag does not
+-- move the point; it only appends a word to the NAME.  A future reader who sees
+-- '/ignoreinset' and reaches for the inset must be able to tell from this file
+-- that the label moved and the coordinate did not.
+run('C2 a ScreenGui with IgnoreGuiInset gets the SAME inset -- the flag labels, it does not branch',
+  makeBtn(Vector2.new(447, 566), Vector2.new(60, 60), SGT),
+  '477.000000,654.000000 inset+0,58/ignoreinset')
 
-run('C3 a SurfaceGui is already in screen space and says so by NAME',
+-- C12 pins the other half of that: false and absent must be indistinguishable.
+-- If a future edit made `false` add a suffix too, C2 alone would stay green.
+run('C12 the flag at false is not the flag at true -- no suffix, same point',
+  makeBtn(Vector2.new(447, 566), Vector2.new(60, 60), SGF),
+  '477.000000,654.000000 inset+0,58')
+
+-- C3: a SurfaceGui is not a screen space at all.  Its children are laid out on
+-- the surface, so no screen coordinate reaches them -- which is why the label
+-- says 'layout/' rather than 'screen/'.  The point is still returned (a refusal
+-- would be silently absent, which is worse than silently wrong) but the name is
+-- the disclosure that the number is not a screen coordinate.
+run('C3 a SurfaceGui is a LAYOUT, not a screen space, and the name says so',
   makeBtn(Vector2.new(447, 566), Vector2.new(60, 60), SURF),
-  '477.000000,596.000000 screen/SurfaceGui')
+  '477.000000,596.000000 layout/SurfaceGui')
 
 run('C4 no LayerCollector ancestor is NAMED, not silently assumed to need nothing',
   makeBtn(Vector2.new(447, 566), Vector2.new(60, 60), nil),
@@ -189,7 +212,7 @@ run('C8 the inset is READ, not the constant this client happens to have',
   '477.000000,632.000000 inset+0,36')
 INSET.Y = 58
 
-run('C9 a flag read that raises falls back to the measured inset',
+run('C9 a flag that RAISES when read is still pressable -- the inset never depended on it',
   makeBtn(Vector2.new(447, 566), Vector2.new(60, 60), SGX),
   '477.000000,654.000000 inset+0,58')
 

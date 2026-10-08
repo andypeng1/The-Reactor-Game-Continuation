@@ -6716,8 +6716,11 @@ GUI 按钮是反过来的：它的处理函数**一定是客户端 LocalScript**
 `clickPoint()` 也只是**返回两个可信的数**，只是空间错了 —— §0.18 最纯的那张脸。
 
 **How to apply:** 换算是 `ap + inset + as / 2`，而 **inset 要从 `GuiService` 读**，
-并且**先看 `ScreenGui.IgnoreGuiInset`**：带这个旗的 ScreenGui **本来就在屏幕空间**，
-再加 inset 就反着错 58 px；`SurfaceGui` / `BillboardGui` 同理（inset 只对一种情形成立）。
+~~并且**先看 `ScreenGui.IgnoreGuiInset`**：带这个旗的 ScreenGui **本来就在屏幕空间**，
+再加 inset 就反着错 58 px；`SurfaceGui` / `BillboardGui` 同理（inset 只对一种情形成立）。~~
+**已更正，见 Phase 105 / 取舍 422：`IgnoreGuiInset` 不搬子件的空间** ——
+它只搬 ScreenGui 自己那个 rect（与 Roblox 自己的 `MouseGui` 是一对精确镜像，底边同一条、顶边差 58）。
+inset 对**每一个** ScreenGui 后代都要加、**不带条件**；那个旗**只进返回的名字**，**不进分支**。
 一个 rect 转点的地方**只许有一处**：`as / 2` 全文件恰好一次、调用点恰好两个，写进构建器当不变量。
 
 ## 417. 桩缺一个元方法臂，红的是「harness 炸了」不是「检查失败了」（Phase 104）
@@ -6769,3 +6772,55 @@ GUI 按钮是反过来的：它的处理函数**一定是客户端 LocalScript**
 
 **How to apply:** 把两个判决**分开写**：仪器上是什么、眼睛上是什么。别让「视觉上是零」
 自动降级成「什么都没发生」，也别让「有读数」自动升格成「能看出来」。
+
+## 422. 两个 GUI 空间，而 `IgnoreGuiInset` 不搬空间（Phase 105）
+
+**Why:** `GuiObject.AbsolutePosition` / `AbsoluteSize` 和 `GetGuiObjectsAtPosition` 答的是
+**CoreUISafe 空间**（y 从顶栏下沿量起，**可以为负** —— 实测背景开始在 **−58**）；
+`VirtualInputManager` 与 `UIS:GetMouseLocation()` 答的是**屏幕空间**。两者差
+`GuiService:GetGuiInset().Y`（这台 **58**）。四条互相独立的边（背景起止、按钮起止）**全部**落在
+CoreUISafe 上，所以这不是一个点上的巧合。
+我先前断言「`IgnoreGuiInset=true` 只改 `ScreenInsets` 而不改子件的空间，所以那个旗在撒谎」
+—— **是错的**。它们是一对精确镜像：带旗的 `ScreenGui abs=0,-58 1151x714`、不带旗的 `MouseGui
+abs=0,0 1151x656`（**底边同一条 656、顶边差 58**）。旗子搬的是
+**ScreenGui 自己那个 rect**，子件的 `AbsolutePosition` **一个空间都不换**。
+
+**How to apply:** 换算是 `ap + inset + as / 2`，**对每一个 ScreenGui 后代都加、不带条件**；
+`inset` 从 `GuiService:GetGuiInset()` 读（`TopbarInset` 是个 `Rect`，`.Max.Y` 才是 58，`.X`/`.Y` 抛）。
+`IgnoreGuiInset` **只许进返回的名字**（`…/ignoreinset`），**不许进分支** ——
+把它写成 `if` 的那一版（`d5`）算出 614，而真值是 673。一个 rect 转点的地方**只许有一处**：
+`as / 2` 全文件恰好一次、调用点恰好两个，写进构建器当不变量。
+
+## 423. `GetGuiObjectsAtPosition` 是一把不产生输入的尺子，但它答的是 GUI 空间（Phase 105）
+
+**Why:** 要判「那一下合成按压到底落在哪个像素上」，需要的是一把**不合成任何输入**的尺子 ——
+否则量它的那一次本身就会按下去。`PlayerGui:GetGuiObjectsAtPosition(x,y)` 就是它：
+**输入为零**、只读一张列表。代价是它答的是 **GUI 空间**（同 422），
+所以它**能**回答「这个像素上有什么」，**不能**回答「VIM 该指向哪里」。
+
+**How to apply:** 用它当**旁证**、不当**换算**。它还有一个便宜的第二用途：同一条 x 列在
+两个空间里返回的**个数不同**（实测 `n=11` 对 `n=15`），是「两个空间确实不同」的独立征兆。
+它**不在官方参考的方法列表里**（`getmetatable(PlayerGui).__index` 是 nil），
+所以别指望文档能确认它存在 —— 运行时存在就够了，**但要在源码里写下「这是量出来的」**。
+
+## 424. `NOCHANGE` 分不开「按钮是死的」和「按压根本没落到按钮上」（Phase 105）
+
+**Why:** `d1`..`d4` 的 `press` 把结果分成 `CHANGED` / `NOCHANGE` / `ERROR`，当时看起来够用。
+cmd 44 报的是 `NOCHANGE` —— 而真因是**那一下按空了 28.4 px**（同 422，就是少加了那次 inset）。
+一个「按到了、按钮没接线」的世界和一个「压根没按到」的世界，**在这一列上逐字节相同**。
+
+**How to apply:** 一个「没反应」的读数**必须**配一把**独立**的尺子来分岔 ——
+这里就是 `GetGuiObjectsAtPosition`（423）。日志里**记实际发出的那一句**
+（`mouse@476,596`），因为**意图**和**效果**是两件事，而这次分的正是它们。
+按下目标之前先算**它到底在哪个像素**，别让「我瞄准了它」自动升级成「我按到了它」。
+
+## 425. 变异测试里「必须留绿」的对照，必须挑变异**动不了**的那个（Phase 105）
+
+**Why:** `selftest_drive_clickpoint.py` 的每个变异都点明一条必须留绿的断言 ——
+否则「红了一大片」只证明这个文件**会**失败，不证明某条断言和某个缺陷有关。
+`d6` 之后 `C_IGNORE`（`IgnoreGuiInset` 那一例）**和 `C1` 一起红**：因为 inset 现在对每个
+ScreenGui 后代都加，去掉 inset 自然把它也带走。**一个会红的对照不是对照。**
+
+**How to apply:** 对照**挑变异结构上碰不到的**输入 —— 这里换成两个 **inset 为零**的案子
+（`C_SURF` / `C_NONE`）：丢掉或减掉 inset，它们逐字节不动。改完 **9/9 变异各自红在指定那条上**、
+对照全绿。**「对照红了」不是测试坏了，是它不再是掩护** —— 对它要做的动作是**换**，不是删。

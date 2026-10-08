@@ -161,6 +161,7 @@ Script 'user_MCPPlugin-release.rbxmx.MCPPlugin', Line 5
 这就是头两次物理点击「打在空气上」的原因。
 同一工具第二个小坑：`instance_path` **只接受 GuiObject**，对 `Part` 必须自己算像素
 （`Camera:WorldToViewportPoint`）。
+**Phase 105 —— 这 58 px 不是工具的毛病，是**两个坐标空间**的差**：`GuiObject.AbsolutePosition` 和 `PlayerGui:GetGuiObjectsAtPosition` 量的是 **CoreUISafe 空间**（y 从顶栏下面量），`VirtualInputManager` 和 `UIS:GetMouseLocation()` 量的是**屏幕空间**（y 算上顶栏），差 `GuiService:GetGuiInset().Y`。所以「GUI 上的矩形 → 像素」一律 `+ GetGuiInset()`，**而 `ScreenGui.IgnoreGuiInset` 不改变这件事**（它只挪 ScreenGui 自己的矩形，不挪子件所在的空间）。细节见本文件 Phase 105 与 `DECISIONS_2` **422**。
 
 ---
 
@@ -1613,8 +1614,11 @@ hook 活到 `[23:41:40]`，客户端 `15:41:47.799Z shutDown: (stage:UGCGame)` �
 **从顶栏下面量起**，而 `VirtualInputManager` 和 `UIS:GetMouseLocation()` **算上顶栏**；
 换算是 `+ GuiService:GetGuiInset().Y`，实测 **58**。**② 交付物漏了这个换算**：`pressAt` 那行是
 `ap.Y + as.Y/2`，于是 **`d1`..`d4` 每一次按压都落在目标上方 58 px，而症状是零**
-（事件返回、点击落别处）—— §0.18 最纯的那张脸。**③ 两半都要读**：`ScreenGui.IgnoreGuiInset`
-为真的 ScreenGui **本来就在屏幕空间**，再加就反着错 58 px；`SurfaceGui`/`BillboardGui` 同理。
+（事件返回、点击落别处）—— §0.18 最纯的那张脸。**③ ~~两半都要读~~（已更正，见 Phase 105）**：~~`ScreenGui.IgnoreGuiInset` 为真的 ScreenGui
+本来就在屏幕空间，再加就反着错 58 px；`SurfaceGui`/`BillboardGui` 同理。~~ 错的是它的**前提**：
+那个旗只挪 ScreenGui 自己的矩形，**不改变子件 `AbsolutePosition` 所在的空间** ——
+所以 inset 对**每一个** ScreenGui 后代都要加；`SurfaceGui`/`BillboardGui` 是**第三种**情形
+（根本不是屏幕空间，只能标成 `layout/<ClassName>`）。
 **④ 撤一条**：「合成点击没反应」是错的 —— 真因是**参数形状**（VIM 那两参是 `Object`，
 `false` 抛 cast 错、`game`/`nil` 都行），我读成了「VM 只读」（取舍 419）。**⑤ 输入排队**：
 同一次调用里 move+click 点的是**上一个**位置，`GetMouseLocation()` 慢一拍。**⑥ 零对照成立** ——
@@ -1631,3 +1635,48 @@ hook 活到 `[23:41:40]`，客户端 `15:41:47.799Z shutDown: (stage:UGCGame)` �
 **没验的**：`d5` **一次都没在活客户端跑过**；`pressAt` 真 VM 零次；daemon 的 `click-button`
 **是否也加 inset 没测**。细节 `PROGRESS.md` 104，取舍 **416..421**，
 `docs/RECORDER_HOWTO.md` **§13.9.14**，`docs/TODO.md` **§3.11.8**。
+
+
+**Phase 105（2026-10-09）—— `d6`：那块差 58 px 的东西不是「工具的毛病」，是**两个坐标空间**；
+而 `d5` 多出来的那半个判断，正是同一族缺陷的第三张脸。**
+
+六句能直接用的：**① 两个空间，差恰好 `GetGuiInset().Y = 58`** ——
+**CoreUISafe 空间**（y 从顶栏下面量）：`GuiObject.AbsolutePosition` / `AbsoluteSize` /
+**`PlayerGui:GetGuiObjectsAtPosition`**；**屏幕空间**（y 算上顶栏）：
+`VirtualInputManager` / `UserInputService:GetMouseLocation()`。**四条独立的边界同时落在前者**：
+背景起点 **−58**（CoreUISafe 预测 −58，屏幕预测 0）、背景终点 **656**（在 657 就空；
+预测 656 / 714）、按钮出现 **594**（`AbsolutePosition.Y = 593.5`；屏幕预测 652）、
+按钮结束 **636**（`593.5 + 42.9`）。**② `SettingsButton rect=1088.3,593.5 42.9x42.9`** ——
+尺寸是 **42.9 不是 43**，真实屏幕中心 **672.95 ≈ 673**，而 `d4` 和 `d5` **都算成 614**
+（日志里写着 `gui … via mouse@1109,614`）。**③ `IgnoreGuiInset` 不说谎、`ScreenInsets` 不是开关** ——
+实测那面旗把 **ScreenGui 自己的矩形**从 `0,-58 1151x714` 挪成 Roblox 自己的 `MouseGui 0,0 1151x656`
+（**同一条下缘、上缘差 58**），它**不改变子件 `AbsolutePosition` 的坐标系**。
+所以 **`d5` 那半个「带旗的分支」是错的**：inset 对**每一个** ScreenGui 后代都要加，
+旗只配当标签（`inset+0,58/ignoreinset`，**点和 `inset+0,58` 逐位相同**）。
+`d6` 把它改成无条件加，并把 `SurfaceGui`/`BillboardGui` 单列成第三种（`layout/<ClassName>`）。
+**④ 交付 `d6`** = **38570** 字节 / **1042** 行 / md5 **`4ce909d36e485ba9a3d964fb1375f173`**
+（0 反斜杠 / 0 CRLF / 编译通过）；两个 harness：构建器 **12 例**、自测 **9/9 变异各自红在指定那条上**
+且留绿对照保住，`run_tests.sh` **rc=0**。
+**⑤ 一个不合成输入的尺子** —— `PlayerGui:GetGuiObjectsAtPosition(x,y)` **运行时存在**
+（官方文档的 Methods 表里没有它），它**回答在 GUI 空间**，所以它不能替 VIM 指路，
+但它能回答「这个像素上到底有什么」而**不需要动任何指针**。
+**⑥ `GetGuiObjectsAtPosition` 顺手给出第二个独立信号**：同一条 x 上 `(476,538)` 回 **n=11**、
+`(476,596)` 回 **n=15** —— 两个空间不只是一个偏移，它们的**内容也不同**。
+
+**这一轮最重的一条是「上一次真的按下去的那一下，按空了」。**
+`EndGameFrame1.ReportUI.Bottom.PostShiftButton` 的 `abs=446.600,566.400 size=60.000x60.000`，
+真实屏幕区间 **y ∈ [624.4, 684.4]**，而 cmd 44 打的是 **mouse@476,596**（`d4` 的
+`ap + as/2` 逐位复现这个数），落点等于 GUI 空间 y=538，那里 `n=11 PostShift=false` ——
+**只有背景**。**差 28.4 px，班次结算没有被触发**（`NOCHANGE` 从此有了一个**量出来的**解释，
+而不是「大概没按到」）。顺带：`HoldButton` 现在也是 **`vis=true`**，
+Phase 104 记的「`Post` / `Hold` 二选一」**不是客户端现在的状态**。
+
+**两处同族的新坑**：**对照选错了不算对照** —— `d6` 下 `C_IGNORE` 会和 `C1` 拿同一个 inset、
+一起红，所以那两条变异的「必须留绿」换成了两个 **inset 为零**的 case（`C_SURF` / `C_NONE`：
+变异**动不了它们**）；**手算与实测的差还是老样子**（`as / 2` 那处：`447,566` 是**输入**里的取整，
+`C10` 专门守着「小数要 floor 不要 round」）。细节 `PROGRESS.md` 105，取舍 **422..425**，
+`docs/RECORDER_HOWTO.md` §13.9.1/§13.9.14，`docs/TODO.md` §3.11.8/§3.11.9。
+
+**没验的**：`d6` **一次都没在活客户端里跑过**（活 VM 里还是 `d4`）；
+`pressAt` 在真 VM 里仍然**零次**；daemon 的 `click-button` **是否也加 inset 没测**。
+

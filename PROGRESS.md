@@ -11827,8 +11827,11 @@ WebLogin http error: {"errors":[{"code":4,"message":"Authentication ticket was i
 **这正是 §0.18 最纯的那张脸 —— 错的尺子不报错，它安静地给你一个值**
 （`clickPoint` 返回两个数，都是**可信的数**，只是空间错了）。
 **③ 换算必须同时读两半**：inset 从 `GuiService` 读，**而且**要看 `ScreenGui.IgnoreGuiInset` ——
-带这个旗的 ScreenGui **本来就在屏幕空间**，再加 inset 就反着错 58 px；
-`SurfaceGui` / `BillboardGui` 同理（所以 inset **只对一种情形**成立）。
+~~带这个旗的 ScreenGui **本来就在屏幕空间**，再加 inset 就反着错 58 px；
+`SurfaceGui` / `BillboardGui` 同理（所以 inset **只对一种情形**成立）。~~
+**已更正（Phase 105 / 取舍 422）**：`IgnoreGuiInset` **不搬子件的空间**，它只搬 ScreenGui 自己那个 rect
+（`ScreenGui abs=0,-58 1151x714` vs `MouseGui abs=0,0 1151x656`，底边同一条 656）。
+inset 对**每一个** ScreenGui 后代都要加、**不带条件**。
 **④ 那条「合成点击根本没反应」的结论是错的，撤了**：我拿两次「画面逐字节相同」判
 `VirtualInputManager` 是死的，而真正的问题是**参数的形状** ——
 `SendMouseMoveEvent` 第 3 参、`SendMouseButtonEvent` 第 5 参在这个 build 里是 **`Object` 类型**，
@@ -11871,3 +11874,70 @@ md5 **`85eacc71e65f280498a5dd5e65173654`**，**0 反斜杠 / 0 CRLF**，`lua.exe
 **没验的**：`d5` **在活客户端里一次都没跑过** —— 所以「按到按钮了」**没被观察过**；
 `pressAt` 在真 VM 里仍然**零次**（它只有 `lua.exe` 的语法和一份逐字节比对）；那 20 分钟的一脚
 两个方向都没复现；`via timer` 活客户端零次；daemon 的 `click-button` **是否也加 inset 没测**。
+
+**Phase 105（2026-10-09）—— 「GUI 空间」不是一个偏移，是**两个空间**；四条独立的边一起指着同一个答案。
+而这一轮最重的一条是量出来的一件坏事：`d1`..`d4` 唯一一次按向 `PostShiftButton` 的那一下，**按空了 28.4 px**。**
+
+**交付 `d6`** —— `_tools/TRG_original_drive.luau`，**38570** 字节 / **1042** 行 /
+md5 **`4ce909d36e485ba9a3d964fb1375f173`**，**0 反斜杠 / 0 CRLF**，`lua.exe` 解析 OK、`loadstring` 编译 OK。
+`M.TAG = 'd6'`。被取代的 `d5` = 36865 / 1019 / `85eacc71e65f280498a5dd5e65173654`。
+
+**六句能直接用的：**
+
+**① 不是「y 偏 58」，是**两个坐标系**，而且它们是分开的 API 面。**
+`GuiObject.AbsolutePosition` / `AbsoluteSize` **和 `PlayerGui:GetGuiObjectsAtPosition(x,y)`** 活在
+**CoreUISafe 空间**（y 从顶栏下沿量起，可以**为负**）；`VirtualInputManager` 的
+`SendMouseMoveEvent` / `SendMouseButtonEvent` **和 `UserInputService:GetMouseLocation()`** 活在
+**屏幕空间**（y 把顶栏算在内）。两者差 `GuiService:GetGuiInset().Y`，这台客户端是 **58**。
+**四条互相独立的边同时指着 CoreUISafe**，所以这不是一个点上的巧合：
+
+| 边 | 实测（`GetGuiObjectsAtPosition` 扫描） | CoreUISafe 预测 | 屏幕空间预测 |
+|---|---|---|---|
+| 背景开始（x=200） | **−58** | −58 ✓ | 0 ✗ |
+| 背景结束（x=200） | **656**（657 空） | 656 ✓ | 714 ✗ |
+| 按钮出现（x=1109） | **594** | `AbsolutePosition.Y = 593.5` ✓ | 652 ✗ |
+| 按钮结束（x=1109） | **636**（637 `n=10`） | `593.5 + 42.9 = 636.4` ✓ | 695 ✗ |
+
+**「背景开始于 −58」这一条本身就否掉了「它是个 y 偏移」的读法** —— 一个偏移不会把量程推到负数。
+
+**② `d5` 那个分支是错的，而它错得毫无症状。** `d5` 把 `ScreenGui.IgnoreGuiInset == true`
+读成「这些子件已经在屏幕空间里了」，于是**不加 inset**，`SettingsButton` 算出 **614**；
+而它真正的屏幕中心是 **673**（`rect = 1088.3, 593.5`，**`AbsoluteSize = 42.9×42.9`** —— 不是整数 43）。
+`d4` 算出的也是同一个 **614**，只是理由不同（`d4` **根本没有 inset 这个概念**）。
+两版都「返回了两个可信的数」，两版都不是按得下去的那个数 —— §0.18 最纯的那张脸。
+
+**③ `IgnoreGuiInset` 既没撒谎、`ScreenInsets` 也不是阀门 —— 它们是一对精确的镜像。**
+`ScreenGui abs = 0,−58 1151x714` 而 Roblox 自己的 `MouseGui abs = 0,0 1151x656`：
+**底边是同一条（656）、顶边差 58**。带旗的 `ScreenGui` 报 `ScreenInsets = None`、
+不带旗的 `MouseGui` 报 `CoreUISafeInsets` —— 旗子**搬的是 ScreenGui 自己那个 rect**，
+**不改变子件的 `AbsolutePosition` 用哪个空间**。我先前的断言「那个旗在撒谎」被这一对镜像否掉，
+所以 `d6` 的换算**对任何 ScreenGui 后代都加 inset、不带条件**；
+那个旗**只进返回的名字**（`inset+0,58/ignoreinset`），**不进分支**。
+
+**④ `GetGuiObjectsAtPosition` 是**不产生输入**的尺子，但它答的是 GUI 空间。**
+它在运行时**存在**，却**不在官方参考的 Methods 列表里**（`getmetatable(PlayerGui).__index` 是 nil）。
+所以它能回答「这个像素上有什么」，**不能**回答「VIM 该指向哪里」——
+后者的换算仍然只有 `GetGuiInset().Y` 一条路。
+
+**⑤ 那一下按空了，而且是量出来的。** live 驱动器 cmd 44 确实发过一次合成按压，
+瞄准 `PostShiftButton`，日志 `[00:12:04] rel 612.5 … mouse@476,596 … NOCHANGE`；
+`476,596` 正是 `d4` 的 `ap + as/2`（**不带 inset**）算出来的数，**所以按它的版本是 `d4`**。
+只读探针（`GetGuiObjectsAtPosition`，**不合成任何输入**）给出：按钮的 GUI 带是
+`y ∈ [566.4, 626.4]`，**屏幕带 = [624.4, 684.4]**，而 `596` 换成 GUI 空间是 **538** ——
+那里 `n=11 PostShift=false`（只有背景）。**结算没有被触发，落点最多只到按钮上沿上方 28.4 px。**
+同一条 x 列 `n=11` 对 `n=15`，是「两个空间确实不同」的第二个独立征兆。
+（`HoldButton` 现在**也是 `vis=true`** —— `docs/` 里「Post / Hold 二选一」那句，客户端现在不这么说。
+**两个都没按**：按它会动操作员的班次结算，那是他的选择，不是我的。）
+
+**⑥ 一个 rect 转点的地方只许有一处。** `d6` 新增 `clickPoint(btn)`，`guiCensus` 与 `pressAt`
+**两个**调用点都走它；构建器当不变量守着：`as / 2` 全文件**恰好一次**、`= clickPoint(` **恰好两个**
+（`_tools/build_drive_clickpoint_test.py`，**12 例**）。判**能不能红**的是
+`_tools/selftest_drive_clickpoint.py`：**9 个变异各自红在自己那条断言上**，
+且每个变异都点明一个**必须留绿**的对照 —— 而**对照必须挑变异动不了的那个**
+（`C_IGNORE` 原来当对照，`d6` 之后它和 `C1` 一起红，只好挪到两个 inset 为零的例子上；取舍 425）。
+`run_tests.sh` **rc=0**。
+
+**没验的**：`d6` **在活客户端里一次都没跑过**（那个 VM 里现在跑的是 `d4`）；`d6` 的
+`inset+0,58/ignoreinset` 标签**没在真 VM 里读过**；`pressAt` 在真 VM 里仍然**零次成功**；
+daemon 的 `click-button` **是否也加 inset 没测**；`get_roblox_docs(VirtualInputManager, section:"Methods")`
+**被拒**（`Available sections: Description, Inherited Members`）→ 权威签名**拿不到**。

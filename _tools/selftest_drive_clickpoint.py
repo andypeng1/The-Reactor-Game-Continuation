@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Break clickPoint seven ways and require the check that guards each to go red.
+"""Break clickPoint one way per mutant and require the check that guards it to go red.
 
 WHY THIS IS NOT PARANOIA.  The harness went green the first time it ran, and a
 suite that has never been broken is indistinguishable from a suite that cannot
@@ -42,8 +42,9 @@ LUA = "D:/Lua/5.1/lua.exe"
 # Which case guards which line of the subject.  Kept here as constants so that a
 # mutation cannot name a check that does not exist and pass by not looking.
 C_ADD = "C1 a ScreenGui that does not ignore the inset has the inset ADDED"
-C_IGNORE = "C2 a ScreenGui with IgnoreGuiInset is already in screen space"
-C_SURF = "C3 a SurfaceGui is already in screen space and says so by NAME"
+C_IGNORE = "C2 a ScreenGui with IgnoreGuiInset gets the SAME inset -- the flag labels, it does not branch"
+C_FLAGFALSE = "C12 the flag at false is not the flag at true -- no suffix, same point"
+C_SURF = "C3 a SurfaceGui is a LAYOUT, not a screen space, and the name says so"
 C_NONE = "C4 no LayerCollector ancestor is NAMED, not silently assumed to need nothing"
 C_READ = "C8 the inset is READ, not the constant this client happens to have"
 C_FLOOR = "C10 a fractional rect is FLOORED, not rounded"
@@ -85,35 +86,49 @@ MUTATIONS = [
         "  local p = ap + inset + as / 2",
         "  local p = ap + as / 2",
         [C_ADD],
-        [C_IGNORE, C_SURF],
+        # C_SURF and C_NONE are the CONTROLS, and they are chosen for a reason:
+        # both are cases whose inset is zero, so dropping the inset cannot move
+        # them.  They are green here for the same reason they are green on the
+        # shipped file -- not because the mutation failed to land anywhere.
+        # C_IGNORE used to be here and had to move: under d6 the ignore-inset
+        # case takes the SAME inset as every other ScreenGui, so it reddens
+        # alongside C1, and a control that reddens is not a control.
+        [C_SURF, C_NONE],
     ),
     (
         "the conversion subtracts the inset",
         "  local p = ap + inset + as / 2",
         "  local p = ap - inset + as / 2",
         [C_ADD],
-        [C_IGNORE],
+        [C_SURF],
     ),
     (
         "the inset is hardwired to this client's 58",
-        "          inset = Vector2.new(gi.X, gi.Y)",
-        "          inset = Vector2.new(0, 58)",
+        "        inset = Vector2.new(gi.X, gi.Y)",
+        "        inset = Vector2.new(0, 58)",
         [C_READ],
         [C_ADD],
     ),
     (
         "the inset is hardwired and only in y",
-        "          inset = Vector2.new(gi.X, gi.Y)",
-        "          inset = Vector2.new(0, gi.Y)",
+        "        inset = Vector2.new(gi.X, gi.Y)",
+        "        inset = Vector2.new(0, gi.Y)",
         [C_POINT],
         [C_ADD],
     ),
     (
         "IgnoreGuiInset stops being read",
-        "      if okf and flag == true then",
-        "      if false then",
+        "        local okf, flag = pcall(function() return lc.IgnoreGuiInset end)",
+        "        local okf, flag = true, false",
         [C_IGNORE],
-        [C_ADD],
+        [C_ADD, C_FLAGFALSE],
+    ),
+    (
+        "the flag at FALSE is lumped in with the flag at true",
+        "        if okf and flag == true then space = space .. '/ignoreinset' end",
+        "        if okf and flag ~= nil then space = space .. '/ignoreinset' end",
+        [C_FLAGFALSE],
+        [C_ADD, C_IGNORE],
     ),
     (
         "every LayerCollector is treated as a ScreenGui",

@@ -98,7 +98,7 @@ WHAT d4 ADDS, AND WHY
 ]]
 
 local M = {}
-M.TAG = 'd5'
+M.TAG = 'd6'
 
 local NL = string.char(10)
 local CR = string.char(13)
@@ -554,16 +554,39 @@ local function guiRoot()
 end
 
 -- The one conversion this file needs and used to get wrong: AbsolutePosition is
--- GUI space, VirtualInputManager is SCREEN space, and on this client the two
--- differ by 58 px in y -- the topbar inset.  That 58 is why every synthetic
--- press before this version landed, silently, on empty pixels.
+-- CoreUISafe space -- its y is measured from below the topbar -- while
+-- VirtualInputManager and UserInputService:GetMouseLocation() are SCREEN space,
+-- whose y counts from the physical top of the viewport.  On this client those
+-- two differ by 58 px in y, and that 58 is why every synthetic press before
+-- this version landed, silently, on empty pixels.
 --
--- Both halves are READ, never hardwired.  The inset comes from GuiService, so a
--- different topbar cannot put the bug back; and IgnoreGuiInset comes from the
--- containing LayerCollector, because a ScreenGui with that flag set is ALREADY
--- in screen space -- adding the inset to it would move the click 58 px the other
--- way.  A SurfaceGui or BillboardGui is likewise already screen space, so the
--- inset applies to exactly one case: a ScreenGui that does not ignore it.
+-- THE INSET IS ADDED FOR EVERY ScreenGui DESCENDANT, and that is a measurement,
+-- not a style.  d5 branched on IgnoreGuiInset, reading the reference's
+-- "true => ScreenInsets is DeviceSafeInsets" as "those children are already in
+-- screen space".  That is not what the property does.  IgnoreGuiInset moves the
+-- ScreenGui's own RECT -- this game's reads abs=0,-58 1151x714 against Roblox's
+-- own MouseGui at 0,0 1151x656, same bottom edge, 58 apart at the top -- while
+-- the space a child's AbsolutePosition is expressed in is CoreUISafe either way.
+--
+-- Swept in the live client with PlayerGui:GetGuiObjectsAtPosition, an oracle
+-- that synthesizes no input and so cannot be perturbed by a pointer already
+-- resting somewhere.  It goes empty at y=656 and resumes at y=-58, and it has
+-- the button present for y in 594..636.  AbsolutePosition puts that button at
+-- 1088.3,593.5 42.9x42.9, so 593.5 and 636.4 are its edges -- all four readings
+-- land on CoreUISafe space and none of them on screen space.  Its true screen
+-- centre is therefore 673, and d4 and d5 both computed 614.
+--
+-- Both halves are still READ, never hardwired: the inset comes from GuiService,
+-- so a different topbar cannot put the bug back.  The flag is still read, but
+-- only into the NAME, where it is a diagnostic -- it does not branch.
+--
+-- A SurfaceGui or BillboardGui is a THIRD case and is not a screen space at all:
+-- a child there is positioned in the surface's own layout, and no screen
+-- coordinate reaches it.  That case is still computed and still NAMED rather
+-- than refused, because a route that is silently wrong and a route that is
+-- silently absent are both worse than one that says which it is -- but the
+-- label is the disclosure: a point whose name starts 'layout/' is not a screen
+-- coordinate and pressing it lands somewhere unintended.
 --
 -- Returns the point, the inset used, and a NAME for which case ran.  The name
 -- is the point: an unknown space that silently reads as 0 is the same defect
@@ -577,18 +600,18 @@ local function clickPoint(btn)
   local okl, lc = pcall(function() return btn:FindFirstAncestorWhichIsA('LayerCollector') end)
   if okl and lc ~= nil then
     if lc:IsA('ScreenGui') then
-      local okf, flag = pcall(function() return lc.IgnoreGuiInset end)
-      if okf and flag == true then
-        space = 'screen/ignore-inset'
-      else
-        local okg, gi = pcall(function() return game:GetService('GuiService'):GetGuiInset() end)
-        if okg and gi ~= nil then
-          inset = Vector2.new(gi.X, gi.Y)
-          space = 'inset+' .. string.format('%.0f,%.0f', inset.X, inset.Y)
-        end
+      local okg, gi = pcall(function() return game:GetService('GuiService'):GetGuiInset() end)
+      if okg and gi ~= nil then
+        inset = Vector2.new(gi.X, gi.Y)
+        space = 'inset+' .. string.format('%.0f,%.0f', inset.X, inset.Y)
+        -- Diagnostic only.  Set on BOTH sides of the flag, deliberately: the
+        -- suffix appearing must never be read as "the point changed", because
+        -- the whole defect d5 shipped was that reading.
+        local okf, flag = pcall(function() return lc.IgnoreGuiInset end)
+        if okf and flag == true then space = space .. '/ignoreinset' end
       end
     else
-      space = 'screen/' .. lc.ClassName
+      space = 'layout/' .. lc.ClassName
     end
   end
   local p = ap + inset + as / 2

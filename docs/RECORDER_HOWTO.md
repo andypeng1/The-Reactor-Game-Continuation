@@ -1436,9 +1436,9 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 | 仓库 | `_tools/TRG_original_drive.luau` |
 | 执行器 | `D:\SCRIPT\SolaraV3\workspace\TRG_original_drive.luau` |
 | 自动注入桩 | `D:\SCRIPT\SolaraV3\autoexec\trg_drive.lua` |
-| tag | `d5` |
-| 字节 / 行 | **36865** / **1019** |
-| md5 | **`85eacc71e65f280498a5dd5e65173654`** |
+| tag | `d6` |
+| 字节 / 行 | **38570** / **1042** |
+| md5 | **`4ce909d36e485ba9a3d964fb1375f173`** |
 | 反斜杠 / CRLF | **0** / **0** |
 | 桩的字节 / md5 | **598** / **`a2c23b97c3d8da8458962e019cd3400c`** |
 | Lua 版本 | **5.1 兼容**（`goto` / `+=` / `//` 一个都不用，`D:\Lua\5.1\lua.exe` 要能过语法） |
@@ -1447,9 +1447,10 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 **反斜杠 0 是刻意的**（§0.10）：换行用 `string.char(10)`、回车用 `string.char(13)`、
 内嵌引号用单引号 Lua 语法。它**不经过 Studio**，但规矩照样守 —— 守一个不变式比守两个便宜。
 
-**上一个身份**（已被取代）：tag `d4` / **33729** 字节 / **962** 行 /
-md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**（`d5` = `d4` + `clickPoint()` 坐标修复，见 §13.9.14）。
-**再往前**：`d3` **30875** / **905** / `72e8105ec89cb900ac9bf8da9842606b`；
+**上一个身份**（已被取代）：tag `d5` / **36865** 字节 / **1019** 行 /
+md5 **`85eacc71e65f280498a5dd5e65173654`**（`d6` = `d5` + 一处**读法**更正：inset 对**每一个** ScreenGui 后代都要加，`IgnoreGuiInset` 只当标签 —— 见 §13.9.14 与 Phase 105）。
+**再往前**：`d4` **33729** / **962** / `0c0bc9d8b4be1bd88d751cff82184ff4`；
+`d3` **30875** / **905** / `72e8105ec89cb900ac9bf8da9842606b`；
 `d2` **30521** / **901** / `18f4c70dac40951fd0a53be5a692c0da`；
 `d1` **16762** / **524** / `7293022574a3ed04f8e75f8b6ee7a85d`。
 
@@ -1457,7 +1458,7 @@ md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**（`d5` = `d4` + `clickPoint()` 坐标
 所以把新文件拷进 `D:\SCRIPT\SolaraV3\workspace\` 只是**准备好** ——
 要它变成新版的，要么**重注入**（新 VM，一个 hook），要么**热重载**
 （`readfile` + `loadstring`，同一个 VM，**会留下旧实例的 hook**，§13.9.11）。
-桩的字节 / md5 没变（`d2` / `d3` / `d4` / `d5` 都只动 `.luau`，没动桩）。
+桩的字节 / md5 没变（`d2` / `d3` / `d4` / `d5` / `d6` 都只动 `.luau`，没动桩）。
 
 #### 13.9.2 它写哪六个文件（全在 `D:\SCRIPT\SolaraV3\workspace\`）
 
@@ -1807,11 +1808,15 @@ TextButton | game.Players.X.PlayerGui.Menu.StartShiftButton | false | START SHIF
 
 换算是 `ap + inset + as / 2`，`inset = GuiService:GetGuiInset()`，这台客户端 `(0, 58)`。
 
-**两半都要读**：`ScreenGui.IgnoreGuiInset == true` 的 ScreenGui **本来就在屏幕空间**，
-再加 inset 就**反着错 58 px**；`SurfaceGui` / `BillboardGui` 同理。所以 `clickPoint()` 先问
-祖先 `LayerCollector` 是什么类、再看那个旗，**并且把「这次用的是哪个空间」当返回值带出来**
-（`inset+0,58` / `screen/ignore-inset` / `screen/SurfaceGui` / `nospace`）——
-**一个 run 打印 `nospace` 就是「什么都没量到」，即使它打印了两个看着很对的数。**
+**~~两半都要读~~（已更正，见 Phase 105）**：~~`ScreenGui.IgnoreGuiInset == true` 的 ScreenGui
+本来就在屏幕空间，再加 inset 就反着错 58 px~~ —— **那个旗只挪 ScreenGui 自己的矩形，
+不改变子件 `AbsolutePosition` 所在的空间**，所以 inset 对**每一个** ScreenGui 后代都要加。
+实测：带旗的 `ScreenGui` 读 `abs=0,-58 1151x714`，Roblox 自己的 `MouseGui` 读 `0,0 1151x656`
+—— **同一条下缘、上缘差 58**，两次读数都在同一套枚举下自洽，**没有任何东西在说谎**。
+所以 `clickPoint()` 先问祖先 `LayerCollector` 是什么类，**并且把「这次用的是哪个空间」
+当返回值带出来**（`inset+0,58` / `inset+0,58/ignoreinset` / `layout/SurfaceGui` / `nospace`）——
+`/ignoreinset` **只是标签**（`d5` 就是把它读成了分支才错的，那两个点**逐位相同**）；
+而 `nospace` 是「什么都没量到」，即使它打印了两个看着很对的数。
 
 **`clickPoint(btn)` 是全通道唯一的 rect→点换算**，两个调用点都走它：
 `pressAt`（真的点）和 `guiCensus`（只报告 rect）。`guiCensus` 不是缺陷源，
@@ -1821,8 +1826,13 @@ TextButton | game.Players.X.PlayerGui.Menu.StartShiftButton | false | START SHIF
 
 **这条修复是靠 `_tools/build_drive_clickpoint_test.py` + `_tools/selftest_drive_clickpoint.py`
 钉住的**（§13.9.10 是同一套做法：构建器**按文本抽出**交付物再塞进桩，自测把换算打坏）。
-构建器跑 **11 例**（`C1..C11`，`C1` 的矩形就是现场读到的 `PostShiftButton` `447,566 60x60`），
-自测 **8/8 变异各自红在指定那条上**、留绿的对照保住、驱动 md5 前=后、`run_tests.sh` **rc=0**。
+构建器跑 **12 例**（`C1..C12`；`C1`/`C2` 的矩形取自现场读到的 `PostShiftButton`
+`abs=446.600,566.400 size=60.000x60.000`，桩里取整成 `447,566` —— **`C10` 专门守着
+「小数要 floor 不要 round」**，所以取整只许发生在**输入**上），
+自测 **9/9 变异各自红在指定那条上**、留绿的对照保住、驱动 md5 前=后、`run_tests.sh` **rc=0**。
+**对照换过一次位置**：`d6` 下带旗的 case 拿的 inset 和大家一样，所以 `C_IGNORE` 会跟着 `C1`
+一起红 —— **一个会跟着红的对照不是对照**，留绿那两条改成了 `C_SURF` / `C_NONE`（inset 为零，
+这两条变异**动不了它们**）。
 两个桩的坑见 `DECISIONS_2` **417 / 418**：桩缺一个 `Vector2.__sub` 会让 harness **抛错中止**
 （红在错的理由上，和一个真的抓到逐字节同形），而生成的 harness 必须 `io.write` 它的报告
 （`lua file.luau` 丢弃顶层 `return`，「全绿」和「没跑过」同形）。
