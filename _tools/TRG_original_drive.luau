@@ -1,5 +1,5 @@
 --[[
-TRG_original_drive.luau   (tag d1)
+TRG_original_drive.luau   (tag d2)
 
 WHAT THIS IS
   A command-driven driver for the ORIGINAL game.  It lives in the same executor
@@ -65,10 +65,26 @@ USAGE
   No Studio edit path is involved in deploying this file, but the backslash rule
   is kept anyway: this file contains ZERO backslashes, newlines are built from
   string.char(10) and CR from string.char(13).
+
+WHAT d2 ADDS, AND WHY EACH ONE
+  * ANTI-IDLE.  Roblox drops a client after about 20 minutes with no input, and
+    nothing in d1 was input: PivotTo moves the avatar, but the idle timer
+    watches the USER.  The failure mode is silence -- later commands are simply
+    never executed -- so the loop now produces input on its own.
+  * A GUI HALF.  d1's census found 1019 ClickDetectors and not one of them
+    starts a shift.  A ClickDetector handler runs on the SERVER and a local fire
+    cannot reach it; a GUI button's handler is always a client LocalScript, so
+    pressing one from here runs real code and its remote does reach the server.
+  * caps / read / probe / listen / cf.  d1 could only see 32 ValueBases, which
+    is why six fires all read NOCHANGE and proved nothing: in a parked world no
+    ValueBase is written, so the sensor could not separate 'inert' from
+    'unreached'.  caps says which executor routes exist; probe says what the
+    game's own panels say; listen says whether anything is ticking at all; cf
+    gives the mechanical half of a click test (only LeverUnion moved).
 ]]
 
 local M = {}
-M.TAG = 'd1'
+M.TAG = 'd2'
 
 local NL = string.char(10)
 local CR = string.char(13)
@@ -101,6 +117,22 @@ local CFG = {
   -- Wait after firing before reading the state back.  Long enough for a server
   -- round trip, short enough that a shift's first second is still visible.
   SettleSeconds = 1.2,
+
+  -- Anti-idle.  Roblox drops a client after about 20 minutes with no input, so
+  -- this must stay well under that; 240 s leaves room for several missed ticks.
+  IdleSeconds = 240,
+
+  -- Fallback jiggle height, in studs.  Small on purpose: it exists to prove the
+  -- character is alive, not to relocate it.
+  IdleJiggle = 0.5,
+
+  GuiFile     = 'trg_drive_gui.txt',
+  GuiCap      = 400,
+  ProbeCap    = 400,
+
+  -- Substring that identifies the control-room monitor trees.  The 7 screens
+  -- carry the game's own words about its own state.
+  MonitorHint = 'ControlRoomMonitor',
 }
 
 local T0 = os.clock()
@@ -217,7 +249,18 @@ local function statline()
   for _, d in ipairs(root:GetDescendants()) do
     if d:IsA('ValueBase') then
       local ok, v = pcall(function() return d.Value end)
-      parts[#parts + 1] = d.Name .. '=' .. tostring(ok and v or 'ERR')
+      -- 'ok and v or ERR' renders a FALSE BoolValue as ERR, so every genuinely
+      -- false flag read as unreadable and the whole dump looked broken.  Render
+      -- by type: only a real pcall failure says ERR.
+      local shown
+      if not ok then
+        shown = 'ERR'
+      elseif type(v) == 'boolean' then
+        shown = tostring(v)
+      else
+        shown = flat(v)
+      end
+      parts[#parts + 1] = d.Name .. '=' .. shown
     end
   end
   parts[#parts + 1] = 'n=' .. tostring(#parts)
@@ -402,6 +445,310 @@ local function doNear(path, studs)
   teleportTo(pos, tonumber(studs) or CFG.DefaultStuds)
 end
 
+-- ========== ANTI-IDLE ==========
+-- Roblox drops a client after about 20 minutes with no input.  Nothing in d1 was
+-- input: PivotTo moves the avatar, but the idle timer watches the USER, so a
+-- long shift would end with the session gone -- and the failure is silence, not
+-- an error.  Later commands would simply never be executed.
+--
+-- Route 1 is the classic executor anti-idle, VirtualUser:CaptureController()
+-- then ClickButton2().  That is IN-GAME virtual input; it never touches the
+-- operator's real cursor.  Route 2, a small PivotTo, is the fallback.  Which one
+-- ran is logged, for the same reason 'fire' logs which click path ran: a silent
+-- fallback and the real thing must not look alike afterwards.
+local lastInput = os.clock()
+
+local function idleRoute()
+  local ok, vu = pcall(function() return game:GetService('VirtualUser') end)
+  if ok and vu ~= nil then
+    local ok2 = pcall(function()
+      vu:CaptureController()
+      vu:ClickButton2(Vector2.new())
+    end)
+    if ok2 then return 'VirtualUser' end
+  end
+  local lp = localPlayer()
+  local c = lp and lp.Character
+  if c ~= nil then
+    local ok3 = pcall(function()
+      c:PivotTo(c:GetPivot() * CFrame.new(0, CFG.IdleJiggle, 0))
+    end)
+    if ok3 then return 'jiggle' end
+  end
+  return nil
+end
+
+-- force=true means 'do it now and say so' (the Idled hook and the 'idle' verb).
+-- force=false is the periodic timer; it also logs, so 'the anti-idle is running'
+-- is a reading rather than a hope.
+local function antiIdle(force)
+  if not force and os.clock() - lastInput < CFG.IdleSeconds then return end
+  local how = idleRoute()
+  lastInput = os.clock()
+  log('antiidle ' .. tostring(how) .. ' at rel ' .. rel())
+end
+
+-- ========== EXECUTOR CAPABILITIES ==========
+-- Which routes this executor actually has.  d1 learned the hard way that
+-- guessing costs a round trip: MouseClick:Fire died with 'Fire is not a valid
+-- member of RBXScriptSignal', and that error names the signal, not the executor.
+local function globalOf(n)
+  local ok, g = pcall(function() return _G[n] end)
+  if ok and g ~= nil then return g end
+  local okg, genv = pcall(function() return getgenv() end)
+  if okg and type(genv) == 'table' then
+    local ok2, v = pcall(function() return genv[n] end)
+    if ok2 and v ~= nil then return v end
+  end
+  return nil
+end
+
+local function caps()
+  local names = {'fireclickdetector','firesignal','firetouchinterest','fireproximityprompt',
+    'getconnections','hookfunction','hookmetamethod','getrawmetatable','setreadonly',
+    'isreadonly','getgenv','getgc','loadstring','readfile','writefile','isfile',
+    'identifyexecutor','getnamecallmethod','checkcaller','newcclosure','cloneref',
+    'request','http_request','setclipboard','getcustomasset','decompile','queue_on_teleport'}
+  local out = {}
+  for _, n in ipairs(names) do
+    out[#out + 1] = n .. '=' .. type(globalOf(n))
+  end
+  log('caps ' .. table.concat(out, ' '))
+end
+
+-- ========== GUI (the client-side half of the control surface) ==========
+-- Why this exists: the census found 1019 ClickDetectors and NOT ONE of them
+-- starts a shift.  A ClickDetector's handler runs on the SERVER, and a fire from
+-- this VM only reaches the client's own listeners.  A GUI button is the
+-- opposite: its handler is always a client LocalScript, so pressing one from
+-- here runs real code and whatever remote it sends does reach the server.  A
+-- game parked on a menu is therefore far more likely to be waiting here.
+local function fmtVec2(p)
+  if p == nil then return '-' end
+  return string.format('%.0f,%.0f', p.X, p.Y)
+end
+
+local function guiRoot()
+  local lp = localPlayer()
+  if lp == nil then return nil end
+  return lp:FindFirstChildOfClass('PlayerGui')
+end
+
+local function guiCensus()
+  local pg = guiRoot()
+  if pg == nil then
+    log('gui FAIL no PlayerGui')
+    return
+  end
+  local out = {}
+  out[#out + 1] = '# gui at ' .. now() .. ' rel ' .. rel()
+  out[#out + 1] = '# KIND | fullPath | visible | text | absPos'
+  local n = 0
+  local function walk(node, depth)
+    if depth > 8 then return end
+    for _, c in ipairs(node:GetChildren()) do
+      local cn = c.ClassName
+      if cn == 'TextButton' or cn == 'ImageButton' then
+        n = n + 1
+        if n <= CFG.GuiCap then
+          local okv, vis = pcall(function() return c.Visible end)
+          local okt, t = pcall(function() return c.Text end)
+          local okp, ap = pcall(function() return c.AbsolutePosition end)
+          -- No 'and/or': Visible is a boolean and false is a real answer here.
+          local visStr = '?'
+          if okv then visStr = tostring(vis) end
+          local txt = ''
+          if okt and type(t) == 'string' then txt = t end
+          local pos = '-'
+          if okp and ap ~= nil then pos = fmtVec2(ap) end
+          out[#out + 1] = cn .. ' | ' .. c:GetFullName() .. ' | ' ..
+            visStr .. ' | ' .. flat(txt) .. ' | ' .. pos
+        end
+      end
+      walk(c, depth + 1)
+    end
+  end
+  walk(pg, 0)
+  out[#out + 1] = '# done buttons=' .. tostring(n)
+  write(CFG.GuiFile, table.concat(out, NL) .. NL)
+  log('gui done buttons=' .. tostring(n))
+end
+
+-- Three routes to fire one signal, tried in order and the winner LOGGED.  In
+-- this executor the built-in signal has no :Fire, so the order matters and a
+-- silence would be indistinguishable from a completed press.
+local function pressSignal(sig)
+  local fs = globalOf('firesignal')
+  if type(fs) == 'function' then
+    local ok = pcall(fs, sig)
+    if ok then return 'firesignal' end
+  end
+  local okFire = pcall(function() sig:Fire() end)
+  if okFire then return 'sig:Fire' end
+  local gc = globalOf('getconnections')
+  if type(gc) == 'function' then
+    local ok, conns = pcall(gc, sig)
+    if ok and type(conns) == 'table' and #conns > 0 then
+      local n = 0
+      for _, c in ipairs(conns) do
+        local fn = c.Function
+        if fn == nil then fn = c.func end
+        if type(fn) == 'function' then
+          local o = pcall(fn)
+          if o then n = n + 1 end
+        end
+      end
+      if n > 0 then return 'getconnections x' .. tostring(n) end
+    end
+  end
+  return nil
+end
+
+local function doPress(path, method)
+  local node, err = resolve(path)
+  if node == nil then
+    log('press FAIL resolve :: ' .. flat(err))
+    return
+  end
+  local btn = node
+  if btn.ClassName ~= 'TextButton' and btn.ClassName ~= 'ImageButton' then
+    btn = node:FindFirstChildOfClass('TextButton')
+    if btn == nil then btn = node:FindFirstChildOfClass('ImageButton') end
+  end
+  if btn == nil then
+    log('press FAIL no button under ' .. path)
+    return
+  end
+  local m = string.lower(method or 'activated')
+  local order
+  if m == 'click' then order = {'click', 'activated'} else order = {'activated', 'click'} end
+  local before = statline()
+  local how = nil
+  for _, which in ipairs(order) do
+    local sig
+    if which == 'click' then sig = btn.MouseButton1Click else sig = btn.Activated end
+    local got = pressSignal(sig)
+    log('press try ' .. which .. ' -> ' .. tostring(got))
+    if got ~= nil then
+      how = got .. ' on ' .. which
+      break
+    end
+  end
+  if how == nil then
+    log('press FAIL no route worked for ' .. btn:GetFullName())
+    return
+  end
+  log('press ' .. btn:GetFullName() .. ' via ' .. how)
+  task.wait(CFG.SettleSeconds)
+  local after = statline()
+  if after == before then
+    log('press NOCHANGE ' .. after)
+  else
+    log('press CHANGED ' .. after)
+  end
+end
+
+-- Every readable property of one node that actually exists.  pcall per name, so
+-- an absent member is skipped rather than fatal -- and only a real failure
+-- reads ERR.
+local function doRead(path)
+  local node, err = resolve(path)
+  if node == nil then
+    log('read FAIL ' .. flat(err))
+    return
+  end
+  local want = {'Text','Visible','Enabled','Active','Value','Position','CFrame',
+    'Size','Color','Material','Transparency','Image','BackgroundColor3',
+    'TextColor3','AbsolutePosition','AbsoluteSize','Orientation'}
+  local out = {}
+  for _, k in ipairs(want) do
+    local ok, v = pcall(function() return node[k] end)
+    if ok and v ~= nil then out[#out + 1] = k .. '=' .. flat(v) end
+  end
+  log('read ' .. node:GetFullName() .. ' (' .. node.ClassName .. ') :: ' ..
+    table.concat(out, ' | '))
+end
+
+-- The game's own HUD, in the game's own words.  Phase 99 read it through the s2
+-- recorder; this is the same read on demand, so a press can be judged against
+-- what the panels SAY and not only against 32 ValueBases.
+local function doProbe()
+  local found = 0
+  for _, d in ipairs(game:GetDescendants()) do
+    if found >= CFG.ProbeCap then break end
+    if d:IsA('TextLabel') or d:IsA('TextButton') then
+      local p, depth, hit = d, 0, false
+      while p ~= nil and depth < 6 do
+        if string.find(p.Name, CFG.MonitorHint, 1, true) ~= nil then
+          hit = true
+          break
+        end
+        p = p.Parent
+        depth = depth + 1
+      end
+      if hit then
+        local okt, t = pcall(function() return d.Text end)
+        if okt and type(t) == 'string' and t ~= '' then
+          found = found + 1
+          log('P ' .. d:GetFullName() .. ' :: ' .. flat(t))
+        end
+      end
+    end
+  end
+  log('probe labels=' .. tostring(found))
+end
+
+-- Answers 'is anything ticking'.  One before/after read cannot tell a frozen
+-- world from a slow one, and a 30 s heartbeat is a flat line in any shorter
+-- window -- the same lesson as trg_drive_loop.txt.  Samples Stats at 4 Hz and
+-- logs ONLY the changes, so a quiet run costs two lines.
+local function doListen(secs)
+  local n = tonumber(secs) or 10
+  if n < 1 then n = 1 end
+  if n > 60 then n = 60 end
+  local prev = statline()
+  local t0 = os.clock()
+  local changes = 0
+  log('listen begin ' .. tostring(n) .. 's')
+  while os.clock() - t0 < n do
+    task.wait(0.25)
+    local cur = statline()
+    if cur ~= prev then
+      changes = changes + 1
+      log('L ' .. string.format('%.2f', os.clock() - t0) .. ' ' .. cur)
+      prev = cur
+    end
+  end
+  log('listen end changes=' .. tostring(changes))
+end
+
+-- Positions, for the mechanical half of a click test: 'only LeverUnion moved'.
+local function doCf(path)
+  local node, err = resolve(path)
+  if node == nil then
+    log('cf FAIL ' .. flat(err))
+    return
+  end
+  local targets = {}
+  if node:IsA('BasePart') then targets[#targets + 1] = node end
+  for _, c in ipairs(node:GetChildren()) do
+    if c:IsA('BasePart') then targets[#targets + 1] = c end
+  end
+  if #targets == 0 then
+    log('cf NOPARTS ' .. node:GetFullName())
+    return
+  end
+  for i = 1, math.min(#targets, 40) do
+    local t = targets[i]
+    local okp, pos = pcall(function() return t.Position end)
+    local oks, siz = pcall(function() return t.Size end)
+    local pStr, sStr = 'ERR', 'ERR'
+    if okp then pStr = fmtPos(pos) end
+    if oks then sStr = fmtPos(siz) end
+    log('C ' .. t:GetFullName() .. ' pos=' .. pStr .. ' size=' .. sStr)
+  end
+end
+
 -- ========== COMMAND DISPATCH ==========
 local function splitArgs(s)
   local t = {}
@@ -427,6 +774,22 @@ local function execute(seq, rest)
     doLs(a[2])
   elseif verb == 'pos' then
     log('pos ' .. charPos())
+  elseif verb == 'gui' then
+    guiCensus()
+  elseif verb == 'press' then
+    doPress(a[2], a[3])
+  elseif verb == 'read' then
+    doRead(a[2])
+  elseif verb == 'probe' then
+    doProbe()
+  elseif verb == 'listen' then
+    doListen(a[2])
+  elseif verb == 'cf' then
+    doCf(a[2])
+  elseif verb == 'caps' then
+    caps()
+  elseif verb == 'idle' then
+    antiIdle(true)
   elseif verb == 'stop' then
     M.stop()
   elseif verb == '' then
@@ -478,6 +841,7 @@ M.running = false
 -- lives only inside a connection cannot be driven from outside it.
 function M.step()
   local n = runCmds()
+  antiIdle(false)
   write(CFG.LoopFile, now() .. ' rel=' .. rel() ..
     ' seq=' .. tostring(loadSeq()) .. ' cmds=' .. tostring(n) .. NL)
   return n
@@ -496,6 +860,18 @@ function M.start()
   M.running = true
   append(CFG.LogFile, '# ' .. M.TAG .. ' start ' .. now() .. NL)
   log('drive start ' .. statline())
+
+  -- Cancel a pending idle kick the moment it is announced.  Event-driven, so it
+  -- costs nothing until the client is actually about to be dropped; the periodic
+  -- timer in M.step covers the case where the event never arrives.
+  local lp0 = localPlayer()
+  if lp0 ~= nil then
+    local okHook = pcall(function()
+      lp0.Idled:Connect(function() antiIdle(true) end)
+    end)
+    if not okHook then log('idled hook FAIL') end
+  end
+
   task.spawn(function()
     while M.running do
       local ok, err = pcall(M.step)
