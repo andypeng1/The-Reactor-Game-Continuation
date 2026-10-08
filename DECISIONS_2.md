@@ -6705,3 +6705,67 @@ GUI 按钮是反过来的：它的处理函数**一定是客户端 LocalScript**
 **How to apply:** 区分「**当成结论**」和「**当成操作约束**」。前者要机制，后者只要相关性足够强、
 且**代价不对称**（遵守它几乎不花钱，违反它可能毁掉你唯一的东西）。
 写的时候把两件事分开写：读数是什么、机制没定。**不要把「没定」当成「不能说」。**
+
+## 416. `AbsolutePosition` 是 GUI 空间，`VirtualInputManager` 是屏幕空间（Phase 104）
+
+**Why:** `GuiObject.AbsolutePosition` 的 y **从顶栏下面量起**；`VirtualInputManager` 的
+`SendMouseMoveEvent` / `SendMouseButtonEvent` 和 `UserInputService:GetMouseLocation()`
+**把顶栏算在内**。两者差 `GuiService:GetGuiInset().Y`，这台客户端是 **58**。
+我自己的交付物 `pressAt` 漏了这个换算，于是 **`d1`..`d4` 的每一次合成按压都落在目标上方 58 px**，
+而**症状是零**：`SendMouseMoveEvent` 返回、按钮事件返回、点击落到那个像素上的别的东西上。
+`clickPoint()` 也只是**返回两个可信的数**，只是空间错了 —— §0.18 最纯的那张脸。
+
+**How to apply:** 换算是 `ap + inset + as / 2`，而 **inset 要从 `GuiService` 读**，
+并且**先看 `ScreenGui.IgnoreGuiInset`**：带这个旗的 ScreenGui **本来就在屏幕空间**，
+再加 inset 就反着错 58 px；`SurfaceGui` / `BillboardGui` 同理（inset 只对一种情形成立）。
+一个 rect 转点的地方**只许有一处**：`as / 2` 全文件恰好一次、调用点恰好两个，写进构建器当不变量。
+
+## 417. 桩缺一个元方法臂，红的是「harness 炸了」不是「检查失败了」（Phase 104）
+
+**Why:** 桩里的 `Vector2` 有 `__add` / `__div` 而没有 `__sub`。SUBTRACT 那个变异让
+`ap - inset` 抛 `attempt to perform arithmetic on local 'ap' (a table value)`，
+整个 harness **中止**，红的理由是**桩不完整**，和被测的换算毫无关系。
+**这比最坏的绿还坏 —— 因为它和一个真的抓到逐字节同形。**
+
+**How to apply:** 桩要覆盖被测表达式**可能出现的每一个算子臂**，而**验法是把每个变异都跑一遍**
+（变异会走到你没打算走的那条路）。一条检查红在一个**和它无关**的理由上时，
+先问「是检查失败了，还是这个文件**炸了**」—— 后者的输出里没有 `FAIL`，只有 traceback。
+
+## 418. 生成的 harness 必须 `io.write` 它的报告（Phase 104）
+
+**Why:** `lua file.luau` **丢弃顶层 `return`**。一个只 `return report` 的 harness 在**全绿**时
+**什么都不打印**，于是一个调用方（自测里那句 `"PASS " in out`）**分不出「全绿」和「从没跑过」**
+—— 两者在这条路上**逐字节同形**。
+
+**How to apply:** 报告**打印出来**（`io.write(report .. string.char(10))`），`return` 可以留着
+但不能是唯一出口。更一般的判据：**任何「没输出」都可能同时是「通过」和「没执行」**，
+所以一个跑起来该说话的东西**在成功时也要说话**。
+
+## 419. 参数的形状错了，报错会指向那个参数（Phase 104）
+
+**Why:** `VirtualInputManager:SendMouseMoveEvent` 第 3 参、`SendMouseButtonEvent` 第 5 参
+在这个 build 里是 **`Object` 类型**。我传 `false` 抛 `Unable to cast value to Object`，
+而 `game` 和 `nil` **都成功**。**我把这句读成了「这个 VM 是只读的」并写进了结论** ——
+报错说的是**参数**，不是 VM 的能力（§0.17 一族：报错指向的地方不是出错的地方）。
+
+**How to apply:** 一个 API 报 `Unable to cast value to Object` 时，**先扫它自己的参数类型**
+（换一个合法形状再试：`game` / `nil` / 真容器），**别急着给宿主下结论**。
+`pcall` 的失败是**关于那次调用**的，不是关于环境的。
+
+## 420. 合成输入是排队、在脚本返回之后处理的（Phase 104）
+
+**Why:** 同一次 `execute-script` 里 move + click，点的是**上一个**指针位置；
+`UIS:GetMouseLocation()` 也**慢一拍**。所以「我把指针移过去了然后点了」在这条通道上
+**不成立** —— 两次调用之间必须**真的过一拍**，或者接受「点在上一个位置」。
+
+**How to apply:** 需要「先移后点」时，把移动和点击**拆成两拍**（两次 `execute-script`，
+或让它自己等一拍）。同理，读回自己的动作结果之前要留一拍。
+
+## 421. 一条「真的信号 + 视觉上是零」的读数，两半都报（Phase 104）
+
+**Why:** 用零对照钉住了指纹稳定之后，`Union` / `Caution` 那 **0.001 stud** 的位移
+是**真信号**（对照不动，它动）—— 但**视觉上是零**。只说「动了」是过度声称，
+只说「没动」是漏掉信号。
+
+**How to apply:** 把两个判决**分开写**：仪器上是什么、眼睛上是什么。别让「视觉上是零」
+自动降级成「什么都没发生」，也别让「有读数」自动升格成「能看出来」。

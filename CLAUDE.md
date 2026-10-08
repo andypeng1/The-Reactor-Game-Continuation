@@ -1606,3 +1606,28 @@ hook 活到 `[23:41:40]`，客户端 `15:41:47.799Z shutDown: (stage:UGCGame)` �
 **此刻没有活会话** ⇒ **操作员那条要求现在是不满足的**。
 细节 `PROGRESS.md` 103，取舍 **411..415**，`docs/RECORDER_HOWTO.md` **§13.9.12/§13.9.13**，
 `docs/TODO.md` **§3.11.7**。
+
+**Phase 104（2026-10-09）—— 我自己的驱动器一个 GUI 按钮都没按到过：`AbsolutePosition` 是 GUI 空间、
+`VirtualInputManager` 是屏幕空间，差 58 px；`d5` 修的就是这个。**
+六句能直接用的：**① §0.11 那句「y 有 +58 px 偏移」的真身** —— `GuiObject.AbsolutePosition` 的 y
+**从顶栏下面量起**，而 `VirtualInputManager` 和 `UIS:GetMouseLocation()` **算上顶栏**；
+换算是 `+ GuiService:GetGuiInset().Y`，实测 **58**。**② 交付物漏了这个换算**：`pressAt` 那行是
+`ap.Y + as.Y/2`，于是 **`d1`..`d4` 每一次按压都落在目标上方 58 px，而症状是零**
+（事件返回、点击落别处）—— §0.18 最纯的那张脸。**③ 两半都要读**：`ScreenGui.IgnoreGuiInset`
+为真的 ScreenGui **本来就在屏幕空间**，再加就反着错 58 px；`SurfaceGui`/`BillboardGui` 同理。
+**④ 撤一条**：「合成点击没反应」是错的 —— 真因是**参数形状**（VIM 那两参是 `Object`，
+`false` 抛 cast 错、`game`/`nil` 都行），我读成了「VM 只读」（取舍 419）。**⑤ 输入排队**：
+同一次调用里 move+click 点的是**上一个**位置，`GetMouseLocation()` 慢一拍。**⑥ 零对照成立** ——
+那 0.001 stud 是**真信号、视觉上是零**，两半都写。
+**交付 `d5`** = 36865 / 1019 / `85eacc71e65f280498a5dd5e65173654`（0 反斜杠 / 0 CRLF）：
+新增 `clickPoint(btn)`，`guiCensus` 与 `pressAt` **两个**调用点都走它（构建器断言
+`as / 2` 恰好一次、调用点恰好两个）；配套 `build_drive_clickpoint_test.py`（11 例）
++ `selftest_drive_clickpoint.py`（**8/8 变异各自红在指定那条上**，留绿对照保住），已挂
+`run_tests.sh`（`set -e`、无 `|| true`），**rc=0**。**两个桩的坑**：桩缺 `Vector2.__sub`
+→ harness **抛错中止**（红在错的理由上，取舍 417）；生成的 harness 必须 `io.write` 报告
+（`lua file.luau` 丢弃顶层 `return`，「全绿」与「没跑」同形，取舍 418）。
+**顺手读回**：`EndGameFrame1` 202 件，`PostShiftButton` / `HoldButton` 二选一、
+其余按钮 `vis=false` —— **先不动**（按它会动操作员的班次结算）。
+**没验的**：`d5` **一次都没在活客户端跑过**；`pressAt` 真 VM 零次；daemon 的 `click-button`
+**是否也加 inset 没测**。细节 `PROGRESS.md` 104，取舍 **416..421**，
+`docs/RECORDER_HOWTO.md` **§13.9.14**，`docs/TODO.md` **§3.11.8**。

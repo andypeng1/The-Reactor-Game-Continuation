@@ -11812,3 +11812,62 @@ WebLogin http error: {"errors":[{"code":4,"message":"Authentication ticket was i
 细节 `docs/RECORDER_HOWTO.md` **§13.9.12 / §13.9.13**，取舍 **411..415**，
 `docs/TODO.md` **§3.11.7**。**这一轮没有改任何行为**：`d4` 的改动是**加法**（一条新路 + 一段新日志），
 老的三条路一个字节没动，`docs/` 里那些数字都是**从现有的四份文件里读回来的**。
+
+**Phase 104（2026-10-09）—— 我自己的驱动器一个 GUI 按钮都没按到过：`AbsolutePosition` 是 GUI 空间、
+`VirtualInputManager` 是屏幕空间，差 58 px。`d5` 修的就是这个。**
+
+六句能直接用的：**① §0.11 那句「y 有 +58 px 偏移」终于有了机制** ——
+`GuiObject.AbsolutePosition` 的 y **从顶栏下面量起**（GUI 空间），而
+`VirtualInputManager:SendMouseMoveEvent` / `SendMouseButtonEvent` 和
+`UserInputService:GetMouseLocation()` **把顶栏算在内**（屏幕空间）。换算是
+`+ GuiService:GetGuiInset().Y`，这台客户端实测 **58**。
+**② 我的探针脚本一直在做这个换算，我的交付物没有** —— `pressAt` 那一行是
+`ap.Y + as.Y/2`，所以 **`d1`..`d4` 的每一次按压都落在目标上方 58 px**，
+而**没有任何东西会说**：`SendMouseMoveEvent` 返回、按钮事件返回、点击落到那 58 px 上的别的东西。
+**这正是 §0.18 最纯的那张脸 —— 错的尺子不报错，它安静地给你一个值**
+（`clickPoint` 返回两个数，都是**可信的数**，只是空间错了）。
+**③ 换算必须同时读两半**：inset 从 `GuiService` 读，**而且**要看 `ScreenGui.IgnoreGuiInset` ——
+带这个旗的 ScreenGui **本来就在屏幕空间**，再加 inset 就反着错 58 px；
+`SurfaceGui` / `BillboardGui` 同理（所以 inset **只对一种情形**成立）。
+**④ 那条「合成点击根本没反应」的结论是错的，撤了**：我拿两次「画面逐字节相同」判
+`VirtualInputManager` 是死的，而真正的问题是**参数的形状** ——
+`SendMouseMoveEvent` 第 3 参、`SendMouseButtonEvent` 第 5 参在这个 build 里是 **`Object` 类型**，
+`false` 抛 `Unable to cast value to Object`，而 `game` 和 `nil` **都成功**
+（§0.17 一族：报错指向参数，我读成了「这个 VM 是只读的」，取舍 419）。
+**⑤ 输入是排队、在脚本返回之后处理的** —— 同一次 `execute-script` 里 move + click
+点的是**上一个**指针位置，`GetMouseLocation()` 也**慢一拍**。
+**⑥ 零对照（null control）成立**：连点两次「本来就什么都没变」的地方，指纹逐位稳定 ——
+所以那些 **0.001 stud** 的位移**是真信号**，只是**视觉上是零**；两半都写。
+
+**交付 `d5`**（`_tools/TRG_original_drive.luau`，**36865** 字节 / **1019** 行 /
+md5 **`85eacc71e65f280498a5dd5e65173654`**，**0 反斜杠 / 0 CRLF**，`lua.exe` 语法 OK）：
+新增 `clickPoint(btn)`，**两个**调用点（`guiCensus`、`pressAt`）都走它 ——
+`guiCensus` 本身不点，但它正是「用来找按钮」的那份读数，**给的却是一个不能直接拿去按的坐标**，
+所以一起修。**不变量写进构建器**：`as / 2` 全文件**恰好一次**、`clickPoint(` **恰好两个**调用点
+（在别处重推一次就是原来那个 bug，所以长出来的调用点必须让构建**失败**，不能被漏掉）。
+
+**新增 `build_drive_clickpoint_test.py` + `selftest_drive_clickpoint.py`，已挂 `run_tests.sh`**
+（`set -e` 底下、没有 `|| true`）：构建器**按文本抽出**交付物的 `clickPoint`（重抄一份
+会在交付物变了之后继续绿）、塞进一个 Lua 5.1 桩引擎，跑 **11 例**（`C1..C11`，
+`C1` 的矩形就是现场读到的 `PostShiftButton` `447,566 60x60`）；自测把换算**打坏 8 种**，
+每一种**指名**一条必须红的检查**和**一条必须留绿的对照。实测 **11/11 PASS**、**8/8 变异各自红在指定那条上**、
+留绿的对照保住、驱动 md5 前=后、`run_tests.sh` **rc=0**。
+
+**两个桩的坑（都会复发，写法已留在构建器/自测里）**：
+**① 桩缺一个元方法臂 = 整个 harness 抛错中止，不是某个检查红** ——
+`Vector2` 少了 `__sub`，SUBTRACT 那个变异让 `ap - inset` 抛
+`attempt to perform arithmetic on local 'ap'`，**红在了一个和换算毫无关系的理由上**。
+**红在错的理由上，比最坏的绿还坏，因为它和一个真的抓到长得一模一样**（取舍 417）。
+**② 生成的 harness 必须 `io.write` 它的报告** —— `lua file.luau` **丢弃顶层 `return`**，
+所以只 `return report` 的绿灯跑会**什么都不打印**，「全绿」和「从没跑过」**逐字节同形**
+（取舍 418）。
+
+**顺手读回来的一屏（`EndGameFrame1`，202 件）**：`ReportUI` / `Bottom` 是可见的，
+`PostShiftButton`（`447,566 60x60`，screen `476,654`）与 `HoldButton`（`516,566 55x60`）
+**二选一**，`RestartButton` / `LeaveButton` / `ContinueButton` **全是 `vis=false`**，
+外加一块铺满屏的 `TextButton`（`1727x997`）当模态挡板。**先不动它**：
+按 `Post` 或 `Hold` 会**动到操作员的班次结算**（钱 / 进度），那是他的选择，不是我的。
+
+**没验的**：`d5` **在活客户端里一次都没跑过** —— 所以「按到按钮了」**没被观察过**；
+`pressAt` 在真 VM 里仍然**零次**（它只有 `lua.exe` 的语法和一份逐字节比对）；那 20 分钟的一脚
+两个方向都没复现；`via timer` 活客户端零次；daemon 的 `click-button` **是否也加 inset 没测**。

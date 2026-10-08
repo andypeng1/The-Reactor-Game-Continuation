@@ -492,11 +492,14 @@ SYSTEM REPAIR IN PROGRESS` —— **这三台为什么这么说，没定**（客
 
 ### 3.11 驱动器跑起来之后的第一件活（Phase 100 / 101）
 
-`_tools/TRG_original_drive.luau` 现在是 **tag `d4`**（**33729** 字节 / **962** 行 /
-md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**），桩也还在。
+`_tools/TRG_original_drive.luau` 现在是 **tag `d5`**（**36865** 字节 / **1019** 行 /
+md5 **`85eacc71e65f280498a5dd5e65173654`**），桩也还在。
 **`d3` 是 `d2` + 一处可观测性改动**（日志行末加 `via <verb|timer|idled>`，见 Phase 102）；
-**`d4` 是 `d3` + 第四条按压路 `pressAt`**（`VirtualInputManager` 点矩形，见 Phase 103）
-—— 而 **`d4` 一次都没在活客户端里跑过**（§3.11.7 ② 解释了为什么）。
+**`d4` 是 `d3` + 第四条按压路 `pressAt`**（`VirtualInputManager` 点矩形，见 Phase 103）；
+**`d5` 是 `d4` + 一处坐标修复**（`clickPoint()`：`AbsolutePosition` 是 GUI 空间、
+`VirtualInputManager` 是屏幕空间，差 `GetGuiInset().Y = 58` —— **`d1`..`d4` 的每一次按压
+都落在目标上方 58 px**，见 Phase 104 / §3.11.8）
+—— 而 **`d5` 一次都没在活客户端里跑过**（§3.11.7 ② 解释了为什么）。
 两条都只加东西，没动老路径。**已经在跑的那一份**取决于它是怎么起来的：
 `loadstring` 热重载可以换掉代码（而且**会留下旧实例的 hook**，见 §3.11.5），
 而 `autoexec\trg_drive.lua` 是在**注入那一刻**读盘上那份 `.luau` 的 ——
@@ -509,7 +512,7 @@ md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**），桩也还在。
 | 1 | `workspace\trg_drive_loop.txt` | **看 `mtime` 在长，不看内容** —— 短窗口分不出「活着」和「死了」（§13.6 / §0.19） |
 | 2 | `workspace\trg_drive_autoexec.txt` | 要有 `stub fired`；**有 `LOAD FAIL` 就是坏了** |
 | 3 | `workspace\trg_drive_census.txt` | 有它 = 普查跑完 |
-| 4 | `trg_drive_log.txt` 里**最后一条** `# … start` | 要带上当前 tag（`# d4 start …`）。**不是「第一行」** —— `M.start()` 是追加的，`# d1` / `# d2` / `# d3` 三行会同时在一份文件里，第一行永远是 `# d1`（取舍 408） |
+| 4 | `trg_drive_log.txt` 里**最后一条** `# … start` | 要带上当前 tag（`# d5 start …`）。**不是「第一行」** —— `M.start()` 是追加的，`# d1` / `# d2` / `# d3` / `# d4` 四行会同时在一份文件里，第一行永远是 `# d1`（取舍 408） |
 
 #### 3.11.1 先问「这台执行器有什么」：`caps`
 
@@ -611,3 +614,19 @@ md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**），桩也还在。
 
 **⑤ 轮询的坑**：`"unconnected": 1` **含** `connected":1`，所以拿子串当字段会在**断线时成立**。
 切出来再比。
+
+#### 3.11.8 `d5` 的坐标修复，以及它意味着什么（Phase 104）
+
+`d4` 之前（含 `d4`）的每一次合成按压**都偏了 58 px**，所以 §3.11.2 那条 `press` 路
+在**修好之前是按不到任何东西的** —— 它报的 `NOCHANGE` 有两个来源：**按钮是死的**，
+或者**根本没按到**，而旧代码分不开。`d5` 的 `clickPoint()` 把两半都读齐
+（`GuiService:GetGuiInset()` + `ScreenGui.IgnoreGuiInset`），并且**把用的哪个空间写进返回值**。
+
+**注入 `d5` 之后，第一件要看的**是 `press` 那一行带的空间名 ——
+**一个能按到的按钮应当报 `inset+0,58`**（这台客户端）。
+若报 **`nospace`**，说明那个按钮的 `LayerCollector` 祖先没解析到，按的坐标不可信 ——
+**别把那次 `NOCHANGE` 读成「按钮是死的」**（它什么都没量到）。
+
+配套：`_tools/build_drive_clickpoint_test.py`（11 例）+ `_tools/selftest_drive_clickpoint.py`
+（8 个变异），**已经挂在 `run_tests.sh` 里**（`set -e` 底下、没有 `|| true`）。
+改 `clickPoint()` 之后**先跑那两个**再注入。

@@ -1,5 +1,5 @@
 --[[
-TRG_original_drive.luau   (tag d4)
+TRG_original_drive.luau   (tag d5)
 
 WHAT THIS IS
   A command-driven driver for the ORIGINAL game.  It lives in the same executor
@@ -98,7 +98,7 @@ WHAT d4 ADDS, AND WHY
 ]]
 
 local M = {}
-M.TAG = 'd4'
+M.TAG = 'd5'
 
 local NL = string.char(10)
 local CR = string.char(13)
@@ -553,6 +553,48 @@ local function guiRoot()
   return lp:FindFirstChildOfClass('PlayerGui')
 end
 
+-- The one conversion this file needs and used to get wrong: AbsolutePosition is
+-- GUI space, VirtualInputManager is SCREEN space, and on this client the two
+-- differ by 58 px in y -- the topbar inset.  That 58 is why every synthetic
+-- press before this version landed, silently, on empty pixels.
+--
+-- Both halves are READ, never hardwired.  The inset comes from GuiService, so a
+-- different topbar cannot put the bug back; and IgnoreGuiInset comes from the
+-- containing LayerCollector, because a ScreenGui with that flag set is ALREADY
+-- in screen space -- adding the inset to it would move the click 58 px the other
+-- way.  A SurfaceGui or BillboardGui is likewise already screen space, so the
+-- inset applies to exactly one case: a ScreenGui that does not ignore it.
+--
+-- Returns the point, the inset used, and a NAME for which case ran.  The name
+-- is the point: an unknown space that silently reads as 0 is the same defect
+-- wearing a hat, so 'nospace' is a value that gets logged, not a fallback.
+local function clickPoint(btn)
+  local okp, ap = pcall(function() return btn.AbsolutePosition end)
+  local oks, as = pcall(function() return btn.AbsoluteSize end)
+  if not okp or not oks or ap == nil or as == nil then return nil, nil, 'norect' end
+  local inset = Vector2.new(0, 0)
+  local space = 'nospace'
+  local okl, lc = pcall(function() return btn:FindFirstAncestorWhichIsA('LayerCollector') end)
+  if okl and lc ~= nil then
+    if lc:IsA('ScreenGui') then
+      local okf, flag = pcall(function() return lc.IgnoreGuiInset end)
+      if okf and flag == true then
+        space = 'screen/ignore-inset'
+      else
+        local okg, gi = pcall(function() return game:GetService('GuiService'):GetGuiInset() end)
+        if okg and gi ~= nil then
+          inset = Vector2.new(gi.X, gi.Y)
+          space = 'inset+' .. string.format('%.0f,%.0f', inset.X, inset.Y)
+        end
+      end
+    else
+      space = 'screen/' .. lc.ClassName
+    end
+  end
+  local p = ap + inset + as / 2
+  return Vector2.new(math.floor(p.X), math.floor(p.Y)), inset, space
+end
+
 local function guiCensus()
   local pg = guiRoot()
   if pg == nil then
@@ -561,7 +603,7 @@ local function guiCensus()
   end
   local out = {}
   out[#out + 1] = '# gui at ' .. now() .. ' rel ' .. rel()
-  out[#out + 1] = '# KIND | fullPath | visible | text | absPos'
+  out[#out + 1] = '# KIND | fullPath | visible | text | absPos | clickPoint'
   local n = 0
   local function walk(node, depth)
     if depth > 8 then return end
@@ -580,8 +622,16 @@ local function guiCensus()
           if okt and type(t) == 'string' then txt = t end
           local pos = '-'
           if okp and ap ~= nil then pos = fmtVec2(ap) end
+          -- The click-space point, not just the rect.  A rect in GUI space is
+          -- not a coordinate anyone can press with, and reading one and pressing
+          -- with it is exactly the 58 px miss this file used to have -- so the
+          -- census and pressAt both go through clickPoint() and agree by
+          -- construction rather than by my remembering to add the same number.
+          local cp, _, space = clickPoint(c)
+          local click = 'norect'
+          if cp ~= nil then click = fmtVec2(cp) .. ' ' .. tostring(space) end
           out[#out + 1] = cn .. ' | ' .. c:GetFullName() .. ' | ' ..
-            visStr .. ' | ' .. flat(txt) .. ' | ' .. pos
+            visStr .. ' | ' .. flat(txt) .. ' | ' .. pos .. ' | ' .. click
         end
       end
       walk(c, depth + 1)
@@ -630,11 +680,14 @@ end
 -- click that (same family as the anti-idle's VirtualUser path -- in-game input,
 -- not the operator's cursor).
 --
--- Two ways for this to lie, so both are checked and both are NAMED: a hidden
--- button and a zero-size button are clicked straight through to whatever is
--- really at those pixels, and that outcome is indistinguishable from a press
--- that did nothing.  A route that cannot say why it did not fire is the silent
--- kind, so this one returns a reason instead of just nil.
+-- Three ways for this to lie, so all three are checked and all three are NAMED:
+-- a hidden button, a zero-size button, and -- the one that actually bit -- a
+-- coordinate in the wrong space.  The first two are clicked straight through to
+-- whatever is really at those pixels; the third is the same failure one layer
+-- down, because a GUI-space point is 58 px off in y and lands on whatever is
+-- there instead.  All three are indistinguishable from a press that did nothing,
+-- so this returns a reason (or the space it used) instead of just nil.  A route
+-- that cannot say why it did not fire is the silent kind.
 local function pressAt(btn)
   local vis, node = true, btn
   while node ~= nil and node ~= game do
@@ -646,19 +699,23 @@ local function pressAt(btn)
     node = node.Parent
   end
   if not vis then return nil, 'SKIP hidden' end
-  local okp, ap = pcall(function() return btn.AbsolutePosition end)
   local oks, as = pcall(function() return btn.AbsoluteSize end)
-  if not okp or not oks or ap == nil or as == nil then return nil, 'SKIP no rect' end
+  if not oks or as == nil then return nil, 'SKIP no rect' end
   if as.X < 1 or as.Y < 1 then return nil, 'SKIP zero size' end
-  local x = math.floor(ap.X + as.X / 2)
-  local y = math.floor(ap.Y + as.Y / 2)
+  -- GUI space -> screen space.  See clickPoint: this used to be the whole bug.
+  local pt, _, space = clickPoint(btn)
+  if pt == nil then return nil, 'SKIP no rect' end
+  local x, y = pt.X, pt.Y
   local vim = game:GetService('VirtualInputManager')
   pcall(function() vim:SendMouseMoveEvent(x, y, game) end)
   local ok = pcall(function() vim:SendMouseButtonEvent(x, y, 0, true, game, 0) end)
   task.wait(0.05)
   ok = pcall(function() vim:SendMouseButtonEvent(x, y, 0, false, game, 0) end) and ok
   if not ok then return nil, 'ERR SendMouseButtonEvent' end
-  return 'mouse@' .. x .. ',' .. y
+  -- The space is part of the answer: a press that used 'nospace' is a press at
+  -- a guessed coordinate, and that must not read the same later as one that used
+  -- a measured inset.
+  return 'mouse@' .. x .. ',' .. y .. ' ' .. tostring(space)
 end
 
 local function doPress(path, method)

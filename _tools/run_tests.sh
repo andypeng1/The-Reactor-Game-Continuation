@@ -172,6 +172,21 @@ python _tools/selftest_watch.py
 echo "=== gui mutations ==="
 python _tools/selftest_gui.py
 
+# The driver's GUI press route, and the reason it needs pinning the same way the
+# player-GUI reader does.  GuiObject.AbsolutePosition is GUI space -- its y is
+# measured BELOW the topbar -- while VirtualInputManager, and UIS:GetMouseLocation,
+# are screen space and include it.  For tags d1..d4 the conversion omitted the
+# inset, so every synthetic press the driver made landed 58 px above its target,
+# and NOTHING SAID SO: the button event returned, the press went to whatever else
+# was at that pixel, and a NOCHANGE could not be told from "never pressed".  The
+# fix routes BOTH pressAt and guiCensus through one clickPoint(), so that division
+# lives in exactly one place; the builder asserts that (one "as / 2", two callers)
+# and selftest_drive_clickpoint.py breaks the conversion eight ways, each naming the
+# check that must go red and a check that must stay green -- a mutation that reddens
+# everything would prove only that the file can fail somewhere.
+echo "=== drive clickPoint mutations ==="
+python _tools/selftest_drive_clickpoint.py
+
 # The end-of-shift rule and the flow boundary are ONE POLICY -- "what is allowed to
 # end a run" -- split across two regions of the recorder by where the code lives.
 # They were also the two things that produced the 12:32 seal, and until that run the

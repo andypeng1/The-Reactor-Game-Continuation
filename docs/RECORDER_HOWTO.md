@@ -1406,7 +1406,7 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 所以「UIDEBUG 里没有」= **没有信息**，不是「没跑」—— 拿它判注入跑没跑，等于拿一把不量这个的尺子。
 
 
-### 13.9 驱动器 `TRG_original_drive.luau`（tag `d4`）—— 「按东西」的那一半
+### 13.9 驱动器 `TRG_original_drive.luau`（tag `d5`）—— 「按东西」的那一半
 
 `13.1..13.8` 那份 `s2` **只读**：它从不写世界、也从不按任何东西。要让**我**去按开机拉杆、
 按控制台上的按钮，需要第二份文件 —— 它住在**同一个执行器 VM** 里、写**同一个目录**
@@ -1415,6 +1415,10 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 
 **最重要的一句先放前面：它现在按不动，而缺的不是文件**（§13.9.7）。文件、注入点、命令都在位，
 差的是 **worker**（与 §13.8 同一件事）—— **下一次注入它自己就开始跑**。
+
+**而 `d5` 之前（含 `d4`）的每一次合成按压都偏了 58 px —— 见 §13.9.14**：`AbsolutePosition` 是 **GUI 空间**（y 从顶栏下面量），
+`VirtualInputManager` 是 **屏幕空间**（y 算上顶栏）。也就是说 §13.9.4 那条 `press` 路
+在 `d5` 之前**按不到任何东西**，而它报的 `NOCHANGE` **分不开「按钮是死的」和「根本没按到」**。
 
 **`d1` 一次都没按动过任何东西，而它连「按没按动」都读不出来 —— `d2` 补的正是这三件。**
 三条都是被 `d1` 那六次 `fire NOCHANGE` 逼出来的，不是猜的：
@@ -1432,27 +1436,28 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 | 仓库 | `_tools/TRG_original_drive.luau` |
 | 执行器 | `D:\SCRIPT\SolaraV3\workspace\TRG_original_drive.luau` |
 | 自动注入桩 | `D:\SCRIPT\SolaraV3\autoexec\trg_drive.lua` |
-| tag | `d4` |
-| 字节 / 行 | **33729** / **962** |
-| md5 | **`0c0bc9d8b4be1bd88d751cff82184ff4`** |
+| tag | `d5` |
+| 字节 / 行 | **36865** / **1019** |
+| md5 | **`85eacc71e65f280498a5dd5e65173654`** |
 | 反斜杠 / CRLF | **0** / **0** |
 | 桩的字节 / md5 | **598** / **`a2c23b97c3d8da8458962e019cd3400c`** |
 | Lua 版本 | **5.1 兼容**（`goto` / `+=` / `//` 一个都不用，`D:\Lua\5.1\lua.exe` 要能过语法） |
 
-仓库那份与执行器那份**逐字节相同**（`verify_drive_id.py` 断言 `repo == exec`）。
+仓库那份与执行器那份**逐字节相同** —— 核法是**逐字节比**（两边各算一次 md5，或直接 `cmp`）：**没有**一个自动断言 `repo == exec` 的脚本。旧版这里写着一个 `verify_drive_id.py`，而那个文件**现在不在仓库里**（`ls` 找不到）—— **散文里点了一个不存在的名字**，这本身就是一条要交代的事，同族见 `DECISIONS` 205（散文说的谎和代码说的谎一样贵）。
 **反斜杠 0 是刻意的**（§0.10）：换行用 `string.char(10)`、回车用 `string.char(13)`、
 内嵌引号用单引号 Lua 语法。它**不经过 Studio**，但规矩照样守 —— 守一个不变式比守两个便宜。
 
-**上一个身份**（已被取代）：tag `d3` / **30875** 字节 / **905** 行 /
-md5 **`72e8105ec89cb900ac9bf8da9842606b`**（`d4` = `d3` + 第四条按压路，见 §13.9.12）。
-**再往前**：`d2` **30521** / **901** / `18f4c70dac40951fd0a53be5a692c0da`；
+**上一个身份**（已被取代）：tag `d4` / **33729** 字节 / **962** 行 /
+md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**（`d5` = `d4` + `clickPoint()` 坐标修复，见 §13.9.14）。
+**再往前**：`d3` **30875** / **905** / `72e8105ec89cb900ac9bf8da9842606b`；
+`d2` **30521** / **901** / `18f4c70dac40951fd0a53be5a692c0da`；
 `d1` **16762** / **524** / `7293022574a3ed04f8e75f8b6ee7a85d`。
 
 **换版有两条路，别混**：`autoexec\trg_drive.lua` 在**注入那一刻**读盘，
 所以把新文件拷进 `D:\SCRIPT\SolaraV3\workspace\` 只是**准备好** ——
 要它变成新版的，要么**重注入**（新 VM，一个 hook），要么**热重载**
 （`readfile` + `loadstring`，同一个 VM，**会留下旧实例的 hook**，§13.9.11）。
-桩的字节 / md5 没变（`d2` / `d3` / `d4` 都只动 `.luau`，没动桩）。
+桩的字节 / md5 没变（`d2` / `d3` / `d4` / `d5` 都只动 `.luau`，没动桩）。
 
 #### 13.9.2 它写哪六个文件（全在 `D:\SCRIPT\SolaraV3\workspace\`）
 
@@ -1784,3 +1789,40 @@ TextButton | game.Players.X.PlayerGui.Menu.StartShiftButton | false | START SHIF
 
 **没验的**：`d4` 没装过；那 20 分钟的一脚**两个方向都没复现过**；
 **此刻没有活会话、也没有抗挂机在跑** —— 所以操作员那条要求**现在是不满足的**。
+
+### 13.9.14 `d5` 修的是坐标：`AbsolutePosition` 是 GUI 空间，`VirtualInputManager` 是屏幕空间（Phase 104）
+
+**这是这条通道上最贵的一个洞，而且它一路无话。** `d1`..`d4` 的 `pressAt` 用的是
+`ap.Y + as.Y/2` —— 少了 `GuiService:GetGuiInset().Y`。于是**四次按压中没有一次落在按钮上**：
+`SendMouseMoveEvent` 返回、按钮事件返回、点击落到那个像素上的别的东西，
+而**日志里只有 `NOCHANGE`** —— 和「按钮是死的」逐字节同形。
+
+**机制**（§0.11 那 58 px 的真身）：
+
+| 量 | 空间 | y 从哪量 |
+|---|---|---|
+| `GuiObject.AbsolutePosition` | **GUI** | **顶栏下面** |
+| `VirtualInputManager:SendMouseMoveEvent` / `SendMouseButtonEvent` | **屏幕** | **算上顶栏** |
+| `UserInputService:GetMouseLocation()` | **屏幕** | **算上顶栏** |
+
+换算是 `ap + inset + as / 2`，`inset = GuiService:GetGuiInset()`，这台客户端 `(0, 58)`。
+
+**两半都要读**：`ScreenGui.IgnoreGuiInset == true` 的 ScreenGui **本来就在屏幕空间**，
+再加 inset 就**反着错 58 px**；`SurfaceGui` / `BillboardGui` 同理。所以 `clickPoint()` 先问
+祖先 `LayerCollector` 是什么类、再看那个旗，**并且把「这次用的是哪个空间」当返回值带出来**
+（`inset+0,58` / `screen/ignore-inset` / `screen/SurfaceGui` / `nospace`）——
+**一个 run 打印 `nospace` 就是「什么都没量到」，即使它打印了两个看着很对的数。**
+
+**`clickPoint(btn)` 是全通道唯一的 rect→点换算**，两个调用点都走它：
+`pressAt`（真的点）和 `guiCensus`（只报告 rect）。`guiCensus` 不是缺陷源，
+但它给的正是「用来找按钮」的那份读数，**给的却是一个不能直接拿去按的坐标**，所以一起修。
+构建器里钉着两条不变量：`as / 2` 全文件**恰好一次**、`clickPoint(` **恰好两个**调用点 ——
+**在调用点重推一次就是原来那个 bug，所以长出来的调用点必须让构建失败，不能被漏掉。**
+
+**这条修复是靠 `_tools/build_drive_clickpoint_test.py` + `_tools/selftest_drive_clickpoint.py`
+钉住的**（§13.9.10 是同一套做法：构建器**按文本抽出**交付物再塞进桩，自测把换算打坏）。
+构建器跑 **11 例**（`C1..C11`，`C1` 的矩形就是现场读到的 `PostShiftButton` `447,566 60x60`），
+自测 **8/8 变异各自红在指定那条上**、留绿的对照保住、驱动 md5 前=后、`run_tests.sh` **rc=0**。
+两个桩的坑见 `DECISIONS_2` **417 / 418**：桩缺一个 `Vector2.__sub` 会让 harness **抛错中止**
+（红在错的理由上，和一个真的抓到逐字节同形），而生成的 harness 必须 `io.write` 它的报告
+（`lua file.luau` 丢弃顶层 `return`，「全绿」和「没跑过」同形）。
