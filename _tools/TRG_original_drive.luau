@@ -84,7 +84,7 @@ WHAT d2 ADDS, AND WHY EACH ONE
 ]]
 
 local M = {}
-M.TAG = 'd2'
+M.TAG = 'd3'
 
 local NL = string.char(10)
 local CR = string.char(13)
@@ -481,11 +481,16 @@ end
 -- force=true means 'do it now and say so' (the Idled hook and the 'idle' verb).
 -- force=false is the periodic timer; it also logs, so 'the anti-idle is running'
 -- is a reading rather than a hope.
-local function antiIdle(force)
+local function antiIdle(force, why)
   if not force and os.clock() - lastInput < CFG.IdleSeconds then return end
   local how = idleRoute()
   lastInput = os.clock()
-  log('antiidle ' .. tostring(how) .. ' at rel ' .. rel())
+  -- 'why' names the caller.  The periodic timer and the Idled hook are
+  -- different mechanisms that used to print the same line, and with the
+  -- lines identical 'which one fired' is unreadable -- the same trap as a
+  -- build whose TAG does not move.
+  log('antiidle ' .. tostring(how) .. ' via ' ..
+    tostring(why or (force and 'forced' or 'timer')) .. ' at rel ' .. rel())
 end
 
 -- ========== EXECUTOR CAPABILITIES ==========
@@ -789,7 +794,7 @@ local function execute(seq, rest)
   elseif verb == 'caps' then
     caps()
   elseif verb == 'idle' then
-    antiIdle(true)
+    antiIdle(true, 'verb')
   elseif verb == 'stop' then
     M.stop()
   elseif verb == '' then
@@ -841,7 +846,7 @@ M.running = false
 -- lives only inside a connection cannot be driven from outside it.
 function M.step()
   local n = runCmds()
-  antiIdle(false)
+  antiIdle(false, 'timer')
   write(CFG.LoopFile, now() .. ' rel=' .. rel() ..
     ' seq=' .. tostring(loadSeq()) .. ' cmds=' .. tostring(n) .. NL)
   return n
@@ -867,7 +872,7 @@ function M.start()
   local lp0 = localPlayer()
   if lp0 ~= nil then
     local okHook = pcall(function()
-      lp0.Idled:Connect(function() antiIdle(true) end)
+      lp0.Idled:Connect(function() antiIdle(true, 'idled') end)
     end)
     if not okHook then log('idled hook FAIL') end
   end
