@@ -492,10 +492,12 @@ SYSTEM REPAIR IN PROGRESS` —— **这三台为什么这么说，没定**（客
 
 ### 3.11 驱动器跑起来之后的第一件活（Phase 100 / 101）
 
-`_tools/TRG_original_drive.luau` 现在是 **tag `d3`**（**30875** 字节 / **905** 行 /
-md5 **`72e8105ec89cb900ac9bf8da9842606b`**），桩也还在。
-**`d3` 是 `d2` + 一处可观测性改动**（日志行末加 `via <verb|timer|idled>`，见 Phase 102），
-行为一个字节没动。**已经在跑的那一份**取决于它是怎么起来的：
+`_tools/TRG_original_drive.luau` 现在是 **tag `d4`**（**33729** 字节 / **962** 行 /
+md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**），桩也还在。
+**`d3` 是 `d2` + 一处可观测性改动**（日志行末加 `via <verb|timer|idled>`，见 Phase 102）；
+**`d4` 是 `d3` + 第四条按压路 `pressAt`**（`VirtualInputManager` 点矩形，见 Phase 103）
+—— 而 **`d4` 一次都没在活客户端里跑过**（§3.11.7 ② 解释了为什么）。
+两条都只加东西，没动老路径。**已经在跑的那一份**取决于它是怎么起来的：
 `loadstring` 热重载可以换掉代码（而且**会留下旧实例的 hook**，见 §3.11.5），
 而 `autoexec\trg_drive.lua` 是在**注入那一刻**读盘上那份 `.luau` 的 ——
 **重注入才会把 `workspace\` 那份整个换掉**。注入前核 §13.9.1 那个 `md5`。
@@ -507,7 +509,7 @@ md5 **`72e8105ec89cb900ac9bf8da9842606b`**），桩也还在。
 | 1 | `workspace\trg_drive_loop.txt` | **看 `mtime` 在长，不看内容** —— 短窗口分不出「活着」和「死了」（§13.6 / §0.19） |
 | 2 | `workspace\trg_drive_autoexec.txt` | 要有 `stub fired`；**有 `LOAD FAIL` 就是坏了** |
 | 3 | `workspace\trg_drive_census.txt` | 有它 = 普查跑完 |
-| 4 | `trg_drive_log.txt` 里**最后一条** `# … start` | 要带上当前 tag（`# d3 start …`）。**不是「第一行」** —— `M.start()` 是追加的，`# d1` / `# d2` / `# d3` 三行会同时在一份文件里，第一行永远是 `# d1`（取舍 408） |
+| 4 | `trg_drive_log.txt` 里**最后一条** `# … start` | 要带上当前 tag（`# d4 start …`）。**不是「第一行」** —— `M.start()` 是追加的，`# d1` / `# d2` / `# d3` 三行会同时在一份文件里，第一行永远是 `# d1`（取舍 408） |
 
 #### 3.11.1 先问「这台执行器有什么」：`caps`
 
@@ -579,3 +581,33 @@ md5 **`72e8105ec89cb900ac9bf8da9842606b`**），桩也还在。
 `caps` / `gui` → `press` / `listen` / `fire` 在**真 VM 里零次执行**。
 §3.9 / §3.10 那几项（2200 的失速门、CBL 五档、警报板亮不亮）**都还在等一个新班次** ——
 驱动器能把它们从「等他按」变成「我来按」，但**得先让第 3.11.0 那四行都成立**。
+
+
+#### 3.11.7 活会话怎么丢的、怎么弄回来（Phase 103 量出来的）
+
+**这一节的优先级在 §3.11.0 之上** —— 没有活会话的时候，那四行**全部无从谈起**。
+
+**① 顺序是「先客户端、再 Solara」，反过来必死在竞态上。**
+`D:\SCRIPT\SolaraV3\bin\DEBUG.txt` 里 `[Client::findMainWindow]` **一共三行、没有重扫**：
+`22:31:55`（启动那次，2220）→ `[CLIENT CONSTRUCTOR]: process_window: 67336` → 79 秒后
+`22:33:14 [EXECUTOR.ATTACH] START`；两次 new-process（`23:41:37` → 13592、`23:47:37` → 15512）
+都是 `process_window: 0` —— **进程出生后约 1 秒扫的**，那一刻窗口还不存在，
+而 **Solara 不会补第二枪**。2220 能被接住，只因为 Solara 起来时它**已经在跑**。
+
+**② 别在活客户端旁边启动第二个。** 2220 在 `23:41:47.799` 写
+`[FLog::SingleSurfaceApp] shutDown: (stage:UGCGame)`、`23:41:53.587` 收完最后一行（**优雅退场**），
+而 `23:41:37` 我启动了 13592 —— **差 10.0 秒**。日志里**没有一句**说因果
+（**机制没定就写没定**，取舍 415），但这条相关性足够决定下一次怎么做：**要重来就先确认上一个已经不在。**
+
+**③ MCP 的三条路，两条是结构性的走不通。** `open-roblox-game` 的 URL 里 **`gameinfo:` 是空的**
+（没有 ticket）⇒ 客户端打 `auth.roblox.com/v1/authentication-ticket/redeem` 拿回
+**403 `Authentication ticket was invalid`**（2/2）；成功那趟日志里 `authentication-ticket` **0 行**。
+`launch-roblox` schema 只有 `{workerId?, path?}` —— **没有 place**。浏览器 deep-link 开了 tab 没开客户端。
+⇒ **只有操作员自己从浏览器进这一条路被验证过能到「已认证的会话」。**
+
+**④ 卡在 worker 上是可读的**：`get-transport-status` → `wsWorkers: 0` /
+`{"connected": 0, "unconnected": 0}` / `activeSessions: []`；`execute-script` →
+`No Roblox executor is connected.`。**一个开着的 WS 不等于一个能用的工具**（§13.8）。
+
+**⑤ 轮询的坑**：`"unconnected": 1` **含** `connected":1`，所以拿子串当字段会在**断线时成立**。
+切出来再比。

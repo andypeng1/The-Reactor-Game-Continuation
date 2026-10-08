@@ -11689,3 +11689,126 @@ WS 还在轮询它自己的 socket（`WS_POLL` ×25317）—— 但 §13.8 那�
 **错的**：`M.start()` 是**追加**（`appendfile`），所以 `# d1` / `# d2` / `# d3` 三行**同时在一份文件里**，
 第一行永远是 `# d1 start 22:33:18`。要读的是**最后一条** `# … start`（取舍 **408** 的下半）。
 细节 `docs/RECORDER_HOWTO.md` §13.9.11，`docs/TODO.md` §3.11。
+
+
+---
+
+## Phase 103（2026-10-08）—— `d4` 装好了、没跑过；而「把它弄回来」这条路，三条我都量过了
+
+**先说结论，因为这一轮的形状是「我交付的东西一次都没运行」。**
+`_tools/TRG_original_drive.luau` 现在是 **tag `d4`**（**33729** 字节 / **962** 行 /
+md5 **`0c0bc9d8b4be1bd88d751cff82184ff4`**），仓库那份和执行器工作目录里那份**逐字节相同**，
+但它**从没被 `loadstring` 过、从没在活客户端里运行过一行**。原因不是它有问题，
+是**会话在那之前就没了，而我回不去** —— 下面 ②③ 是两条独立量出来的东西。
+
+**① `d4` 为什么存在：`d3` 的三条按压路在这台执行器上全是死的，而这是读出来的。**
+`trg_drive_log.txt` 第 92 行（`[23:32:29] 430.3`）的 `caps` 逐条回：
+`firesignal=nil`、`getconnections=nil`、`hookmetamethod=nil`、`getgc=nil`，
+而 `fireclickdetector` / `firetouchinterest` / `fireproximityprompt` / `loadstring` /
+`readfile` / `request` **都在** —— 也就是说，**缺的三个环节全在执行器那一侧**。
+`[23:34:04] 464.0 #34 press` 于是走成（第 374..376 行）：
+
+```
+press try click -> nil
+press try activated -> nil
+press FAIL no route worked for Players.123434567963.PlayerGui.ScreenGui.SettingsFrame.GeneralTab.GameHints.Button
+```
+
+**`d4` 加的是第四条路 `pressAt`：不按信号，按矩形。** 按钮不只是一个 `RBXScriptSignal`，
+**它还是屏幕上一块有位置的矩形**，而 `VirtualInputManager:SendMouseMoveEvent` +
+`SendMouseButtonEvent(x, y, 0, true, game, 0)` 能点那块矩形的中心
+（`AbsolutePosition` / `AbsoluteSize` 就是视口像素，**同一个空间**）。
+这和抗挂机的 `VirtualUser` **是同一族：游戏内合成输入，不是操作员的鼠标**
+（§4.1 那条「别老动我鼠标」守得住）。它**把没按下去的原因也写出来**
+（`SKIP hidden` / `SKIP zero size` / `ERR SendMouseButtonEvent`），
+因为一块藏起来的按钮和一块零尺寸的按钮，都会**把点击直接穿到那块像素上真正在那儿的东西** ——
+而那个结果和「按了没反应」**长得一模一样**。
+
+**② 会话是怎么没的：我停了循环，而重来依赖的那个 worker 早就死了。**
+
+| 时刻 | 事件 | 出处 |
+|---|---|---|
+| `[23:36:49] 690.9 #35 stop` / `[23:36:50] 691.0 stop requested` | 我发停 | `trg_drive_log.txt` |
+| `23:36:50 rel=691.0 seq=35 cmds=1` | `trg_drive_loop.txt` **冻在这里**（33 字节，`mtime` 不再动） | 心跳文件 |
+| `[23:41:40] 981.3 … via idled` / `[23:41:40] 1585.2 …` | **hook 还活着**（两行 = `d3` + 热重载留下的老实例，取舍 410） | `trg_drive_log.txt` |
+| `2026-10-08T15:41:47.799Z … shutDown: (stage:UGCGame).` | **客户端自己优雅退场** | 客户端日志 1241 行 |
+| `2026-10-08T15:41:53.587Z … Platform handler was destroyed.` | 最后一行 | 客户端日志尾 |
+| `23:41:37` | **我启动了第二个客户端**（PID 13592） | `DEBUG.txt` |
+
+**那个 10.0 秒是我算出来的，不是日志说的。** 本地 `23:41:47.799` = 那个 UTC 时间戳，
+而我 `23:41:37` 起了第二个进程 —— **差 10.0 秒**。日志里**一个字都没有**把这两件事连起来
+（**机制没定就写没定**）。但这条相关性足够决定下一次怎么做，所以它进了文档和待办：
+**要重来之前先确认上一个已经不在**（取舍 415）。
+
+**③ 三条回去的路，全堵，其中两条是结构性的。**
+
+| 路 | 结果 | 证据 |
+|---|---|---|
+| `open-roblox-game`（daemon） | **2/2 失败**，弹 驗證失敗，从不进游戏 | 见下 |
+| `launch-roblox`（daemon） | **没有 place 参数**，schema 只有 `{workerId?, path?}` | `tools/list`（80 个工具） |
+| 浏览器 deep-link（PowerShell `Start-Process`） | 开了 tab，**没开客户端** | 90 秒 9 次轮询全无 `RobloxPlayerBeta`；`msedge` 起了 3 个新进程 |
+
+**第一条的机制在客户端自己的日志里，逐字如下**（PID 15512，第 113..114 行；
+PID 13592 那趟同一条，1 行）：
+
+```
+status:403 Forbidden bodySize:70 url:{ "https://auth.roblox.com/v1/authentication-ticket/redeem" }
+WebLogin http error: {"errors":[{"code":4,"message":"Authentication ticket was invalid."}]}, statusCode: 403
+```
+
+**`gameinfo:` 是空的**（没有 authentication ticket）⇒ 换票被拒 ⇒ **驗證失敗**。
+**对照组**（PID 2220，从操作员自己浏览器进的那趟）：`authentication-ticket` **0 行**，
+直接 `GameJoinLoadTime placeid:8381853606`（`14:30:17`）→
+`doTeleport: … Join.ashx?ticketVersion=2&ticket={"UserId"%3a… …PlaceId%3a17596243941…`（`14:31:05`）
+→ `placeid:17596243941`（`14:31:06`，**先跳一个 place 再传送进来**）。
+**所以只有「操作员自己从浏览器进」这一条路被验证过能到「已认证的会话」。**
+
+**两条更正，都是写之前抓到的**（§0.2 那一族的纪律在起作用）：
+① 我原本要引一行 `[FLog::LoginView] AuthenticationFailed` —— **日志里没有这一行**，
+`驗證失敗` 是**窗口标题**，机制只能引上面那两行；
+② 我原本要把 `wsWorkers: 0` / `No Roblox executor` 说成 `DEBUG.txt` 里的行 ——
+**`grep` 证明这两个字符串在那份文件里不存在**，它们是 **daemon 的 HTTP 回应**。
+**一个我上一格的假设在这里死掉，不许进文档**：「第一个客户端失败是因为旁边还有另一个客户端活着」——
+第二次启动时机器上一个客户端都没有，**失败逐字相同**。**否定它的是我自己安排的第二次实验。**
+
+**④ attach 的解剖：顺序是「先客户端、再 Solara」，反过来必死在竞态上。**
+`DEBUG.txt` 里 `[Client::findMainWindow]` **一共只有三行、没有重扫**：
+
+| 时刻 | PID | 结果 |
+|---|---|---|
+| `22:31:55`（**启动那次**） | 2220 | `[CLIENT CONSTRUCTOR]: process_window: 67336` → 79 秒后 `22:33:14 [EXECUTOR.ATTACH] START` |
+| `23:41:37` | 13592 | `process_window: 0` |
+| `23:47:37` | 15512 | `process_window: 0` |
+
+两次 new-process 扫描都在**进程出生后约 1 秒**，那一刻窗口还不存在，**而 Solara 不会补第二枪**。
+2220 能被接住，只因为 **Solara 启动（`22:31:51`）时它已经在跑（`22:30:04`）**。
+**`process_window: 0` 是「扫早了」的指纹，不是「这东西坏了」。**
+
+**⑤ 卡在 worker 上的时候，状态是可读的**（这一节是 §13.8 换的第二张脸）。
+`get-transport-status` 实测回：`activeTransport: "ws"`、`wsWorkers: 0`、
+`status: {"connected": 0, "unconnected": 0}`、`activeSessions: []`；
+`execute-script` 实测回
+`{"success": false, "error": "No Roblox executor is connected. Launch or inject Roblox first."}`。
+**WS 是 OPEN ≠ 工具能用。**
+
+**两条量法，都当场做了**：
+- **子串会匹配到它自己的否定**：`"unconnected": 1` **含** `connected":1`，
+  所以 `grep -q 'connected":1'` 在一个**断线**的客户端上照样成立（已实测 `in` 为 True）。
+  状态字段是一整格的时候**先切出来再比**（取舍 414）。
+- **80 个工具的普查**里**没有一个** attach / inject / 起会话的工具 ——
+  这是**真的没找到**，不是「查法错了」（§0.20：先问你在数谁）。`launch-roblox` 拿的是 `path`，
+  而 `path` 是**可执行文件路径**，不是 place。
+
+**⑥ 没验的（这一半比验了的长，而且我欠的正是操作员要的那一件）**：
+- **`pressAt` 一次都没跑过** —— 它连一行日志都没有。它过了 `lua.exe` 的语法、
+  它和仓库那份**逐字节相同**，**仅此而已**（§4.4）。
+- **那 20 分钟的一脚，两个方向都没复现过** —— 从没被踢，也从没在接近 20 分钟时被观察过。
+- **`via timer` 在活客户端里仍然是零次**（只在桩里）。
+- **此刻没有活会话、也没有抗挂机在跑** —— 所以操作员那条要求
+  「**每隔一段时间（小于20分钟）就让玩家动一次**」**现在是不满足的**。
+  要满足它，得先走 ④ 那条路把会话弄回来（**先客户端、再 Solara**），
+  然后**重新注入**（不是热重载）装 `d4`。
+
+细节 `docs/RECORDER_HOWTO.md` **§13.9.12 / §13.9.13**，取舍 **411..415**，
+`docs/TODO.md` **§3.11.7**。**这一轮没有改任何行为**：`d4` 的改动是**加法**（一条新路 + 一段新日志），
+老的三条路一个字节没动，`docs/` 里那些数字都是**从现有的四份文件里读回来的**。

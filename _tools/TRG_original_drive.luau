@@ -1,5 +1,5 @@
 --[[
-TRG_original_drive.luau   (tag d2)
+TRG_original_drive.luau   (tag d4)
 
 WHAT THIS IS
   A command-driven driver for the ORIGINAL game.  It lives in the same executor
@@ -81,10 +81,24 @@ WHAT d2 ADDS, AND WHY EACH ONE
     'unreached'.  caps says which executor routes exist; probe says what the
     game's own panels say; listen says whether anything is ticking at all; cf
     gives the mechanical half of a click test (only LeverUnion moved).
+
+WHAT d4 ADDS, AND WHY
+  * A FOURTH PRESS ROUTE, AND ON THIS EXECUTOR THE ONLY ONE.  d2 pressed a
+    SIGNAL (firesignal / sig:Fire / getconnections); caps then read back
+    firesignal=nil and getconnections=nil in the live client, and the built-in
+    signal has no :Fire, so all three routes are dead there and press reported
+    'no route worked'.  A button is not only a signal -- it is also a RECTANGLE
+    at a known screen position, and VirtualInputManager can click a rectangle.
+    Same family as the anti-idle's VirtualUser path: in-game synthetic input,
+    not the operator's cursor.
+  * Every attempt is still a reading.  The mouse route NAMES why it did not
+    fire -- 'SKIP hidden' / 'SKIP zero size' / 'ERR SendMouseButtonEvent' --
+    because a click that lands on something else is otherwise the same shape as
+    a press that did nothing.
 ]]
 
 local M = {}
-M.TAG = 'd3'
+M.TAG = 'd4'
 
 local NL = string.char(10)
 local CR = string.char(13)
@@ -609,6 +623,44 @@ local function pressSignal(sig)
   return nil
 end
 
+-- The fourth route, and in THIS executor the only one.  The chain above presses
+-- a SIGNAL; this presses a RECTANGLE.  Both matter: with firesignal and
+-- getconnections nil and no :Fire on the signal, a signal-only chain has nothing
+-- left, while the button is still a rectangle on the screen and this VM can
+-- click that (same family as the anti-idle's VirtualUser path -- in-game input,
+-- not the operator's cursor).
+--
+-- Two ways for this to lie, so both are checked and both are NAMED: a hidden
+-- button and a zero-size button are clicked straight through to whatever is
+-- really at those pixels, and that outcome is indistinguishable from a press
+-- that did nothing.  A route that cannot say why it did not fire is the silent
+-- kind, so this one returns a reason instead of just nil.
+local function pressAt(btn)
+  local vis, node = true, btn
+  while node ~= nil and node ~= game do
+    local okv, v = pcall(function() return node.Visible end)
+    if okv and v == false then
+      vis = false
+      break
+    end
+    node = node.Parent
+  end
+  if not vis then return nil, 'SKIP hidden' end
+  local okp, ap = pcall(function() return btn.AbsolutePosition end)
+  local oks, as = pcall(function() return btn.AbsoluteSize end)
+  if not okp or not oks or ap == nil or as == nil then return nil, 'SKIP no rect' end
+  if as.X < 1 or as.Y < 1 then return nil, 'SKIP zero size' end
+  local x = math.floor(ap.X + as.X / 2)
+  local y = math.floor(ap.Y + as.Y / 2)
+  local vim = game:GetService('VirtualInputManager')
+  pcall(function() vim:SendMouseMoveEvent(x, y, game) end)
+  local ok = pcall(function() vim:SendMouseButtonEvent(x, y, 0, true, game, 0) end)
+  task.wait(0.05)
+  ok = pcall(function() vim:SendMouseButtonEvent(x, y, 0, false, game, 0) end) and ok
+  if not ok then return nil, 'ERR SendMouseButtonEvent' end
+  return 'mouse@' .. x .. ',' .. y
+end
+
 local function doPress(path, method)
   local node, err = resolve(path)
   if node == nil then
@@ -638,6 +690,11 @@ local function doPress(path, method)
       how = got .. ' on ' .. which
       break
     end
+  end
+  if how == nil then
+    local at, why = pressAt(btn)
+    log('press try mouse -> ' .. tostring(at or why))
+    how = at
   end
   if how == nil then
     log('press FAIL no route worked for ' .. btn:GetFullName())

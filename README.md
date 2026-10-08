@@ -1179,7 +1179,8 @@ See PROGRESS.md Phase 97 and DECISIONS 341 to 348.
 The state recorder (`_tools/TRG_original_state.luau`, tag `s2`) is read-only by construction:
 it never writes the world and it never presses anything. Pressing is what `fireclickdetector`
 is for, and `fireclickdetector` is an executor-side function - so it needed a second injected
-file. `_tools/TRG_original_drive.luau` (tag `d1`) lives in the same executor VM and is driven
+file. `_tools/TRG_original_drive.luau` (tag `d1` when this section was written; the current
+identity is `d4`) lives in the same executor VM and is driven
 by a **command file**: I write `<seq> <verb> <args>` into `trg_cmd.txt` from Windows, it
 executes every sequence number it has not executed before, and appends the outcome to
 `trg_drive_log.txt`. The sequence is monotonic and the last one is persisted in
@@ -1208,3 +1209,42 @@ see `docs/RECORDER_HOWTO.md` section 13.9 and `docs/TODO.md` section 3.11.
 
 **Not verified: it has never pressed anything.** Every statement above about *how* it presses
 comes from reading its source, not from watching it run.
+
+
+### Phase 102-103 - the driver ran live, then the session was lost
+
+Phase 102 is the round the driver finally ran inside a live client. The anti-idle went from `d2`
+to `d3` by adding one observability field: `antiIdle(force)` became `antiIdle(force, why)` and
+the log line grew a `via <verb|timer|idled>` tail. Behaviour did not change by a byte - but the
+field paid for itself the same evening, because a hot reload leaves the old module's `Player.Idled`
+connection alive in the same VM: at 23:27:39 two lines one second apart were byte-identical except
+for that word, and without it they read as "it moved twice in one second" (DECISIONS 410).
+Measured auto-gaps are 120.1-150.0 s and all of them are events; the 240 s periodic path is
+starved, because every `Idled` resets the timer it is waiting on. That is a backstop that works
+by having only one live leg.
+
+Phase 103 is a negative result, and it is written as one. `d4` is the **fourth press route**:
+`d3`'s three routes all press a *signal*, and the live `caps` read back `firesignal=nil` and
+`getconnections=nil` (while `fireclickdetector` was present), so `press` reported
+`no route worked`. But a button is not only a signal - it is also a **rectangle** at a known
+screen position, and `VirtualInputManager:SendMouseButtonEvent` can click that. Same family as
+the anti-idle's `VirtualUser` path: in-game synthetic input, never the operator's cursor.
+
+`d4` is **staged and never loaded**. It is byte-identical in the repo and in the executor's
+workspace, it parses, and it has never run a single line. The session went away before it could
+be verified, and all three routes back were measured dead:
+
+- `open-roblox-game` sends a launch URL with an empty `gameinfo:`, so the client redeems a ticket
+  that does not exist and gets `403 Forbidden ... Authentication ticket was invalid` (2 of 2
+  attempts). The session that did work - launched from the operator's own browser - has **zero**
+  `authentication-ticket` lines and joins, then teleports, then arrives.
+- `launch-roblox`'s schema is `{workerId, path}`. There is no place parameter, so the daemon has
+  no route to an authenticated session.
+- A browser deep link opened three `msedge` processes and no `RobloxPlayerBeta` in 90 seconds.
+
+The attach anatomy explains all of it without any new mechanism: Solara's `findMainWindow` runs
+**exactly once per process, about a second after the process appears, and never rescans**. The one
+client it caught (window handle 67336, attached 79 s later) was already running when Solara
+started. Both later clients report `process_window: 0`. **Client first, then Solara.**
+
+See PROGRESS.md Phase 103 and DECISIONS 411 to 415.

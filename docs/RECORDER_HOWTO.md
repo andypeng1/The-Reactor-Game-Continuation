@@ -1406,7 +1406,7 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 所以「UIDEBUG 里没有」= **没有信息**，不是「没跑」—— 拿它判注入跑没跑，等于拿一把不量这个的尺子。
 
 
-### 13.9 驱动器 `TRG_original_drive.luau`（tag `d3`）—— 「按东西」的那一半
+### 13.9 驱动器 `TRG_original_drive.luau`（tag `d4`）—— 「按东西」的那一半
 
 `13.1..13.8` 那份 `s2` **只读**：它从不写世界、也从不按任何东西。要让**我**去按开机拉杆、
 按控制台上的按钮，需要第二份文件 —— 它住在**同一个执行器 VM** 里、写**同一个目录**
@@ -1432,9 +1432,9 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 | 仓库 | `_tools/TRG_original_drive.luau` |
 | 执行器 | `D:\SCRIPT\SolaraV3\workspace\TRG_original_drive.luau` |
 | 自动注入桩 | `D:\SCRIPT\SolaraV3\autoexec\trg_drive.lua` |
-| tag | `d3` |
-| 字节 / 行 | **30875** / **905** |
-| md5 | **`72e8105ec89cb900ac9bf8da9842606b`** |
+| tag | `d4` |
+| 字节 / 行 | **33729** / **962** |
+| md5 | **`0c0bc9d8b4be1bd88d751cff82184ff4`** |
 | 反斜杠 / CRLF | **0** / **0** |
 | 桩的字节 / md5 | **598** / **`a2c23b97c3d8da8458962e019cd3400c`** |
 | Lua 版本 | **5.1 兼容**（`goto` / `+=` / `//` 一个都不用，`D:\Lua\5.1\lua.exe` 要能过语法） |
@@ -1443,15 +1443,16 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 **反斜杠 0 是刻意的**（§0.10）：换行用 `string.char(10)`、回车用 `string.char(13)`、
 内嵌引号用单引号 Lua 语法。它**不经过 Studio**，但规矩照样守 —— 守一个不变式比守两个便宜。
 
-**上一个身份**（已被取代）：tag `d2` / **30521** 字节 / **901** 行 /
-md5 **`18f4c70dac40951fd0a53be5a692c0da`**（`d3` = `d2` + 一处可观测性改动，见 §13.9.11）。
-**再上一个**：tag `d1` / **16762** / **524** / `7293022574a3ed04f8e75f8b6ee7a85d`。
+**上一个身份**（已被取代）：tag `d3` / **30875** 字节 / **905** 行 /
+md5 **`72e8105ec89cb900ac9bf8da9842606b`**（`d4` = `d3` + 第四条按压路，见 §13.9.12）。
+**再往前**：`d2` **30521** / **901** / `18f4c70dac40951fd0a53be5a692c0da`；
+`d1` **16762** / **524** / `7293022574a3ed04f8e75f8b6ee7a85d`。
 
 **换版有两条路，别混**：`autoexec\trg_drive.lua` 在**注入那一刻**读盘，
 所以把新文件拷进 `D:\SCRIPT\SolaraV3\workspace\` 只是**准备好** ——
 要它变成新版的，要么**重注入**（新 VM，一个 hook），要么**热重载**
 （`readfile` + `loadstring`，同一个 VM，**会留下旧实例的 hook**，§13.9.11）。
-桩的字节 / md5 没变（`d2` / `d3` 都只动 `.luau`，没动桩）。
+桩的字节 / md5 没变（`d2` / `d3` / `d4` 都只动 `.luau`，没动桩）。
 
 #### 13.9.2 它写哪六个文件（全在 `D:\SCRIPT\SolaraV3\workspace\`）
 
@@ -1571,7 +1572,7 @@ fire NOCHANGE Core.TemperatureVal=... ...
 `trg_drive_autoexec.txt`（里面有 `stub fired`、**没有** `LOAD FAIL`）。
 **看 `mtime`，不要看一个短窗口**（§13.6 / §0.19）。
 
-**`d2` / `d3` 还多一条**：盘上那份换了，但**已经在跑的那一份（如果有）还是老的**。
+**`d2` / `d3` / `d4` 还多一条**：盘上那份换了，但**已经在跑的那一份（如果有）还是老的**。
 两条换法见 §13.9.11，**别在循环还活着的时候换字节**（取舍 409）。
 
 ### 13.9.8 抗挂机（`d2` 新增，`d3` 加了 `via`）—— 那 20 分钟里 `d1` 什么都没做
@@ -1711,3 +1712,75 @@ TextButton | game.Players.X.PlayerGui.Menu.StartShiftButton | false | START SHIF
 
 **没验的**：那 20 分钟的一脚**从来没在任何方向上被复现过**（`d1` 零抗挂机跑 41.9 分钟没被踢）；
 `via timer` 活客户端零次；驱动器**仍然一次都没按过任何东西**。
+
+
+### 13.9.12 `d4` 加的是第四条按压路：不按信号，按矩形（Phase 103）
+
+**`d3` 交付的三条按压路在这台执行器上全是死的，而这是量出来的。**
+`23:32:29` 的 `caps` 逐条回（`trg_drive_log.txt` 第 92 行）：
+`firesignal=nil` / `getconnections=nil` / `hookmetamethod=nil` / `getgc=nil`，
+而 `fireclickdetector` / `firetouchinterest` / `fireproximityprompt` / `loadstring` /
+`readfile` / `request` **都在**。于是 `23:34:04` 的 `#34 press` 走成
+`press try click -> nil` / `press try activated -> nil` /
+`press FAIL no route worked for Players.…GameHints.Button`（第 374..376 行）。
+**缺的三个环节都在执行器那一侧，不在代码那一侧。**
+
+**按钮不只是一个信号，它还是一个屏幕上的矩形。** `pressAt` 用
+`VirtualInputManager:SendMouseMoveEvent` 加上
+`SendMouseButtonEvent(x, y, 0, true, game, 0)` 点那个矩形的**中心**
+（`GuiObject.AbsolutePosition` / `AbsoluteSize` 就是视口像素，**同一个空间**）——
+和抗挂机的 `VirtualUser` **同一族：游戏内合成输入，不是操作员的鼠标**。
+
+**它把「为什么没按下去」也写出来**，因为两种假按和「按了没反应」**长得一样**：
+按钮被藏起来（`SKIP hidden`，往上逐层查 `Visible`）、按钮尺寸为 0（`SKIP zero size`）
+—— 两种都会把点击**直接穿到那块像素上真正在那儿的东西**。回 `mouse@x,y` 才算发出去了。
+
+**没验的**：`pressAt` **一次都没跑过** —— 它连一行日志都没有。它存在、它过了 `lua.exe` 的语法、
+它和仓库里那份**逐字节相同**，**仅此而已**（§4.4）。
+
+
+### 13.9.13 活会话是怎么丢的，以及怎么弄回来（Phase 103）
+
+**顺序是「先客户端、再 Solara」，反过来必死在竞态上。**
+`D:\SCRIPT\SolaraV3\bin\DEBUG.txt` 里 `[Client::findMainWindow]` **一共只有三行、没有重扫**：
+
+| 时刻 | PID | 结果 |
+|---|---|---|
+| `22:31:55`（**启动那次**） | 2220 | `[CLIENT CONSTRUCTOR]: process_window: 67336` → 79 s 后 `22:33:14 [EXECUTOR.ATTACH] START` |
+| `23:41:37`（new-process） | 13592 | `process_window: 0` |
+| `23:47:37`（new-process） | 15512 | `process_window: 0` |
+
+两次 new-process 扫描都在**进程出生后约 1 秒**，那一刻窗口还不存在，而 **Solara 不会补第二枪**。
+2220 能被接住，只因为 Solara 启动（`22:31:51`）时它**已经在跑**（`22:30:04`）。
+
+**别在活客户端旁边启动第二个。** 2220 在 `23:41:47.799` 写下
+`[FLog::SingleSurfaceApp] shutDown: (stage:UGCGame)`、`23:41:53.587` 收完最后一行
+—— **一次优雅退场，不是 taskkill**；而 `23:41:37` 我启动了 13592（**差 10.0 s**）。
+日志里**没有一句**说因果 —— **机制没定就写没定** —— 但这条相关性足够决定下一次怎么做（取舍 415）。
+
+**MCP 的三条路走不通，两条是结构性的。** `open-roblox-game` 发出去的 `roblox-player:` URL 里
+**`gameinfo:` 是空的**（没有 authentication ticket），客户端于是打
+`https://auth.roblox.com/v1/authentication-ticket/redeem` 拿回
+`status:403 Forbidden bodySize:70` 和
+`WebLogin http error: {"errors":[{"code":4,"message":"Authentication ticket was invalid."}]}, statusCode: 403`
+（**2/2 全败**），弹 驗證失敗 对话框、从不进游戏。**对照组**：从操作员自己浏览器进的那趟，
+日志里 `authentication-ticket` **0 行**，直接 `GameJoinLoadTime placeid:8381853606`
+→ `doTeleport … PlaceId%3a17596243941` → `placeid:17596243941`（**先跳一个 place 再传送进来**）。
+`launch-roblox` 的 schema 只有 `{workerId?, path?}` —— **没有 place**，daemon 侧没有第二条路。
+浏览器 deep-link（PowerShell `Start-Process`）**开了 tab 没开客户端**：90 秒 9 次轮询全无客户端，
+而 `msedge` 确实起了 3 个新进程。
+
+**卡在 worker 上是可读的**：`get-transport-status` 回 `activeTransport: "ws"` /
+`wsWorkers: 0` / `status: {"connected": 0, "unconnected": 0}` / `activeSessions: []`，
+`execute-script` 回
+`{"success": false, "error": "No Roblox executor is connected. Launch or inject Roblox first."}`
+（**这两句来自 daemon 的回应，不是 `DEBUG.txt`**）。**一个开着的 WS 不等于一个能用的工具**（§13.8）。
+
+**轮询那个坑（会复发）**：`"unconnected": 1` **含**子串 `connected":1` ——
+断线的客户端上 `grep -q 'connected":1'` **照样成立**（已实测）。
+状态字段是一整格的时候**先切出来再比**（发 `"%d|%s"`、用 `${R%%|*}` 取数、再 `[ "$N" -ge 1 ]`），
+**不要把 JSON 当文本搜**。区分：§0.20 那次 `identify` 是**名字不对**（带主题前缀找不到），
+这次是**名字对但被父串罩住**（取舍 414）。
+
+**没验的**：`d4` 没装过；那 20 分钟的一脚**两个方向都没复现过**；
+**此刻没有活会话、也没有抗挂机在跑** —— 所以操作员那条要求**现在是不满足的**。

@@ -1567,3 +1567,42 @@ GUI 按钮的处理函数**一定是客户端 LocalScript**。所以新动词先
 **没验的**：那 20 分钟的一脚**从来没在任何方向上被复现过**（`d1` 零抗挂机 41.9 分钟没被踢）；
 `via timer` 活客户端零次；驱动器**仍然一次都没按过任何东西**（§3.11.6）。
 细节 `PROGRESS.md` 102，取舍 **408..410**，`docs/RECORDER_HOWTO.md` **§13.9.11**，`docs/TODO.md` §3.11。
+
+**Phase 103（2026-10-08）—— `d4` 装好了、没跑过；而「把会话弄回来」这条路，三条我都量过了。**
+操作员那句「我建议你每隔一段时间（小于20分钟）就让玩家动一次，不然会被踢」的**后续** ——
+这一轮**没让它更接近**，反而把**回不去**的原因量清楚了。
+**结论先给：`d4` 一次都没运行过一行。** 不是它有问题，是**会话在我验它之前就没了，而我回不去**。
+五句能直接用的：**① `d4` 是什么、为什么存在** —— `d3` 的三条按压路在这台执行器上**全是死的**，
+`[23:32:29]` 的 `caps` 逐条回 `firesignal=nil` / `getconnections=nil`（而 `fireclickdetector`
+在），`[23:34:04] #34 press` 走成 `click -> nil` / `activated -> nil` /
+`press FAIL no route worked for …GameHints.Button`。`d4` 加**第四条路 `pressAt`：不按信号，按矩形**
+（`VirtualInputManager:SendMouseButtonEvent` 点 `AbsolutePosition/AbsoluteSize` 的中心）——
+**和抗挂机同一个族：游戏内合成输入，不是操作员的鼠标**；它把没按下去的原因也写出来
+（`SKIP hidden` / `SKIP zero size`），因为**藏起来的按钮和零尺寸的按钮都会把点击穿到别的东西上**，
+和「按了没反应」同形。**② 会话怎么没的**：`[23:36:50] seq=35 stop` 后循环冻住（心跳文件 `mtime` 不动），
+hook 活到 `[23:41:40]`，客户端 `15:41:47.799Z shutDown: (stage:UGCGame)` 优雅退场
+（= 本地 `23:41:47.799`），而 **`23:41:37` 我启动了第二个客户端 —— 差 10.0 秒**。
+日志里**没有一句**说因果（**机制没定就写没定**，取舍 **415**）——
+**但下一次要重来就先确认上一个已经不在**。**③ 三条回去的路全堵**：
+`open-roblox-game` 的 URL 里 **`gameinfo:` 是空的** ⇒ 客户端打
+`auth.roblox.com/v1/authentication-ticket/redeem` 拿回 **403 `Authentication ticket was invalid`**
+（2/2）；成功那趟日志里 `authentication-ticket` **0 行**（直接 `GameJoinLoadTime`→`doTeleport`
+→`placeid:17596243941`，**先跳一个 place 再传送**）。`launch-roblox` schema 只有
+`{workerId?, path?}` —— **没有 place**。浏览器 deep-link 开了 tab 没开客户端。
+⇒ **只有「操作员自己从浏览器进」这条路被验证过能到已认证的会话。**
+**④ 顺序是「先客户端、再 Solara」** —— `DEBUG.txt` 里 `[Client::findMainWindow]` **一共三行、没有重扫**：
+`22:31:55` 那次给出 `process_window: 67336`（79 秒后 attach），两次 new-process **都是
+`process_window: 0`**（扫描在进程出生后约 1 秒，窗口还不存在，**而 Solara 不补第二枪**）。
+**`process_window: 0` 是「扫早了」的指纹，不是「坏了」**（取舍 **412**）。
+**⑤ 两条量法**：**子串会匹配到它自己的否定** —— `"unconnected": 1` 含 `connected":1`，
+断线时 `grep -q 'connected":1'` 照样成立（取舍 **414**，同族是 `identify` 那次「名字不对」）；
+**80 个工具里没有一个 attach/inject 工具**，这是**真的没找到**（§0.20）。
+**卡在 worker 上时**：`wsWorkers: 0` / `{"connected":0,"unconnected":0}` / `activeSessions: []`，
+`execute-script` → `No Roblox executor is connected.` ——**§13.8 第二张脸：WS 是 OPEN ≠ 工具能用**。
+**修掉两条写之前抓到的归因错**（要引的 `AuthenticationFailed` 日志行**不存在**；
+`wsWorkers` 不在 `DEBUG.txt` 里，它是 daemon 的回应），并**否掉我上一格那个假设**
+（「因为我旁边还有客户端」—— 第二次一个都没有，失败逐字相同）。
+**没验的**：`pressAt` **零次运行**；那 20 分钟的一脚**两个方向都没复现**；`via timer` 活客户端零次；
+**此刻没有活会话** ⇒ **操作员那条要求现在是不满足的**。
+细节 `PROGRESS.md` 103，取舍 **411..415**，`docs/RECORDER_HOWTO.md` **§13.9.12/§13.9.13**，
+`docs/TODO.md` **§3.11.7**。
