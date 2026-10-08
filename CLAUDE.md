@@ -1511,3 +1511,36 @@ Roblox 客户端**里，不是 Studio。交付 `_tools/TRG_original_state.luau`�
 文件，所以「它怎么按」全是**读源码**得到的，不是看它跑出来的（§0.2）。细节 `PROGRESS.md` 100，
 取舍 **401..403**，`docs/RECORDER_HOWTO.md` **§13.9**（顺手把 §13.8 那行过期的
 `13:20:40` 改成 `13:29:37`），`docs/TODO.md` **§3.11**。
+
+**Phase 101（2026-10-08）—— `d2`：驱动器学会了自己动（你那条「<20 分钟要动一次，不然会被踢」），并且长出了 GUI 那一半。**
+
+用户原话（本轮唯一需求）：「**我建议你没个一段时间（小于20分钟）就让玩家动一次，不然会被踢**」。
+盘上 `_tools/TRG_original_drive.luau` 现在是 **tag `d2`**（**30521** 字节 / **901** 行 /
+md5 **`18f4c70dac40951fd0a53be5a692c0da`**），**桩没变**（598 / `a2c23b97…`）。**五句能直接用的：**
+
+**① 必须重新注入**（`autoexec\trg_drive.lua` 是**注入那一刻**读盘上那份 `.luau` 的）——
+已经在跑的那一份**还是 `d1`**（16762 / 524 / `7293022574…`），不重注就拿不到下面的动词。
+
+**② 抗挂机两条路，日志里记是哪一条**：`VirtualUser:CaptureController()` + `ClickButton2()`（真输入，
+**不碰你的鼠标**）优先，退路是 `PivotTo` 抬 `IdleJiggle=0.5` stud —— **后者不重置那个计时器**。
+`IdleSeconds = 240`，外加 `Player.Idled` 钩子。日志 `antiidle <哪条路> at rel <秒>`，
+两条都不成写 `antiidle nil`（**静默的退化和真跑了，事后必须长得不一样**）。
+
+**③ GUI 按钮是控制面的客户端那一半**：`ClickDetector.MouseClick` 的处理函数跑在**服务端**，
+本地发火到不了它 —— 这就是 `d1` 那六次 `NOCHANGE` **始终分不开「按到了没用」和「没按到」**的原因。
+GUI 按钮的处理函数**一定是客户端 LocalScript**。所以新动词先 `caps`（问这台执行器有什么）、
+再 `gui`（找那个按钮）、`press`（按它，`CHANGED`/`NOCHANGE` 两分）、
+再 `probe` / `listen <秒>`（**世界到底在不在动** —— 一个停着的世界里没有任何 `ValueBase` 会被写）。
+`press` 依次试 `firesignal` → `sig:Fire` → `getconnections`；**这台执行器的信号没有 `:Fire`**。
+
+**④ 修了一个真缺陷**：`statline()` 原来是 `tostring(ok and v or 'ERR')`，而 Lua 的 `and/or`
+**把 `false` 当假值** → **每一个「真的是 false」的旗标都读成「读不出来」**（整份 dump 看起来像坏的）。
+改成按类型渲染，只有真的 pcall 失败才写 `ERR`。
+
+**⑤ 桩内验证跑的是交付的字节**（`D:\Lua\5.1\lua.exe` + 一个 Lua 5.1 桩 DataModel，17 条命令，`rc=0`），
+而且**桩故意缺着真环境缺的那一样**（信号没有 `:Fire`），退路才算被走到过。
+**我自己写的一句话被自己的产物否掉**：`sig:Fire` **一次都没赢过**（永远输的退路，别的执行器才有）。
+**没验的：`d2` 在活客户端里一次都没跑过** —— 抗挂机没发过一次真输入，
+`gui`/`press`/`probe`/`listen`/`cf`/`caps` 没有一个在真 VM 里执行过。
+细节 `PROGRESS.md` 101，取舍 **404..407**，`docs/RECORDER_HOWTO.md` **§13.9.8..§13.9.10**，
+`docs/TODO.md` **§3.11**（已重写，注入后照它走）。

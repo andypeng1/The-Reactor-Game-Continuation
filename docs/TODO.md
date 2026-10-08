@@ -490,29 +490,68 @@ SYSTEM REPAIR IN PROGRESS` —— **这三台为什么这么说，没定**（客
 **并且开一个新班次**。
 
 
-### 3.11 驱动器跑起来之后的第一件活（Phase 100）
+### 3.11 驱动器跑起来之后的第一件活（Phase 100 / 101）
 
-`_tools/TRG_original_drive.luau`（tag `d1`）已经在位、桩已经装好、命令文件里排好了
-`1 census` / `2 pos`。**它一次都没跑过** —— 缺的是 worker（`RECORDER_HOWTO.md` §13.9.7）。
-下一次注入之后按这个顺序看，**每步一个读数，别跳**：
+`_tools/TRG_original_drive.luau` 现在是 **tag `d2`**（**30521** 字节 / **901** 行 /
+md5 **`18f4c70dac40951fd0a53be5a692c0da`**），桩也还在。但**已经在跑的那一份（如果有）还是 `d1`** ——
+`autoexec\trg_drive.lua` 是在**注入那一刻**读盘上那份 `.luau` 的，所以
+**要拿到抗挂机和 GUI 那一半，必须再注一次**。注入前核 §13.9.1 那个 `md5`。
+
+#### 3.11.0 注入之后先看三样（每步一个读数，别跳）
 
 | # | 看什么 | 怎么算数 |
 |---|---|---|
-| 1 | `workspace\trg_drive_loop.txt` 存在 | **看 `mtime` 在长**，不看内容 —— 短窗口分不出「活着」和「死了」（§13.6 / §0.19） |
+| 1 | `workspace\trg_drive_loop.txt` | **看 `mtime` 在长，不看内容** —— 短窗口分不出「活着」和「死了」（§13.6 / §0.19） |
 | 2 | `workspace\trg_drive_autoexec.txt` | 要有 `stub fired`；**有 `LOAD FAIL` 就是坏了** |
-| 3 | `workspace\trg_drive_census.txt` | 普查跑完才有；它列出**每一个** `ClickDetector` / `ProximityPrompt` |
-| 4 | `trg_drive_log.txt` | `#1 census` 和 `#2 pos` 两行都要在 |
+| 3 | `workspace\trg_drive_census.txt` | 有它 = 普查跑完 |
+| 4 | `trg_drive_log.txt` 的第一行 | 要是 `# d2 start …` —— **还写着 `d1` 就说明注入没换掉**，后面全是老的 |
 
-然后才是**真正要测的东西**：
+#### 3.11.1 先问「这台执行器有什么」：`caps`
+
+一条命令、一个读数，回答的是**通道问题**：`firesignal` / `getconnections` /
+`fireclickdetector` / `VirtualUser` 这些名字**到底存不存在**。
+`d1` 那六次 `NOCHANGE` 之所以证明不了什么，一半就是因为它**从来没问过这个问题**
+（`MouseClick:Fire` 死在 `Fire is not a valid member of RBXScriptSignal`，
+而**那句报错说的是信号，不是执行器**）。**`fire` 之前先跑这个。**
+
+#### 3.11.2 再找「游戏在等什么」：`gui` → `press`
+
+`d1` 的普查列了 1019 个 `ClickDetector`，**没有一个是开局面的**，而这是**结构性的**：
+`ClickDetector.MouseClick` 的处理函数跑在服务端，本地发火到不了它
+（`RECORDER_HOWTO.md` §13.9.9）。**GUI 按钮反着来** —— 它的处理函数一定是客户端 LocalScript。
+所以顺序是：
+
+1. `gui` → `trg_drive_gui.txt`，看有没有一个 `Visible=true` 的按钮**名子里带开局/开始/确认**；
+2. `press <那个按钮>`（给父件也行，它会往下找一层）；
+3. 按完立刻 `stats` + `probe` —— **`press CHANGED` 才算按到了**，
+   `NOCHANGE` 是**真读数**（取舍 403），不是失败。
+
+**一条待验的假设**：`AlertsControlRoomMonitor` 那 27 块警报板，**板亮 = 该警报在响**
+（Phase 99 ③ 把它写成了假设，就一行测试：开机时看 `CBL ACTIVE` / `PUMP ACTIVE` 亮不亮）。
+`probe` 现在能按需触发，**不必等采集器那 30 秒一轮**。
+
+#### 3.11.3 最后问「有没有东西在走」：`listen`
+
+`d1` 最大的盲点：**在一个停着的世界里，没有任何 `ValueBase` 会被写**，
+所以「惰性」和「没够到」在它眼里**逐字节同形**。`listen <秒数>` 以 ~4 Hz 采样 `Stats`
+**只记变化** —— 它回答的是「这个世界是不是在动」，而这**必须先有答案**，
+后面每一条 `NOCHANGE` 才读得出来是什么意思。桩里它记到 4 次变化，那 4 次是**故意的**。
+
+#### 3.11.4 然后才是 `fire` 那半
 
 1. **开机拉杆** —— 从普查里找到开机拉杆那件（**靠 `label` 和 `mad` 两列，别猜名字**），
    `fire <路径>`，看 `fire CHANGED` 还是 `fire NOCHANGE`。这一条同时验三件事：
    我给的路径对不对、`fireclickdetector` 在这个执行器上到底有没有、**距离门是不是真的**。
 2. **`signal` vs 默认** —— 同一条路径各发一次（`fire <路径> signal`），两次结果**分别记**。
-   `MouseClick:Fire` 只放客户端监听者，而逻辑在服务端 —— **两次不一致本身就是发现**，
-   不是我这边坏了。
-3. **`stats` 前后各一次** —— 这是驱动器**自己的**读数，不等采集器那 30 秒的快照。
-   按一下、读数变了，才算真的按到了。
+   `MouseClick:Fire` 只放客户端监听者，而逻辑在服务端 —— **两次不一致本身就是发现**。
+3. **`stats` 前后各一次** —— 按一下、读数变了，才算真的按到了。
+4. **`cf <那件>` 前后各一次** —— 机械那一半：**只有 `LeverUnion` 动了**才算对（§4.4）。
 
-§3.9 / §3.10 那几项（2200 的失速门、CBL 五档、警报板亮不亮）**都还在等一个新班次** ——
-驱动器能把它们从「等他按」变成「我来按」，但**得先让第 1 行那个文件存在**。
+#### 3.11.5 还欠着的那两条
+
+- **抗挂机**：`trg_drive_log.txt` 里要出现 `antiidle <哪条路> at rel <秒>`，
+  而且**每条路都要出现过至少一次**（`VirtualUser` / `jiggle`）。
+  只有 `jiggle` 在刷 = 这台执行器没有 `VirtualUser`，**20 分钟那一脚还在**（取舍 404）。
+  `IdleSeconds = 240`，所以**第一次出现大约在第 4 分钟**，早于它出现不代表它坏了。
+- **§3.9 / §3.10 那几项**（2200 的失速门、CBL 五档、警报板亮不亮）**都还在等一个新班次** ——
+  驱动器能把它们从「等他按」变成「我来按」，但**得先让第 3.11.0 那四行都成立**。

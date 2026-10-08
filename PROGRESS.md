@@ -11507,3 +11507,95 @@ WS 还在轮询它自己的 socket（`WS_POLL` ×25317）—— 但 §13.8 那�
 没有任何一个 `trg_drive_*` 文件存在。所以上面每一条关于「它怎么按」的话
 都是**读源码得到的**，不是**看它跑出来的** —— §0.2 那张表在这里仍然是空的。
 下一次注入之后的第一件活见 `docs/TODO.md` **§3.11**。
+
+**Phase 101（2026-10-08）—— `d2`：驱动器学会了自己动，并且长出了 GUI 那一半。**
+
+用户原话（这一轮唯一的用户需求）：「**我建议你没个一段时间（小于20分钟）就让玩家动一次，不然会被踢**」。
+
+**先说结论的形状**：这是一次**交付**（文件改了、注到执行器工作目录了、提交推送了），
+**加上**一次**桩内验证**（跑的是交付的那份字节）。**它仍然没有在活客户端里跑过** ——
+和 Phase 100 结尾那句一样，`worker` 不在，所以**要拿到 `d2` 必须由操作员再注一次**
+（`autoexec\trg_drive.lua` 是在**注入那一刻**读盘上那份 `.luau` 的）。
+
+**身份（§0.0 的规矩，注入前核这个）：**
+
+| 文件 | 字节 | 行 | md5 |
+|---|---|---|---|
+| 仓库 `_tools/TRG_original_drive.luau` | **30521** | **901** | **`18f4c70dac40951fd0a53be5a692c0da`** |
+| 执行器 `workspace\TRG_original_drive.luau` | 30521 | 901 | 同上（`repo == exec` 已断言） |
+| 桩 `autoexec\trg_drive.lua` | 598 | 16 | `a2c23b97c3d8da8458962e019cd3400c`（**没变**，d2 只动 .luau） |
+
+上一版（`d1`）是 **16762 / 524 / `7293022574a3ed04f8e75f8b6ee7a85d`**，
+所以这一轮**必须重新注入**才拿得到新动词。0 个反斜杠（§0.10）不变。
+提交 `0e37243`，`git ls-remote` 复核过远端同 sha。
+
+**`d2` 补的五件，每一件都是被 `d1` 的现场逼出来的，不是猜的：**
+
+**① 抗挂机（用户要的那一件）。** Roblox 大约 **20 分钟**没有用户输入就踢人，
+而 `d1` 里**没有任何东西是输入** —— `PivotTo` 只是把角色挪一点，**挂机计时器看的是用户，
+不是角色**。而且**失败是静默的**：后面的命令根本没被执行过，盘上没有任何一行说它没跑。
+两条路，**走的哪条记进日志**（和 `fire` 记「实际用哪句」同一个理由）：
+`VirtualUser:CaptureController()` + `ClickButton2(Vector2.new())`（**游戏内虚拟输入，
+不碰操作员的真鼠标**），退路是一个 `PivotTo` 抬 `IdleJiggle = 0.5` stud。
+两种触发：`M.step()` 每拍看 `os.clock() - lastInput < IdleSeconds`（**240 秒**，
+留够几次漏拍），外加 `LocalPlayer.Idled:Connect` —— **踢人被宣布的那一刻**就当输入处理。
+日志行 `antiidle <哪条路> at rel <秒>`，两条都不可用就写 `antiidle nil`（**一个 nil 比一行不写诚实**）。
+
+**② GUI 那一半。** `d1` 的普查列了 **1019 个 `ClickDetector`，没有一个是开局面的**。
+原因是结构性的：`ClickDetector.MouseClick` 的处理函数跑在**服务端**，本地发火到不了它 ——
+所以 `d1` 那六次 `NOCHANGE` **始终分不开「按到了但没用」和「根本没按到」**。
+**GUI 按钮是反过来的**：它的处理函数**一定是客户端 LocalScript**，从这里按下去跑的是真代码，
+它发的 remote **真的到服务端**。停在一张菜单上的游戏，更可能是在**这里**等着。
+
+**③ 四条读数动词 `caps` / `read` / `probe` / `listen` / `cf`。** `d1` 只看得到 32 个 `ValueBase`，
+而**在一个停着的世界里没有哪个 `ValueBase` 会被写** —— 所以那六次 `NOCHANGE` 什么也没证明：
+传感器分不开「惰性」和「没够到」。新动词各补一个缺口：`caps` 说**这台执行器有哪些通道**；
+`probe` 说**游戏自己的面板在说什么**（同一套 `s2` 读法，按需触发）；
+`listen` 说**到底有没有东西在走**；`cf` 给一次点击试验的**机械那一半**（只有 `LeverUnion` 动了）。
+
+**④ 一个真缺陷：`statline()` 把 `false` 打成 `ERR`。** 原来是
+`tostring(ok and v or 'ERR')` —— 而 Lua 的 `and/or` **把 `false` 当假值**，
+于是**每一个「真的是 false」的旗标都读成「读不出来」**，整份 dump 看起来像坏了
+（`GameActive=false` / `ISEBreach=false` 正是这种）。改成按类型渲染：只有**真的 pcall 失败**才写 `ERR`。
+**同一张脸**（`and/or` 吞假值）在 `guiCensus` 里被**预先躲开**：`Visible` 是布尔，
+`false` 在那里是一个**真答案**，所以那一段**故意不用 `and/or`**。
+
+**⑤ `press` 的退路链。** 这台执行器的信号**没有 `:Fire`**（`d1` 学到的：报错是
+`Fire is not a valid member of RBXScriptSignal` —— **那句话说的是信号，不是执行器**）。
+所以按一个信号要依次试三条并**记下谁成了**：`firesignal(sig)` → `sig:Fire()`（包 pcall）→
+`getconnections(sig)` 逐个调 `c.Function`/`c.func`。
+
+**验证：桩里跑的是交付的那份字节（同 Phase 99 ⑥），`rc=0`。**
+`D:\Lua\5.1\lua.exe` 过语法，然后一个 **Lua 5.1 桩 DataModel** 里
+`loadfile` **它自己的字节**跑 17 条命令。桩里造了假世界（一个 **`false`** 的 `BoolValue`、
+一个 `Visible=false` 的按钮、一个**按钮藏在下一层**的 `Frame`、一台监视器、一个拉杆），
+并且**故意让信号没有 `:Fire`** —— 所以退路链**是被走到的**，不是被跳过的。实测走过的：
+
+| 验到的 | 实测那行 |
+|---|---|
+| `false` 不再被打成 `ERR` | `stats … GameActive=false ISEBreach=false … n=9` |
+| 两条发火通道各跑通过 | `via firesignal on activated` / `via getconnections x1 on click` |
+| 三条全断时**大声失败** | `press try activated -> nil` / `press try click -> nil` / `press FAIL no route worked for …` |
+| `press <Frame>` 会往下找到按钮 | `press … Menu.BootCard.ConfirmButton via firesignal on activated` |
+| `CHANGED` 与 `NOCHANGE` **两个分支都到得了** | 两行都在日志里 |
+| 不是按钮时**不静默** | `press FAIL no button under Workspace.Consoles.StartUpBigLever.StartClickPart` |
+| `gui` 把 `false` 打成 `false` | `… StartShiftButton \| false \| START SHIFT \| 12,34` |
+| 抗挂机**两条路**都验过、且记下哪条 | `antiidle jiggle at rel 1.0` 与 `antiidle VirtualUser at rel 1.0` |
+| 失败路径都带位置 | `read FAIL missing segment 2 = Nope under game.Workspace`、`unknown verb bogusverb` |
+
+**这一轮我自己写了一句话、然后被自己的产物否掉**（§0.2 的老规矩）：我先把
+「三条发火通道**各自**都跑通过」写进了 HOWTO §13.9.10，跑完才看见
+`sig:Fire` **一次都没赢过** —— 桩和真执行器的信号都没有 `:Fire`，所以它是一条
+**永远输的退路**（别的执行器有，所以不是死代码）。已改成「**只有那两条**」。
+
+**两条运行时才发现的小事**：桩里 `listen 1` 记到 **4 次变化**，
+而那个 `BoolValue` 是被 `task.wait` 的**计数器**翻转的（`MUTATE_AT`）——
+**这恰好就是 `listen` 存在的理由**：单看前后两次读数，一个冻结的世界和一个慢世界**长得一样**。
+以及 `read` 的输出里 `Position=table: 00A06EC8` 是 **Lua 5.1 的 `tostring` 不做 Vector3**
+（真 Luau 会打 `10, 20, 30`）—— **这是桩的产物，不是驱动的行为**。
+
+**没验的那一半，说清楚：`d2` 在活客户端里一次都没跑过。**
+抗挂机没在真客户端里发过一次输入，`gui`/`press`/`probe`/`listen`/`cf`/`caps`
+**没有一个在真 VM 里执行过**，所以「按一个真按钮能触发一次真开局」至今是**零次**。
+桩里没有真 `VirtualUser`、没有真 `PlayerGui` 布局、没有服务端。
+下一次注入之后的第一件活见 `docs/TODO.md` **§3.11**。

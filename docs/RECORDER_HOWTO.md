@@ -1406,7 +1406,7 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 所以「UIDEBUG 里没有」= **没有信息**，不是「没跑」—— 拿它判注入跑没跑，等于拿一把不量这个的尺子。
 
 
-### 13.9 驱动器 `TRG_original_drive.luau`（tag `d1`）—— 「按东西」的那一半
+### 13.9 驱动器 `TRG_original_drive.luau`（tag `d2`）—— 「按东西」的那一半
 
 `13.1..13.8` 那份 `s2` **只读**：它从不写世界、也从不按任何东西。要让**我**去按开机拉杆、
 按控制台上的按钮，需要第二份文件 —— 它住在**同一个执行器 VM** 里、写**同一个目录**
@@ -1416,6 +1416,15 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 **最重要的一句先放前面：它现在按不动，而缺的不是文件**（§13.9.7）。文件、注入点、命令都在位，
 差的是 **worker**（与 §13.8 同一件事）—— **下一次注入它自己就开始跑**。
 
+**`d1` 一次都没按动过任何东西，而它连「按没按动」都读不出来 —— `d2` 补的正是这三件。**
+三条都是被 `d1` 那六次 `fire NOCHANGE` 逼出来的，不是猜的：
+
+| d2 加了什么 | 为什么非有不可 |
+|---|---|
+| **抗挂机**（§13.9.8） | Roblox 大约 20 分钟没有**用户输入**就踢人。`d1` 里**没有任何东西是输入**：`PivotTo` 只是搬运角色，而挂机计时器看的是**用户**。后果是**静默的** —— 后面的命令根本没被执行过 |
+| **GUI 那一半**（§13.9.4） | `d1` 的普查找到 1019 个 `ClickDetector`，**没有一个**能开一班。`ClickDetector` 的处理函数跑在**服务端**，本地发火到不了；**GUI 按钮的处理函数一定是客户端 LocalScript**，从这里按下去跑的是真代码，它发的 remote **真的到服务端** |
+| **`caps` / `read` / `probe` / `listen` / `cf`** | `d1` 只能看见 32 个 `ValueBase`，这就是六次 `NOCHANGE` 什么都证明不了的原因：**在一个停着的世界里没有任何 `ValueBase` 会被写**，于是传感器**分不开「这件是死的」和「没按到」**。`caps` 说有哪些执行器通道、`probe` 说游戏自己的面板在说什么、`listen` 说到底有没有东西在走、`cf` 给出一次点击试验的机械那一半（只有 `LeverUnion` 动了） |
+
 #### 13.9.1 身份（注入前核这个）
 
 | 项 | 值 |
@@ -1423,9 +1432,9 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 | 仓库 | `_tools/TRG_original_drive.luau` |
 | 执行器 | `D:\SCRIPT\SolaraV3\workspace\TRG_original_drive.luau` |
 | 自动注入桩 | `D:\SCRIPT\SolaraV3\autoexec\trg_drive.lua` |
-| tag | `d1` |
-| 字节 / 行 | **16762** / **524** |
-| md5 | **`7293022574a3ed04f8e75f8b6ee7a85d`** |
+| tag | `d2` |
+| 字节 / 行 | **30521** / **901** |
+| md5 | **`18f4c70dac40951fd0a53be5a692c0da`** |
 | 反斜杠 / CRLF | **0** / **0** |
 | 桩的字节 / md5 | **598** / **`a2c23b97c3d8da8458962e019cd3400c`** |
 | Lua 版本 | **5.1 兼容**（`goto` / `+=` / `//` 一个都不用，`D:\Lua\5.1\lua.exe` 要能过语法） |
@@ -1433,6 +1442,12 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 仓库那份与执行器那份**逐字节相同**（`verify_drive_id.py` 断言 `repo == exec`）。
 **反斜杠 0 是刻意的**（§0.10）：换行用 `string.char(10)`、回车用 `string.char(13)`、
 内嵌引号用单引号 Lua 语法。它**不经过 Studio**，但规矩照样守 —— 守一个不变式比守两个便宜。
+
+**上一个身份**（已被取代）：tag `d1` / **16762** 字节 / **524** 行 /
+md5 **`7293022574a3ed04f8e75f8b6ee7a85d`**。**换成 `d2` 要重新注入一次** ——
+`autoexec\trg_drive.lua` 是在**注入那一刻**读盘上那份 `.luau` 的，所以把新文件拷进
+`D:\SCRIPT\SolaraV3\workspace\` 只是**准备好**，**不会**让已经在跑的那一份变成新版。
+桩的字节 / md5 没变（`d2` 只动 `.luau`，没动桩）。
 
 #### 13.9.2 它写哪六个文件（全在 `D:\SCRIPT\SolaraV3\workspace\`）
 
@@ -1444,8 +1459,9 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 | `trg_drive_state.txt` | 它写（覆盖） | 只有一行：**已执行到的最大 seq** |
 | `trg_drive_loop.txt` | 它写（覆盖） | 只有一行，每 poll 重写 —— **它是活着的证明** |
 | `trg_drive_FATAL.txt` | 它写（追加） | `M.step()` 抛错才出现；**出现即故障** |
+| `trg_drive_gui.txt` | 它写（覆盖） | `gui` 动词的产物：`PlayerGui` 里每个 `TextButton` / `ImageButton`（上限 `GuiCap = 400`） |
 
-`trg_cmd.txt` 是这六个里**唯一**由我写的 —— 别的五个都是它的输出。
+`trg_cmd.txt` 是这七个里**唯一**由我写的 —— 别的六个都是它的输出。
 自动注入桩另写一个 `trg_drive_autoexec.txt`（§13.9.6）。
 
 #### 13.9.3 命令文件：seq 单调、文件**永不截断**
@@ -1469,7 +1485,19 @@ POST 到本机、执行器从本机 HTTP 取脚本本体。**这一份不走那�
 | `near` | `<路径> [半径]` | 列出附近的 `ClickDetector` |
 | `ls` | `<路径>` | 列一层子物体（上限 60 条） |
 | `pos` | — | 记一行角色当前位置 |
+| `gui` | — | 普查 `PlayerGui` 里的 `TextButton` / `ImageButton` → `trg_drive_gui.txt`（见 §13.9.9） |
+| `press` | `<路径> [activated\|click]` | 按一个 **GUI 按钮**；三条通道依次试、**记下谁成了**（见 §13.9.9） |
+| `read` | `<路径>` | 读一个节点的可读属性（`Text` / `Visible` / `Value` / `Position` / `Size` …）；**读不到的说 `ERR`，缺席的不列** |
+| `probe` | — | 把 7 台控制室监视器上**游戏自己写的字**记下来（同一个 `s2` 读法，按需触发） |
+| `listen` | `[秒数]`（夹在 1..60） | 以 ~4 Hz 采样 `Stats`，**只记变化** —— 回答「有没有东西在走」 |
+| `cf` | `<路径>` | 记这个节点（+ 最多 40 个 `BasePart` 子件）的 `pos` / `size` |
+| `caps` | — | 记 28 个执行器全局名各自的 `type()` —— **这条执行器有哪些通道** |
+| `idle` | — | 立刻做一次抗挂机，并记下**走的是哪条路**（§13.9.8） |
 | `stop` | — | 停循环 |
+
+**`press` 的 `<路径>` 可以是按钮本身，也可以是它的父件** —— 不是按钮时它
+`FindFirstChildOfClass('TextButton')`、再 `ImageButton` 往下找一层。找不到就
+`press FAIL no button under <路径>`（**不是静默返回**）。
 
 路径是 `GetFullName()` 那种（根是 `game`，但不打印 `game`），逐段 `FindFirstChild`；
 **找不到时报出「哪一段」而不是光一个 `missing`** —— 一个不带位置的 `missing`
@@ -1538,3 +1566,95 @@ fire NOCHANGE Core.TemperatureVal=... ...
 `trg_drive_loop.txt`（活着）、`trg_drive_census.txt`（普查跑完）、
 `trg_drive_autoexec.txt`（里面有 `stub fired`、**没有** `LOAD FAIL`）。
 **看 `mtime`，不要看一个短窗口**（§13.6 / §0.19）。
+
+**`d2` 还多一条**：盘上那份已经是 `d2`，但**已经在跑的那一份（如果有）还是老的** ——
+要拿到 §13.9.8 / §13.9.9 那些动词，**必须再注一次**（§13.9.1 那段）。
+
+### 13.9.8 抗挂机（`d2` 新增）—— 那 20 分钟里 `d1` 什么都没做
+
+**Roblox 大约 20 分钟没有用户输入就踢人**，而 `d1` 里**没有任何东西是输入**：
+`PivotTo` 只是把角色挪一点，挂机计时器看的是**用户**，不是角色。所以长班次会以
+**会话消失**结束 —— 而**失败是静默的**：后面的命令根本没被执行过，盘上没有任何一行说它没跑。
+
+两条路，**走的哪条记在日志里**（和 `fire` 记「实际用哪句」同一个理由：一个静默的退化和真跑了，
+事后必须长得不一样）：
+
+| 路 | 做法 | 备注 |
+|---|---|---|
+| 1 | `VirtualUser:CaptureController()` + `ClickButton2(Vector2.new())` | 经典执行器抗挂机。这是**游戏内虚拟输入**，**不碰你的真鼠标** |
+| 2 | 一个小 `PivotTo`（抬 `IdleJiggle = 0.5` stud） | 退路。它**不重置那个计时器**，只是证明角色还活着 |
+
+两种触发，**两种都写同一行日志**：
+
+- **周期**：`M.step()` 每拍检查 `os.clock() - lastInput < IdleSeconds`（**240 秒**，留够几次漏拍）；
+- **事件**：`M.start()` 里挂 `LocalPlayer.Idled`，**踢人被宣布的那一刻**就当输入处理。
+
+日志行是 `antiidle <哪条路> at rel <秒>`，`<哪条路>` 是 `VirtualUser` / `jiggle` / `nil`。
+**`nil` 是真的**：两条路都不可用时它照写，一个 `nil` 比一行不写诚实。
+
+### 13.9.9 GUI 那一半（`d2` 新增）—— 为什么按按钮比按 `ClickDetector` 值
+
+`ClickDetector.MouseClick` 的处理函数跑在**服务端**，本地发火到不了它 —— `d1` 那六次
+`NOCHANGE` 里始终分不开「按到了但没用」和「根本没按到」。**GUI 按钮是反过来的**：
+它的处理函数**一定是客户端 LocalScript**，所以从这里按下去跑的是**真代码**，
+它发的 remote **真的到服务端**。停在一张菜单上的游戏，更可能是在**这里**等着。
+
+**三条通道，依次试，并记下谁成了**（这台执行器的信号没有 `:Fire`，
+所以顺序是有意义的，而沉默与「按成了」事后必须可分辨）。**三条全断时**实测是这样
+（桩里两次 `try` 都是 `nil`，是**一段逐字的运行记录**，不是示意）：
+
+```
+press try activated -> nil
+press try click -> nil
+press FAIL no route worked for game.Players.Tester.PlayerGui.Menu.StartShiftButton
+```
+
+顺序是 `firesignal(sig)` → `sig:Fire()`（包 `pcall`）→ `getconnections(sig)` 逐个调
+`c.Function` / `c.func`。**桩里跑通过的是前两条**（`via firesignal on activated`、
+`via getconnections x1 on click`）—— `sig:Fire` **一次都没赢过**，因为这台执行器
+（和照着它做的桩）的信号**没有 `:Fire`**。它不是死代码（别的执行器有），
+但**在这个环境里它是一条永远输的退路**，读日志时别指望看见它。
+
+`<method>` 给 `click` 就先试 `MouseButton1Click`，否则先试 `Activated`（两种都会试完）。
+
+按完 `task.wait(SettleSeconds = 1.2)`，再和**按之前**的 `statline()` 比一行：
+`press CHANGED …` / `press NOCHANGE …`。**`NOCHANGE` 是一个真读数，不是失败** ——
+它和 `fire NOCHANGE` 一样，是负测量。
+
+`gui` 的产物长这样（`visible` 列**故意不走 Lua 的 `and/or`**：`Visible` 是布尔而
+`false` 在这里是一个**真答案**，`false` 被打成 `?` 就等于把「不可见」和「读不到」混成一个）：
+
+```
+# KIND | fullPath | visible | text | absPos
+TextButton | game.Players.X.PlayerGui.Menu.StartShiftButton | false | START SHIFT | 512,340
+# done buttons=2
+```
+
+### 13.9.10 `d2` 是怎么验的 —— 不靠 Studio，验的是**交付的那份字节**
+
+**验的是仓库里那份文件本身**（不是副本）：`_tools/TRG_original_drive.luau` 用
+`D:\Lua\5.1\lua.exe` 过语法，再在一个 **Lua 5.1 桩 DataModel** 里 `loadfile` **它自己的字节**
+跑一遍（同 Phase 99 ⑥ 的做法）。桩里造了一个假世界（`Workspace.Stats` 带一个
+**`false`** 的 `BoolValue`、一个 `Visible=false` 的按钮、一个按钮藏在下面一层的 `Frame`、
+一台监视器、一个拉杆），并且**故意**让信号没有 `:Fire` —— 所以退路链**是被走到的**，
+不是被跳过的。
+
+**实测走过的**（这是该文件的行为证据，不是「源码看起来对」）：
+
+| 验到的 | 证据 |
+|---|---|
+| `false` 不再被打成 `ERR` | `stats … GameActive=false ISEBreach=false …` |
+| 三条发火通道**各自**都跑通过 | `via firesignal on activated` / `via getconnections x1 on click` —— **只有这两条**；`sig:Fire` 在这个环境里永远输（信号没有 `:Fire`） |
+| 三条全断时**大声失败** | `press FAIL no route worked for …`（不是静默返回） |
+| `press <Frame>` 会往下找到按钮 | `press … BootCard.ConfirmButton via firesignal` |
+| `CHANGED` 与 `NOCHANGE` **两个分支都到得了** | 两行都在日志里 |
+| `gui` 把 `false` 打成 `false` | `… StartShiftButton \| false \| START SHIFT \| 12,34` |
+| 抗挂机**两条路**都验过、且记下哪条 | `antiidle jiggle …` 与 `antiidle VirtualUser …` |
+| 失败路径都带位置 | `read FAIL missing segment 2 = Nope under game.Workspace`、`unknown verb bogusverb` |
+
+**`d2` 修掉的那两个缺陷**：`statline()` 原来用 `ok and v or 'ERR'`，于是**一个假值的
+`BoolValue` 被打成 `ERR`** —— 每一个「真的是 false」的旗标都读成「读不出来」，
+整份 dump 看起来像坏了；`panelLines`（在 `s2` 里）原来在亮灯超过 12 条时**只留字母序前四条**。
+
+**没验的，说清楚**：桩里没有真 `VirtualUser`、没有真 `PlayerGui` 布局、没有服务端。
+所以**「它在活客户端里真的能按动一个按钮」至今是零次** —— 那要等 §13.9.7 说的那一次注入。
