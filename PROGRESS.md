@@ -11941,3 +11941,69 @@ md5 **`4ce909d36e485ba9a3d964fb1375f173`**，**0 反斜杠 / 0 CRLF**，`lua.exe
 `inset+0,58/ignoreinset` 标签**没在真 VM 里读过**；`pressAt` 在真 VM 里仍然**零次成功**；
 daemon 的 `click-button` **是否也加 inset 没测**；`get_roblox_docs(VirtualInputManager, section:"Methods")`
 **被拒**（`Available sections: Description, Inherited Members`）→ 权威签名**拿不到**。
+
+**Phase 106（2026-10-09）—— 反应堆真的点着了，而第六步我把 HDEF 发电机开着、没开冷却泵。**
+
+操作员的判断（`你反应堆都没开机！！！！！！！！！`）**成立**，这一轮把它解掉了一半，
+另一半由他当场驳回（`HDEF Generator爆炸了（其实是过热，开时间太长就会这样）`）。
+**六句能直接用的：**
+
+**① 挡住点击的不是 `UnlockUI` 这个按钮，是它所在的 `LayerCollector`。**
+四格梯子（每一格都在开火那一刻验过 `mouse.Target == ClickPart`）：
+`不出手` → `MouseClick=0`；`UnlockUI.Visible=false` → **0**；`+MouseGui.Enabled=false` → **0**；
+`+ScreenGui.Enabled=false` → **1**。而 `GetGuiObjectsAtPosition(575, 299)` 在那像素上返回 33 件、
+其中 Active/可点**只有一件**：`ScreenGui.UnlockUI`（全屏 1151.2×714.4 @ 0,−58）。
+**能用的操作是把 `Enabled` 置 false**，不是把 `Visible` 置 false（取舍 **426**）。
+
+**② 开机链按游戏自己的顺序走，六步，每步读服务端的 `Stats` 差。**
+工具提示是字面的 —— `MASTER START-UP SWITCH` 说
+`"Will beep green after proper control room boot-up."`，而**这一步真的在等 `MonitorBoot`**：
+
+| 步骤 | onTarget | MouseClick | Stats 差 |
+|---|---|---|---|
+| `RoomLight` | true | 1 | 0（灯不在 `Stats` 里） |
+| `MonitorPower` | true | 1 | 0（同上） |
+| `Shutters` | true | 1 | 0（同上） |
+| `MonitorBoot` | true | 1 | **6**：`CBL1..3.Active false->true`、`CBL1..3.TempVal 140->791` |
+| `StartUp` | true | **0** | **2**：`BreachValCore false->true`、`HDEF.IntegrityVal 12->20` |
+| `HDEF PowerLever` | true | 1 | **5**：`IntegrityVal 20->66`、`OutputVal 0->61`、`PressureVal 20->3126`、`RadiationVal 360->474`、`TemperatureVal 0->4009` |
+
+再等 3 秒：**T 4009→7842、P 3126→6097、输出 61→120、辐射→583、HDEF 完整性→88**。
+**反应堆是被点着的**：温度从 0 起来、压力从 20 起来、输出从 0 到 120 GW。
+
+**③ `ClickDetector.MouseClick` 在客户端**不是判据** —— 它能在服务端已经动手时报 0。**
+上面那一格 `StartUp`：`MouseClick=0` 而 `Stats` 动了两个值；反过来另一次 `MouseClick=1`
+（`MonitorBoot` 之前按的）一个值都没动。**本地计数器不响的时候什么也不证明**（取舍 **427**）。
+
+**④ 第六步是破坏性的，而缺的东西不在那条链上。** `HDEF.IntegrityVal` 12→20→66→88→99 一路爬，
+我在三台 C-Pumps 全关的情况下把发电机开着就不再管它 → 操作员报 `HDEF Generator爆炸了`。
+**这条机制是他说的，不是我量的**（我只有那个单调数列）。**下次开机：先 C-Pumps，再 HDEF**
+（取舍 **429**）。
+
+**⑤ 结束时（客户端退出前）量到的状态：两半互相矛盾，要一起报。**
+`Stats.GameActive=true`、`OutputVal=144` GW、`TemperatureVal=9420 F`、`PressureVal=7320`、
+`RadiationVal 676→715` 在爬、六台风扇全 `true`、`CBL1..3.Active=true`（`TempVal 925`）；
+而 **T/P/输出 20 秒逐位不动**（只是停机积分器的形状），
+配额监视器 `PreStartupFrame` 仍写 `PENDING REACTOR ACTIVATION`、`GameStart=false`，
+Log 顶栏 `CORE COLLAPSE DETECTED - PLEASE WAIT WHILE THE REACTOR COMPLETES ITS AUTOMATED
+SHUTDOWN INSTRUCTIONS. ANY INTERRUPTIONS …`（**这句在我按任何东西之前就在**）。
+配额钟 **11:50 PM → 12:47 AM**，午夜过去了（Phase 71：午夜是开盘）。
+配额目标 `524 GW`，热控面板另有 `PRESSURE CONTROL SYSTEMS NONFUNCTIONAL` /
+`SYSTEM ERROR` / `CANNOT IDENTIFY ROOT CAUSE` / `TESSERACT QUANTUM MAINFRAME UNRESPONSIVE`
+（取舍 **430**）。
+
+**⑥ 我自己坏了两把尺子，都是「打印先截断」。** `tlab(therm, "F")` 匹配到的是
+`SYNTHESIS MANUFACTURING CO.`（`find("F")` 是子串测试，而那条标签全是印刷体大写）；
+监视器标签枚举 **117 条我只印了前 45 条**、Active 件 **26 件我只印了 12 件**，
+两次都是从截断的枚举里读出一个「没有」。**截断不报错。**（取舍 **428**）
+
+**通道**：daemon 的 `execute-script` 会在 `list-roblox-processes` 报 `connected:1`、pid 不变时
+回 `No Roblox executor is connected.`（§13.8 第三张脸）—— **重试一次就通了，而最后那次不通是真的**
+（操作员 `卡了卡了，我不小心退出游戏了`）。整个过程中驱动器那条路一直活着
+（`trg_drive_loop.txt` 的 `mtime` 就是当前时刻）。
+
+**没验的**：① 「反应堆开了」**在游戏自己的口径上没有成立**（`GameStart=false`、
+配额屏仍 `PENDING REACTOR ACTIVATION`）；② HDEF 过热的**机制没量**，只有操作员那句话；
+③ `温度监听那个变量好像有点问题` **没回答**（热控监视器的 117 条标签只枚举了一部分，
+且我没有在温度**动**的时候抓到它对应的那个读数）；④ 会话结束在**相机仍是
+`Enum.CameraType.Scriptable`**、角色停在控制台旁的状态。

@@ -1179,8 +1179,9 @@ See PROGRESS.md Phase 97 and DECISIONS 341 to 348.
 The state recorder (`_tools/TRG_original_state.luau`, tag `s2`) is read-only by construction:
 it never writes the world and it never presses anything. Pressing is what `fireclickdetector`
 is for, and `fireclickdetector` is an executor-side function - so it needed a second injected
-file. `_tools/TRG_original_drive.luau` (tag `d1` when this section was written; the current
-identity is `d4`) lives in the same executor VM and is driven
+file. `_tools/TRG_original_drive.luau` (tag `d1` when this section was written; it has moved
+on several times since - for its current identity read the table in `docs/RECORDER_HOWTO.md`
+section 13.9) lives in the same executor VM and is driven
 by a **command file**: I write `<seq> <verb> <args>` into `trg_cmd.txt` from Windows, it
 executes every sequence number it has not executed before, and appends the outcome to
 `trg_drive_log.txt`. The sequence is monotonic and the last one is persisted in
@@ -1209,6 +1210,9 @@ see `docs/RECORDER_HOWTO.md` section 13.9 and `docs/TODO.md` section 3.11.
 
 **Not verified: it has never pressed anything.** Every statement above about *how* it presses
 comes from reading its source, not from watching it run.
+
+*Superseded by Phase 106, below: that is the round it pressed the game's own
+switches and the reactor came up.*
 
 
 ### Phase 102-103 - the driver ran live, then the session was lost
@@ -1248,3 +1252,60 @@ client it caught (window handle 67336, attached 79 s later) was already running 
 started. Both later clients report `process_window: 0`. **Client first, then Solara.**
 
 See PROGRESS.md Phase 103 and DECISIONS 411 to 415.
+
+### Phase 106 - the boot chain, pressed for real
+
+The driver's fourth press route landed on the game's own switches this round, and the
+reactor came up. Four things here were measured rather than assumed.
+
+**What was blocking the click was not the button.** `UnlockUI` is a full-screen
+`TextButton` (`1151.2 x 714.4` at `0, -58`) and a `GetGuiObjectsAtPosition` census at
+the pixel reported it as the *only* Active object there. Hiding it is not the fix:
+with `UnlockUI.Visible = false` the press still counted `MouseClick=0`, and only
+`ScreenGui.Enabled = false` turned it into a landing press (`MouseClick=1`). Why
+`Visible` alone is not enough has two surviving readings; what *works* has one
+(DECISIONS 426).
+
+**A client-counted `ClickDetector.MouseClick` is not an oracle.** The press that did
+land on `StartUpBigLever` reported `MouseClick=0` while the server changed two
+replicated values; an earlier press that reported `MouseClick=1` changed none,
+because it came before `MonitorBoot`. `Workspace.Stats` - 32 `ValueBase`s, under the
+`Core` / `Fans` / `CBL1..3` / `HDEF` folders - is the only oracle (DECISIONS 427).
+
+**The chain, in the game's own order**, each step read as a before/after diff of
+`Stats`. The master start-up switch's own tooltip - *"Will beep green after proper
+control room boot-up"* - is literal, and the step it waits on is `MonitorBoot`:
+
+| step | part | `MouseClick` | `Stats` delta |
+|---|---|---|---|
+| RoomLight | `ALTReactorConsole...RoomLightButton.ClickPart` | 1 | none (lamps are not in `Stats`) |
+| MonitorPower | `ALTReactorConsole...MonitorPowerButton.ClickPart` | 1 | none |
+| Shutters | `ALTReactorConsole...ShuttersLever.ClickPart` | 1 | none |
+| MonitorBoot | `MainReactorConsole.MonitorBootButton.ClickPart` | 1 | 6 - `CBL1..3.Active false->true`, `CBL1..3.TempVal 140->791` |
+| StartUp | `MainReactorConsole.StartUpBigLever.StartClickPart` | 0 | 2 - `Core.BreachVal false->true`, `HDEF.IntegrityVal 12->20` |
+| HDEF PowerLever | `HDEFGenerator.PowerLever.ClickPart` | 1 | 5 - `IntegrityVal 20->66`, `OutputVal 0->61`, `PressureVal 20->3126`, `RadiationVal 360->474`, `TemperatureVal 0->4009` |
+
+Three seconds later: temperature 4009 -> 7842 F, pressure 3126 -> 6097 PSI, output
+61 -> 120 GW, HDEF integrity -> 88. Temperature and pressure both start at zero and
+the output comes off the floor, so this is the reactor lighting and not a readout
+moving.
+
+**The sixth step is the destructive one.** It was run with all three C-Pumps off and
+left that way, and `HDEF.IntegrityVal` climbed 12 -> 20 -> 66 -> 88 -> 99. The
+operator reported the outcome: *"HDEF Generator 爆炸了（其实是过热，开时间太长就会这样）"*.
+The mechanism is his, not mine - I only have the monotone series. **Next time: C-Pumps
+first, then the HDEF power lever** (DECISIONS 429). The operating procedure, with the
+per-step aim directions and the collector-hiding preamble, is `docs/TODO.md`
+section 3.11.10.
+
+**Two readings of "the reactor is on" disagree, and both belong in the report.**
+`Stats.GameActive=true`, `Core.OutputVal=144` GW and `TemperatureVal=9420 F`, while
+`Stats.GameStart=false`, the quota monitor's `PreStartupFrame` still read
+`PENDING REACTOR ACTIVATION`, and the log monitor's headline was `CORE COLLAPSE
+DETECTED - PLEASE WAIT WHILE THE REACTOR COMPLETES ITS AUTOMATED SHUTDOWN
+INSTRUCTIONS` - which was there *before* any of these presses. Temperature, pressure
+and output then sat byte-frozen for 20 s with only radiation creeping (676 -> 715),
+which is the shape of a shutdown integrator rather than a live core. The quota clock
+went 11:50 PM -> 12:47 AM, so midnight passed and the shift opened.
+
+See PROGRESS.md Phase 106 and DECISIONS 426 to 430.

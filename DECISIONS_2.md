@@ -6824,3 +6824,60 @@ ScreenGui 后代都加，去掉 inset 自然把它也带走。**一个会红的�
 **How to apply:** 对照**挑变异结构上碰不到的**输入 —— 这里换成两个 **inset 为零**的案子
 （`C_SURF` / `C_NONE`）：丢掉或减掉 inset，它们逐字节不动。改完 **9/9 变异各自红在指定那条上**、
 对照全绿。**「对照红了」不是测试坏了，是它不再是掩护** —— 对它要做的动作是**换**，不是删。
+
+## 426. 挡住点击的是 LayerCollector，不是那个按钮（Phase 106）
+
+**Why:** 在 `Workspace.Consoles.ThermalConsole.CFLever1.ClickPart` 上做四格梯子，每一格
+都在**开火那一刻**验过 `mouse.Target == ClickPart`：不出手 → `MouseClick=0`；
+`UnlockUI.Visible=false` → **仍然 0**；再 `+MouseGui.Enabled=false` → 0；
+再 `+ScreenGui.Enabled=false` → **1**。而 `PlayerGui:GetGuiObjectsAtPosition(575, 299)` 在那一像素上
+**只有一个** Active/可点件：`ScreenGui.UnlockUI`（`1151.2 × 714.4` @ `0, −58`，全屏）。
+两个读法都还活着（游戏把自己的锁写回 `true`，或 `Visible` 不是引擎命中测试用的那个属性），
+但**能用的操作只有一个**：把 `LayerCollector.Enabled` 置 `false`。
+**此前「把 `UnlockUI` 藏起来就能点」是错的** —— 它从来没有单独成立过。
+
+**How to apply:** 要往世界里点之前，**逐个关掉 `PlayerGui` 下的 `LayerCollector`**
+（`ScreenGui` / `MouseGui` 都要），用完同一步恢复；不要只藏某一个按钮的 `Visible`。
+判据用服务端复制出来的值（见 427），不要用本地信号。
+
+## 427. 本地数到的 `MouseClick` 可能是 0，而服务端已经动手了（Phase 106）
+
+**Why:** 落在 `MainReactorConsole.StartUpBigLever.StartClickPart` 上、**真的落地**的那一次
+（`Stats` 变了两个值：`BreachValCore false->true`、`HDEF.IntegrityVal 12->20`）报的是
+`MouseClick=0`；另一次报 `MouseClick=1` 的反而一个值都没动（那次在 `MonitorBoot` 之前按，
+被游戏自己挡了）。**两个方向都不一致。** 客户端 `MouseClick` 不是判据。
+
+**How to apply:** 点一下之后读**服务端的复制态**（这里是 `Workspace.Stats` 的 32 个 `ValueBase`）
+并做前后差。本地信号只能在**它响了**的时候当正证据；**它不响时什么也证明不了**。
+
+## 428. 被截断的枚举，不能拿来支撑一个否定（Phase 106）
+
+**Why:** 同一轮犯了两次。`GetGuiObjectsAtPosition` 的 33 件里「只有一个 Active」是从
+**打印了 12 of 26** 的那一段读出来的；Thermal 监视器 **117** 条非空 `TextLabel` 只看前 **45** 条，
+就写下「没有温度读数标签」。**两次都不是数据不支持，是打印先截断了。**
+同族 §0.20（数出来多少个，先问数的是谁）。
+
+**How to apply:** 任何「**没有 X**」的结论，先确认枚举**跑完了**：要么去掉上限，要么把上限
+写进那句结论（「前 45 条里没有」）。截断是**我看不见的**，它不会报错。
+
+## 429. HDEF 发电机不能单独开 —— 它的邻居是 C-Pumps（Phase 106，操作员报的）
+
+**Why:** 我把开机链第六步（`Consoles.HDEFGenerator.PowerLever`）走出去，而三台冷却泵
+一个都没开；`HDEF.IntegrityVal` 一路 `12 → 20 → 66 → 88 → 99` 单调爬。
+操作员原话：**「HDEF Generator爆炸了（其实是过热，开时间太长就会这样）」**。
+**机制不是我量的**（我只量到那条单调数列），**是他告诉我的** —— 两半分开写（同 §0.21）。
+
+**How to apply:** 再开机时**先开 C-Pumps（`ThermalConsole.CoolantControl1..3`）再开 HDEF**。
+那条六步链是我从游戏自己的工具提示（`"Will beep green after proper control room boot-up."`）
+加 Phase 61 的记录拼出来的，**其中只有最后一步在缺冷却时会造成破坏**。
+
+## 430. 「反应堆开着」有两个判据，而它们不一致（Phase 106）
+
+**Why:** 同一时刻：`Stats.GameActive=true`、`Core.OutputVal=144` GW、`TemperatureVal=9420 F`；
+而配额监视器 `PreStartupFrame` 仍写着 `PENDING REACTOR ACTIVATION`、`Stats.GameStart=false`，
+Log 监视器顶栏是 `CORE COLLAPSE DETECTED - PLEASE WAIT WHILE THE REACTOR COMPLETES ITS
+AUTOMATED SHUTDOWN INSTRUCTIONS. ANY INTERRUPTIONS …`。**机械读数说在跑，状态机说没有。**
+而且 T / P / 输出 **20 秒逐位不动**、只有辐射在爬（676→715）—— 那是停机积分器，不是活堆芯。
+
+**How to apply:** 报「开着」的时候**两半都报**（机械读数 + 游戏自己的状态字符串），不要挑一个
+当结论。注意那句 `CORE COLLAPSE DETECTED` 在我按**任何东西之前**就挂在顶栏上了。

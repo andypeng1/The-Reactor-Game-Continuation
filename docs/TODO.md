@@ -665,3 +665,37 @@ md5 **`4ce909d36e485ba9a3d964fb1375f173`**），桩也还在。
 
 **下一次真按之前先想**：这条规矩没有豁免，`d6` 也不会让 `pressAt` 更准 ——
 它只会让**别的**按钮第一次真的能被按到。
+
+#### 3.11.10 开机链怎么走（Phase 106 第一次真的走通）—— **先 C-Pumps，再 HDEF**
+
+**六步，按这个顺序**（顺序不是我排的，是游戏自己的工具提示和 Phase 61 的记录给的）：
+
+| # | 目标 | 路径（都在 `Workspace.Consoles` 下） | 命中方向 / 距离 |
+|---|---|---|---|
+| 1 | RoomLight | `ALTReactorConsole.ControlRoomSystems.RoomLightButton.ClickPart` | (0,0,1) / 4 |
+| 2 | MonitorPower | `ALTReactorConsole.ControlRoomSystems.MonitorPowerButton.ClickPart` | (0,0,1) / 4 |
+| 3 | Shutters | `ALTReactorConsole.ControlRoomSystems.ShuttersLever.ClickPart` | (0,0,1) / 4 |
+| 4 | MonitorBoot | `MainReactorConsole.MonitorBootButton.ClickPart` | (1,0,0) / 4 |
+| 5 | StartUp | `MainReactorConsole.StartUpBigLever.StartClickPart` | (1,0,0) / 4 |
+| 6 | **HDEF PowerLever** | `HDEFGenerator.PowerLever.ClickPart` | (0,0,1) / 5.2 |
+
+**前一步不做完，后一步是空的**：`MonitorBoot` 之前按 `StartUp` 得到的是**零个** `Stats` 变化
+（游戏自己挡掉），`MonitorBoot` 之后按同一个件，`Stats` 立刻动 —— 主开关的提示
+`"Will beep green after proper control room boot-up."` 是**字面的**。
+
+**第 6 步单独走会烧掉发电机**（Phase 106）：`HDEF.IntegrityVal` 会一路爬，操作员的原话是
+`HDEF Generator爆炸了（其实是过热，开时间太长就会这样）`。
+**先开 `ThermalConsole.CoolantControl1..3`**（三台 C-Pumps，各 `OnButton.ClickPart`），
+再走第 6 步。
+
+**要往世界里点，必须先把 `PlayerGui` 下的 `LayerCollector` 全部 `Enabled=false`** ——
+藏 `UnlockUI` 的 `Visible` **不够**（取舍 426）。用完同一步恢复。
+
+**判据只有一个**：服务端复制出来的 `Workspace.Stats`（32 个 `ValueBase`，路径在
+`Core.` / `Fans.` / `CBL1..3.` / `HDEF.` 四个文件夹下面）**前后差**。
+本地的 `ClickDetector.MouseClick` 计数**能在服务端已经动手时报 0**（取舍 427）。
+
+**六步各自的读数**（Phase 106 实测）：`MonitorBoot` → 三个 CBL 上电（`140 -> 791`）；
+`StartUp` → `BreachValCore false->true`、`HDEF.IntegrityVal 12->20`；
+`HDEF PowerLever` → `OutputVal 0->61`、`PressureVal 20->3126`、`TemperatureVal 0->4009`。
+前三个（灯 / 监视器电源 / 卷帘）**不在 `Stats` 里**，它们的证据只能是别的（灯的颜色、卷帘的 CFrame）。

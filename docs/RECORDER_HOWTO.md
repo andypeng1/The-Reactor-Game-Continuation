@@ -1836,3 +1836,58 @@ TextButton | game.Players.X.PlayerGui.Menu.StartShiftButton | false | START SHIF
 两个桩的坑见 `DECISIONS_2` **417 / 418**：桩缺一个 `Vector2.__sub` 会让 harness **抛错中止**
 （红在错的理由上，和一个真的抓到逐字节同形），而生成的 harness 必须 `io.write` 它的报告
 （`lua file.luau` 丢弃顶层 `return`，「全绿」和「没跑过」同形）。
+
+### 13.9.15 往原版世界里点一下的最小配方（Phase 106，第一次真的点动）
+
+**判据只有一个：服务端复制出来的值变了。** 本地的 `ClickDetector.MouseClick` 计数
+**能在服务端已经动手时报 0**（取舍 427），所以它只能当**正**证据用。
+
+**四个必须做对的地方**（每一个漏掉都是静默的）：
+
+1. **关掉 `PlayerGui` 下每一个 `LayerCollector` 的 `Enabled`** —— 只把 `UnlockUI.Visible`
+   置 false **不够**（实测那一格仍然 `MouseClick=0`；`Enabled=false` 才给 1）。用完恢复。
+2. **对准了再发火**：搜索候选方向，**要求 `mouse.Target == ClickPart` 在开火那一刻成立**。
+   打印 `tostring(cp and "cp")` 是**同义反复**（`cp` 恒真），量不到任何东西。
+3. **先传送、再发火**，而且**留出角色落位的时间**（`task.wait(0.4)` 之后重新取视口坐标）。
+4. **同一件要重试**：同一份配方下，六步里有一件第一次 `MouseClick=0`、换一个距离再来一次就中。
+
+```lua
+local UIS = game:GetService("UserInputService")
+local VIM = game:GetService("VirtualInputManager")
+local cam = workspace.CurrentCamera
+local lp  = game:GetService("Players").LocalPlayer
+local hrp = lp.Character.HumanoidRootPart
+local mouse = lp:GetMouse()
+local pg = lp.PlayerGui
+
+local hidden = {}
+for _, lc in ipairs(pg:GetChildren()) do
+  if lc:IsA("LayerCollector") and lc.Enabled then hidden[#hidden+1] = lc; lc.Enabled = false end
+end
+
+local cp  = --[[ 目标 ClickPart ]]
+local det = cp:FindFirstChildOfClass("ClickDetector")
+for _, d in ipairs({ Vector3.new(1,0,0), Vector3.new(0,0,1), Vector3.new(-1,0,0), Vector3.new(0,0,-1) }) do
+  hrp.CFrame = CFrame.new(cp.Position + d*4 + Vector3.new(0,3,0))
+  cam.CameraType = Enum.CameraType.Scriptable
+  cam.CFrame = CFrame.lookAt(cp.Position + d*6.5, cp.Position)
+  UIS.MouseBehavior = Enum.MouseBehavior.Default
+  task.wait(0.4)
+  local vp = cam:WorldToViewportPoint(cp.Position)   -- Vector3，不是 Vector2
+  VIM:SendMouseMoveEvent(vp.X, vp.Y, game) ; task.wait(0.3)
+  if mouse.Target == cp then
+    VIM:SendMouseButtonEvent(vp.X, vp.Y, 0, true,  nil, false) ; task.wait(0.14)
+    VIM:SendMouseButtonEvent(vp.X, vp.Y, 0, false, nil, false)
+    break
+  end
+end
+
+for _, lc in ipairs(hidden) do lc.Enabled = true end
+```
+
+**读回**：`Workspace.Stats` 的 32 个 `ValueBase`（值挂在 `Core.` / `Fans.` / `CBL1..3.` /
+`HDEF.` 四个**文件夹下面**，所以 `Stats:FindFirstChild("Fan1")` 回 `nil` 而 `Fans` 里
+明明有 —— 一次 `nil` 读出来长得和「没变化」一模一样）。
+
+**相机和角色**：`cam.CameraType` 和 `hrp.CFrame` 都要在同一段里存下来、结尾恢复 ——
+本次会话就是结束在相机还停在 `Scriptable` 上。
