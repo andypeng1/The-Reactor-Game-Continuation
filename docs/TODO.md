@@ -666,7 +666,7 @@ md5 **`4ce909d36e485ba9a3d964fb1375f173`**），桩也还在。
 **下一次真按之前先想**：这条规矩没有豁免，`d6` 也不会让 `pressAt` 更准 ——
 它只会让**别的**按钮第一次真的能被按到。
 
-#### 3.11.10 开机链怎么走（Phase 106 第一次真的走通）—— **先 C-Pumps，再 HDEF**
+#### 3.11.10 开机链怎么走（Phase 106 第一次真的走通）—— 而「先 C-Pumps，再 HDEF」是被操作员作废的那一条
 
 **六步，按这个顺序**（顺序不是我排的，是游戏自己的工具提示和 Phase 61 的记录给的）：
 
@@ -701,3 +701,32 @@ md5 **`4ce909d36e485ba9a3d964fb1375f173`**），桩也还在。
 `StartUp` → `BreachValCore false->true`、`HDEF.IntegrityVal 12->20`；
 `HDEF PowerLever` → `OutputVal 0->61`、`PressureVal 20->3126`、`TemperatureVal 0->4009`。
 前三个（灯 / 监视器电源 / 卷帘）**不在 `Stats` 里**，它们的证据只能是别的（灯的颜色、卷帘的 CFrame）。
+
+#### 3.11.11 班次结束之后（Phase 107）—— 报告屏只读，以及下一班的第一件事
+
+**现状**：反应堆点着（Phase 106）→ **失速**（`STALLOUT PREVENTION -$60000`）→
+`REACTOR ENERGY QUOTA NOT MET` → 七台监视器**全部**只剩 `ShutdownFrame`。
+`Stats`：`GameActive=false`、`CBL1..3.Active=false`、`ChamberGravity=false`、`ResetShift=true`、
+`NextShift=false`；`Core.TemperatureVal/PressureVal` **钉死**在 9420 / 7320。
+`A.E.R.N - SHIFT [1] REPORT` 摊开，`TOTAL -$263000`。
+
+**规矩没变**：`PostShiftButton` / `HoldButton` **只读不按**（§3.11.9）。
+要不要按 -> `QUESTIONS.md` **D7**。
+
+**下一班开起来之后的第一件事**（这条是 Phase 107 用 `-$263000` 换来的）：
+走完开机链第六步之后**立刻看压力斜率**，再动别的装置。
+判据是操作员自己的模型：`dP = floor(T/50) - 70*fans`；为负就**先关风扇** ——
+**失速是低压故障**，每个风扇 −60 PSI/tick，**关风扇抬压**。
+Phase 107 的算术：`T=9420`、6 台风扇 ⇒ `188 - 420 = -232 PSI/tick`，对 `StallPressure ≈ 2200`。
+
+**读监视器之前先算有效可见性**（取舍 **431**）：`Visible` × 每一层祖先 × `Enabled`
+（`LayerCollector`），再叠 `TextTransparency < 0.95`。
+**文档序第一个同名件不是屏上的那一个** —— Phase 107 里那六条 `StatusLabel` 藏在
+`FanFrame`（隐藏页）里，读出来是 `OFF ×6`，而同刻 `Stats.Fans.Fan1..6` 全是 `true`。
+
+**`Stats` 要按路径读**（取舍 **432**）：`FindFirstChild('Core.TemperatureVal', true)` 是**按名字**查，
+会把 32 个值**全**读成 `?`；用 `GetFullName()` 后缀当键。
+
+**温度那个问题还没结**（取舍 **434**）：`Stats.Core.TemperatureVal` 钉在 9420，
+而监视器 `MainMonitorFrame.ReadingsFrame.TempLabel` 从 `3731` 掉到 `1065`。
+要在**温度真的在动**的那一段同时抓两个读数 —— **而那一页必须在屏上**（现在被 `ShutdownFrame` 盖着）。

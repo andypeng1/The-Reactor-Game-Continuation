@@ -1680,3 +1680,46 @@ Phase 104 记的「`Post` / `Hold` 二选一」**不是客户端现在的状态*
 **没验的**：`d6` **一次都没在活客户端里跑过**（活 VM 里还是 `d4`）；
 `pressAt` 在真 VM 里仍然**零次**；daemon 的 `click-button` **是否也加 inset 没测**。
 
+
+**Phase 106（2026-10-09）—— 反应堆真的点着了，开机链六步一次走通，而第六步我把 HDEF 发电机开着、没开冷却泵。**
+操作员那句（继承的）`先把反应堆开机才能动其他装置啊` / `你反应堆都没开机！！！！！！！！！` 的落地。
+**五句能直接用的：① 六步链**（`RoomLight -> MonitorPower -> Shutters -> MonitorBoot -> StartUpLever -> HDEF-PowerLever`）
+**每一按都在第一次就落地**（`mouse.Target` 在开火那一刻验过，方向与距离 **`1,0,0@4.5`**），
+两秒之后 `Stats.GameActive` 翻 `true`、`Core.OutputVal` **144 GW**。**② 机架站在
+`sqrt(4.5^2+3^2) = 5.408` stud，而 62 个 `ClickDetector` 的 `MaxActivationDistance = 6.0` —— 在闸门内**：
+「按得到」这件事是**量出来的**，不是试出来的。**③ 收集器必须先关**
+（`LayerCollector.Enabled = false`，光设 `UnlockUI.Visible` 不够）—— 不关的话 `mouse.Target` 命中的是浮层，
+而**症状是零**。**④ 两处 `changed=0` 里只有一处是闸**：`MonitorBoot` 对着 **1000 键的 GUI 指纹**
+（`Workspace.Monitors` 下 `TextLabel`/`TextButton`/`SurfaceGui`/`Frame` 的 `Visible`/`Enabled`/
+`TextTransparency`/`BackgroundTransparency`/`Text`）前后**零变化** —— 那个否定**展开过**，站得住；
+而 StartUp 那一次的 `changed=0` **不是闸**（重按同一条件就把拉杆拨动了，取舍 **435**）。
+**⑤ `StartUpBigLever.LeverUnion` 的静息位是 `108.8817,280.1995,-0.6630`、启动位 `110.4322,279.6351,-0.6630`**，
+tween ≈ 0.2–0.4 s。**没验的**：① 操作员那句 `温度监听那个变量好像有点问题` **没回答**；
+② HDEF 发电机开着而冷却泵没开（操作员的第二句 `HDEF Generator过热是必然的，冷却没办法减缓`
+把「先开 C-Pumps」那条处方作废了，见下）；③ 会话结束时相机还停在 `Enum.CameraType.Scriptable`；
+④ 一次意外坠落把角色血量 **100 -> 40**。细节 `PROGRESS.md` 106。
+
+**Phase 107（2026-10-09）—— 反应堆点着之后失速了，而那条指令早就在我手上。**
+**四句能直接用的：① 结局是游戏自己的字**：七台监视器**全部**只剩 `ShutdownFrame` ——
+`REACTOR SHUTDOWN PROTOCOL` / `CORE COLLAPSE DETECTED…` / `REACTOR ENERGY QUOTA NOT MET`；
+`GameActive/CBL1..3.Active/ChamberGravity` 全 `false`、`ResetShift=true`、`NextShift=false`。
+**② 报告屏摊开着，我没按**：`A.E.R.N - SHIFT [1] REPORT`，
+`FAILED QUOTA PENALTY -$200000` + **`STALLOUT PREVENTION -$60000`** + `CBL DAMAGE -$40000`
+− `STRUCTUAL DAMAGE $37000` = **`TOTAL -$263000`**，`DEBT CEILING - $1,000,000`。
+全屏唯一可点件是 `PostShiftButton`（`HoldButton` 也在）—— **§3.11.9 的规矩没变：只读不按**，
+要不要按是操作员的钱与进度（`QUESTIONS.md` **D7**）。**③ 失速有三条独立通道指认**：
+告警板上 `STALLOUT POSSIBILITY` 是**全板唯一的蓝**（`0.00,0.67,1.00`）、报告屏单独收了一笔、
+以及算术 `floor(9420/50) - 70*6 =` **−232 PSI/tick** 对 `StallPressure ≈ 2200` ——
+**失速是低压故障，风扇是 −60 PSI/tick，所以关风扇是抬压**；操作员的 `快，先关一点风扇，不然会失速`
+**在失速之前就在我手上**，我没在它发生前动手（取舍 **436**）。
+**④ 三把尺子全是我的**：`FindFirstChild('Core.TemperatureVal', true)` 是**按名字**查 →
+32 个 `Stats` 值**全**读成 `?`（取舍 **432**）；`first(ui,'Name')` 跨页取件 →
+把隐藏页 `FanFrame` 里那六条 `StatusLabel` 读成「六台风扇自己关了」，
+而同刻 `Stats.Fans.Fan1..6` **全是 `true`**（取舍 **431**）——
+**读监视器前先算有效可见性**（自己的 `Visible` × 每一层祖先 × `LayerCollector.Enabled`，
+再叠 `TextTransparency < 0.95`）；`plr:PlayerGui` 是**属性**被当方法调（取舍 **433**）。
+**没验的**：失速的机制只有算术加两条独立通道、**没有逐 tick 的压力序列**；
+`温度监听…` 只拿到**两份不一致的读数**（`Stats.Core.TemperatureVal` 恒 **9420** vs
+监视器 `MainMonitorFrame.ReadingsFrame.TempLabel` **3731 -> 1065** —— 而那一页被 `ShutdownFrame` 盖着），
+**哪一份错没定**（取舍 **434**）；报告屏之后的班次**没有开始**。
+细节 `PROGRESS.md` 107，取舍 **431..437**，`docs/TODO.md` **§3.11.11**。

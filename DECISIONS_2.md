@@ -6883,3 +6883,85 @@ AUTOMATED SHUTDOWN INSTRUCTIONS. ANY INTERRUPTIONS …`。**机械读数说在�
 
 **How to apply:** 报「开着」的时候**两半都报**（机械读数 + 游戏自己的状态字符串），不要挑一个
 当结论。注意那句 `CORE COLLAPSE DETECTED` 在我按**任何东西之前**就挂在顶栏上了。
+
+## 431. 只在一张隐藏页上读到的读数，不是读数（Phase 107）
+
+**Why:** `ThermalControlRoomMonitor` 的六条 `StatusLabel`（都在 `FanFrame` 里）在一次 16 秒观测里
+从 `ON ON ON ON ON ON` 翻成 `OFF ×6`，我据此写下「六台风扇自己关了」；而**同刻**
+`Stats.Fans.Fan1..6` **全是 `true`**。原因：`FanFrame` 整页 `shown=false`（被别的页盖着）。
+同一轮里 `MainMonitorFrame.ReadingsFrame` 的 `TempLabel` / `PressureLabel` / `FluctuationLabel`
+也全是 `shown=false`，而它们的值**一直在动**（`3731->1065`、`582->-238`）。
+**隐藏页的文本由游戏照常更新** —— 所以「页被盖住」与「值在动」同时成立，
+**两者都不告诉你这一页在不在屏上**。
+
+**How to apply:** 读监视器上的任何东西之前先算**有效可见性**：
+自己的 `Visible`（`LayerCollector` 用 `Enabled`）**乘上每一层祖先**的同一个属性，
+再叠一层 `TextTransparency < 0.95`。`first(ui, 'Name')` 这种「文档序第一个同名件」的读法
+**必须废掉** —— 它跨页取件，取到哪一页是布局的巧合。同族 §0.2（读实例状态）。
+
+## 432. 按名字的递归查找，会把一条路径读成「不存在」（Phase 107）
+
+**Why:** `Stats:FindFirstChild('Core.TemperatureVal', true)` 问的是**名字等于
+`"Core.TemperatureVal"`** 的子件，而 `Core` 是文件夹、`TemperatureVal` 是它的孩子 ——
+于是 32 个值**全部**读成 `?`，而 `Stats` 好好的（`n=32`，键全在）。
+**上一轮同一次探测**用的是 `d:GetFullName():gsub('^Workspace%.Stats%.','')`，读到全部 32 个。
+**同一个对象、两个读法，一个好、一个「全空」。**
+
+**How to apply:** 带点的路径**不能**喂给 `FindFirstChild` / `WaitForChild` —— 要么逐段走，
+要么拿 `GetFullName()` 当键。**「全空」先怀疑读法**（§0.20：数出来多少个，先问数的是谁）。
+
+## 433. `plr:PlayerGui` —— 一个属性被当方法调（Phase 107）
+
+**Why:** 整段脚本以 `attempt to call a nil value` 中止，改掉一个字符（`:` -> `.`）就好。
+**这一族错误是好的**：它**响**（运行时错误），不像 431 / 432 那样安静地给出一个错答案 ——
+**安静的那个才要防。**
+
+**How to apply:** 属性用点、方法用冒号。运行时错误值得庆祝。
+
+## 434. 温度有两个读数，一个在掉、一个钉死（Phase 107）—— 这是 `温度监听那个变量好像有点问题` 的第一份数据
+
+**Why:** 同一时刻 `Stats.Core.TemperatureVal = 9420`（~60 次采样**逐位不变**）、
+`Core.PressureVal = 7320`（同），而监视器**被盖住的那一页**上
+`TempLabel 3731 -> 1065 F`、`PressureLabel 582 -> -238 PSI` 在动。
+**两者不是同一个量**（9420 vs 1065）。**机制没定** —— 我列得出两种读法
+（停机积分器的残留值 / 一张不随状态切换的旧页），**都不能排除**。
+把更简单那个解释否掉的是：`Core.RadiationVal` 在 `785 -> 460` 动过 ——
+所以**不是「`Stats` 整个不写了」**。
+
+**How to apply:** 报温度一律**点名是哪一个字段**（`Stats.Core.TemperatureVal`，还是监视器
+`MainMonitorFrame.ReadingsFrame.TempLabel`）。**要定机制，必须在温度真的在动的那一段里同时抓两个读数**，
+而那时监视器必须停在**读数页**上（本轮它停在 `ShutdownFrame`）。
+
+## 435. 一次 `changed=0` 的按压，不是闸门的证据（Phase 107）
+
+**Why:** 同一套机架、同一个 `ClickPart`、同一个方向与距离（`1,0,0@4.5`，
+`mouse.Target == part` 在开火那一刻验过）：一次回 `changed=0`，**下一次把拉杆拨动了**
+（`LeverUnion 108.8817 -> 110.4322`，t≈0.2–0.4 s）。**两次输入逐字节相同，结果不同** ——
+所以单次 `changed=0` 分不开「游戏挡掉」与「这一下没按到」；**第一次为什么没按到，没定。**
+
+**How to apply:** 要下「这一步按不动」这种否定，**同一条件重复几次**，
+并且**先把枚举展开**（Phase 106 那个 `MonitorBoot` 的否定能站住，是因为它对着 1000 键的
+GUI 指纹**零变化**）。同族 **427**（本地 `MouseClick` 不是判据）、**428**（截断的枚举支撑不了否定）。
+
+## 436. 反应堆点着之后失速了，而那条指令早就在我手上（Phase 107）
+
+**Why:** 报告屏逐行是 `FAILED QUOTA PENALTY -$200000`、**`STALLOUT PREVENTION -$60000`**、
+`CBL DAMAGE -$40000`、`TOTAL -$263000`；告警板上 `STALLOUT POSSIBILITY` 是**全板唯一的蓝**
+（`0.00,0.67,1.00`）。算术用操作员自己的模型：`floor(9420/50) - 70*6 = -232 PSI/tick`，
+对 `StallPressure ≈ 2200`。**六个风扇全开、温度 9420 时压力站不住。**
+操作员原话 `快，先关一点风扇，不然会失速` **在失速之前就说过** —— 我没在它发生前动手。
+
+**How to apply:** 开机链走完之后，**第一件事是看压力斜率**，不是继续走别的装置：
+`floor(T/50) - 70*fans` 为负就**先关风扇**。**失速是低压故障**，风扇是 **−60 PSI/tick**，
+所以**关风扇是抬压**。这条现在有代价：一个班次（`-$263000`）。
+
+## 437. 班次结算屏只有操作员能按（Phase 107）—— 而它现在开着
+
+**Why:** 报告屏开着（`A.E.R.N - SHIFT [1] REPORT`，`TOTAL -$263000`），全屏唯一可点件是
+`PostShiftButton`（`HoldButton` 也在）。按它 = 确认结算 + 进 `Shift [2]`，
+而那是**操作员的钱与进度**。§3.11.9 的规矩没变，**这一轮我没按**。
+我观测的二十秒里 `ResetShift` 恒 `true`、`NextShift` 恒 `false`，**没有任何自发的重置**；
+**能不能绕开那个按钮我不知道，也没试。**
+
+**How to apply:** 报告屏只读。要开始下一班**得他按**，或者他明确授权我按（`QUESTIONS.md` **D7**）。
+不要为了「让进度往前走」去按它 —— 进度不是我的。

@@ -12009,3 +12009,68 @@ SHUTDOWN INSTRUCTIONS. ANY INTERRUPTIONS …`（**这句在我按任何东西之
 ③ `温度监听那个变量好像有点问题` **没回答**（热控监视器的 117 条标签只枚举了一部分，
 且我没有在温度**动**的时候抓到它对应的那个读数）；④ 会话结束在**相机仍是
 `Enum.CameraType.Scriptable`**、角色停在控制台旁的状态。
+
+**Phase 107（2026-10-09）—— 反应堆点着了，然后它失速了：一条早就递到手上的指令，和三个把我读错的尺子。**
+
+Phase 106 把反应堆点着，这一轮接着看它跑 —— 结局是 `REACTOR SHUTDOWN PROTOCOL` /
+`REACTOR ENERGY QUOTA NOT MET`，报告屏已经摊开。**这一轮没改任何代码，全部是测量**；
+产物是下面这些数，外加三把被自己量坏的尺子。
+
+**① 结局在游戏自己的字里。** 七台监视器**全部**只剩 `ShutdownFrame` 一页 ——
+`REACTOR SHUTDOWN PROTOCOL`、`CORE COLLAPSE DETECTED - PLEASE WAIT WHILE THE REACTOR COMPLETES
+ITS AUTOMATED SHUTDOWN INSTRUCTIONS…`、`REACTOR ENERGY QUOTA NOT MET`。
+`Stats` 同刻：`GameActive true->false`、`CBL1..3.Active true->false`、`ChamberGravity true->false`、
+`ResetShift=true`、`NextShift=false`；`GameFail=false`、`MainframeMeltdown=false`、`Core.BreachVal=false`。
+`Core.TemperatureVal=9420` / `PressureVal=7320` / `OutputVal=144` / `RadiationVal=460` /
+`HDEF.IntegrityVal=99` —— **一个字都不动**（12 秒 × 11 个键，逐位相同）。
+
+**② 报告屏（`EndGameFrame1`，全屏唯一可点件是 `PostShiftButton`）。**
+`A.E.R.N - SHIFT [1] REPORT`，逐行：`FAILED QUOTA PENALTY -$200000` / `H.D.E.F GEN DAMAGE $0` /
+**`STALLOUT PREVENTION -$60000`** / `RADIATION DAMAGE $0` / `CBL DAMAGE -$40000` /
+`STRUCTUAL DAMAGE $37000`（**正数**，是减项）/ `ENERGY PRODUCED $0` / 其余全 `$0` /
+**`TOTAL -$263000`**，`DEBT CEILING - $1,000,000`。**没有按。**（§3.11.9：那两个按钮结算的是
+操作员的班次。）
+
+**③ 「失速」有三条互相独立的通道在指认，其中一条是我算的。**
+告警板上 `STALLOUT POSSIBILITY` 的板色是 **`0.00,0.67,1.00`（全板唯一的蓝）**，同板其余是黄
+`1,1,0` / 红 `1,0,0` / 紫 `0.67,0,1`；报告屏单独收了 `STALLOUT PREVENTION -$60000`。
+算术用操作员自己的模型（Phase 98.14/98.16 落进交付的那条）：`floor(T/50) - 70*fans`，
+`T=9420` ⇒ `188 - 420 =` **−232 PSI/tick**，对 `StallPressure ≈ 2200`。
+**六个风扇全开 + 温度 9420 时压力不可能站住。**
+操作员的 `快，先关一点风扇，不然会失速` **在这件事发生之前就在我手上** —— 我没在失速前动手，
+**这是本轮的漏，不是发现**（取舍 **436**）。
+
+**④ 三把尺子，全是我的，全是「读到了别的东西」。**
+
+| 症状 | 真因 | 取舍 |
+|---|---|---|
+| 32 个 `Stats` **全**读成 `?` | `FindFirstChild('Core.TemperatureVal', true)` 是**按名字**递归查，而名字里没有点号 | **432** |
+| 「六台风扇自己关了」 | 那 6 条 `StatusLabel` 在 `ThermalControlRoomMonitor` 的 `FanFrame` 里，`shown=false`；同刻 `Stats.Fans.Fan1..6` **全是 `true`** | **431** |
+| 整段脚本 `attempt to call a nil value` | `plr:PlayerGui` —— `PlayerGui` 是**属性**，冒号把它当方法调 | **433** |
+
+**⑤ 操作员那一句 `温度监听那个变量好像有点问题` 现在有数了（但机制没定）。**
+`MainMonitorFrame.ReadingsFrame` 这**一页**（`shown=false`，被 `ShutdownFrame` 盖着）里的读数**一直在动**：
+`TempLabel` **3731 → 1065 F**、`PressureLabel` **582 → −238 PSI**、`FluctuationLabel` 恒 `-840 F`；
+而同刻 `Stats.Core.TemperatureVal` **恒 9420**、`Core.PressureVal` **恒 7320**（~60 次采样逐位相同）。
+**两个温度读数，一个在掉、一个钉死，而且它们不是同一个量。**
+机制**没定**：两种读法（停机积分器的残留值 / 一个不随状态切换的旧页）都没被排除，
+**我没在温度真的动的时候抓到对应的那个字段**（取舍 **434**）。
+另一条同时成立、把更简单的解释否掉的是 `Core.RadiationVal` 在 `785 -> 460` 动过 ——
+所以「`Stats` 整个不写了」**是错的**。
+
+**⑥ 这一轮唯一一次按压没按动，而它自己证明不了为什么。**
+同一套机架、同一个件、同一个方向与距离（`1,0,0@4.5`，`mouse.Target == part` 在开火那一刻验过）：
+一次回 `changed=0`，**下一次把拉杆拨动了**（`LeverUnion 108.8817 -> 110.4322`，t≈0.2–0.4 s，是 tween）。
+所以**单次 `changed=0` 分不开「游戏挡了」和「这一下没按到」**（取舍 **435**）。
+能站住的否定只有展开过的那一个：`MonitorBoot` 对着 **1000 键的 GUI 指纹**（`Workspace.Monitors` 下
+`TextLabel`/`TextButton`/`SurfaceGui`/`Frame` 的 `Visible`/`Enabled`/`TextTransparency`/
+`BackgroundTransparency`/`Text`）前后**零变化**。
+
+**通道**：`mcp__roblox-mcp-difz__execute-script`，pid 18308，`localhost:28429`。
+`MaxActivationDistance = 6.0`（`Workspace.Consoles` 下 62 个 `ClickDetector` 逐个读过），
+机架站在 `sqrt(4.5^2+3^2) = 5.408` stud —— **在闸门内**。
+
+**没验的**：① 失速的**机制**只有算术加两条独立通道，**没有逐 tick 的压力序列**
+（`Stats.Core.PressureVal` 全程钉死，那一路读不到）；② `温度监听…` 只拿到**两份不一致的读数**，
+哪一份错**没定**；③ 报告屏之后的班次（`Shift [2]`）**没有开始**，能不能绕开那个按钮我不知道、
+也没试；④ 一次意外坠落把角色血量从 **100 打到 40** —— 我没修，**这里记着**。
