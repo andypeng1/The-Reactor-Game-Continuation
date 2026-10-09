@@ -683,10 +683,12 @@ md5 **`4ce909d36e485ba9a3d964fb1375f173`**），桩也还在。
 （游戏自己挡掉），`MonitorBoot` 之后按同一个件，`Stats` 立刻动 —— 主开关的提示
 `"Will beep green after proper control room boot-up."` 是**字面的**。
 
-**第 6 步单独走会烧掉发电机**（Phase 106）：`HDEF.IntegrityVal` 会一路爬，操作员的原话是
-`HDEF Generator爆炸了（其实是过热，开时间太长就会这样）`。
-**先开 `ThermalConsole.CoolantControl1..3`**（三台 C-Pumps，各 `OnButton.ClickPart`），
-再走第 6 步。
+**第 6 步会烧掉发电机，而冷却不是杠杆**（Phase 106）：`HDEF.IntegrityVal` 会一路爬
+（实测 `12→20→66→88→99`）。操作员两句原话：
+`HDEF Generator爆炸了（其实是过热，开时间太长就会这样）`、
+**`HDEF Generator过热是必然的，冷却没办法减缓`**。
+**规则只有「别让它一直开着」** —— 我先前按第一句写的「先开 C-Pumps 再走第 6 步」
+**已被他第二句作废**，别照着做。
 
 **要往世界里点，必须先把 `PlayerGui` 下的 `LayerCollector` 全部 `Enabled=false`** ——
 藏 `UnlockUI` 的 `Visible` **不够**（取舍 426）。用完同一步恢复。

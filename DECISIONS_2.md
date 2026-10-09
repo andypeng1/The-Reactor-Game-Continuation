@@ -6860,16 +6860,18 @@ ScreenGui 后代都加，去掉 inset 自然把它也带走。**一个会红的�
 **How to apply:** 任何「**没有 X**」的结论，先确认枚举**跑完了**：要么去掉上限，要么把上限
 写进那句结论（「前 45 条里没有」）。截断是**我看不见的**，它不会报错。
 
-## 429. HDEF 发电机不能单独开 —— 它的邻居是 C-Pumps（Phase 106，操作员报的）
+## 429. HDEF 发电机开着就会过热，而冷却不是杠杆（Phase 106，操作员两次更正）
 
-**Why:** 我把开机链第六步（`Consoles.HDEFGenerator.PowerLever`）走出去，而三台冷却泵
-一个都没开；`HDEF.IntegrityVal` 一路 `12 → 20 → 66 → 88 → 99` 单调爬。
-操作员原话：**「HDEF Generator爆炸了（其实是过热，开时间太长就会这样）」**。
-**机制不是我量的**（我只量到那条单调数列），**是他告诉我的** —— 两半分开写（同 §0.21）。
+**Why:** 我把开机链第六步（`Consoles.HDEFGenerator.PowerLever`）开着就不再管它，
+`HDEF.IntegrityVal` 一路 `12 → 20 → 66 → 88 → 99` 单调爬（**这一段是我量的**）。
+操作员两句话，第二句把第一句给的那个解法也否掉了：
+「HDEF Generator爆炸了（其实是过热，开时间太长就会这样）」→
+**「HDEF Generator过热是必然的，冷却没办法减缓」**。
 
-**How to apply:** 再开机时**先开 C-Pumps（`ThermalConsole.CoolantControl1..3`）再开 HDEF**。
-那条六步链是我从游戏自己的工具提示（`"Will beep green after proper control room boot-up."`）
-加 Phase 61 的记录拼出来的，**其中只有最后一步在缺冷却时会造成破坏**。
+**我把第一句读成了「缺冷却」，于是写下「先开 C-Pumps 再开 HDEF」—— 那条处方作废。**
+能用的规则只剩一句：**别让那台发电机一直开着**；C-Pumps 不是它的解药。
+（原版这一族系统本来就没做完 —— Phase 74 量到那段手册自己盖着 `{wip system}` 的章。）
+**没定的是**「把电源杆关掉之后 `IntegrityVal` 会不会回落」：那是可以量的，还没量。
 
 ## 430. 「反应堆开着」有两个判据，而它们不一致（Phase 106）
 

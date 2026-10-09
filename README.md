@@ -1290,13 +1290,13 @@ Three seconds later: temperature 4009 -> 7842 F, pressure 3126 -> 6097 PSI, outp
 the output comes off the floor, so this is the reactor lighting and not a readout
 moving.
 
-**The sixth step is the destructive one.** It was run with all three C-Pumps off and
-left that way, and `HDEF.IntegrityVal` climbed 12 -> 20 -> 66 -> 88 -> 99. The
-operator reported the outcome: *"HDEF Generator 爆炸了（其实是过热，开时间太长就会这样）"*.
-The mechanism is his, not mine - I only have the monotone series. **Next time: C-Pumps
-first, then the HDEF power lever** (DECISIONS 429). The operating procedure, with the
-per-step aim directions and the collector-hiding preamble, is `docs/TODO.md`
-section 3.11.10.
+**The sixth step is the destructive one.** It was left running, and `HDEF.IntegrityVal`
+climbed 12 -> 20 -> 66 -> 88 -> 99. The operator reported the outcome: *"HDEF Generator
+爆炸了（其实是过热，开时间太长就会这样）"*, and then corrected the fix I inferred from it: *"HDEF Generator
+过热是必然的，冷却没办法减缓"* - **cooling does not slow it down.** The rule is
+only *do not leave that generator running*; the C-Pumps are not its remedy (DECISIONS
+429). The operating procedure, with the per-step aim directions and the
+collector-hiding preamble, is `docs/TODO.md` section 3.11.10.
 
 **Two readings of "the reactor is on" disagree, and both belong in the report.**
 `Stats.GameActive=true`, `Core.OutputVal=144` GW and `TemperatureVal=9420 F`, while
