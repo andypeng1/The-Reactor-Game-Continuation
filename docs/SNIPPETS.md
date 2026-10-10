@@ -1588,3 +1588,93 @@ end)
 整张 0.13 s 刷新一遍）**留着当保险，不当必需**（取舍 451）。
 
 细节 `PROGRESS.md` 110，取舍 **449..453**，`docs/SYSTEMS.md` **§2.19**，`docs/TODO.md` **§3.11.13**。
+
+
+---
+
+## 5.26 演奏一份 MIDI 的音符（+ 两把编错的尺子，和它们为什么必须**换掉**而不是调一下）★ Phase 112
+
+上手 `_tools/music/midi_song.py`。三个可以单独抄走的片段，每个都配**它为什么长这样**。
+
+### 一、源是**音符**时，「量出来的规格」长什么样
+
+`analyze.py` 量的是**音频**，所以关于速度的一切都是猜的。MIDI 把答案当**数据**带着走
+（division / tempo 事件 / 拍号 / note-on/off tick），所以它是**另一种尺子**：
+它不估计那个格，**它就是那个格**。用它之前先做一次 `--compare`（`midi_grid.py`）——
+两首不同的曲子也会共享一堆音级，所以问法要**先旋转再问空档**，不是直接问。
+
+```python
+# 每小节音符数 -> 段落标签：这个文件的形状是它自己说出来的，不是我定的
+counts, lows, pcs = bar_stats(src, n_bars)   # 每小节 [音符数, 最低响音, 音级集合]
+segs = sections(counts)                      # full / thin / sparse，相邻同类合并
+```
+
+**四个层全部照这条走**：结构 ← `counts`；踏板 ← 每四分格的 `lows`（贝斯根音）；
+sub ← 每小节的 `lows`；pad ← 每小节的 `pcs`。
+**做决定的那一行旁边，把被否掉的那条也印出来** —— 这样「我选了 A」当场就是**数**，不是一句话。
+
+```python
+say(lines, "  pedal rule: bass root -> %d changes; the sounding-set rule would"
+           " give %d (rejected)" % (len(changes), len(other)))
+```
+
+### 二、两把**编错的尺子**，以及「换掉」的判据
+
+两条都是**看起来会通过**的检查。判据不是「结果不好看」，是**它在对照上表现不对**。
+
+**(1) 相关峰落在梳齿上 → argmax 不是测量。**
+源文件每个音都在十六分格上，于是 flux↔onset-train 的相关是**梳子**，
+齿与齿**分数打平**（0.240 / 0.224 / 0.224 / 0.215，而物理预测的 −2 帧是 0.215）。
+宽窗取 max = 报出**哪颗齿碰巧赢了**。改法有两半，缺一不可：
+
+```python
+grid_fr = tick_s(src, src['tpq'] / 4.0) * SR / hop   # 十六分 = 21.5 帧
+half    = max(2, int(round(grid_fr / 2.0)))          # 窗只要半格 —— 齿进不来
+pred    = -n / (2.0 * hop)                           # STFT 帧自己的中心化，是**预言**
+win     = cc[c - half:c + half + 1]
+lag     = int(np.argmax(win)) - half
+ok      = peak > 0.15 and abs(lag - pred) <= 2.5 and ratio > 3.0
+```
+
+**并且齿的分数照印**（`alias`）。「相关分不开零和一个十六分」正是窗必须窄的理由；
+把齿藏起来、只印赢的那个数，这条检查就变成便宜话了。
+
+**(2) 排名测试拿**全数**基准比**带通**测量 → 它量的是音色不是音符。**
+`top-4 音级` 在**录音**上全对（r 0.894），换到合成音色上就不对（B 10.84% vs 源 4.70%），
+因为带通里**高音露基频、低音只露泛音**。换成**旋转检验**（有零点差：另外 11 个移调）：
+
+```python
+def key_rotation(au, ref):
+    best = None
+    for s in range(12):
+        rr = float(np.corrcoef(au, np.roll(ref, s))[0, 1])
+        if best is None or rr > best[1]:
+            best = ((s if s <= 6 else s - 12), rr)
+    return best          # 零旋转 r +0.813 胜出，次好 +0.508
+```
+
+**顺带补一把绝对的尺子**：网格量化让「整首平移一个十六分」在相关里**不可见**，
+但**曲子的开头是唯一的** —— 第一个音在 tick 0 就该在采样 0 发出一记起音，不是 250 ms 静音。
+
+### 三、母带：响度目标要是**不动点**，打击层要按**峰值**定级
+
+```python
+want, ceil = 10 ** (TARGET_RMS_DB / 20.0), 10 ** (PRE_CEIL_DB / 20.0)
+for it in range(4):
+    cur = float(np.sqrt(((0.5 * (L + R)) ** 2).mean()))   # 括号：0.5*(L+R)**2 会高 √2
+    L, R = L * (want / max(1e-12, cur)), R * (want / max(1e-12, cur))
+    pk  = max(float(np.abs(L).max()), float(np.abs(R).max()))
+    L, R = L * min(1.0, ceil / pk), R * min(1.0, ceil / pk)
+    L, R = dsp.limiter_stereo(L, R, SR, CEIL_DB, 8.0, 60.0)
+    if abs(dsp.rms_db(0.5 * (L + R)) - TARGET_RMS_DB) <= 0.25:
+        break
+```
+
+**三条为什么**：① 在峰值保护**之前**加的增益不是到达文件的增益（保护会拿走一部分），
+所以目标是**不动点**不是一步；② `0.5 * (L + R) ** 2` 是 `0.5 * ((L+R)**2)`，高 √2 且**不报错**
+（指纹：一趟 gain 1.0000 却稳定偏离 √2——**算式错，不是被控对象错**）；
+③ **打击层按峰值定级** —— `marks` 原来跟着 sub/pad 用 RMS，峰值冲到 1.0261，
+母带的余量保护于是把**整首**降 6 dB（交付 −22.01 vs 目标 −16.00）。
+一个瞬态的 RMS 只是它峰值的一小撮，**按信号的性质选尺子，不是按项目里其他层用了什么**。
+
+细节 `PROGRESS.md` 112，取舍 **463..469**，`docs/SYSTEMS.md` **§2.20**，`docs/TODO.md` **§3.6**。

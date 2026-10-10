@@ -365,6 +365,14 @@
 
 ---
 
+**2026-10-11 追补（Phase 112）—— 那份 MIDI 已经有主了，第二个兄弟也建好了。**
+`M1` 答的是 **A（渲染成音频）**，交付 `asstes/music/ReconstructingMoreScience.{ogg,mp3}`（96.000 s），
+渲染器是 `_tools/music/midi_song.py`（跑法和纪律见 `docs/SYSTEMS.md` §2.20）。
+**仍然卡住的一件事没变**：送进游戏里要 `ROBLOX_OPEN_CLOUD_API_KEY`（`asset:write`）+ creator id，
+**两个都没设** —— 所以「游戏内音乐」这条路的**最后一公里还是走不通**，和 Phase 111 时一样。
+三份音频（`ReactorShift` / `ReactorStartup_Remix` / `ReconstructingMoreScience`）
+现在都在 `asstes/music/` 躺着等人拖进去。
+
 ### 3.7 世界的「搬运」规矩，与 Phase 96 留下的四笔账
 
 **规矩（Phase 96 之后，任何一次动世界之前先过这一条）：**
@@ -832,3 +840,4 @@ Play 起来之后按第 2 条读**实例状态**，**第一次就否掉了原来
 - **一次棋盘格至今没有解释**：早先看到「客户端自建的透镜在持续改写之后变成棋盘格」，
   今天 `stride = 1` 与 `stride = 4` 各跑满 4 分钟都不复现（取舍 451）。
   分片（`CFG.SLICE_STRIDE = 4`）留着当保险。**如果操作员在真机上又看到棋盘格，这就是要追的那条线索。**
+

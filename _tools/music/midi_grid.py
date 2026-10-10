@@ -113,12 +113,17 @@ def parse(path):
             j += 2
             key = (st & 0x0F, pitch)
             if hi == 0x90 and vel > 0:
-                open_notes[key].append(tick)
+                open_notes[key].append((tick, vel))
                 t['chans'][st & 0x0F] = t['chans'].get(st & 0x0F, 0) + 1
             elif hi == 0x80 or (hi == 0x90 and vel == 0):
                 if open_notes[key]:
-                    on = open_notes[key].pop()
-                    t['notes'].append((on, tick, pitch, st & 0x0F))
+                    on, von = open_notes[key].pop()
+                    # The SECOND data byte of the note-on is the velocity; the
+                    # second byte of the note-off is the release velocity, which
+                    # by convention is 0.  Reading the latter reports "every
+                    # note has velocity 0", which is a statement about the
+                    # wrong event, not about the file.
+                    t['notes'].append((on, tick, pitch, st & 0x0F, von))
         t['length'] = tick
         tracks.append(t)
         i = end
@@ -134,7 +139,7 @@ def seconds(ticks, tpq, us_per_quarter=1_000_000):
 
 
 def chroma(notes, weight='count'):
-    """12-vector from (on, off, pitch, ch) events.
+    """12-vector from (on, off, pitch, ch, vel) events.
 
     `count` is how many times a pitch sounds; `duration` is how long it sounds
     for.  They disagree the same way RMS and peak do -- a piano's left hand
@@ -142,7 +147,8 @@ def chroma(notes, weight='count'):
     chroma claim has to say which one it used.
     """
     v = np.zeros(12)
-    for on, off, pitch, _ch in notes:
+    for n in notes:
+        pitch, off, on = n[2], n[1], n[0]
         v[pitch % 12] += 1.0 if weight == 'count' else max(0, off - on)
     return v / (v.sum() or 1.0)
 
@@ -212,13 +218,22 @@ def report(mid, lines):
     allnotes = []
     problems = []
     for k, t in enumerate(mid['tracks']):
-        ps = [p for (_on, _off, p, _c) in t['notes']]
+        ps = [x[2] for x in t['notes']]
+        vs = [x[4] for x in t['notes']]
         lines.append('  track %d  "%s"  %d ticks  %d sounding notes'
                      % (k, t['name'], t['length'], len(t['notes'])))
         if ps:
             lines.append('     pitch %d..%d   programs %s   channels %s'
                          % (min(ps), max(ps), sorted({v for _tk, v in t['progs']}),
                             sorted(t['chans'])))
+            # Printed because one velocity per track and one velocity per note
+            # are different compositions.  A step-entered file usually carries
+            # the balance and none of the phrasing, and the renderer has to know
+            # which of those it is being handed.
+            lines.append('     velocity %d..%d (%d distinct)%s'
+                         % (min(vs), max(vs), len(set(vs)),
+                            '  <- constant: the file states a mix, not a phrasing'
+                            if len(set(vs)) == 1 else ''))
         if t['tempos']:
             for tk, us in t['tempos'][:6]:
                 lines.append('     tempo at tick %d: %d us/quarter = %.4f bpm'

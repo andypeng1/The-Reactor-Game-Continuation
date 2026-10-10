@@ -196,6 +196,18 @@ asstes/music/ReactorStartup_Remix.report.txt
 #     grid -- it just does not go up. ---
 asstes/music/*.mid
 
+# --- the MIDI render (asstes/music/ReconstructingMoreScience.*) is the third
+#     case and the one where the derivation is thinnest: it is not built by
+#     sampling the recording, it is built by PLAYING the transcription's notes,
+#     so it reproduces the composition itself rather than pointing at it.  Same
+#     call as the other two -- the operator asked for it knowing what it is, and
+#     keeping it out of a public repo is the half that is mine.  The report is
+#     ignored with it for the same reason it was last time: it carries the
+#     arrangement's parameters in full. ---
+asstes/music/ReconstructingMoreScience.mp3
+asstes/music/ReconstructingMoreScience.ogg
+asstes/music/ReconstructingMoreScience.report.txt
+
 # --- _tools/music/out/ is the render chain's scratch: the 46 MB intermediate
 #     .wav that gets encoded to ogg/mp3, and stems.npz, the cached mono stems
 #     that make stereo re-assembly cost seconds instead of a six-minute

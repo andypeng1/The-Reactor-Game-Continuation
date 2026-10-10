@@ -1291,6 +1291,51 @@ python _tools/music/midi_grid.py path/to/file.mid
 python _tools/music/midi_grid.py path/to/file.mid --compare asstes/music/ReactorStartup.mp3
 ```
 
+## The MIDI render - `asstes/music/ReconstructingMoreScience.{ogg,mp3}`
+
+The operator's answer to `M1` was `A` -- render it to audio -- and these are the
+files: 96.000 s, 23 bars at 60 bpm, built from the 936 notes in the `.mid` he
+put in `asstes/music/`.
+
+It is the third sibling in `_tools/music/`, not a third mode:
+`make_song.py` composes, `remix.py` samples a recording, and
+**`midi_song.py` plays a MIDI's own notes**. Every arrangement layer is measured
+off the source rather than chosen:
+
+- the section map comes from the file's own per-bar note counts;
+- the pedal follows the bass root on a quarter-note grid (42 changes), and the
+  rejected rules print the same run so the choice is data, not taste;
+- the sub doubles each bar's lowest sounding note, the pad voices each bar's own
+  pitch classes, and the marks land only on measured section boundaries (3).
+
+Two of its checks had to be **replaced rather than tuned**, and the reason is
+worth carrying:
+
+- **An argmax over aliases is not a measurement.** Every onset in this file sits
+  on a sixteenth (250 ms = 21.5 frames), so the onset correlation is a comb with
+  teeth at +19 / -24 / +41 / -46 frames scoring 0.240 / 0.224 / 0.224 / 0.215 --
+  and the alignment the physics predicts (-2 frames) scores 0.215. The first
+  version took the maximum over a wide window and reported "lag +19 frames
+  (221 ms)", a whole sixteenth of nothing. The window is now half a grid wide
+  and the lag is tested against `-n/(2*hop)`, with the alias printed beside it.
+- **A top-4 pitch-class ranking is not a note test.** The reference counts every
+  note once; the measurement is an FFT in 300-3000 Hz, where a high note shows
+  its fundamental and a low one only its harmonics -- so the band couples weight
+  to register (B reads 10.84% against the source's 4.70%). That band was tuned
+  on the *recording*, where the top-4 came out right; on a synthetic voice it
+  does not. It is replaced by asking which of the twelve rotations fits best,
+  which has a null: zero wins at r +0.813 against +0.508 for the next.
+
+The master's loudness target is a **fixed point** (normalise, limit, measure,
+repeat) rather than a step, the mix is trimmed to a stated length, and a
+percussive bus is levelled by peak rather than rms. Target loudness is -19 dB
+rather than the -16 dB the other two tools use: this material's crest factor is
+about 21 dB, so reaching -16 would mean shaving 5 dB off every attack.
+
+The `.mid` and all three audio files are gitignored -- the derivation is the
+thinnest of the three cases, because it reproduces the composition itself rather
+than pointing at a recording. See `docs/SYSTEMS.md` 2.20 and PROGRESS Phase 112.
+
 ## The console in `luau-windows/`
 
 `luau-windows/calculation.luau` is the operator's own transcription of the reactor's pressure
@@ -1488,3 +1533,4 @@ Section numbers were **not** renumbered, so every `0.13` / `2.6` / `5.9` cross-r
 `PROGRESS.md`, `DECISIONS*.md` and this file still resolves. The authoritative long form
 stays in `PROGRESS.md` and `DECISIONS*.md`; `docs/PHASES.md` is the condensed look-up by
 Phase number.
+

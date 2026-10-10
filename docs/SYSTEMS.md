@@ -838,3 +838,42 @@ Play 里改不落盘**（§0.4）。所以「交付」是**那两个东西 + 同
 **「每帧写多少」不是已证的机制**，分片 `CFG.SLICE_STRIDE = 4` 只是**保险**；
 `Enable Mesh / Image APIs` 这个开关**只有操作员能开**（`QUESTIONS.md` L2）。
 细节 `PROGRESS.md` 109/110，取舍 **442..453**，`docs/SNIPPETS.md` **§5.25**。
+
+
+### 2.20 `_tools/music/midi_song.py` —— 演奏一份 MIDI 的音符（2026-10-11，Phase 112）
+
+`_tools/music/` 里第三个兄弟。**它不是模式，是另一种源**：
+`make_song.py` 自己作曲、`remix.py` 采样一段录音、**这一个演奏一份 MIDI 的音符**。
+交付 `asstes/music/ReconstructingMoreScience.{ogg,mp3}`（96.000 s）。
+
+**跑法**
+```bash
+cd _tools/music
+python midi_song.py --mid "../../asstes/music/<name>.mid"     # 渲染 + 编码 + 自检
+python midi_song.py --mid "..." --probe                        # 只报计划和测量
+python midi_song.py --mid "..." --check                         # 只重量已交付的文件
+python midi_song.py --mid "..." --bars 4                        # 前 4 小节干跑，不编码
+```
+
+**结构**（每个数都是量出来的，不是写的）
+- `load_source` → 复用 `midi_grid.parse`（纯 stdlib 的 SMF 解析器）。
+- `bar_stats` → 每小节音符数 / 最低音 / 音级集合（`counts, lows, pcs`）。
+- `sections` → 按 `hi*peak` / `lo*peak` 分 full/thin/sparse 并合并连续段。
+- `pedal_gate` → **每四分音符格的贝斯根音**触发踏板；**被否掉的规则也在同一次跑里印出来**。
+- `render_piano` → 加性钢琴音色（`piano_note`，18 个分音、每个分音各自截断），
+  加 ±12 ms 人味抖动与按音高的声像。**音符落位用 clamp 不用 continue** —— 丢一个音是错的交易。
+- `render_sub` / `render_pad` / `render_marks` → 见 Phase 112 的表。
+- `master` → 归一到目标响度是**不动点**（归一到目标 → 限幅 → 测量 → 重来，≤4 趟），
+  并把限幅器削掉多少印出来。
+
+**四条写下来的纪律（都是这一轮踩出来的）**
+1. **打击层按峰值定级，不按 RMS。** 一个瞬态的 RMS 只是它峰值的一小撮（取舍 463）。
+2. **响度目标是不动点，不是一步** —— 在峰值保护之前加的增益，不是到达文件的增益（取舍 464）。
+3. **`0.5 * (L+R) ** 2` 是 `0.5 * ((L+R)**2)`**，比单声道 RMS 高 √2，而且不报错（取舍 465）。
+4. **相关峰落在梳齿上时，argmax 不是测量** —— 搜索窗要窄于半个网格，并且用物理去判 lag（取舍 466）。
+
+**自检（`check_files`，ogg/mp3 各 10 项）**
+时长 / 峰值 / 响度 / **最佳移调是不是零** / chroma 相关 / **事件落位（窗宽半格 + 物理预言）** /
+**首个起音的位置** / 单声道兼容 / 无极性翻转 / 无点击。
+其中两条是**为了替代两把编错的尺子**而写的：旋转检验替掉 top-4 顺序（取舍 467）、
+半格窗 + 物理判据替掉宽窗 argmax（取舍 466）。上手片段见 `docs/SNIPPETS.md` §5.26。
