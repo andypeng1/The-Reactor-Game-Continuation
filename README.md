@@ -1309,3 +1309,17 @@ which is the shape of a shutdown integrator rather than a live core. The quota c
 went 11:50 PM -> 12:47 AM, so midnight passed and the shift opened.
 
 See PROGRESS.md Phase 106 and DECISIONS 426 to 430.
+
+
+## Documentation layout
+
+`CLAUDE.md` is the file auto-loaded into an assistant's context every session, so as of
+2026-10-10 it carries only what must be seen **every round**: the doc-sync rules (0.0), the
+numbered "blood-and-tears" lessons (0 through 0.22), the project overview (1), the
+operator's preferences (4), the do-not-touch list (6), the references (7), a one-sentence
+summary (8), and the operational "before you act" rules. The per-Phase digest of Phases
+47-107 - **1155 lines, 67% of the old 1725-line file** - was moved out to `docs/PHASES.md`.
+Section numbers were **not** renumbered, so every `0.13` / `2.6` / `5.9` cross-reference in
+`PROGRESS.md`, `DECISIONS*.md` and this file still resolves. The authoritative long form
+stays in `PROGRESS.md` and `DECISIONS*.md`; `docs/PHASES.md` is the condensed look-up by
+Phase number.
