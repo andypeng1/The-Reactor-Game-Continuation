@@ -1203,6 +1203,55 @@ is about ten minutes and `lead_margin.py` assembles four full mixes.
 See PROGRESS.md Phases 93 and 95, DECISIONS 313 to 321 and 327 to 333, and
 `docs/SYSTEMS.md` section 2.16.
 
+## The remix - `asstes/music/ReactorStartup_Remix.{ogg,mp3}`
+
+A remix built **on top of** `ReactorStartup.mp3` rather than alongside it: the reference recording
+is kept and transformed - its own material is sampled, re-levelled and ducked - with a drum kit,
+sub, pads, risers, impacts and an arrangement charted against it. **266.93 s, 90.000 bpm, 97 bars.**
+
+**It is not committed, and the reason is the recording it quotes.** Sampling that master means the
+result carries the same recording, so it cannot be published any more freely than its source can.
+`ReactorStartup_Remix.mp3`, `.ogg` and its report are all in `.gitignore`, next to the reference
+itself. The *tool* - `_tools/music/remix.py` - is tracked, because the arrangement table, the
+parameters and the checker are original and independent of the sampled audio. The derived numbers
+live in PROGRESS Phase 111 for the same reason: the report they would normally sit in is ignored.
+
+**The tempo in the stored report was wrong, and the ruler was why.** `ReactorStartup.report.txt`
+was generated with `--nfft 8192` / 21.5 fps and says 92.25 bpm. On the fine ruler the rest of the
+code uses (`n=2048`, hop 512, 86.13 fps) 90.00 scores **326.174** on the comb against 92.25's
+**13.441** - a factor of 24, with sharp shoulders. 90.000 supersedes it, and the superseded number
+is kept with its reason rather than deleted: "why do the two reports disagree" is a question that
+comes back.
+
+**The bar phase is the one measurement that could still be audibly wrong.** Which of the four
+beats carries the downbeat wins by **+1.01 dB against a 1.0 dB threshold** - it scraped through.
+Pick the wrong one and the whole kit moves by one beat, which sounds fine on its own and is wrong
+against the music. The first metric was worse than a close call: scoring the mean envelope on each
+beat gave four candidates in monotone order, 59.3554, 59.5056, 59.6567, 59.8085 - a 0.77% spread
+that was the envelope's slope (this track climbs to its climax at 140 s), not a downbeat. The comb
+- on-beat against the interleaved off-beat, same span for every candidate - is what cancels it.
+
+**Roles come from measurement, not from position.** The reference's busiest passage (bars 50-57)
+is also its quietest (34-38 dB), and its last 88 s are its loudest (45-47.6 dB). Charting by
+position would put the busiest kit over the quietest music and highpass the loudest section; the
+instrumentation follows the z-scores of level and density instead, and the tail keeps the main
+treatment rather than being given a fake outro.
+
+**The mix balance is measured on the delivered encodes.** Reference share of energy **44.9%**
+(was 8.9%), mix/reference correlation **+0.753** (was +0.360), and the octave profile is +6.2 /
++4.9 / +4.5 / +4.2 / +5.6 dB over the reference instead of +13.5 / +12.3 / +11.0 dB in the bass.
+The original bug was levelling a reference pulled to about -25 dBFS RMS against a kit levelled in
+absolute peaks; the fix is one measured scale for the whole kit bus.
+
+**What is not verified: whether it sounds good.** Every number above is a ruler reading, and the
++1.01 dB bar phase is the single one that could be wrong in a way an ear would catch. There are
+still no upload credentials here, so nothing has been wired into Roblox - and `Workspace.Sounds`
+is part of the world.
+
+Run it with `python _tools/music/remix.py` (`--probe` for the grid and the structure table only,
+`--check` to re-measure an existing render). See PROGRESS.md Phase 111, DECISIONS 454 to 458, and
+`docs/SYSTEMS.md` section 2.16.
+
 ## The console in `luau-windows/`
 
 `luau-windows/calculation.luau` is the operator's own transcription of the reactor's pressure

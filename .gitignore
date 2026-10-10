@@ -172,6 +172,18 @@ build-library/
 asstes/music/ReactorStartup.mp3
 asstes/music/ReactorStartup.report.txt
 
+# --- the remix (asstes/music/ReactorStartup_Remix.*) is the same problem one
+#     derivation further out: it is built BY sampling that master, so it quotes
+#     the recording itself and cannot be published any more freely than the
+#     source it quotes.  The operator chose this route knowingly -- he was told
+#     the publishing call is his; keeping the artefacts out of a public repo is
+#     the half that is mine.  The report is ignored with them because it
+#     describes the same audio and would let the mix be reconstructed from the
+#     numbers; the derived figures live in PROGRESS Phase 111 instead. ---
+asstes/music/ReactorStartup_Remix.mp3
+asstes/music/ReactorStartup_Remix.ogg
+asstes/music/ReactorStartup_Remix.report.txt
+
 # --- _tools/music/out/ is the render chain's scratch: the 46 MB intermediate
 #     .wav that gets encoded to ogg/mp3, and stems.npz, the cached mono stems
 #     that make stereo re-assembly cost seconds instead of a six-minute
