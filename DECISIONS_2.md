@@ -7085,3 +7085,21 @@ GUI 矩形的中心算出来当屏幕坐标用。这条已收成原语 `clickScr
 `Heartbeat:Connect(M.step)`）**加上**一块由**同一份源码**在 Edit 模式建出来的 `MeshPart`；
 两边都按**长度 + 校验和**核到同一份 18961 字节。**并且明写在文档里：静帧是给人看的，
 动的那一半只有源码保证** —— 一个只验了静帧的交付，是一张**照片**，不是效果。
+
+
+## 448. `-I` 会把**用户级 site-packages** 从 `sys.path` 里拿掉 —— 于是「没装」和「探条把它藏了」长得一样（Phase 109）
+
+**Why:** 我为引力透镜写 `_tools/ppm_to_png.py`（纯 stdlib 的 PNG 编码器），写的**理由是错的**：
+我在 docstring 里写下「这台机器上没有 Pillow，说它有那条 memory 是错的」。
+实测 `python -I -c "import PIL"` -> `ModuleNotFoundError`，而 `python -c "import PIL"` -> **`PIL 12.3.0`**。
+落点是 **用户级** site-packages（`C:\Users\andypeng1NB\AppData\Roaming\Python\Python314\site-packages\PIL`）。
+本仓库的每一条 Python 命令都带 `-I`（隔离：忽略 `PYTHONPATH`、不加载 user site），
+理由是防**被别人种下的 `import json`**；而 **`-I` 恰恰就是那个把用户 site 从 `sys.path` 摘掉的开关**。
+所以「我没装这个包」和「我用了藏它的那个开关」在终端上**逐字节同形** —— **§0.2 的又一页**：
+**探条只探它探的那件事**。（`-E` 单独用没事；`-s` 单独就能复现。`numpy 2.5.3` 在同一个目录，同样会被藏。）
+
+**How to apply:** 判「某包有没有」**一律用两个解释器各问一次**：
+`python -c "import X; print(X.__file__)"`（默认）**和** `python -I -c ...`（本仓库的常规）。
+两者不一致 ⇒ 包在，是**标志**藏了它，不是包不在。**报「没有 X」之前必须先说出你用哪个标志探的。**
+反面也成立：既然写成了零依赖，就**别改回去** —— 零依赖的脚本在两种标志下都对，
+而「因为以为没有 Pillow 才写成零依赖」这个理由**不能留着不修**（散文的谎和代码的谎一样贵，同 441）。

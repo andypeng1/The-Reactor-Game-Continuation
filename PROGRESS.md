@@ -12226,6 +12226,19 @@ md5 `984bfa338d4e79ec17a40fd080f7497d` / 多项式校验和 `2051583504`**（**0
 只有源码保证；② 运动学核对用的是**两个相位**，不是一段连续轨迹，所以「帧率是否稳定 30 Hz」
 （`CFG.UPDATE_HZ`）**没量**；③ §0.14 那条「这台机器上两个截图工具都不认我给的相机」我**没有重新证伪** ——
 这一轮我压根**没给过相机**（受硬约束），所以「能渲染出正确的画面」这件事我只从**色场图**上知道。
-细节 `DECISIONS_2` **442..447**，`docs/SNIPPETS.md` **§5.24**，`docs/SYSTEMS.md` **§2.19**，
+细节 `DECISIONS_2` **442..448**，`docs/SNIPPETS.md` **§5.24**，`docs/SYSTEMS.md` **§2.19**，
 `docs/TODO.md` **§3.11.13**，`README.md`「The gravity lens」。
 
+
+
+**纠正（同一步，2026-10-10）—— 「这台机器没有 Pillow」是**我说的，而且是错的**。**
+我写 `_tools/ppm_to_png.py` 时在 docstring 里写下这个理由，口径是「有 Pillow 那条 memory 是错的」。
+实测：`python -I -c "import PIL"` -> `ModuleNotFoundError`，而 `python -c "import PIL"` -> **`PIL 12.3.0`**，
+落在**用户级** site-packages（`%APPDATA%\Python\Python314\site-packages`）——
+**`-I` 恰恰就是把用户 site 从 `sys.path` 里摘掉的那个开关**（本仓库每条 Python 命令都用它，
+为的是防别人种下的 `import json`；`-E` 单独用没事，`-s` 单独就能复现）。
+**所以那条 memory 是对的，错的是我的探条**（§0.2：**探条只探它探的那件事**），
+而「没装这个包」和「我用了藏它的那个开关」在终端上**逐字节同形**。
+四处已经改正：`_tools/ppm_to_png.py` 的 docstring、本文、`docs/SNIPPETS.md` §5.24、
+`docs/SYSTEMS.md` §2.19、`README.md` —— **纯 stdlib 的写法留着**（零依赖在两种标志下都对），
+但那个**理由是错的就不能留着**（取舍 448）。

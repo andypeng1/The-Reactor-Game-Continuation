@@ -994,7 +994,11 @@ zero, `t=5.75` Y max **2.838**, with `outerMoved 1.270` / `innerMoved 1.209` mat
 the section 5.18 round trip (`MeshContent` -> `CreateEditableMeshAsync`, `worstPositionDelta 0`, colours
 within `0.0029` = one 8-bit step, i.e. the mesh quantises colour); and a **colour-field** render pushed
 as ASCII PPM through `_tools/receive.py` (crc32 matched on both sides) and converted by
-`_tools/ppm_to_png.py`, a stdlib-only encoder written because **Pillow is not installed here**. The
+`_tools/ppm_to_png.py`, a stdlib-only encoder. It was written on the belief that **Pillow is not
+installed here** - that belief was wrong (see PROGRESS.md Phase 109 and DECISIONS_2 448): Pillow 12.3.0
+is installed, in the **per-user** site-packages, and `python -I` - the flag every one of these tools is
+run with - strips the user site from `sys.path`, so `import PIL` fails there and looks exactly like an
+absent package. The encoder stays anyway: stdlib-only means it runs under `-I` too. The
 colour field is rendered separately from a screenshot because `screen_capture` measures the *renderer* -
 material, lighting and post-processing included - and the question was whether the *vertex colours* are
 right. The one picture that shows it actually moving is a controlled pair: same camera position, same
@@ -1005,7 +1009,7 @@ clock changed 5.75 -> 17.25, and `compare_images` reports the internal pattern r
 so "it animates under its own power" rests on the source alone; the 30 Hz is a number I set and never
 measured; and the lens sits in this Rebuild place rather than in the game's, which is `QUESTIONS.md` L1.
 
-See PROGRESS.md Phase 109, DECISIONS_2 442 to 447, docs/SNIPPETS.md 5.24, docs/SYSTEMS.md 2.19.
+See PROGRESS.md Phase 109, DECISIONS_2 442 to 448, docs/SNIPPETS.md 5.24, docs/SYSTEMS.md 2.19.
 
 ---
 

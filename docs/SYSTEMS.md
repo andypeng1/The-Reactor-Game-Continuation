@@ -750,7 +750,7 @@ Play 里改不落盘**（§0.4）。所以「交付」是**那两个东西 + 同
 （`MeshPart.MeshContent -> CreateEditableMeshAsync`）`worstPositionDelta 0`、
 颜色差 `0.0029`（= **1/255**，mesh 的 8 位量化，不是缺陷）；③ **色场**渲成 ASCII PPM
 （`receive.py` 侧 CRC `0fa36841` @200² / `42393a69` @300²，两边逐位相同）再由
-`_tools/ppm_to_png.py`（纯 stdlib，这台机器**没有 Pillow**）转 PNG，
+`_tools/ppm_to_png.py`（纯 stdlib，零依赖，**`-I` 底下也跑得动**）转 PNG，
 视觉桥评 **Excellent / 无缺陷**。渲染图之外**单独渲色场**，是因为 `screen_capture` 量的是渲染器
 （材质 + 光照 + 后处理一起算进来），而这里要问的是**顶点颜色对不对**。
 
@@ -759,4 +759,4 @@ Play 里改不落盘**（§0.4）。所以「交付」是**那两个东西 + 同
 `compare_images` 报**内部图案顺时针转**（内环峰 6 点 → 5 点）。**没验的**：
 `SSS.GravityLens` 那个 `Script` **从没在跑起来的会话里被观察过**（这一轮全程 Edit 模式），
 它会不会在 Play 里也这么动**只有源码保证**；30 Hz 的帧率稳定性没量。
-细节 `PROGRESS.md` 109，取舍 **442..447**。
+细节 `PROGRESS.md` 109，取舍 **442..448**。

@@ -2,10 +2,21 @@
 """Turn an ASCII PPM (P3) into a PNG, using nothing but the standard library.
 
 Why this exists: the Roblox side can only hand out text, so the lens renders
-itself as P3 and POSTs it to receive.py. Something has to make that viewable,
-and Pillow is not installed on this machine (the memory that said it was is
-wrong, or it was true of a different interpreter). zlib + struct is enough for
-a PNG -- the format is five chunks and one filter byte per row.
+itself as P3 and POSTs it to receive.py, and something has to make that viewable.
+
+The first version of this paragraph said "Pillow is not installed on this
+machine". That was WRONG, and the way it was wrong is the useful part. Pillow
+12.3.0 IS installed -- in the PER-USER site-packages
+(%APPDATA%/Python/Python314/site-packages). Every Python command in this repo
+runs with `-I` (isolated: no PYTHONPATH, no user site) so that a planted
+json.py cannot hijack an import, and `-I` drops the user site from sys.path.
+So `python -I -c "import PIL"` fails with ModuleNotFoundError, which is
+byte-for-byte what an absent package looks like. The probe only probed the
+flag. `-E` alone is fine; `-s` alone reproduces it.
+
+The encoder stays stdlib-only anyway, and that is now the better property: it
+runs under `-I` too, so it never depends on which interpreter flag you used.
+zlib + struct is enough for a PNG -- five chunks and one filter byte per row.
 
     python -I _tools/ppm_to_png.py Data/gravity_lens.ppm Data/gravity_lens.png
 """

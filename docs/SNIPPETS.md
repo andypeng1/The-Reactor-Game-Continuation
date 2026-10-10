@@ -1476,8 +1476,18 @@ local function pushPPM(url, n)          -- 色场，不是渲染图：绕开材�
 end
 ```
 `receive.py` 那一侧记 `RECV <name> <bytes> <crc32>`，两边 CRC **逐位相同**才算到（`0fa36841` @200²、
-`42393a69` @300²）；PNG 由纯 stdlib 的 `_tools/ppm_to_png.py` 转（这台机器上**没有 Pillow**）。
+`42393a69` @300²）；PNG 由纯 stdlib 的 `_tools/ppm_to_png.py` 转 —— 它零依赖，
+**所以 `-I` 底下也跑得动**（下面 ⑨ 那条：这台机器**有** Pillow，`-I` 把它藏起来了）。
 
 **⑧ 一个恒为黑的采样点，是「这条检查没在测东西」的唯一信号。** 第一版 `verify` 拿第 1 环比颜色 ——
 那是阴影中心，源色和比对函数**同时趋近 0**，于是断言恒真（§0.13）。改成沿 1,6,11,… 环展开，
 并**报最亮的采样值**（`brightestSample 2.148`）；`worstColourDelta 0.0029` 是 mesh 的 **8 位量化**，不是缺陷。
+
+
+**⑨ 「这台机器没有 Pillow」是**我说的，而且是错的** —— `-I` 把它藏起来了（取舍 448）。**
+`python -I -c "import PIL"` -> `ModuleNotFoundError`；`python -c "import PIL"` -> **`PIL 12.3.0`**。
+落点是**用户级** site-packages（`%APPDATA%\Python\Python314\site-packages`），
+而 **`-I` 正是把用户 site 从 `sys.path` 摘掉的那个开关**（本仓库的每条 Python 命令都带它，
+为的是防别人种下的 `import json`）。**`-E` 单独用没事，`-s` 单独就能复现**；`numpy` 在同一个目录，同样被藏。
+判「有没有这个包」**两个解释器各问一次**，不一致就说明是**标志**藏的。
+（`_tools/ppm_to_png.py` 仍然留着纯 stdlib —— 那反而是更好的性质：它在 `-I` 底下也跑得动。）
