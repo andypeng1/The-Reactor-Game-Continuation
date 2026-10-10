@@ -184,8 +184,54 @@ python _tools/selftest_gui.py
 # and selftest_drive_clickpoint.py breaks the conversion eight ways, each naming the
 # check that must go red and a check that must stay green -- a mutation that reddens
 # everything would prove only that the file can fail somewhere.
+# Whole-file gates for the driver, for the same reason the recorder and the watcher
+# have them: the harnesses below compile one REGION each and leave the rest unchecked,
+# so a syntax error in the command loop, the anti-idle or the census would be found by
+# the executor in the original game instead of here.  This is a 5.1 parse, not a Luau
+# compile -- worth being exact about which of the two it proves.
+#
+# The backslash count is not fussiness.  Anything written into the driver through an
+# editing layer is decoded once on the way in, so a single backslash in a short string
+# becomes a real newline and turns valid Lua into a syntax error pointing at the
+# string.  The file is written to contain none, and that is checkable here.
+"$LUA" -e "
+local f, err = loadfile('_tools/TRG_original_drive.luau')
+if not f then io.stderr:write('driver does not parse: ' .. tostring(err) .. string.char(10)) os.exit(1) end
+local h = io.open('_tools/TRG_original_drive.luau', 'rb')
+local s = h:read('*a') h:close()
+local bs, cr = 0, 0
+for i = 1, #s do
+  local c = s:sub(i, i)
+  if c == string.char(92) then bs = bs + 1 end
+  if c == string.char(13) then cr = cr + 1 end
+end
+if bs ~= 0 then io.stderr:write('driver has ' .. bs .. ' backslash byte(s)' .. string.char(10)) os.exit(1) end
+if cr ~= 0 then io.stderr:write('driver has CR bytes -- the repo pins LF' .. string.char(10)) os.exit(1) end
+print('driver parses: ' .. _VERSION .. ', ' .. #s .. ' bytes, 0 backslash, 0 CR')
+"
+
 echo "=== drive clickPoint mutations ==="
 python _tools/selftest_drive_clickpoint.py
+
+# The other half of the same lesson, and the half the clickPoint suite cannot see.
+# clickPoint converts a GUI rectangle into a screen point; what it cannot tell you is
+# whether the button event is handed the point the engine actually reported.  d1..d4
+# did the arithmetic and pressed the ANSWER, which is how all of them landed 58 px
+# high with no symptom; the recipe that lit this reactor on Phase 106/107 never did
+# that -- it moved, asked UIS:GetMouseLocation() where the mouse ended up, and pressed
+# THERE.  clickScreen() is that recipe as a primitive, and it is now the only place in
+# the driver that clicks a pixel (the builder asserts the call sites, not the prose).
+#
+# The second subject is the seq floor.  The executor's read of its own state file
+# lagged -- the file held 203 while the next read in the same pass returned 0 -- so
+# runCmds re-ran the whole command file, straight through the 'stop' that was supposed
+# to end the session and on into the session-ender press.  Memory cannot lag.  The
+# case that matters is not "the floor is read" but "an empty read does NOT replay".
+echo "=== drive route ==="
+python _tools/build_drive_route_test.py
+"$LUA" _tools/_drive_route_states.luau
+echo "drive route rc=$?"
+python _tools/selftest_drive_route.py
 
 # The end-of-shift rule and the flow boundary are ONE POLICY -- "what is allowed to
 # end a run" -- split across two regions of the recorder by where the code lives.

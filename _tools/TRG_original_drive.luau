@@ -1,5 +1,5 @@
 --[[
-TRG_original_drive.luau   (tag d5)
+TRG_original_drive.luau   (tag d9)
 
 WHAT THIS IS
   A command-driven driver for the ORIGINAL game.  It lives in the same executor
@@ -95,10 +95,40 @@ WHAT d4 ADDS, AND WHY
     fire -- 'SKIP hidden' / 'SKIP zero size' / 'ERR SendMouseButtonEvent' --
     because a click that lands on something else is otherwise the same shape as
     a press that did nothing.
+-- ==== d7..d9 (2026-10-10) ====
+-- Three changes, each answering a measured failure rather than a hunch.
+--
+-- (1) A THIRD fire route, 'vim'.  d1..d6 could only press a window signal or a
+--     GUI rectangle, and a ClickDetector's handler runs on the SERVER, so
+--     neither can reach it -- which is why every determinate 'fire' in the log
+--     reads NOCHANGE while the same control works when a mouse really goes
+--     there.  The recipe below is the one that actually lit this reactor
+--     (Phase 106/107), reproduced, not re-derived.
+--
+-- (2) The 58 px lesson, applied as a PRIMITIVE rather than as arithmetic.  The
+--     move takes viewport coordinates and the button event takes whatever
+--     UIS:GetMouseLocation() reports back afterwards; those are two different
+--     spaces and the read-back is what absorbs the difference.  clickScreen()
+--     is now the only place this file clicks a pixel.
+--
+-- (3) A seq floor kept in MEMORY as well as on disk.  The executor's read of
+--     its own state file lagged -- the file held 203 while loadSeq() returned
+--     0 -- and runCmds, seeing last = 0, re-ran the entire file, straight
+--     through the 'stop' that should have ended the session and on into the
+--     session-ender press.  Memory cannot lag.  The file's real protection is
+--     still that it holds only PENDING commands.
+--
+--     d8 and d9 are that same floor, tightened.  d8 moved it into memory at all;
+--     d9 (this file) raises it on EVERY pass, not only on the pass that had work
+--     to run.  The difference is the whole protection: a pass that found every
+--     command already done used to leave the floor unset, and then the only thing
+--     between a laggy disk read and the top of the file was the laggy read.  A
+--     floor written only when work was done is not a floor, it is a note about the
+--     last time work was done.  S7 and the M-NOWORK mutant keep that raise honest.
 ]]
 
 local M = {}
-M.TAG = 'd6'
+M.TAG = 'd9'
 
 local NL = string.char(10)
 local CR = string.char(13)
@@ -124,9 +154,11 @@ local CFG = {
   DefaultStuds = 4,
   RiseStuds = 3,
 
-  -- Census gives up after this many descendants so a forgotten walk cannot
-  -- wedge the thread.
+  -- Census gives up after this many descendants -- and a COUNT gives up on
+  -- output, not on time.  300000 descendants IS the wedge, so it is this pair
+  -- together that bounds the walk.  Same reason as ProbeMs.
   CensusCap = 300000,
+  CensusMs  = 8000,
 
   -- Wait after firing before reading the state back.  Long enough for a server
   -- round trip, short enough that a shift's first second is still visible.
@@ -143,6 +175,16 @@ local CFG = {
   GuiFile     = 'trg_drive_gui.txt',
   GuiCap      = 400,
   ProbeCap    = 400,
+
+  -- A COUNT budget does not bound TIME.  ProbeCap caps how many labels a probe
+  -- KEEPS; the walk still visits every descendant either way.  Measured
+  -- 2026-10-10: the same probe returned in 7 s at 01:16:47 and then, three and
+  -- a half minutes later, a probe issued at 01:20:10 still had not returned
+  -- thirteen minutes on.  Because one pass is one synchronous runCmds
+  -- iteration, that did not merely delay the probe -- it held the whole
+  -- command loop hostage, and trg_drive_loop.txt froze at 01:08:46 for the
+  -- duration.  doListen already bounds itself by os.clock(); these must too.
+  ProbeMs     = 4000,
 
   -- Substring that identifies the control-room monitor trees.  The 7 screens
   -- carry the game's own words about its own state.
@@ -321,6 +363,7 @@ local function census()
   out[#out + 1] = '# census at ' .. now() .. ' rel ' .. rel()
   out[#out + 1] = '# KIND | fullPath | parent | parentClass | pos | mad | label'
   local nCD, nPP, seen = 0, 0, 0
+  local cut = nil
   local ok, all = pcall(function() return game:GetDescendants() end)
   if not ok then
     log('census ERROR GetDescendants ' .. flat(all))
@@ -328,7 +371,8 @@ local function census()
   end
   for _, d in ipairs(all) do
     seen = seen + 1
-    if seen > CFG.CensusCap then break end
+    if seen > CFG.CensusCap then cut = 'countcap' break end
+    if os.clock() - t0 > CFG.CensusMs / 1000 then cut = 'timecap' break end
     local cn = d.ClassName
     if cn == 'ClickDetector' or cn == 'ProximityPrompt' then
       local p = d.Parent
@@ -351,7 +395,8 @@ local function census()
   local head = '# done in ' .. string.format('%.2f', os.clock() - t0) ..
     's  descendants=' .. tostring(seen) ..
     '  ClickDetector=' .. tostring(nCD) ..
-    '  ProximityPrompt=' .. tostring(nPP)
+    '  ProximityPrompt=' .. tostring(nPP) ..
+    '  stopped=' .. tostring(cut or 'end')
   out[#out + 1] = head
   write(CFG.CensusFile, table.concat(out, NL) .. NL)
   log(head)
@@ -379,6 +424,112 @@ local function doLs(path)
     ' :: ' .. table.concat(names, ' '))
 end
 
+-- One primitive for every press this file makes.  The argument is a GUESS in
+-- the space the MOVE takes; the CLICK is given whatever point the engine
+-- reports back afterwards.  Those are not the same space -- that difference is
+-- the whole 58 px -- and the recipe that actually lit this reactor never
+-- resolved it arithmetically: it moved, read GetMouseLocation(), and clicked at
+-- THAT.  Reproduced, not re-derived.
+local function clickScreen(gx, gy)
+  local vim = game:GetService('VirtualInputManager')
+  local uis = game:GetService('UserInputService')
+  local okMove = pcall(function() vim:SendMouseMoveEvent(gx, gy, game) end)
+  if not okMove then return nil, 'ERR SendMouseMoveEvent' end
+  -- The queue is not instant: reading the location in the same call as the move
+  -- gives the PREVIOUS position.  So: move, wait, then read.
+  task.wait(0.35)
+  local cur = nil
+  local okRead = pcall(function() cur = uis:GetMouseLocation() end)
+  if not okRead or cur == nil then return nil, 'ERR GetMouseLocation' end
+  local x, y = math.floor(cur.X), math.floor(cur.Y)
+  local okA = pcall(function() vim:SendMouseButtonEvent(x, y, 0, true, game, 0) end)
+  task.wait(0.2)
+  local okB = pcall(function() vim:SendMouseButtonEvent(x, y, 0, false, game, 0) end)
+  if not okA or not okB then return nil, 'ERR SendMouseButtonEvent' end
+  return 'mouse@' .. x .. ',' .. y
+end
+
+-- The 3D route, and the reason this file has one at all: a ClickDetector's
+-- handler runs on the SERVER, so fireclickdetector -- which fires the
+-- client-side signal -- cannot reach it.  Synthetic input at the point the
+-- camera projects the ClickPart onto is the same family as the anti-idle's
+-- VirtualUser path: in-game input, never the operator's cursor.
+--
+-- Every step that can silently do nothing is named in the returned string: the
+-- screen point actually clicked, the hit distance against the detector's own
+-- MaxActivationDistance, what the mouse is over, and how many times the
+-- detector's own MouseClick fired (a LOCAL counter, so it reads 0 even when the
+-- server acted -- judge by Workspace.Stats, not by this).
+local function click3d(cp)
+  local lp = localPlayer()
+  if lp == nil then return nil, 'no local player' end
+  local ch = lp.Character
+  local hrp = ch and ch:FindFirstChild('HumanoidRootPart')
+  if hrp == nil then return nil, 'no HumanoidRootPart' end
+  local cam = workspace.CurrentCamera
+  if cam == nil then return nil, 'no camera' end
+  local cd = cp:FindFirstChildOfClass('ClickDetector')
+  local t = cp.Position
+
+  local wasType = cam.CameraType
+  cam.CameraType = Enum.CameraType.Scriptable
+  cam.CFrame = CFrame.lookAt(t + Vector3.new(0, 3, 5), t, Vector3.new(0, 0, 1))
+  pcall(function() hrp.CFrame = CFrame.new(t + Vector3.new(0, 3.2, 5)) end)
+  task.wait(CFG.SettleSeconds)
+
+  -- The layer collectors must be OFF.  With a ScreenGui over the viewport the
+  -- move lands on the overlay, mouse.Target is the overlay, and the symptom is
+  -- NOTHING -- the same shape as a press that missed.  This is the one step of
+  -- the boot chain the world itself cannot tell you about.
+  local hidden = {}
+  local pg = lp:FindFirstChildOfClass('PlayerGui')
+  if pg ~= nil then
+    for _, lc in ipairs(pg:GetDescendants()) do
+      if lc:IsA('LayerCollector') then
+        local okv, v = pcall(function() return lc.Enabled end)
+        if okv and v == true then
+          hidden[#hidden + 1] = lc
+          pcall(function() lc.Enabled = false end)
+        end
+      end
+    end
+  end
+  task.wait(0.3)
+
+  local hits = 0
+  local conn = nil
+  if cd ~= nil then
+    pcall(function() conn = cd.MouseClick:Connect(function() hits = hits + 1 end) end)
+  end
+  local pv = cam:WorldToViewportPoint(t)
+  local how, err = clickScreen(pv.X, pv.Y)
+  task.wait(0.6)
+
+  local dist = (hrp.Position - t).Magnitude
+  local maxd = 0
+  if cd ~= nil then
+    local okd, v = pcall(function() return cd.MaxActivationDistance end)
+    if okd and v ~= nil then maxd = v end
+  end
+  local target = 'nil'
+  local mouse = lp:GetMouse()
+  if mouse ~= nil then
+    local okt, tg = pcall(function() return mouse.Target end)
+    if okt and tg ~= nil then target = tg.Name end
+  end
+
+  if conn ~= nil then pcall(function() conn:Disconnect() end) end
+  for _, lc in ipairs(hidden) do pcall(function() lc.Enabled = true end) end
+  cam.CameraType = wasType
+
+  local note = (how or ('ERR ' .. tostring(err))) ..
+    ' vp=' .. string.format('%.0f,%.0f', pv.X, pv.Y) ..
+    ' d=' .. string.format('%.2f', dist) .. ' of ' .. string.format('%.1f', maxd) ..
+    ' tgt=' .. target .. ' cdFired=' .. tostring(hits)
+  if maxd > 0 and dist > maxd then note = note .. ' OUT-OF-RANGE' end
+  return note
+end
+
 local function doFire(path, method, studs)
   local node, err = resolve(path)
   if node == nil then
@@ -404,7 +555,10 @@ local function doFire(path, method, studs)
   local lp = localPlayer()
   local before = statline()
   local how
-  if method == 'signal' then
+  if method == 'vim' or method == 'world' then
+    local res, e = click3d(cd.Parent)
+    how = res ~= nil and ('vim ' .. res) or ('vim FAIL ' .. tostring(e))
+  elseif method == 'signal' then
     local ok, e = pcall(function() cd.MouseClick:Fire(lp) end)
     how = ok and 'MouseClick:Fire' or ('MouseClick:Fire ERROR ' .. flat(e))
   else
@@ -728,17 +882,13 @@ local function pressAt(btn)
   -- GUI space -> screen space.  See clickPoint: this used to be the whole bug.
   local pt, _, space = clickPoint(btn)
   if pt == nil then return nil, 'SKIP no rect' end
-  local x, y = pt.X, pt.Y
-  local vim = game:GetService('VirtualInputManager')
-  pcall(function() vim:SendMouseMoveEvent(x, y, game) end)
-  local ok = pcall(function() vim:SendMouseButtonEvent(x, y, 0, true, game, 0) end)
-  task.wait(0.05)
-  ok = pcall(function() vim:SendMouseButtonEvent(x, y, 0, false, game, 0) end) and ok
-  if not ok then return nil, 'ERR SendMouseButtonEvent' end
-  -- The space is part of the answer: a press that used 'nospace' is a press at
-  -- a guessed coordinate, and that must not read the same later as one that used
-  -- a measured inset.
-  return 'mouse@' .. x .. ',' .. y .. ' ' .. tostring(space)
+  -- clickPoint gives a GUESS; clickScreen gives the point the button event is
+  -- actually handed.  Both are reported, because a press that used 'nospace' is
+  -- a press at a guessed coordinate and must not read later like one that used
+  -- a measured inset -- and neither of those may read like the read-back point.
+  local how, e = clickScreen(pt.X, pt.Y)
+  if how == nil then return nil, tostring(e) end
+  return 'guess@' .. pt.X .. ',' .. pt.Y .. ' ' .. tostring(space) .. ' -> ' .. how
 end
 
 local function doPress(path, method)
@@ -816,8 +966,16 @@ end
 -- what the panels SAY and not only against 32 ValueBases.
 local function doProbe()
   local found = 0
+  local seen = 0
+  local t0 = os.clock()
+  local why = nil
   for _, d in ipairs(game:GetDescendants()) do
-    if found >= CFG.ProbeCap then break end
+    if found >= CFG.ProbeCap then why = 'labelcap' break end
+    if os.clock() - t0 > CFG.ProbeMs / 1000 then why = 'timecap' break end
+    seen = seen + 1
+    -- Yield on a COUNT, not on a clock: the reason to hand the frame back does
+    -- not depend on how fast this machine is.
+    if seen % 500 == 0 then task.wait() end
     if d:IsA('TextLabel') or d:IsA('TextButton') then
       local p, depth, hit = d, 0, false
       while p ~= nil and depth < 6 do
@@ -837,7 +995,12 @@ local function doProbe()
       end
     end
   end
-  log('probe labels=' .. tostring(found))
+  -- `why` is on the line on purpose: a probe cut short and a probe that ran to
+  -- the end look identical otherwise, and the short one's silence would read
+  -- as "the panels say nothing".
+  log('probe labels=' .. tostring(found) .. ' seen=' .. tostring(seen) ..
+    ' ms=' .. string.format('%.0f', (os.clock() - t0) * 1000) ..
+    ' stopped=' .. tostring(why or 'end'))
 end
 
 -- Answers 'is anything ticking'.  One before/after read cannot tell a frozen
@@ -949,6 +1112,12 @@ end
 
 local function saveSeq(n)
   write(CFG.StateFile, tostring(n) .. NL)
+  -- Read-after-write lag, measured 2026-10-10: this file held 203 while the very
+  -- next loadSeq() in the same pass returned 0.  On disk the seq is only as good
+  -- as the executor's flush; in memory it cannot lag, so the floor is kept in
+  -- both places and the higher one wins.  Without this, one empty read re-runs
+  -- the whole file -- and a file that contains 'stop' replays 'stop'.
+  if n > (M._seq or 0) then M._seq = n end
 end
 
 -- Every command whose seq is greater than the last one executed.  The file is
@@ -958,6 +1127,7 @@ local function runCmds()
   local text = read(CFG.CmdFile)
   if text == '' then return 0 end
   local last = loadSeq()
+  if (M._seq or 0) > last then last = M._seq end
   local maxSeq = last
   local n = 0
   for line in string.gmatch(text, '[^' .. CR .. NL .. ']+') do
@@ -971,6 +1141,14 @@ local function runCmds()
       end
     end
   end
+  -- Raised UNCONDITIONALLY, and that adverb is the fix.  This used to happen
+  -- only inside saveSeq, which is reached ONLY when the pass had something new
+  -- to run -- so the pass that found every command already done left M._seq
+  -- nil.  That is precisely the pass that arms the next one to replay: with
+  -- the memory floor unset, the sole thing between a laggy disk read and the
+  -- top of the file is that read itself.  A floor written only when work was
+  -- done is not a floor, it is a note about the last time work was done.
+  if maxSeq > (M._seq or 0) then M._seq = maxSeq end
   if maxSeq ~= last then saveSeq(maxSeq) end
   return n
 end
@@ -985,7 +1163,7 @@ function M.step()
   local n = runCmds()
   antiIdle(false, 'timer')
   write(CFG.LoopFile, now() .. ' rel=' .. rel() ..
-    ' seq=' .. tostring(loadSeq()) .. ' cmds=' .. tostring(n) .. NL)
+    ' seq=' .. tostring(M._seq or 0) .. ' cmds=' .. tostring(n) .. NL)
   return n
 end
 
@@ -1000,8 +1178,12 @@ function M.start()
     return true
   end
   M.running = true
+  -- Seed the floor from disk once, so a fresh injection does not replay a file
+  -- whose already-executed lines the executor only forgot to flush.
+  local seeded = loadSeq()
+  if seeded > (M._seq or 0) then M._seq = seeded end
   append(CFG.LogFile, '# ' .. M.TAG .. ' start ' .. now() .. NL)
-  log('drive start ' .. statline())
+  log('drive start ' .. statline() .. ' seqfloor=' .. tostring(M._seq))
 
   -- Cancel a pending idle kick the moment it is announced.  Event-driven, so it
   -- costs nothing until the client is actually about to be dropped; the periodic
@@ -1038,5 +1220,13 @@ end
 if _G.TRG_DRIVE_AUTORUN then
   M.start()
 end
+
+-- The autoexec stub asks THIS whether a loop is already alive before it loads
+-- and starts another one.  A stub that guards on "have I ever loaded" instead
+-- makes the only recovery route -- injecting again -- a silent no-op.
+pcall(function()
+  local g = getgenv()
+  if type(g) == 'table' then g.TRG_DRIVE = M end
+end)
 
 return M

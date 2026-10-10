@@ -99,6 +99,18 @@ __pycache__/
 _tools/_recorder_mutant.luau
 _tools/_gui_mutant_states.luau
 
+# The driver's route suite is the same shape as the two above, one subject over.
+# _drive_route_states.luau is the GENERATED harness (built by
+# build_drive_route_test.py out of the shipped driver by text), and the _mut_
+# pair is the deliberately broken copy its mutation run builds and diffs.  All
+# three are regenerated on every run and all three are deleted on the way out;
+# they are listed here as well so that a run killed halfway leaves nothing for
+# the automatic `git add -A` to pick up -- a broken copy of a shipped file is
+# the one thing in this tree that must never look like something to commit.
+_tools/_drive_route_states.luau
+_tools/_drive_route_mutant.luau
+_tools/_drive_route_mut_states.luau
+
 # --- the user's own auxiliary reference dumps (Data/auxcollection/).  Handed to
 #     me to read, not produced by the project: 180 MB in ONE file, which is over
 #     GitHub's 100 MB hard file limit, so an accidental `git add -A` would be
