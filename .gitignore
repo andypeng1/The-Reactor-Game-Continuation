@@ -162,13 +162,15 @@ Data/_transfer/
 #     directory the tool rewrites. ---
 build-library/
 
-# --- the operator's reference track (asstes/music/ReactorStartup.mp3) is a
-#     Portal 2 "Reconstructing More Science" remix -- someone else's master
-#     recording, renamed.  This repo is PUBLIC (Phase 51), so it is not ours to
-#     publish, and the file is past the size where "just commit it" is free at
-#     4.2 MB.  It stays on disk and is the thing the analysis measures; the
-#     track generated against it (asstes/music/ReactorShift.*) is original
-#     material and IS tracked. ---
+# --- the operator's reference track (asstes/music/ReactorStartup.mp3) is a piano
+#     arrangement of a Portal 2 OST cue.  The operator named the source himself
+#     (2026-10-11): "[WIP] (Piano) Portal 2 OST - Reconstructing More Science -
+#     Aperture Science Psychoacoustic Laboratories".  So it is somebody else's
+#     recording OF somebody else's composition, and this repo is PUBLIC
+#     (Phase 51): not ours to publish, and past the size where "just commit it"
+#     is free at 4.2 MB.  It stays on disk and is the thing the analysis
+#     measures; the track generated against it (asstes/music/ReactorShift.*) is
+#     original material and IS tracked. ---
 asstes/music/ReactorStartup.mp3
 asstes/music/ReactorStartup.report.txt
 
@@ -183,6 +185,16 @@ asstes/music/ReactorStartup.report.txt
 asstes/music/ReactorStartup_Remix.mp3
 asstes/music/ReactorStartup_Remix.ogg
 asstes/music/ReactorStartup_Remix.report.txt
+
+# --- any .mid dropped into asstes/music/ is a note-level transcription of the
+#     same composition, which is the most publishable-looking and least
+#     publishable thing in the folder: a MIDI file IS the notes, with no
+#     recording in between to make the derivation arguable.  The operator put
+#     one there on 2026-10-11 ("[WIP] (Piano) Portal 2 OST - Reconstructing More
+#     Science ..."), and a `git add -A` picked it up before this rule existed.
+#     It stays on disk -- it is analysable, and it is the arrangement's own
+#     grid -- it just does not go up. ---
+asstes/music/*.mid
 
 # --- _tools/music/out/ is the render chain's scratch: the 46 MB intermediate
 #     .wav that gets encoded to ogg/mp3, and stems.npz, the cached mono stems

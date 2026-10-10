@@ -1250,5 +1250,10 @@ md5 `984bfa338d4e79ec17a40fd080f7497d` / 校验和 `2051583504`**（0 反斜杠 
 
 **没验：好不好听**（耳朵）。**并且**：开工时 `ReactorShift.{mp3,ogg,report.txt}` 是**已删未提交**、
 而没有任何记录说该删，remix 又是 gitignored —— 提交那次删除会让仓库一首曲子都不剩，
-所以从 `HEAD` **恢复**了那三个文件（不提交删除）。细节 `PROGRESS.md` 111，取舍 **454..458**，
+所以从 `HEAD` **恢复**了那三个文件（不提交删除）。
+**来源（他 2026-10-11 给的）**：`[WIP] (Piano) Portal 2 OST - Reconstructing More Science -
+Aperture Science Psychoacoustic Laboratories` —— 一份**钢琴改编**，所以链条是**两段**
+（Valve 的曲子 → 某人的钢琴录音 → 这版 remix），只加固「不能发布」。
+顺带量了**结尾**：音乐跑到 t−1.6 s 还满着，~0.5 s 内掉进数字静音，最后约 1.1 s 逐位为 0
+（**[WIP]** 对得上）—— 那 6 s `fade` 因此是**量过之后的选择**（取舍 459）。细节 `PROGRESS.md` 111，取舍 **454..458**，
 `docs/SYSTEMS.md` §2.16，`docs/TODO.md` §3.6。

@@ -607,7 +607,7 @@ label 的 `Visible`。属性不相交 —— 这是它能成为第二个写入�
 |---|---|
 | 交付 | `asstes/music/ReactorShift.ogg`（5,908,619 B）/ `.mp3`（6,334,005 B）/ `.report.txt` |
 | 时长 / 调性 | **263.84 s / 89.25 bpm / F 大调五声** / 97 小节 / 260.8 s + 3.0 s 尾 |
-| **规格来源** | `asstes/music/ReactorStartup.mp3`（别人的母带，**gitignored、不进仓库**）——`make_song.TARGET` 里每个数都是**对它测出来的**（`analyze.py` → `.report.txt`），**旋律一个音都没转录** |
+| **规格来源** | `asstes/music/ReactorStartup.mp3`（**别人的录音、别人的曲子** —— 操作员 2026-10-11 给的来源：`[WIP] (Piano) Portal 2 OST - Reconstructing More Science - Aperture Science Psychoacoustic Laboratories`，**一份钢琴改编**；**gitignored、不进仓库**）——`make_song.TARGET` 里每个数都是**对它测出来的**（`analyze.py` → `.report.txt`），**旋律一个音都没转录** |
 | 生成 | `_tools/music/make_song.py`（**唯一**）—— 纯 numpy，无 torch、无模型、无外部素材 |
 | 依赖 | numpy。合成原语在 `dsp.py`（加法/拨弦/滤波/混响 IR），编码走 ffmpeg |
 

@@ -1149,7 +1149,9 @@ and encoded with ffmpeg. Two encodes are shipped because Roblox and browsers dis
 codecs; both are the same audio.
 
 **Its specification is a measurement, not a mood.** `asstes/music/ReactorStartup.mp3` is the
-reference the operator named (a Portal 2 remix), and every number in `make_song.TARGET` was
+reference the operator named - his own identification of the source (2026-10-11) is
+`[WIP] (Piano) Portal 2 OST - Reconstructing More Science - Aperture Science Psychoacoustic
+Laboratories`, a piano arrangement of a Portal 2 OST cue - and every number in `make_song.TARGET` was
 measured off it with `_tools/music/analyze.py`: the per-octave profile, the 10 s block
 band shares, the p5/p95 dynamic arc, side/mid and L/R correlation. **No melody was
 transcribed from it** - it fixes the *shape*, not the notes. The reference and its report are
@@ -1249,7 +1251,7 @@ still no upload credentials here, so nothing has been wired into Roblox - and `W
 is part of the world.
 
 Run it with `python _tools/music/remix.py` (`--probe` for the grid and the structure table only,
-`--check` to re-measure an existing render). See PROGRESS.md Phase 111, DECISIONS 454 to 458, and
+`--check` to re-measure an existing render). See PROGRESS.md Phase 111, DECISIONS 454 to 459, and
 `docs/SYSTEMS.md` section 2.16.
 
 ## The console in `luau-windows/`

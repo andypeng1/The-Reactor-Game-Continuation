@@ -1,5 +1,14 @@
 """Remix `asstes/music/ReactorStartup.mp3` -- the reference recording itself, re-arranged.
 
+WHERE THE REFERENCE COMES FROM (the operator's identification, 2026-10-11)
+    `[WIP] (Piano) Portal 2 OST - Reconstructing More Science - Aperture
+    Science Psychoacoustic Laboratories` -- a piano arrangement, marked WIP, of
+    a Portal 2 OST cue.  So there are two links of
+    derivation here, not one: Valve's composition, then that pianist's
+    recording, then this.  Nothing derived from it is committed for that
+    reason, and it is also why nothing about the arrangement is invented --
+    the melody this sits under is not mine to write.
+
 WHAT THIS IS, AND HOW IT DIFFERS FROM make_song.py
     `make_song.py` measured the reference and then wrote an ORIGINAL track to
     that measurement; the reference's notes are not in its output at all.  This

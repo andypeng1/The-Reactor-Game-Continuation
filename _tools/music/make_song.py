@@ -1,8 +1,13 @@
 """Compose an original track to a specification measured off the reference.
 
-The reference (asstes/music/ReactorStartup.mp3) is a Portal 2
-"Reconstructing More Science" remix -- someone else's master recording, and
-the repo is public, so it is not committed (see .gitignore).  It is used for
+The reference (asstes/music/ReactorStartup.mp3) is a piano arrangement of the
+Portal 2 OST cue "Reconstructing More Science", credited to Aperture Science
+Psychoacoustic Laboratories -- the operator's own identification of the source
+(2026-10-11):
+`[WIP] (Piano) Portal 2 OST - Reconstructing More Science - Aperture Science
+Psychoacoustic Laboratories`.  It is therefore somebody else's recording of
+somebody else's composition, and the repo is public, so it is not committed
+(see .gitignore).  It is used for
 exactly one purpose here: as a *target spec*.  Every number in TARGET below is
 a measurement of that file (ReactorStartup.report.txt, made by
 _tools/music/analyze.py); none of it is a genre label typed in from memory.
