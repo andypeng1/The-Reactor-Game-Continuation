@@ -1254,6 +1254,43 @@ Run it with `python _tools/music/remix.py` (`--probe` for the grid and the struc
 `--check` to re-measure an existing render). See PROGRESS.md Phase 111, DECISIONS 454 to 459, and
 `docs/SYSTEMS.md` section 2.16.
 
+## The MIDI - `asstes/music/*.mid`
+
+Also ignored (see `.gitignore`): a MIDI file **is** the notes, with no recording in between to make
+the derivation arguable, so it gets the same treatment as the reference it would be derived from.
+The operator put one there on 2026-10-11 and named it himself:
+
+```
+[WIP] (Piano) Portal 2 OST - Reconstructing More Science - Aperture Science Psychoacoustic Laboratories.mid
+```
+
+**What it is**, measured rather than assumed: format 1, four staves all on program 0 (acoustic grand),
+384 ticks per quarter, one tempo event of 60.000 bpm in 4/4, **936 sounding notes in only 296 unique
+onsets**, ending at tick 34560 = 90.00 quarters = **22.50 bars = 90.00 s**. Every onset and offset is
+a multiple of 96 ticks, so it is quantized exactly to the sixteenth, and the 936 notes use just **six
+distinct lengths** (705 of them exactly one sixteenth). That is a step-entered transcription, not a
+performance - a played piano has dozens of durations. Range D2..D5.
+
+**It is not the recording, and that is a measurement, not a guess.** The MIDI is strictly diatonic:
+**D#, G and A# never sound, in any of the 936 notes.** The audio's chroma has no empty class at all,
+and its second-largest is **G at 11.04%** - the pitch class the MIDI never plays. Rotating the MIDI
+onto the audio does not rescue it: the best rotation (-4 semitones, r +0.680) still leaves D#, F# and
+B at zero where the audio sounds them at 6.67%, 6.31% and 5.75%. **No transposition of this MIDI is
+this recording.** They share a title, not a performance - and note that the title's own `[WIP]` tag is
+what the audio corroborates (DECISIONS 459).
+
+`_tools/music/midi_grid.py` is the ruler for this, and it is tracked because it is original. It parses
+an SMF with stdlib only (no mido), reports the tempo/meter/texture grid, and with `--compare <audio>`
+runs the transposition test above. It is a ruler of a different kind from `analyze.py`: `analyze.py`
+infers a grid from a spectrogram, whereas a MIDI **is** the grid - which is why the bar phase that
+scraped through at +1.01 dB against a 1.0 dB threshold would be stated outright in a MIDI of the same
+music. It follows that the file has to be *shown* to be the same music before it can be spent as one.
+
+```bash
+python _tools/music/midi_grid.py path/to/file.mid
+python _tools/music/midi_grid.py path/to/file.mid --compare asstes/music/ReactorStartup.mp3
+```
+
 ## The console in `luau-windows/`
 
 `luau-windows/calculation.luau` is the operator's own transcription of the reactor's pressure

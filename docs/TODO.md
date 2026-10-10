@@ -351,6 +351,16 @@
 - [ ] **`_tools/music/remix.py` 也没挂 `run_tests.sh`**：一次完整跑（解码 → STFT → 混 → 母带 → 编码 → 检查）
       **125.1 s**，和 `check_song.py` 同一个理由（量级不对，故意不挂）；`--probe` 是它的快档
       （只出格点/结构，不渲染）。
+- [ ] **操作员放进来的那份 MIDI 还没用途**（Phase 111 追补，2026-10-11）：
+      `asstes/music/[WIP] (Piano) Portal 2 OST - Reconstructing More Science …mid`，**gitignored**、
+      只在盘上。**已经量清楚它是什么**（4 轨钢琴 / 60.000 bpm / 4/4 / 936 音 / 十六分量化 /
+      22.50 小节 = 90.00 s），**也量清楚它不是那份录音**（取舍 **461**）。
+      **要干什么等他答** —— 条目 `QUESTIONS.md` **`M1`**。
+      **在他答之前不要在这份 MIDI 上建东西**：前提（它 = 那份录音）已经量掉、是假的。
+- [ ] **`_tools/music/midi_grid.py` 也没挂 `run_tests.sh`**：它自己很快（一份 MIDI 秒级），
+      但 `--compare` 要**解一遍那段音频 + 一次 STFT**（264 s 的录音，数十秒）。
+      真要挂就只挂不带 `--compare` 的那条路径（纯 MIDI、纯 stdlib）。
+      它**没通过自己的自检会 exit 1**（取舍 **460**），所以挂上去是有意义的，不是形式。
 
 
 ---
