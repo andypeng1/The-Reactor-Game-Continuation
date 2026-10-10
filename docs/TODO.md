@@ -748,3 +748,34 @@ Phase 107 的算术：`T=9420`、6 台风扇 ⇒ `188 - 420 = -232 PSI/tick`，�
 
 **开机链本身**照 §3.11.10 走（六步，每步验方向与距离 `1,0,0@4.5`），第六步 HDEF **不要开着**。
 **别按** `PostShiftButton` / `HoldButton`（§3.11.9）。
+
+#### 3.11.13 引力透镜：**动的那一半从来没在跑起来的会话里被看过**（Phase 109）
+
+**盘上/Studio 里都已经有了**：`_tools/gravity_lens.luau`（**18961** 字节 / **575** 行 /
+md5 **`984bfa338d4e79ec17a40fd080f7497d`** / 校验和 **`2051583504`**，0 反斜杠 / 0 CR）；
+`ServerScriptService.GravityLens` 里是**同一份字节**；`Workspace.GravityLens` 是它建出来的静帧
+（`92 × 92 × 10.303`，Neon，`-151.10 58.00 71.00`）。落在 **`The Reactor [Rebuild]`（`131274481205639`）**。
+
+**没验的那一条是这里最该先做的：** 一个 `Script` 在 **Edit 模式**里**不会跑**（不在运行中的 DataModel；
+`RunService:IsRunning()` 在那里为假，所以连 `Heartbeat:Connect` 都不注册）。
+所以「它真的会动」这件事，目前只有**源码**保证 —— 我抓到的那 5.75 s 里 Y 最大 2.838，
+是**同一个模块在 Edit 沙箱里被手动 `step()` 出来**的，**不是** `Script` 自己跑出来的。
+
+**要做的（按顺序）：**
+1. `start_stop_play(is_start=true)`（官方 `rblx_start_stop_play`）—— 注意**这会拿走 `Edit` 数据模型**
+   （§0.17：推源码的顺序是**停 → 推 → 起**，不是反过来），所以**先确认盘上那份和 Studio 那份已经一致**。
+2. Play 起来之后，**读实例状态而不是模块状态**（§0.2）：`Workspace.GravityLens` 的
+   `MeshPart.MeshContent` → `CreateEditableMeshAsync` → 逐顶点位置，**隔一秒取两次**，
+   两次要不同（这就是「`Script` 自己驱动了它」和「我手动 `step` 了它」的差别）。
+3. 顺手量**帧率**：`CFG.UPDATE_HZ = 30` 只是**我设的那个数**，这一轮**没有量过**它是否稳定 ——
+   两个相位不是一段连续轨迹（取舍 445 的反面）。
+4. 停 Play（官方 `rblx_start_stop_play(is_start=false)`，§0.16）。**`Workspace.GravityLens` 是 `Script`
+   在 Play 里建的**，所以停了之后它可能只剩 Edit 那一份 —— 先记下 `MeshContent` 的字节数再停。
+
+**还没动的两件（都是「要不要」，不是「对不对」）：**
+
+- **它现在在重建台，不在主游戏那个 place。** 要不要复制/搬过去 → `QUESTIONS.md` **L1**。
+  （搬过去需要**活客户端通道**，而那个会话 Phase 103 就没了 —— 所以 L1 选 B 的话，
+  它排在那条通道恢复之后。）
+- **位置 / 大小 / 朝向是我挑的**（`ORIGIN` / `FACING` 两个常量，在 `CFG` 里）。
+  你说一句就改，改完**同一步**补 `PROGRESS` / `SYSTEMS`。

@@ -12134,3 +12134,98 @@ Phase 106/107 那条**真的点亮了反应堆**的配方**没有做这个算术
 **没验的**：`d9` **一次都没在活客户端里跑过**（活 VM 里还是 `d4`，而那个会话 Phase 103 就没了）；
 `clickScreen` 在真 VM 里**零次**；这一次改的是**注释和下限**、**没有在世界里按过任何一下**。
 细节 `DECISIONS_2` **438..441**，`docs/RECORDER_HOWTO.md` **§13.9.1 / §13.9.16**，`docs/TODO.md` **§3.11.12**。
+
+
+## Phase 109（2026-10-10）—— 引力透镜：用 EditableMesh **逐顶点**改出来的动态效果
+
+操作员原话：**「那个你在 studio 里面搞个引力透镜，就实现那种黑洞扭曲的效果（使用 editable mesh）
+然后那个通过编辑顶点然后做出动态效果，不要动我的摄像机」**。
+
+**落在哪个 place：`The Reactor [Rebuild]`，placeId `131274481205639`** ——
+就是 README「The Rebuild place」那一节的那个（geometry 按原坐标重装的比对 place）。
+**这一轮这台机器上接着的 Studio 只有这一个**，所以它在这儿；要不要也进主游戏那个 place，
+写在 `QUESTIONS.md` **L1** 里问你。
+三条都做到了：它是 `EditableMesh`；动的是 `SetPosition`；**从头到尾一次都没写 `workspace.CurrentCamera`**，
+也没调用过任何带 `camera_position` / `look_at_position` 的截图工具（§0.11、§0.14 那两条路我是**读**着走过来的）。
+
+**① 先量 API，再写一行。** 这台 Studio 里 `EditableMesh` 是**旧的、靠间接层的那一套**，
+而且它的成员**探不到就会硬报错**（`typeof(em) == "Object"`，不是 Instance）—— 所以每一个名字都先用
+`pcall` 探，把**真实报错原文**打出来再决定怎么写。量到的面：
+
+| 有 | 没有 |
+|---|---|
+| `AddVertex(Vector3) -> vertexId` | `SetVertexPosition` |
+| `AddTriangle(v1,v2,v3) -> faceId` | `SetVertexColor(s)` / `GetVertexColor` |
+| `GetFaceColors(f) -> {colorId,colorId,colorId}` | `SetColors` / `SetUVs` / `SetVertexNormals` |
+| `SetFaceColors(f, {c1,c2,c3})`（**表**，2 个实参） | `RemoveVertex` / `RemoveTriangle` |
+| `SetColor(colorId, Color3)` / `GetColor(colorId)` | `GetTriangles` / `GetVertexCount` / `GetFaceCount` |
+| `SetPosition(v, Vector3)` / `GetPosition` | `HasVertex` / `HasFace` / `Clone` |
+
+三条当时**看着像有、其实每次都报错**的：`SetColor_2arg` → `Unexpected EditableMesh id type.
+Expected Color id, received Vertex id`；`SetFaceColors(f, c1, c2, c3)` → `EditableMesh function:
+expects 2 arguments`；给 `SetFaceColors` 传三个 `Color3` → `Invalid id`。
+**这一套是按 id 间接的**：面记的是**颜色 id**，颜色 id 再映到一个 `Color3`。
+
+**② 颜色 id 是算不出来的，只能当场收。** 颜色 id 在**第一次用到时**按面的顺序分配，
+而且**按顶点共享**（`f1=(a,b,c)` 拿到 889/890/891，`f2=(b,d,c)` 拿到 890/892/891 —— 同一个 `b` 同一个 890）。
+所以每建一个面就要**顺手把 `GetFaceColors` 收下来**，建立 `vertexId -> colorId` 的映射；
+事后没有任何办法把颜色 id 反推回来。构建时数出来的 `colourConflicts = 0` **正是这个假设被证实的那一下** ——
+如果颜色是按面而不是按顶点存的，这里会立刻变成一万多。
+
+**③ 两个上限都是量出来的，不是文档给的。** 顶点 **60000**（越界报 `Vertex count above limit`）、
+三角形 **20000**（`Triangle count above limit`）。**绑定的是三角形那一条** ——
+我在写之前先跑了探针（`triangles_made: 20000` 停住），所以拓扑最后定成
+`RINGS=64 × SPOKES=152` = 9728 顶点 / 19152 面（**离上限 848 面**），
+而且 `build()` 开头就用**具名常量**把两个数挡住了：越界时错的是**我自己的话**，
+不是引擎那句 `Triangle count above limit`。
+
+**④ 「动态」= 每帧改顶点；渲染跟着走，物理不跟。** 这一条是 Roblox 自己的文档（`docs/SNIPPETS.md` §5.18 引过）：
+`SetPosition` **当场**改渲染，而**碰撞/物理是快照**，要 `CreateMeshPartAsync` + `ApplyMesh` 才更新。
+所以整份交付**只有渲染**：`CanCollide=false`、`CanQuery=false`、`CastShadow=false`。
+（这不是省事 —— 一块会挡住射线、会参与碰撞的「黑洞」是**改了玩法**，§1.4 第 1 条。）
+
+**⑤ 交付身份。** `_tools/gravity_lens.luau` = **18961 字节 / 575 行 /
+md5 `984bfa338d4e79ec17a40fd080f7497d` / 多项式校验和 `2051583504`**（**0 反斜杠 / 0 CR**，§0.10）。
+盘上、`ServerScriptService.GravityLens` 里的 `Source`（`#Source == 18961`）**逐字节相同** ——
+第三个字节检查点（前两个是 17380/4115984015 与 18768/1174259352，都是中途的版本），
+比的是**长度 + 校验和两样**，从不只比长度（§0.0）。
+
+**为什么交货的是一个 `Script` 而不是一堆调好的属性：** Edit 模式建的那一版是**静帧**
+（`Workspace.GravityLens`，一个 `MeshPart`，`92 × 92 × 10.303`，Neon，`DoubleSided`，
+落在 `-151.10 58.00 71.00`，朝向 `0.4099, -0.4912, -0.7686`）；
+**动起来的那一版**必须是 `ServerScriptService` 里一个 `Script`，Play 模式重新编译同一份源码、
+自己 `build()` 再 `Heartbeat:Connect(M.step)`。**Edit ≠ Play**（§0.4 的同族）：
+在 Edit 模式改 `Source` 不动运行时副本，反过来也一样，所以**两份都要有、而且必须是同一份字节**。
+
+**⑥ 验证用了三条互相独立的通道，任何一条单独都不够（§4.4 要的是实例状态，§0.14b 说能量图就先拍）。**
+
+- **通道 A —— 逐顶点读回，速度是我自己算的。** 两相快照（`require` 同一个模块实例 → 模块缓存
+  保证 `state` 是同一份）：`snapshotA` 在 `t=0`，所有 Y **全 0**；`snapshotB` 在 `t=5.75`，
+  Y 最大 **2.838**。再把 `outerMoved 1.270` / `innerMoved 1.209` 拿**运动学**去核：外圈慢、内圈快，
+  数量级对得上。**这不是「看起来在动」，是「动的量和算出来的量一致」。**
+- **通道 B —— §5.18 的往返（`MeshContent` → `CreateEditableMeshAsync`）。**
+  `roundTrip ok`、`worstPositionDelta 0`、颜色差 ≤ 1/255。**这里的 1/255 不是误差，是发现**：
+  mesh 把颜色量化到 8 位，`worstColourDelta 0.0029` 正好一格，写下来免得下次当成 bug 追。
+- **通道 C —— 图。** 把**颜色场**（不是渲染图）从 Lua 侧渲成 ASCII PPM、POST 到 `receive.py`
+  （`crc32 0fa36841` @200²、`42393a69` @300²，两边 CRC 逐位相同），再用纯 stdlib 的
+  `_tools/ppm_to_png.py` 转 PNG。**为什么要自己渲色场：**`screen_capture` 量的是**渲染器**，
+  它会把材质、光照、后处理一起算进来，而我要看的是**顶点颜色对不对**。色场图在视觉桥那里拿到
+  **Excellent / 无缺陷**（阴影圆且居中、环锐利完整、弧线明显、无条带、无硬缝、环不偏心）。
+
+**⑦ 唯一的「它真的在动」的证据是一对受控对照（取舍 443）。**
+单独两张截图**什么都不证明** —— 相机在动、部件在动、时间在走，全是变量。所以造了一对
+**只有 `clock` 变**的图：`camPos` 相同、`partPos` 相同、同一个部件、**同一个模块实例**
+（`__GLBLive` 持久持有 → 命中 `require` 的缓存），只有 `clock` 从 **5.75 → 17.25**。
+`compare_images` 报的是**内部图案顺时针转**（内环的峰从 6 点走到 5 点，左上那块亮粉往顶中挪）。
+**这里必须补一句反话**：这一次我**没有动相机**，但中途有一张 `screen_capture` 拍到了**完全不同的画面**
+（是设施，不是透镜）—— 那是**操作员自己挪了镜头**，不是工具坏了。
+我把那一对作废重建了。**这正好说明「同一台相机」在这台机器上不是一个我能假定的条件**（§0.14 的边界）。
+
+**没验的**：① 只验了**渲染**，没有一次 Play 模式下的**运行时**读数 —— `ServerScriptService.GravityLens`
+那个 `Script` **从没在跑起来的会话里被观察过**（会话是 Edit 模式的），它会不会在 Play 里也这么动，
+只有源码保证；② 运动学核对用的是**两个相位**，不是一段连续轨迹，所以「帧率是否稳定 30 Hz」
+（`CFG.UPDATE_HZ`）**没量**；③ §0.14 那条「这台机器上两个截图工具都不认我给的相机」我**没有重新证伪** ——
+这一轮我压根**没给过相机**（受硬约束），所以「能渲染出正确的画面」这件事我只从**色场图**上知道。
+细节 `DECISIONS_2` **442..447**，`docs/SNIPPETS.md` **§5.24**，`docs/SYSTEMS.md` **§2.19**，
+`docs/TODO.md` **§3.11.13**，`README.md`「The gravity lens」。
+

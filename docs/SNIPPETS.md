@@ -1363,3 +1363,121 @@ HallwayRoomConnector 8 roots, big  74 孩子 /  102 件, 空壳 2 → 20 孩子 
 零件上**没有任何父属记录**、只剩一堆**彼此只隔 2–15 stud** 的 pivot 时 ——
 最近的分配会跑通、会给出 45 个大小合理的容器、**什么都不报错**，而它**大概率是错的**。
 **那是「挑的数」，不是「量出来的数」**（取舍 274/340）。**这一格只能披露，不能补。**
+
+
+## 5.24 用 **EditableMesh** 建一个逐顶点驱动的效果（旧 API 的间接层 + 两个上限 + 字节级交货）★ Phase 109
+
+一个会自己变形的东西：`AddVertex` / `AddTriangle` 建一次拓扑，之后**每帧只改 `SetPosition`**。
+三条能让它一次跑通的东西，和三条骗过我的东西。
+
+**① 这台 Studio 是**旧的、按 id 间接**的一套 API —— 每一个名字先用 `pcall` 试，并打报错原文。**
+`EditableMesh` 在这里是 **datatype**（`typeof(em) == "Object"`），不是 Instance：
+探一个不存在的成员**不是回 `nil`，是抛错**，所以 `if em.Thing then` 这种写法自己就是那一次错误。
+
+```lua
+local ok, res = pcall(function() return em.SetVertexColor end)
+-- ok == false，而 res 是 "SetVertexColor is not a valid member of EditableMesh"
+```
+
+量到的面（2026-10 实测）——**有**：`AddVertex(Vector3)->vid`、`AddTriangle(v1,v2,v3)->fid`、
+`GetFaceColors(f)->{cid,cid,cid}`、`SetFaceColors(f,{cid,cid,cid})`（**表**，2 实参）、
+`SetColor(cid, Color3)`、`GetColor(cid)`、`SetPosition(vid,Vector3)`、`GetPosition(vid)`、
+`GetVertices`、`GetFaces`、`GetFaceUVs`、`SetFaceNormals`、`SetUV`/`GetUV`、`SetNormal`/`GetNormal`、
+`Triangulate`、`GetSize`、`Clear`、`Destroy`、`AddColor(Color3, alpha)->cid`。
+**没有**：`SetVertexPosition`、`SetVertexColor(s)`、`GetVertexColor`、`SetColors`、`SetUVs`、
+`SetVertexNormals`、`RemoveVertex`、`RemoveTriangle`、`GetTriangles`、`GetVertexCount`、
+`GetFaceCount`、`HasVertex`、`HasFace`、`Clone`。
+
+**② 颜色 id **算不出来**，而且**按顶点共享** —— 建面的那一刻就要收下来。**
+`f1=(a,b,c)` 拿到 889/890/891，`f2=(b,d,c)` 拿到 890/892/891（同一个 `b` 还是 890）。
+
+```lua
+local colourOf, conflicts = {}, 0
+local function link(a, b, c)
+    local f = em:AddTriangle(a, b, c)
+    local cols = em:GetFaceColors(f)          -- 只有此刻问得到
+    local vs = { a, b, c }
+    for k = 1, 3 do
+        local prev = colourOf[vs[k]]
+        if prev == nil then colourOf[vs[k]] = cols[k]
+        elseif prev ~= cols[k] then conflicts = conflicts + 1 end
+    end
+end
+```
+`conflicts` **必须**到构建末尾报出来：它是「按顶点」这个前提**唯一**会被证伪的地方，
+而证伪了画面**照样对**（每面一个顶点色，肉眼分不出）。
+
+**③ 两个上限先量再用，且**绑定的是三角形那一条**。** 顶点 **60000**、三角形 **20000**；
+按面留余量，`build()` 开头用**具名常量**挡住，错的要是自己的话：
+
+```lua
+local CAP_VERTICES, CAP_TRIANGLES = 60000, 20000
+if wantTris > CAP_TRIANGLES then
+    error(string.format("topology asks for %d triangles, the cap is %d", wantTris, CAP_TRIANGLES))
+end
+```
+交付拓扑 `RINGS=64 × SPOKES=152` = 9728 顶点 / **19152 面**（离 20000 有 848）。
+
+**④ 「动态」= 每帧改顶点；渲染跟、物理不跟 —— 所以整件不参与碰撞。**
+Roblox 文档：`SetPosition` 当场改渲染，碰撞是**快照**，要 `CreateMeshPartAsync` + `ApplyMesh` 才更新。
+一个会挡射线、会撞人的「黑洞」是**改玩法**（§1.4 第 1 条），所以交付成
+`CanCollide=false` / `CanQuery=false` / `CastShadow=false`。
+
+**⑤ 造 MeshPart 不需要上传凭据**（§5.18 的同一条）：
+
+```lua
+local mesh = AssetService:CreateEditableMesh()
+build(mesh)
+local mp = AssetService:CreateMeshPartAsync(Content.fromObject(mesh))
+mp.Anchored = true; mp.CanCollide = false; mp.CanQuery = false; mp.CastShadow = false
+mp.Material = Enum.Material.Neon; mp.DoubleSided = true; mp.Size = CFG.SIZE
+mp.CFrame = CFrame.new(CFG.ORIGIN, CFG.ORIGIN + CFG.FACING); mp.Parent = workspace
+```
+**唯一可信的读回是** `MeshPart.MeshContent -> CreateEditableMeshAsync(content)`（这一轮 `worstPositionDelta 0`）。
+`CollisionFidelity` 在 Object-content 的 MeshPart 上**写不进去**，所以别指望它。
+
+**⑥ 把源码搬进 Studio 并按**字节**核 —— 长度 + 校验和，从不只比长度**（§0.17：这条走官方 `rblx_execute_luau`）**：
+
+```lua
+local ok, src = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
+-- 官方 VM 里 ok=true, type=string；第三方插件 VM 里 GetAsync 是桩（§0.17）
+local sum = 0
+for i = 1, #src do sum = (sum * 33 + string.byte(src, i)) % 4294967296 end
+-- 与盘上 Python 算的同一条式子在 rc 里逐位比
+```
+盘上那一侧（同一个式子的 Python 版）：
+```python
+s = 0
+for c in open(p, "rb").read():
+    s = (s * 33 + c) % 4294967296
+```
+**跑它**用 §0.15 的现成解法：`Clone()` 到一个临时 `Folder` 再 `require`（新实例 = 新缓存项 = 重新编译），
+用完 `Destroy()`；**并**把启动块包进 `pcall`，把 `M.bootError` **写进模块**再 `warn` ——
+否则 `require` 只回一句 `Requested module experienced an error while loading`，
+**它指的是调用者，不是出错的那一行**。这一轮正是靠它一秒看到真正的原因是
+`Triangle count above limit`（那条上限我那时还没量）。
+
+**⑦ 证明「动」：一对只有时钟不同的图，外加从色场渲出来的 PPM。**
+`camPos` / `partPos` / 部件 / **模块实例**（用持久 holder `require` → 命中缓存）全钉死，
+只让 `clock` 5.75 → 17.25，然后**用 `compare_images` 比**，不用眼睛下结论。渲染图之外再渲一张**颜色场**：
+
+```lua
+local function pushPPM(url, n)          -- 色场，不是渲染图：绕开材质/光照/后处理
+    local rows = { "P3", n .. " " .. n, "255" }
+    for y = 1, n do
+        local t = {}
+        for x = 1, n do
+            local r, g, b = sourceColour(...)   -- 直接问颜色函数
+            t[#t+1] = string.format("%d %d %d", r*255, g*255, b*255)
+        end
+        rows[#rows+1] = table.concat(t, " ")
+    end
+    HttpService:PostAsync(url, table.concat(rows, string.char(10)))   -- §0.10：一个反斜杠都不写
+end
+```
+`receive.py` 那一侧记 `RECV <name> <bytes> <crc32>`，两边 CRC **逐位相同**才算到（`0fa36841` @200²、
+`42393a69` @300²）；PNG 由纯 stdlib 的 `_tools/ppm_to_png.py` 转（这台机器上**没有 Pillow**）。
+
+**⑧ 一个恒为黑的采样点，是「这条检查没在测东西」的唯一信号。** 第一版 `verify` 拿第 1 环比颜色 ——
+那是阴影中心，源色和比对函数**同时趋近 0**，于是断言恒真（§0.13）。改成沿 1,6,11,… 环展开，
+并**报最亮的采样值**（`brightestSample 2.148`）；`worstColourDelta 0.0029` 是 mesh 的 **8 位量化**，不是缺陷。

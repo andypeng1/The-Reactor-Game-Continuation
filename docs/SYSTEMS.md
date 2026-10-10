@@ -717,3 +717,46 @@ python gui.py
 （8 个真变异各自红在指定那一项、2 个 FOLLOW 留绿）。
 **驱动走 `event_generate`、截图走 `PrintWindow`——全程不动操作员的光标**（取舍 348）。
 细节 `PROGRESS.md` 97，取舍 **341..348**。
+
+### 2.19 `Workspace.GravityLens` —— 用 EditableMesh 逐顶点驱动的引力透镜（2026-10-10，Phase 109）
+
+**场景里多出来的一件纯视觉件。** 操作员要的是「黑洞扭曲」那种效果，
+**用 editable mesh 编辑顶点做出动态效果**，硬约束是**不要动他的摄像机**
+（全程一次都没写 `workspace.CurrentCamera`，也没调用过任何带 `camera_position` 的截图工具）。
+
+| | |
+|---|---|
+| 在哪个 place | **`The Reactor [Rebuild]`，placeId `131274481205639`**（这一轮唯一接着的 Studio） |
+| 盘上源码 | `_tools/gravity_lens.luau` = **18961 字节 / 575 行 / md5 `984bfa338d4e79ec17a40fd080f7497d` / 校验和 `2051583504`**（0 反斜杠 / 0 CR） |
+| Studio 里的动件 | `ServerScriptService.GravityLens`（一个 `Script`，`#Source == 18961`）——**Play 模式**才建网格并 `Heartbeat` 驱动 |
+| Studio 里的静帧 | `Workspace.GravityLens`（`MeshPart`，Size `92, 92, 10.303`，Neon，`DoubleSided`，落在 `-151.10 58.00 71.00`，朝向 `0.4099, -0.4912, -0.7686`） |
+| 拓扑 | `RINGS=64 × SPOKES=152` = **9728 顶点 / 19152 面**（上限 60000 / 20000，留 848 面余量） |
+| 物理 | **不参与**：`CanCollide=false`、`CanQuery=false`、`CastShadow=false` —— `SetPosition` 只改**渲染**，碰撞是快照（§5.18） |
+| 身份标签 | `M.TAG = "lens-a1"` |
+
+**它画的是什么。** 一张**正对着它的平面盘**，每个顶点按**点质量透镜映射**
+`beta = R - rE^2 / R` 采一个源平面的样子（`rE` 是爱因斯坦半径，环内 `beta` 为负 =
+源被翻到对面），叠一个高斯**环增亮**（`RING_BOOST = 2.4`，`RING_WIDTH = 0.012`）、
+一个 `FADE_IN` 边缘、以及 `R_VIGNETTE` 外的淡出。**动态**来自每帧改 `SetPosition`：
+**旋流**（越靠内圈拖得越狠，`SWIRL = 0.30` rad / 23 s）、**呼吸**（`BREATHE = 0.045` / 11 s）、
+**涟漪**（`RIPPLE = 1.5` / 7 s），30 Hz。
+
+**为什么是 `Script` 而不是一堆调好的属性：** Edit 模式建出来的 `MeshPart` 是**静帧** ——
+可读、可截图、**但不会动**。会动的那一版必须是 Play 里跑起来的脚本，而 **Edit 改 `Source` 不动运行时副本、
+Play 里改不落盘**（§0.4）。所以「交付」是**那两个东西 + 同一份字节**（见上手 `docs/SNIPPETS.md` §5.24）。
+
+**验证（三条独立通道）**：① 逐顶点快照 —— `t=0` 时所有 Y 为 **0**，`t=5.75` 时 Y 最大 **2.838**，
+且 `outerMoved 1.270` / `innerMoved 1.209` 与运动学一致；② §5.18 往返
+（`MeshPart.MeshContent -> CreateEditableMeshAsync`）`worstPositionDelta 0`、
+颜色差 `0.0029`（= **1/255**，mesh 的 8 位量化，不是缺陷）；③ **色场**渲成 ASCII PPM
+（`receive.py` 侧 CRC `0fa36841` @200² / `42393a69` @300²，两边逐位相同）再由
+`_tools/ppm_to_png.py`（纯 stdlib，这台机器**没有 Pillow**）转 PNG，
+视觉桥评 **Excellent / 无缺陷**。渲染图之外**单独渲色场**，是因为 `screen_capture` 量的是渲染器
+（材质 + 光照 + 后处理一起算进来），而这里要问的是**顶点颜色对不对**。
+
+**「它真的在动」的证据只有一对受控对照**（取舍 443）：`camPos` / `partPos` / 部件 / **模块实例**
+（持久 holder `require` → 命中模块缓存）全钉死，只让 `clock` 5.75 → 17.25，
+`compare_images` 报**内部图案顺时针转**（内环峰 6 点 → 5 点）。**没验的**：
+`SSS.GravityLens` 那个 `Script` **从没在跑起来的会话里被观察过**（这一轮全程 Edit 模式），
+它会不会在 Play 里也这么动**只有源码保证**；30 Hz 的帧率稳定性没量。
+细节 `PROGRESS.md` 109，取舍 **442..447**。

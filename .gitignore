@@ -213,3 +213,21 @@ luau-windows/lune-*.zip
 #     that produces them is _tools/analyze_fluc_steps.py and IS tracked, so the
 #     numbers stay reproducible from the repo plus his file. ---
 Data/analyze/
+
+# --- the Phase 109 lens colour-field render's RAW transfer format.  The picture
+#     the analysis actually read is the PNG beside it -- 161 KB, and the file the
+#     vision bridge rated Excellent.  The .ppm is the 812 KB ASCII intermediate
+#     the Roblox side POSTs through receive.py, and it is regenerated in one
+#     command from the shipped module.  Same rule as Data/roomwatch*/inventory.txt
+#     above: the derived artefact is tracked, the big raw dump is not. ---
+Data/gravity_lens.ppm
+
+# --- a screenshot of the ORIGINAL game's post-shift report screen
+#     (A.E.R.N - SHIFT [1] REPORT, TOTAL -$263000), taken 2026-10-10 while the
+#     driver session was still alive.  It is the operator's own game state, not
+#     this project's output, and this repo is PUBLIC (Phase 51) -- the same
+#     reason asstes/music/ReactorStartup.mp3 is listed near the top.  Nothing
+#     reads it back, and it is not ignored by any rule above: `git add -A` runs
+#     unprompted here, so leaving it unlisted means the next push publishes his
+#     screen without anyone choosing to. ---
+Data/shot_report.png

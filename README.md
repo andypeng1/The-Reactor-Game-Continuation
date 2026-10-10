@@ -955,6 +955,58 @@ float32**, so a 1e-9 tolerance tests the storage format, not the geometry.
 
 See PROGRESS.md Phase 90, DECISIONS 297 to 302, docs/SNIPPETS.md 5.21.
 
+### The gravity lens - `_tools/gravity_lens.luau`
+
+A `Script` at `ServerScriptService.GravityLens` that builds a **gravitational lens** out of an
+`EditableMesh` and animates it **by moving its vertices**, plus the still `MeshPart` the same
+source builds in Edit mode at `Workspace.GravityLens` (`92, 92, 10.303`, Neon, `-151.10 58.00 71.00`,
+laid against `0.4099, -0.4912, -0.7686`). The operator's constraint was **do not touch my camera**:
+nothing in that file writes `workspace.CurrentCamera`, and no screenshot tool was ever handed a
+`camera_position`.
+
+The disc samples a point-mass lens map, `beta = R - rE^2 / R`, so the source plane is inverted
+inside the Einstein radius; a Gaussian ring brightens it there, and three clock-driven terms move it -
+a swirl that drags the inner rings hardest (0.30 rad / 23 s), a breathe (0.045 / 11 s) and a ripple
+(1.5 / 7 s) at 30 Hz. Topology is `64 x 152` = **9728 vertices / 19152 triangles**, against measured
+caps of **60000 / 20000** - the triangle cap is the binding one, and `build()` names both so a
+too-big topology errors in my own words rather than in the engine's.
+
+Four things here were measured, and **three of them are silent when wrong**:
+
+  - **This Studio's `EditableMesh` is the old, indirection-based API** - a face records *colour ids*,
+    and a colour id maps to a `Color3`. It is a **datatype, not an Instance**, so probing a member
+    that does not exist **throws instead of returning nil**; every name had to be tried under `pcall`
+    and the error text read. `SetColor(vertexId, ...)` replies `Expected Color id, received Vertex id` -
+    three separate errors that all describe argument shapes and none of which says "this is indirect".
+  - **Colour ids cannot be computed.** They are allocated at first use in face order and **shared per
+    vertex** (`f1=(a,b,c)` gets 889/890/891, `f2=(b,d,c)` gets 890/892/891), so `GetFaceColors` has to
+    be harvested the moment each face is created. The build's `colourConflicts = 0` is the only place
+    that assumption can be falsified - and if it were false the picture would still look right.
+  - **`SetPosition` moves the render and not the collision** (Roblox's own docs): physics is a snapshot
+    that needs `CreateMeshPartAsync` + `ApplyMesh`. So the whole thing is `CanCollide`, `CanQuery` and
+    `CastShadow` false - a black hole that blocks raycasts would be a gameplay change.
+  - **Edit is not Play.** The `MeshPart` built in Edit mode is a still frame; the moving half has to be
+    the `Script`, and Play rebuilds it from the same bytes. Both sides were checked by **length *and* a
+    polynomial checksum** (`18961`, `2051583504`), never by length alone.
+
+Verification came from three independent channels: a per-vertex read-back at two phases (`t=0` all Y
+zero, `t=5.75` Y max **2.838**, with `outerMoved 1.270` / `innerMoved 1.209` matching the motion maths);
+the section 5.18 round trip (`MeshContent` -> `CreateEditableMeshAsync`, `worstPositionDelta 0`, colours
+within `0.0029` = one 8-bit step, i.e. the mesh quantises colour); and a **colour-field** render pushed
+as ASCII PPM through `_tools/receive.py` (crc32 matched on both sides) and converted by
+`_tools/ppm_to_png.py`, a stdlib-only encoder written because **Pillow is not installed here**. The
+colour field is rendered separately from a screenshot because `screen_capture` measures the *renderer* -
+material, lighting and post-processing included - and the question was whether the *vertex colours* are
+right. The one picture that shows it actually moving is a controlled pair: same camera position, same
+part position, same module instance (a persistent holder, so `require` hits the module cache), only the
+clock changed 5.75 -> 17.25, and `compare_images` reports the internal pattern rotating clockwise.
+
+**Not verified:** the `Script` has never been observed in a running session - this was all Edit mode -
+so "it animates under its own power" rests on the source alone; the 30 Hz is a number I set and never
+measured; and the lens sits in this Rebuild place rather than in the game's, which is `QUESTIONS.md` L1.
+
+See PROGRESS.md Phase 109, DECISIONS_2 442 to 447, docs/SNIPPETS.md 5.24, docs/SYSTEMS.md 2.19.
+
 ---
 
 ## The intro film - `intro/`
