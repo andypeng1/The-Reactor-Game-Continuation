@@ -1207,3 +1207,29 @@ md5 `984bfa338d4e79ec17a40fd080f7497d` / 校验和 `2051583504`**（0 反斜杠 
 「帧率是否稳定 30 Hz」没量（两个相位不是连续轨迹）；§0.14 那条「截图工具不认我给的相机」**没有重新证伪**
 （这一轮压根没给过相机）。细节 `PROGRESS.md` 109，取舍 **442..448**，`docs/SNIPPETS.md` **§5.24**，
 `docs/SYSTEMS.md` **§2.19**，`docs/TODO.md` **§3.11.13**。
+
+**Phase 110（2026-10-10）—— 「进测试之后透镜变成一个小方块」：`MeshContent.SourceType = Object` 是进程局部的。**
+
+操作员问「为什么我进测试之后透镜变成一个小方块」。量到了：同一个实例、同一句
+`CreateEditableMeshAsync(part.MeshContent)`，**建它的那个进程**回 `9728` 顶点 / `(-46 -46 -11)..(46 46 -0.7)`，
+**另一个进程**回 `1536` 顶点 / `(0,0,0)..(1,1,1)` —— **一个单位立方体**（＝渲染器的棋盘格占位，
+尺寸按部件包围盒）。**服务端建的网格，客户端画不出来**；客户端**从没被告知「没有」**。
+
+解药是**在画它的那个进程里建它**：`ServerScriptService.GravityLens` 删掉，
+源码挪到 `ReplicatedStorage.GravityLens`（**24695 字节 / sum33 `189076020`**），
+加一个 `StarterPlayer.StarterPlayerScripts.GravityLensClient` 去 `require` 它；
+`Workspace.GravityLens` 那块静帧**降格成摆位锚**（客户端读它的 `CFrame` 再自己建，建完删掉）。
+`M.start()` 多一道能力闸 `meshApiUsable()` —— 给不了网格的进程别留一块棋盘格板子。
+
+**在跑起来的会话里验过了**：Play 里画出完整的透镜（两帧内环转过去了）；
+`MeshContent` 往返两次相隔 1.2 s、最大位移 **0.0072 stud**（与 `SWIRL 0.30 rad / 23 s` 在 `r = 0.073` 上逐位吻合）；
+`t+220 s`（约 6600 拍）后仍然是完整透镜；`passes = 446 / ~15 s` ⇒ **29.7 Hz**。
+
+**没验的、以及反过来的：** 早先看到的「客户端自建透镜变棋盘格」**今天没有复现**
+（`stride = 1` 全量重写与 `stride = 4` 各跑满 4 分钟都是完整透镜）——
+「每帧写多少」**不是已证的机制**，那次棋盘格**至今没有解释**；分片留着当**保险**，不当必需。
+另外：这一轮前半段的「Play 客户端」读数**全在插件 VM 里取的**，
+交付的 `LocalScript` 只有它自己跑过才算数（新做法：让游戏 VM 里的临时 `LocalScript`
+把结论写进 `workspace` 上的 `StringValue`）。
+细节 `PROGRESS.md` 110，取舍 **449..453**，`docs/SNIPPETS.md` **§5.25**，
+`docs/SYSTEMS.md` **§2.19**，`docs/TODO.md` **§3.11.13**，`QUESTIONS.md` **L2**。

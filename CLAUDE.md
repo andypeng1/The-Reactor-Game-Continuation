@@ -433,6 +433,25 @@ local ez = math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z
 （`uniq -c` 把每条结果算两遍，诊断那一趟也打过同样的行 —— `MainHallwaySegment(456)` 出现
 8 次而真实合并 3 次，取舍 339）。**能拿来「找」，不能拿来「读」。**
 
+### 0.23 【坑】`MeshContent.SourceType = Object` 的网格**活在创建它的那个进程里** —— 别处拿到的是**单位立方体**
+
+`Content.fromObject(editableMesh)`（用 `EditableMesh` 造出来的 MeshPart）**不跨网络**。
+同一个实例、同一句 `CreateEditableMeshAsync(part.MeshContent)`：**建它的那个进程**回
+**9728 顶点 / 跨 `±46`**；**另一个进程**回 **1536 顶点 / 跨 `(0,0,0)..(1,1,1)`** ——
+一个**单位立方体**（新建的 `CreateEditableMesh()` 是 **0 顶点**，所以 1536 是**替代品**、不是空），
+渲染器把它画成**棋盘格占位**、尺寸按部件的包围盒。**操作员那句「进测试之后变成一个小方块」量的就是这个。**
+
+三条连带，都是 **§0.2 换了张脸**：
+**① `CreateEditableMesh()` 在给不了的进程里返回 `nil`，不抛错** ——
+`pcall` 回 `ok = true, em = nil`，崩在**下一个消费者**身上（同 §0.15）。
+**② 从 `execute_luau` 里做的「Play 客户端」诊断，问的不是游戏那个 VM** ——
+**交付路径（`StarterPlayerScripts` 里的 `LocalScript`）必须自己跑过自己**。
+让**游戏 VM** 说话的办法：它自己把结论写进 **`workspace` 上的一个 `StringValue`**，插件 VM 再读那个值。
+**③ 「每帧改写多少顶点会丢网格」不是已证的机制** —— 我一度这么归因（当时确实看到棋盘格），
+今天 `stride = 1` 与 `stride = 4` 各跑满 4 分钟都不复现。**没复现的那一半要写成没复现**（同 §0.21 第 3 条）。
+
+细节取舍 **449/450/451/452**，上手 `docs/SNIPPETS.md` **§5.25**。
+
 ## 1. 项目概述
 
 ### 1.1 基本信息

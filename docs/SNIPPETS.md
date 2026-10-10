@@ -966,6 +966,10 @@ mesh:Destroy()                   -- Content 已经握着它了，克隆出来的
 
 **唯一可信的读回**：`MeshPart.MeshContent` -> `AssetService:CreateEditableMeshAsync(content)`
 -> `GetVertices()` / `GetPosition(id)`。这是**往返**，不是自证。
+（**2026-10-10 更正，Phase 110**：这条**只在拥有那个对象的那个进程里**成立。
+换一个进程，同一句调用**不报错**，而是回你**一个单位立方体**（1536 顶点、跨 `(0,0,0)..(1,1,1)`）——
+`SourceType = Object` 的网格是**进程局部**的，不跨网络。所以在别人的进程里，
+「读回一个网格」和「读回**那个**网格」在类型上同形。取舍 **449/450**，见 **§5.25**。）
 **不要用射线验形状** —— 见下面的代价。
 
 **代价：碰撞体。** `MeshContent.SourceType = Object` 的 MeshPart 上，
@@ -1433,7 +1437,11 @@ mp.Anchored = true; mp.CanCollide = false; mp.CanQuery = false; mp.CastShadow = 
 mp.Material = Enum.Material.Neon; mp.DoubleSided = true; mp.Size = CFG.SIZE
 mp.CFrame = CFrame.new(CFG.ORIGIN, CFG.ORIGIN + CFG.FACING); mp.Parent = workspace
 ```
-**唯一可信的读回是** `MeshPart.MeshContent -> CreateEditableMeshAsync(content)`（这一轮 `worstPositionDelta 0`）。
+**唯一可信的读回是** `MeshPart.MeshContent -> CreateEditableMeshAsync(content)`（这一轮 `worstPositionDelta 0`）——
+（**2026-10-10 更正，Phase 110**：这条**只在拥有那个对象的那个进程里**成立。
+换一个进程，同一句调用**不报错**，而是回你**一个单位立方体**（1536 顶点、跨 `(0,0,0)..(1,1,1)`）——
+`SourceType = Object` 的网格是**进程局部**的，不跨网络。所以在别人的进程里，
+「读回一个网格」和「读回**那个**网格」在类型上同形。取舍 **449/450**，见 **§5.25**。）
 `CollisionFidelity` 在 Object-content 的 MeshPart 上**写不进去**，所以别指望它。
 
 **⑥ 把源码搬进 Studio 并按**字节**核 —— 长度 + 校验和，从不只比长度**（§0.17：这条走官方 `rblx_execute_luau`）**：
@@ -1491,3 +1499,92 @@ end
 为的是防别人种下的 `import json`）。**`-E` 单独用没事，`-s` 单独就能复现**；`numpy` 在同一个目录，同样被藏。
 判「有没有这个包」**两个解释器各问一次**，不一致就说明是**标志**藏的。
 （`_tools/ppm_to_png.py` 仍然留着纯 stdlib —— 那反而是更好的性质：它在 `-I` 底下也跑得动。）
+
+
+---
+
+## 5.25 用 `EditableMesh` 做的东西必须**在画它的那个进程里建** —— `SourceType = Object` 不跨网络 ★ Phase 110
+
+**症状（操作员原话）：** 「为什么我进测试之后透镜变成一个小方块」。
+
+**量到的原因。** 同一个实例、同一句 `AssetService:CreateEditableMeshAsync(part.MeshContent)`：
+
+| 在哪个进程 | `GetVertices()` | 包围盒 |
+|---|---|---|
+| 建它的那个（Edit） | **9728** | `(-46.00 -46.00 -11.00) .. (46.00 46.00 -0.70)` |
+| 别处（Play 客户端） | **1536** | `(0.000 0.000 0.000) .. (1.000 1.000 1.000)` |
+
+1536 顶点、跨 1.0 —— **一个单位立方体**。而新建的 `CreateEditableMesh()` 是 **0 顶点 0 面**，
+所以 1536 **不是空网格、不是错误**，是引擎给的**替代品**；渲染器再把它画成**棋盘格占位**、
+尺寸按部件的包围盒（`92 x 92 x 10.303`）。**操作员看到的那块「小方块」就是这个。**
+
+**结论：`Content.fromObject(editableMesh)`（`MeshContent.SourceType = Object`）活在创建它的那个进程的内存里。**
+**服务端建的网格，客户端画不出来。**
+
+```lua
+-- 解药不是「把网格发过去」，是「在画它的那个进程里建它」。
+-- 交付因此分成两份：一份源码（ReplicatedStorage 里的 ModuleScript），
+-- 一个引导（StarterPlayerScripts 里的 LocalScript 去 require 它并 start()）。
+-- 服务端那份 Script 删掉了 —— 它建出来的东西任何客户端都看不到。
+
+-- 摆位可以从服务端/Edit 留下的静帧上读，但那份静帧本身对客户端是棋盘格，
+-- 所以读完就收掉它，别留在世界让玩家看见。
+local frame = workspace:FindFirstChild("GravityLens")
+local cf = CFrame.lookAt(CFG.ORIGIN, CFG.ORIGIN - CFG.FACING.Unit)
+if frame ~= nil and frame:IsA("BasePart") then cf = frame.CFrame end
+local s = build(cf)                 -- 只建不删
+if frame ~= nil then frame:Destroy() end
+```
+
+**能力闸：给不了网格的进程，别留一块棋盘格板子。**
+
+```lua
+local function meshApiUsable()
+	local okCreate, em = pcall(function() return AssetService:CreateEditableMesh() end)
+	if not okCreate then return false, "CreateEditableMesh refused: " .. tostring(em) end
+	-- CreateEditableMesh() 在给不了的进程里返回 nil，而不是抛错（取舍 450）
+	if em == nil then return false, "CreateEditableMesh returned nil" end
+	local v = em:AddVertex(Vector3.new(0, 0, 0))
+	em:SetPosition(v, Vector3.new(3, 0, 0))
+	if math.abs(em:GetPosition(v).X - 3) > 0.0001 then
+		return false, "wrote 3, read back " .. tostring(em:GetPosition(v).X)
+	end
+	return true, "ok"
+end
+```
+
+**怎么在「游戏的 VM」里验它**（§0.17 的同一条，这一轮才补上）：
+`execute_luau` 跑的不是游戏那个 VM，**交付路径必须自己跑过自己**。
+在 `Players.LocalPlayer.PlayerScripts` 下放一个临时 `LocalScript` 让它自己测，
+把结论写进 workspace 上一个 `StringValue`，插件 VM 再读**那个值**：
+
+```lua
+local out = Instance.new("StringValue")
+out.Name = "LensReport"; out.Value = "booting"; out.Parent = workspace
+local M = require(game:GetService("ReplicatedStorage"):WaitForChild("GravityLens", 30))
+local s = M.start()
+task.spawn(function()
+	while true do
+		task.wait(2)
+		out.Value = string.format("passes=%d parent=%s err=%s",
+			s.passes, tostring(s.part.Parent), tostring(M.stepError))
+	end
+end)
+```
+
+**摆位的坑（取舍 453）：** `cam.CFrame * CFrame.new(0, 0, -260)` **不是「相机前方 260 stud」**。
+相机 look 向下 15 度时，它把东西放到**地下 67 stud**，而 `WorldToViewportPoint` 照样回
+`onScreen = true` —— 在视锥里，只是在基板底下。用相机的**水平**方向
+（`Vector3.new(look.X, 0, look.Z).Unit`）加一个**指定高度**。**投影在屏不等于看得见。**
+
+**在跑起来的会话里量到的三条**：Play 里画出完整的透镜（两帧之间内环转过去了）；
+`MeshContent` 往返两次相隔 1.2 s，最大位移 **0.0072 stud**（与 `SWIRL 0.30 rad / 23 s`、
+喉部半径 `0.073` 推算逐位吻合）；`t+220 s`、约 6600 拍之后仍是完整透镜，
+`CreateEditableMesh()` 预算恒 `ok`。
+
+**没证的那一条（别把它写成机制）：** 我一度把「客户端自建透镜变棋盘格」归因于
+「每帧全量重写 9728 个顶点太多」。**这一轮没有复现** —— `stride = 1`（每拍全量）与 `stride = 4`
+各跑满约 4 分钟都是完整透镜。分片（`CFG.SLICE_STRIDE = 4`，每拍 ≤ 2432 次写入、
+整张 0.13 s 刷新一遍）**留着当保险，不当必需**（取舍 451）。
+
+细节 `PROGRESS.md` 110，取舍 **449..453**，`docs/SYSTEMS.md` **§2.19**，`docs/TODO.md` **§3.11.13**。

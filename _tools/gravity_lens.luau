@@ -7,6 +7,17 @@
 -- map on each pass while its colour stays welded to it. That is what makes the
 -- swirl legible -- the pattern moves because the mesh it is painted on moves.
 --
+-- WHERE THIS RUNS (Phase 110). It is a CLIENT module, and that is not a style
+-- choice. A MeshPart whose MeshContent is an EditableMesh OBJECT does not send
+-- that mesh over the network: the object is process-local. Measured 2026-10-10 --
+-- the SAME call, CreateEditableMeshAsync(part.MeshContent), returned 9728
+-- vertices spanning +-46 studs inside the Edit process and 1536 vertices spanning
+-- (0,0,0)..(1,1,1), a unit cube, on a Play client. The client is not told "no";
+-- it is handed a default block, so every client drew a small cube where the lens
+-- should be. The cure is not to ship the mesh, it is to build it where it is
+-- drawn. The server keeps the still frame as the authored placement; the client
+-- reads that placement, then builds and animates its own copy.
+--
 -- Three rules this file keeps on purpose:
 --   * it never writes to the camera. The lens is placed once and left there.
 --   * zero backslashes. The Studio editing layer escape-decodes text that
@@ -78,8 +89,20 @@ local CFG = {
 	BREATHE_PERIOD = 11,
 	RIPPLE = 1.5,        -- out-of-plane wave through the sheet
 	RIPPLE_PERIOD = 7,
-	UPDATE_HZ = 30,      -- 13824 SetPosition calls per pass; 30 Hz is cheap enough
+	UPDATE_HZ = 30,      -- 9728 SetPosition calls per pass; 30 Hz is cheap enough
 	                     -- and 60 Hz of full-mesh rewrites is not free
+	-- ---- how much of the sheet is rewritten in one pass. THIS IS THE ONE KNOB
+	-- THAT DECIDES WHETHER A CLIENT RENDERS THE LENS AT ALL, and it defaults to
+	-- the safe reading rather than the pretty one. Measured on a Play client:
+	-- rewriting all 9728 vertices in a single tick makes the client drop the mesh
+	-- and paint the unresolvable-content checkerboard, while a copy edited a few
+	-- hundred vertices per tick renders as a lens indefinitely. So a pass writes
+	-- 1/SLICE_STRIDE of the rings and consecutive passes take consecutive slices;
+	-- the whole sheet still refreshes every SLICE_STRIDE ticks. At 30 Hz a stride
+	-- of 4 is a full refresh every 0.13 s, which is smooth, and it bounds the
+	-- per-tick write count at 2432. The server, whose EditableMesh has no budget,
+	-- can run stride 1.
+	SLICE_STRIDE = 4,
 
 	-- ---- where it sits. Derive it, do not invent it: while building this, the
 	-- operator's edit camera was at (-115.80, 7.70, 4.84), so ORIGIN is 75 studs
@@ -246,7 +269,12 @@ end
 
 -- ========== BUILD ==========
 
-local function build()
+-- cf: where to put the sheet. Everything is built in local space and the disc is
+-- symmetric about its own z axis, so any CFrame works -- which is what lets the
+-- runtime take the placement from the instance already sitting in the world
+-- rather than from a constant, so moving the part in Studio moves the lens.
+local function build(cf)
+	cf = cf or CFrame.lookAt(CFG.ORIGIN, CFG.ORIGIN - CFG.FACING.Unit)
 	local rings = CFG.RINGS
 	local spokes = CFG.SPOKES
 
@@ -351,7 +379,7 @@ local function build()
 	part.Anchored = true
 	part.Material = Enum.Material.Neon
 	part.Color = Color3.new(1, 1, 1)
-	part.CFrame = CFrame.lookAt(CFG.ORIGIN, CFG.ORIGIN - CFG.FACING.Unit)
+	part.CFrame = cf
 	-- The sheet is a surface, not a wall: it must not collide, must not be hit by
 	-- rays, and must not cast a shadow onto the operator's facility. Only the
 	-- appearance is wanted; everything else would be a side effect on the world.
@@ -361,10 +389,9 @@ local function build()
 	part.CastShadow = false
 	pcall(function() part.DoubleSided = true end)
 
-	local old = workspace:FindFirstChild("GravityLens")
-	if old ~= nil then
-		old:Destroy()
-	end
+	-- build() only builds. It destroys nothing, because on a client the thing it
+	-- would destroy is the replicated still frame it is about to read its own
+	-- placement from. The caller decides that, after this returns.
 	part.Parent = workspace
 
 	local state = {
@@ -408,13 +435,24 @@ M.build = build
 -- growing shear would wind the sheet into infinitely fine spirals, which is the
 -- winding problem, not a look.
 
-function M.step(state, dt)
+-- stride slices the pass. Ring i is written when (i-1) % stride == state.slice,
+-- and the slice advances once per pass, so every ring is written exactly once per
+-- `stride` passes and no ring is ever left holding a stale position. stride = 1 is
+-- the whole sheet in one pass, which is what the server can afford and what a
+-- client cannot (see CFG.SLICE_STRIDE). The motion is unaffected: each ring is
+-- still placed from the same formula, just at its own tick within the cycle.
+function M.step(state, dt, stride)
+	stride = stride or CFG.SLICE_STRIDE or 1
+	if stride < 1 then
+		stride = 1
+	end
 	state.clock = state.clock + dt
 	if state.clock - state.last < 1 / CFG.UPDATE_HZ then
 		return 0
 	end
 	state.last = state.clock
 	local t = state.clock
+	state.slice = ((state.slice or 0) + 1) % stride
 
 	local swirl = CFG.SWIRL * math.sin(2 * math.pi * t / CFG.SWIRL_PERIOD)
 	local bPhase = 2 * math.pi * t / CFG.BREATHE_PERIOD
@@ -428,22 +466,24 @@ function M.step(state, dt)
 	local i, j
 
 	for i = 1, state.rings do
-		local u = state.rn[i]
-		local drag = (rE / (rE + u)) ^ 1.5
-		local d = swirl * drag
-		local cd = math.cos(d)
-		local sd = math.sin(d)
+		if (i - 1) % stride == state.slice then
+			local u = state.rn[i]
+			local drag = (rE / (rE + u)) ^ 1.5
+			local d = swirl * drag
+			local cd = math.cos(d)
+			local sd = math.sin(d)
 
-		local ramp = smoothstep(0, 0.10, u) * (1 - smoothstep(0.80, 1.0, u))
-		local rr = state.rad[i] * (1 + CFG.BREATHE * ramp * math.sin(bPhase - 2.6 * u))
-		local zz = state.dip[i] + CFG.RIPPLE * ramp * math.sin(rPhase - 3.2 * u)
+			local ramp = smoothstep(0, 0.10, u) * (1 - smoothstep(0.80, 1.0, u))
+			local rr = state.rad[i] * (1 + CFG.BREATHE * ramp * math.sin(bPhase - 2.6 * u))
+			local zz = state.dip[i] + CFG.RIPPLE * ramp * math.sin(rPhase - 3.2 * u)
 
-		local row = state.verts[i]
-		for j = 1, state.spokes do
-			local c = cosv[j] * cd - sinv[j] * sd
-			local s = sinv[j] * cd + cosv[j] * sd
-			em:SetPosition(row[j], Vector3.new(rr * c, rr * s, zz))
-			moved = moved + 1
+			local row = state.verts[i]
+			for j = 1, state.spokes do
+				local c = cosv[j] * cd - sinv[j] * sd
+				local s = sinv[j] * cd + cosv[j] * sd
+				em:SetPosition(row[j], Vector3.new(rr * c, rr * s, zz))
+				moved = moved + 1
+			end
 		end
 	end
 	state.passes = state.passes + 1
@@ -548,28 +588,108 @@ function M.pushPPM(url, n)
 	return ok, err, #body
 end
 
--- ========== START ==========
--- In Play this builds and animates. In Edit it only builds, because there is no
--- simulation to hang an animation on -- so requiring this file from the edit
--- sandbox is also how the still frame gets placed.
+-- ========== CAN THIS PROCESS USE THE MESH API AT ALL ==========
+-- EditableMesh sits behind the DynamicGeneration security capability, and in a
+-- running experience that capability is off until the place is verified and
+-- "Enable Mesh / Image APIs" is turned on. The engine says so plainly:
+--   "EditableMesh is not accessible. Go to the Security Tab in Experience
+--    Settings to enable this API."
 --
--- The boot is wrapped and its failure is recorded rather than thrown. A module
--- that throws is reported by its caller as "Requested module experienced an
--- error while loading", which names the CALLER and not the fault, and the real
--- message is then nowhere -- a script that dies must say why (CLAUDE.md 0.17).
+-- The probe MUTATES, and that is the whole point of it. On 2026-10-10 a session
+-- was seen where CreateEditableMesh succeeded inside build() and the refusal
+-- only arrived later, at the first SetPosition -- one error per frame, hundreds
+-- of them. A probe that stopped after "can I create a mesh?" would have passed on
+-- exactly that session. So it creates, writes, and reads back, and it treats a
+-- read-back of the wrong VALUE as a failure too, because a write that silently
+-- does nothing is the same problem wearing a friendlier face.
+local function meshApiUsable()
+	local okCreate, emOrErr = pcall(function()
+		return AssetService:CreateEditableMesh()
+	end)
+	if not okCreate then
+		return false, "CreateEditableMesh refused: " .. tostring(emOrErr)
+	end
+	local okWrite, errWrite = pcall(function()
+		local em = emOrErr
+		local v = em:AddVertex(Vector3.new(0, 0, 0))
+		em:SetPosition(v, Vector3.new(3, 0, 0))
+		local p = em:GetPosition(v)
+		if math.abs(p.X - 3) > 0.0001 then
+			error(string.format("wrote 3, read back %.4f", p.X))
+		end
+	end)
+	pcall(function()
+		emOrErr:Destroy()
+	end)
+	if not okWrite then
+		return false, "EditableMesh write refused: " .. tostring(errWrite)
+	end
+	return true, "ok"
+end
 
-local bootOk, bootErr = pcall(function()
-	local s = build()
+-- ========== START ==========
+-- Called by the client boot. Builds a mesh in THIS process and animates it here.
+-- In Edit it only builds, because there is no simulation to hang an animation on.
+--
+-- Two things it must never do:
+--   * throw. A module that throws is reported by its caller as "Requested module
+--     experienced an error while loading", which names the CALLER and not the
+--     fault, so the real message is nowhere -- a script that dies must say why
+--     (CLAUDE.md 0.17).
+--   * leave a lie standing. If the mesh API is refused, the replicated still
+--     frame is destroyed rather than left in the world, because on a client that
+--     frame renders as a one-stud cube and reads as "the lens, badly made"
+--     instead of "the lens could not be made here".
+function M.start()
+	if M.started ~= nil then
+		return M.started
+	end
+
+	local usable, whyUsable = meshApiUsable()
+	if not usable then
+		M.bootError = whyUsable
+		warn("[GravityLens] " .. M.TAG .. " cannot run in this process: " .. whyUsable)
+		local frame = workspace:FindFirstChild("GravityLens")
+		if frame ~= nil then
+			frame:Destroy()
+		end
+		return nil
+	end
+
+	-- The placement is read from the authored instance, so the part in the world
+	-- stays the single source of truth for where the lens belongs.
+	local cf = CFrame.lookAt(CFG.ORIGIN, CFG.ORIGIN - CFG.FACING.Unit)
+	local frame = workspace:FindFirstChild("GravityLens")
+	if frame ~= nil and frame:IsA("BasePart") then
+		cf = frame.CFrame
+	end
+
+	local s = build(cf)
 	M.state = s
+	if frame ~= nil then
+		frame:Destroy()
+	end
+
 	if RunService:IsRunning() then
 		M.conn = RunService.Heartbeat:Connect(function(dt)
-			M.step(s, dt)
+			-- A pcall here is not defensive habit: this exact call is measured to
+			-- throw when the capability is missing, and without it the failure is
+			-- one identical stack per frame, which buries everything else in the
+			-- console. Fail once, say why, stop.
+			local okStep, errStep = pcall(M.step, s, dt)
+			if not okStep then
+				M.stepError = tostring(errStep)
+				if M.conn ~= nil then
+					M.conn:Disconnect()
+					M.conn = nil
+				end
+				warn("[GravityLens] " .. M.TAG .. " animation stopped: " .. M.stepError)
+			end
 		end)
 	end
-end)
-if not bootOk then
-	M.bootError = tostring(bootErr)
-	warn("[GravityLens] " .. M.TAG .. " boot failed: " .. M.bootError)
+
+	M.started = s
+	return s
 end
 
 return M

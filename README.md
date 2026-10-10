@@ -957,10 +957,12 @@ See PROGRESS.md Phase 90, DECISIONS 297 to 302, docs/SNIPPETS.md 5.21.
 
 ### The gravity lens - `_tools/gravity_lens.luau`
 
-A `Script` at `ServerScriptService.GravityLens` that builds a **gravitational lens** out of an
-`EditableMesh` and animates it **by moving its vertices**, plus the still `MeshPart` the same
-source builds in Edit mode at `Workspace.GravityLens` (`92, 92, 10.303`, Neon, `-151.10 58.00 71.00`,
-laid against `0.4099, -0.4912, -0.7686`). The operator's constraint was **do not touch my camera**:
+A **`ModuleScript` at `ReplicatedStorage.GravityLens`** that builds a **gravitational lens** out of an
+`EditableMesh` and animates it **by moving its vertices**, plus a **`LocalScript`** at
+`StarterPlayer.StarterPlayerScripts.GravityLensClient` that requires it and calls `start()`. The still
+`MeshPart` at `Workspace.GravityLens` (`92, 92, 10.303`, Neon, `-151.10 58.00 71.00`, laid against
+`0.4099, -0.4912, -0.7686`) is **no longer the deliverable** - it is the **placement anchor** the client
+reads its `CFrame` from before building its own copy and destroying it. The operator's constraint was **do not touch my camera**:
 nothing in that file writes `workspace.CurrentCamera`, and no screenshot tool was ever handed a
 `camera_position`.
 
@@ -985,9 +987,16 @@ Four things here were measured, and **three of them are silent when wrong**:
   - **`SetPosition` moves the render and not the collision** (Roblox's own docs): physics is a snapshot
     that needs `CreateMeshPartAsync` + `ApplyMesh`. So the whole thing is `CanCollide`, `CanQuery` and
     `CastShadow` false - a black hole that blocks raycasts would be a gameplay change.
-  - **Edit is not Play.** The `MeshPart` built in Edit mode is a still frame; the moving half has to be
-    the `Script`, and Play rebuilds it from the same bytes. Both sides were checked by **length *and* a
-    polynomial checksum** (`18961`, `2051583504`), never by length alone.
+  - **Edit is not Play, and a process is not another process.** The `MeshPart` built in Edit mode is a
+    still frame; the moving half has to be rebuilt where it is drawn. Source and instance were checked
+    by **length *and* a polynomial checksum** (`24695`, `189076020`), never by length alone.
+  - **`MeshContent.SourceType = Object` is process-local.** This is the one that produced the operator's
+    bug report, in Phase 110. Same instance, same call `CreateEditableMeshAsync(part.MeshContent)`:
+    the process that built it returns **9728 vertices spanning `+/-46`**; any other process returns
+    **1536 vertices spanning `(0,0,0)..(1,1,1)`** - a **unit cube**, which the renderer paints as the
+    unresolvable-content checkerboard sized to the part. A server-built mesh **cannot be drawn by a
+    client at all**, and the client is never told no. The fix is not to ship the mesh but to **build it
+    in the process that draws it**.
 
 Verification came from three independent channels: a per-vertex read-back at two phases (`t=0` all Y
 zero, `t=5.75` Y max **2.838**, with `outerMoved 1.270` / `innerMoved 1.209` matching the motion maths);
@@ -1005,11 +1014,23 @@ right. The one picture that shows it actually moving is a controlled pair: same 
 part position, same module instance (a persistent holder, so `require` hits the module cache), only the
 clock changed 5.75 -> 17.25, and `compare_images` reports the internal pattern rotating clockwise.
 
-**Not verified:** the `Script` has never been observed in a running session - this was all Edit mode -
-so "it animates under its own power" rests on the source alone; the 30 Hz is a number I set and never
-measured; and the lens sits in this Rebuild place rather than in the game's, which is `QUESTIONS.md` L1.
+Phase 110 then closed the gap that the last paragraph of the Phase 109 write-up admitted: the moving
+half had never been observed in a running session. It has now. In Play, the shipped path draws a
+complete lens (two frames seconds apart show the inner ring rotated), the `MeshContent` round trip
+taken twice 1.2 s apart moves a vertex by **0.0072 studs** (matching the configured `SWIRL = 0.30 rad /
+23 s` at the throat radius), and at `t+220 s` - about 6600 passes - it is still a complete lens with the
+`CreateEditableMesh()` budget reporting `ok` throughout. `passes = 446` over ~15 s is **29.7 Hz**, so the
+30 Hz is now a measurement rather than a setting. A slice knob (`CFG.SLICE_STRIDE = 4`: at most 2432
+`SetPosition` calls per tick, a full refresh every 0.13 s) ships as **insurance, not as a proven
+requirement** - an earlier checkerboard on a client-built lens did not reproduce, and that one has no
+mechanism yet.
 
-See PROGRESS.md Phase 109, DECISIONS_2 442 to 448, docs/SNIPPETS.md 5.24, docs/SYSTEMS.md 2.19.
+**Not verified:** `EditableMesh` in a running experience wants the **Enable Mesh / Image APIs** toggle
+(which needs 13+ and ID verification and is not scriptable, so only the operator can flip it -
+`QUESTIONS.md` L2); the lens still sits in this Rebuild place rather than in the game's (`QUESTIONS.md`
+L1); and the one checkerboard seen earlier is unexplained.
+
+See PROGRESS.md Phase 109 and 110, DECISIONS_2 442 to 453, docs/SNIPPETS.md 5.24 and 5.25, docs/SYSTEMS.md 2.19.
 
 ---
 

@@ -779,3 +779,32 @@ md5 **`984bfa338d4e79ec17a40fd080f7497d`** / 校验和 **`2051583504`**，0 反�
   它排在那条通道恢复之后。）
 - **位置 / 大小 / 朝向是我挑的**（`ORIGIN` / `FACING` 两个常量，在 `CFG` 里）。
   你说一句就改，改完**同一步**补 `PROGRESS` / `SYSTEMS`。
+
+**—— Phase 110 更新（2026-10-10）：上面第 1、2 条做完了，而且答案是「不在那个 VM 里」**
+
+Play 起来之后按第 2 条读**实例状态**，**第一次就否掉了原来的交付**：
+`Workspace.GravityLens` 的 `MeshContent` 在 Play 客户端回的是一个 **1536 顶点、跨 (0,0,0)..(1,1,1)
+的单位立方体**，在 Edit 里回的是 **9728 顶点、跨 ±46** 的真网格。
+也就是说 `SourceType = Object` 的网格**不跨进程** —— **服务端建的那一版，客户端根本画不出来**
+（渲染器把它画成棋盘格占位，尺寸按部件包围盒）。操作员那句「一个小方块」就是这个。
+
+**已改（取舍 449）**：`ServerScriptService.GravityLens` 删掉；源码挪到 `ReplicatedStorage.GravityLens`
+（`ModuleScript`，**24695 字节 / 695 行 / md5 `f65793aa941a7b558225028f0f4917b7` / sum33 `189076020`**）；
+`StarterPlayer.StarterPlayerScripts.GravityLensClient`（`LocalScript`）`require` 它并 `start()`；
+`Workspace.GravityLens` 那块静帧**降格成摆位锚**（客户端读它的 `CFrame`，建完删掉它）。
+`build(cf)` 改成只建不删，`M.start()` 加了能力闸 `meshApiUsable()`。
+
+**已验（Play 里，三条）**：① 渲染出完整透镜，两帧相隔数秒内环转过去了；
+② `MeshContent` 往返两次、相隔 1.2 s，最大位移 **0.0072 stud**（与设定运动学逐位吻合）；
+③ `t+220 s`（约 6600 拍）仍是完整透镜、预算恒 `ok`。**第 3 条（帧率）也顺手量了一次**：
+`passes = 446` / 约 15 s ⇒ **29.7 Hz**。
+
+**还没做的：**
+
+- **位置/大小/朝向**仍然是 `CFG.ORIGIN` / `CFG.FACING` 里我挑的常量，你说一句就改。
+- **它还在重建台（`131274481205639`），不在主游戏那个 place** → `QUESTIONS.md` **L1**。
+- **`Enable Mesh / Image APIs` 这个开关只有你能开**（`GameSettings` 不可脚本化，
+  且要 13+ 与 ID 验证）→ `QUESTIONS.md` **L2**。
+- **一次棋盘格至今没有解释**：早先看到「客户端自建的透镜在持续改写之后变成棋盘格」，
+  今天 `stride = 1` 与 `stride = 4` 各跑满 4 分钟都不复现（取舍 451）。
+  分片（`CFG.SLICE_STRIDE = 4`）留着当保险。**如果操作员在真机上又看到棋盘格，这就是要追的那条线索。**

@@ -36,16 +36,21 @@
 **待你「回答」的：`P11`（`ReferenceTick` 2.5 → 1.70）、`P12`（stall 门读入口还是更新后的压力）、
 `P13`（要不要给 remake 加「压力 ≥ 12000 显示为黄色」）。**
 **待你「拍板」的（新）：`D7` —— 报告屏上那一下（`PostShiftButton`）要不要我按；
-`L1` —— 引力透镜要不要离开重建台。**
+`L1` —— 引力透镜要不要离开重建台；`L2` —— 你有没有开过 `Enable Mesh / Image APIs`。**
 **`P10` / `P9` 已于 2026-10-03 答完（分别是 `B` / `A`），档案在下半部分。**
 **要你「动手」的：下一次注入。** D / O / B / Q / A 全部已答（`D7` 是刚开的新条目）。
 
 ## L1 — 待你拍板：引力透镜现在在**重建台**上（2026-10-10，Phase 109）
 
-**背景一句话：** 你要的那个引力透镜做好了 —— `_tools/gravity_lens.luau`（18961 字节），
-用 `EditableMesh` **逐顶点**动，`ServerScriptService.GravityLens` 里是一个会自己跑起来的 `Script`，
-`Workspace.GravityLens` 是同一份源码在 Edit 模式建的静帧，
-落在 `-151.10 58.00 71.00`，**全程没碰你的摄像机**。
+**背景一句话：** 你要的那个引力透镜做好了 —— `_tools/gravity_lens.luau`（**24695 字节**），
+用 `EditableMesh` **逐顶点**动，**全程没碰你的摄像机**。
+
+**（2026-10-10，Phase 110 更新）交付形态改了：** 原来那份是服务端的 `Script`，
+而你报的「进测试之后变成一个小方块」正是它 —— `MeshContent.SourceType = Object` 的网格
+**不跨进程**，服务端建、客户端画不出来，客户端拿到的是一个**单位立方体**（渲染成棋盘格占位）。
+现在是 `ReplicatedStorage.GravityLens`（`ModuleScript`）+ `StarterPlayerScripts.GravityLensClient`
+（`LocalScript`），**在客户端建**；`ServerScriptService.GravityLens` 已删；
+`Workspace.GravityLens` 那块静帧降格成**摆位锚**。Play 里已经验过：画得出完整透镜、顶点真的在动。
 
 **问题：它现在装在 `The Reactor [Rebuild]`（placeId `131274481205639`）里** ——
 就是 README「The Rebuild place」那一节那个（按原坐标重装几何体的比对 place），
@@ -59,6 +64,41 @@
   而那个会话 Phase 103 就没了 —— 所以这条要**排在通道恢复之后**，我现在做不了。
 - **C：位置 / 大小 / 朝向不对。** 那三个是我自己挑的常量（`CFG.ORIGIN` / `CFG.FACING` / `CFG.SIZE` 在
   `_tools/gravity_lens.luau` 里），你给个坐标或一句「大一点 / 转过去 / 挪到堆芯上面」，我改完同一步补文档。
+
+---
+
+## L2 — 待你答：**你有没有开过 `Enable Mesh / Image APIs`**（2026-10-10，Phase 110）
+
+**背景一句话：** `EditableMesh` 在**跑起来的体验**里默认是关的。官方文档：
+「For security purposes, using `EditableMesh` fails by default for published games.
+To enable usage of `EditableMesh`, you must be 13+ age verified and ID verified.
+After you open the Creator Dashboard toggle on **Enable Mesh / Image APIs**.」
+那个开关在 **Studio 的 Game Settings → Security** 页，也在 **Creator Dashboard** 里。
+
+**为什么只有你能开：** `GameSettings` **不可脚本化**（在 `game` 下面 `Invalid parent for Service`），
+所以我没有 API 去翻它 —— 这一条**必须你去点**。
+
+**为什么现在要问：** 我这一轮量到两种不同的失败**都不是报错**，而是「给一个像样的错东西」：
+
+- 给不了的进程里 `AssetService:CreateEditableMesh()` **返回 `nil`**（不抛错）；
+- 内容不可解析时 `CreateEditableMeshAsync(...)` **回你一个单位立方体**（1536 顶点、跨 `(0,0,0)..(1,1,1)`）。
+
+所以「它能不能跑」在 Play 里的表现**可能是**：透镜画不出来，或者画出一块棋盘格 ——
+而**没有一行日志会说为什么**。我这一轮在 Studio 的 Play 里**能**建、能画、能跑满 4 分钟，
+但**Studio 的 Play 和发布出去的体验不是一回事**（Studio 里那一路按文档是「unlimited memory」）。
+
+**三种答法：**
+
+- **A：开过了 / 一会儿去开。** 那我只等你一句「开了」，就在 Play 里重验一遍并把这一条关掉。
+- **B：没开，也不打算开。** 那这条效果只能留在 Studio 里看，**发布出去的体验里不会有透镜** ——
+  我会把 `meshApiUsable()` 那条 `warn` 写成一句人话，让将来的我们一眼看见是这个开关。
+- **C：你也不确定。** 那就按「没开」处理（B），我照样先把 `warn` 补好。
+
+**顺带（如果你哪天在真机上又看到棋盘格）：** 这一轮我**有过一次**「客户端自建的透镜变成棋盘格」，
+今天**没有复现**（`stride = 1` 全量重写与 `stride = 4` 各跑满 4 分钟都是完整透镜）。
+它**至今没有解释**。你只要再看到一次，把当时在干什么说一句，那就是最值钱的线索。
+
+**要你「动手」的：** 去 Game Settings → Security 看一眼那个开关的状态（是/否）。
 
 ---
 

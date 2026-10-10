@@ -12242,3 +12242,74 @@ md5 `984bfa338d4e79ec17a40fd080f7497d` / 多项式校验和 `2051583504`**（**0
 四处已经改正：`_tools/ppm_to_png.py` 的 docstring、本文、`docs/SNIPPETS.md` §5.24、
 `docs/SYSTEMS.md` §2.19、`README.md` —— **纯 stdlib 的写法留着**（零依赖在两种标志下都对），
 但那个**理由是错的就不能留着**（取舍 448）。
+
+## Phase 110（2026-10-10）—— 「进测试之后透镜变成一个小方块」：Object 网格**不跨进程**，解药是**在画它的那个进程里建它**
+
+**操作员这一轮的唯一请求（原话）：** 「为什么我进测试之后透镜变成一个小方块」
+
+**原因量到了，两半都有。** 同一个实例、同一句
+`AssetService:CreateEditableMeshAsync(part.MeshContent)`，两个进程给出两个答案：
+
+| 在哪个进程 | `GetVertices()` | 包围盒 | 那是什么 |
+|---|---|---|---|
+| Edit（建它的那个） | **9728** | `(-46.00 -46.00 -11.00) .. (46.00 46.00 -0.70)` | 真的透镜 |
+| Play 客户端 | **1536** | `(0.000 0.000 0.000) .. (1.000 1.000 1.000)` | **一个单位立方体**，`maxRadius 1.55` |
+
+`Content.fromObject(editableMesh)`（`MeshContent` 的 `SourceType = Object`）**是进程局部的**：
+它在**建它的那个进程**里解析，**不跨网络**。客户端**从来没被告知「没有」** ——
+它拿到一个**看起来很像样的错东西**，渲染器再把它画成**棋盘格占位**、尺寸按部件的包围盒
+（`92 x 92 x 10.303`）。**操作员那句「一个小方块」量的就是这个。**
+
+（1536 不是「一个坏了的空网格」：新建的 `CreateEditableMesh()` 是 **0 顶点 0 面**。
+1536 是**替代品**，不是错误。）
+
+所以：`Workspace.GravityLens` 那块静帧**对任何客户端都不是透镜**；
+`ServerScriptService.GravityLens` 里那个 `Script` 建出来的也一样 ——
+**服务端建的网格，客户端画不出来。**
+
+**解药不是「把网格发过去」，是「在画它的那个进程里建它」。** 交付形态因此改了（取舍 449）：
+
+| 改前 | 改后 |
+|---|---|
+| `ServerScriptService.GravityLens`（`Script`，服务端建） | **删掉**（`removedOldServerScript: true`） |
+| —— | `ReplicatedStorage.GravityLens`（`ModuleScript`，**24695 字节 / 695 行 / md5 `f65793aa941a7b558225028f0f4917b7` / sum33 `189076020`**） |
+| —— | `StarterPlayer.StarterPlayerScripts.GravityLensClient`（`LocalScript`，`require(...).start()`） |
+| `Workspace.GravityLens`（静帧，**客户端看不见**） | 保留，但身份变了：它现在只是**摆位锚** —— 客户端读它的 `CFrame` 再自己建，`M.start()` 建完就 `Destroy()` 它 |
+
+`build(cf)` 因此改成**只建不删**（要删的那块静帧正是它刚读过摆位的那块），
+`M.start()` 里多了一道**能力闸** `meshApiUsable()`：给不了网格的进程**别留一块棋盘格板子** ——
+`warn` 一句、把静帧一并收掉、返回 `nil`。
+
+**在跑起来的会话里验过了**（这是 `docs/TODO.md` §3.11.13 那条「动的那一半从来没在跑起来的会话里被看过」的正面答案）：
+
+- **渲染**：`StarterPlayerScripts` 那条路径在 Play 里画出一枚**完整的透镜**（爱因斯坦环 + 内环亮斑），
+  两帧相隔数秒、**内环明显转过去了**；
+- **顶点真的在动**：`MeshContent` 往返取两次、相隔 1.2 s，最大位移 **0.0072 stud** ——
+  与 `SWIRL = 0.30 rad / 23 s` 在喉部半径 `r = 0.073` 上的推算**逐位吻合**；
+- **不衰减**：`t+100 s` 与 `t+220 s` 两次采样，`CreateEditableMesh()` 预算恒 `ok`、
+  往返恒 `loadable 9728`，约 **6600 拍**之后**仍然**是一枚完整透镜；
+- **帧率**：`passes = 446` 时约过了 15 s ⇒ **29.7 Hz**，`CFG.UPDATE_HZ = 30` 这一次**是量过的**。
+
+**没验的、反过来的：** 这一轮早些时候我看到过**客户端自建的**透镜变成棋盘格，
+于是推断「每帧改写 9728 个顶点太多」。**今天它没有复现** —— `stride = 1`（每拍全量重写 9728 个顶点、
+30 Hz）与 `stride = 4` 各自跑满约 4 分钟，**都是完整的透镜**。所以**「每帧写多少」目前不是一个已证的机制**，
+那一次的棋盘格**至今没有解释**。分片仍然留着（`CFG.SLICE_STRIDE = 4`：每拍最多 2432 次写入、
+整张盘每 0.13 s 刷新一遍），但它是**保险，不是已证的必需**（取舍 451）。
+
+**一条方法上的（这一轮最贵的）：** 我前半段的「Play 客户端」读数**全是在插件 VM 里做的**，
+而**交付路径（`StarterPlayerScripts` 里的 `LocalScript`）只有它自己跑过**。
+要让**游戏的 VM** 说话，得在 `Players.LocalPlayer.PlayerScripts` 里放一个临时 `LocalScript`，
+把结论写进 workspace 上一个 `StringValue`（`workspace.LensReport`），插件 VM 再读那个值 ——
+§0.17「让跑着的脚本自己写出来」的同一条（取舍 452）。
+
+**`EditableMesh` 在跑起来的体验里是要开的**：`Enable Mesh / Image APIs`
+（Studio 的 Game Settings → Security，或 Creator Dashboard），而且**要 13+ 与 ID 验证**。
+`GameSettings` **不可脚本化**（`Invalid parent for Service`），所以**只有操作员能开** → `QUESTIONS.md` **L2**。
+
+**摆位的连带教训（取舍 453）：** `cam.CFrame * CFrame.new(0, 0, -260)` **不是「前方 260 stud」** ——
+相机 look 向下 15 度时，它把东西放到**地下 67 stud**，而 `WorldToViewportPoint` 照样回
+`onScreen = true`。我照着这个投影读了三张「在屏上」的读数，而三块盘都埋在基板底下（§0.18 同族：
+**错的量法给一个自信的数**）。要摆看得见的东西，用相机的**水平**方向 + 一个**指定高度**。
+
+细节取舍 **449..453**；上手 `docs/SNIPPETS.md` **§5.25**；系统 `docs/SYSTEMS.md` **§2.19**；
+待办 `docs/TODO.md` **§3.11.13**；问题 `QUESTIONS.md` **L2**。
