@@ -3,8 +3,24 @@
 
 	The 12-ring version (ShockRipple.C1..C12) moves in 5-stud steps: twelve
 	discrete lifts, which reads as steps and not as a wave. This one is a
-	single editable mesh whose height is a function of radius, so the crest
-	travels outward continuously -- but the SHAPE is kept as it is drawn.
+	single editable mesh whose height is a function of radius, so the motion
+	is continuous -- but the SHAPE is kept as it is drawn.
+
+	TWO MOTIONS, chosen by the Motion attribute (both are kept; neither
+	replaces the other):
+
+	  "pulse" (default) -- the whole sheet heaves up and down together. The
+	    height is Amplitude * envelope(radius) * sin(2*pi*t/Period), so the
+	    middle swings the full +/- Amplitude and the rim does not move at all.
+	    The envelope is a raised cosine, 0.5*(1+cos(pi*r/RADIUS)): it is 1 at
+	    the centre and EXACTLY 0 at the rim, and its slope is 0 at both ends,
+	    so neither the middle nor the edge shows a seam. Speed and Width are
+	    not used by this motion.
+
+	  "wave" -- a crest is born at the middle and travels outward at Speed
+	    studs per second, Width of a Period wide, and the next one follows
+	    Period seconds behind it. This is the Phase 118 look, kept because
+	    asking for another motion is not a reason to lose the first one.
 
 	THE SHAPE IS AN 18-GON, and that is measured, not assumed. The disc
 	(Cylinder2) has 54 vertices on its rim but only 18 distinct angles, 20.00
@@ -477,30 +493,48 @@ local function step()
 		end
 	end
 
-	local amplitude = number("Amplitude", 2.5, 0)
+	local amplitude = number("Amplitude", 1, 0)
 	local speed = number("Speed", 60, 1)
 	local period = number("Period", 1.2, 0.05)
 	local width = math.min(number("Width", 0.5, 0.05), 1)
 	local transparency = number("Transparency", 0.15, 0)
 	local reassign = rig:GetAttribute("Reassign") == true
+	-- "pulse" unless the rig says "wave": one name, two motions, and the
+	-- default is the one that was asked for last
+	local heaving = rig:GetAttribute("Motion") ~= "wave"
 
 	local startCost = os.clock()
 	local elapsed = now - started
 	local moved = false
 	local maxHeight = 0
+	local peakHeight = 0
 
 	for ring = 0, builtRings do
 		local height = 0
 		if active then
 			local radius = RADIUS * ring / builtRings
-			local phase = (elapsed - radius / speed) / period
-			local frac = phase - math.floor(phase)
-			if frac < width then
-				height = amplitude * 0.5 * (1 - math.cos(2 * math.pi * frac / width))
+			if heaving then
+				-- The whole sheet moves together: Amplitude at the middle,
+				-- nothing at all at the rim. The envelope is a raised cosine,
+				-- 0.5*(1 + cos(pi*r/RADIUS)) -- it is exactly 1 at the centre
+				-- and exactly 0 at r = RADIUS, and its slope is 0 at both ends,
+				-- so the middle does not come to a point and the rim does not
+				-- show a step where the motion stops.
+				local envelope = 0.5 * (1 + math.cos(math.pi * radius / RADIUS))
+				height = amplitude * envelope * math.sin(2 * math.pi * elapsed / period)
+			else
+				local phase = (elapsed - radius / speed) / period
+				local frac = phase - math.floor(phase)
+				if frac < width then
+					height = amplitude * 0.5 * (1 - math.cos(2 * math.pi * frac / width))
+				end
 			end
 		end
 		if height > maxHeight then
 			maxHeight = height
+		end
+		if math.abs(height) > peakHeight then
+			peakHeight = math.abs(height)
 		end
 		if heights[ring] ~= height then
 			heights[ring] = height
@@ -542,7 +576,7 @@ local function step()
 	-- different question from "what did this script just write", and the
 	-- difference is the whole reason the sheet exists. Held back until a crest
 	-- is actually up so the number is not just the flat half-thickness.
-	if selfMeasured == false and maxHeight >= 0.5 and sheet ~= nil and sheet.Parent ~= nil then
+	if selfMeasured == false and peakHeight >= 0.5 and sheet ~= nil and sheet.Parent ~= nil then
 		selfMeasured = true
 		local measuredOk, back = pcall(function()
 			return AssetService:CreateEditableMeshAsync(sheet.MeshContent)
@@ -572,8 +606,9 @@ local function step()
 		if sheet ~= nil and sheet.Parent ~= nil then
 			sheetState = "yes"
 		end
-		live(string.format("t=%.2f active=%s sheet=%s disc=%d ms/frame=%.2f h[0]=%.2f h[%d]=%.2f h[%d]=%.2f h[%d]=%.2f",
-			elapsed, tostring(active), sheetState, discSwaps, 1000 * frameCost / frameCount,
+		live(string.format("t=%.2f active=%s motion=%s sheet=%s disc=%d ms/frame=%.2f h[0]=%.2f h[%d]=%.2f h[%d]=%.2f h[%d]=%.2f",
+			elapsed, tostring(active), heaving and "pulse" or "wave", sheetState, discSwaps,
+			1000 * frameCost / frameCount,
 			heights[0], mid, heights[mid], far, heights[far], builtRings, heights[builtRings]))
 		frameCount = 0
 		frameCost = 0

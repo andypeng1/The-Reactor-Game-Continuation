@@ -893,13 +893,20 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 - 件：`StarterPlayer.StarterPlayerScripts.ShockRippleClient`（`LocalScript`，
   盘上原文 `_tools/shock_ripple_client.luau`）。
 - 形状：一张 `EditableMesh` 薄片，**18 个楔 × 24 个环 × 2 层**（`verts=1800 faces=1728`），
-  外半径 60.000；每帧只改顶点的 Y，所以起伏是**连续**的。0.85 ms/帧。
+  外半径 60.000；每帧只改顶点的 Y，所以运动是**连续**的。0.85–1.13 ms/帧。
+- **两种运动**，由属性 `Motion` 选（两个都留着，没有互相取代）：
+  - `"pulse"`（**现在的默认**）：整张网同步上下呼吸 —— 中间 ±`Amplitude`，
+    到边缘衰减到**逐位的零**（包络是升余弦，在 `r = RADIUS` 处恰好 0）。用
+    `Amplitude` / `Period` / `Transparency`；`Speed` / `Width` 在这支里不参与。
+  - `"wave"`：鼓包从中间往外跑（Phase 118 那版）。用多的两个属性是 `Speed` / `Width`。
 - **它只活在本地客户端**：`Content.fromObject` 做的东西不跨进程（§0.23），
   每个客户端自己建一张 —— 所以**服务端和 Edit 模式都看不到它**，这是设计代价不是 bug。
 - 光环：运行中把原盘在本地隐掉（`Wave.Transparency = 1`，客户端本地写入）。
-- 调参全在属性面板（改完一帧内生效）：`WaveEnabled` / `Amplitude 2.5` / `Speed 60` /
+- 调参全在属性面板（改完一帧内生效）：`Motion` / `WaveEnabled` / `Amplitude 1` / `Speed 60` /
   `Period 1.2` / `Width 0.5` / `Transparency 0.15` / `Segments 18` / `Rings 24` / `Reassign false`。
   改 `Segments`/`Rings` 会重建网格。
+  **`Amplitude` 这个名字和 12 环那个旧驱动共用的**（它现在 `Enabled = false`，
+  所以无害；哪天把环打回来，两边会同时被这一个数管住）。
 - 自检：每半秒把 `t / active / sheet / disc / ms/frame / 几个环的高度` 写进 `ShockRipple.Diag`
   （`StringValue`）；**另有一次读回**，把"件里真的是多高"和"脚本这帧写了多高"并排印出来。
 
