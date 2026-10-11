@@ -1535,8 +1535,12 @@ stays in `PROGRESS.md` and `DECISIONS*.md`; `docs/PHASES.md` is the condensed lo
 Phase number.
 
 `docs/SRSU.md` (2026-10-11) is the first **device bible** in that layout: the in-universe
-setting for the *Subspace Radiation Suppression Unit*, a device that exists **on paper only** -
-zero lines of it are in `ReactorBackend`, and the file says so at the top. It is registered in
-the `CLAUDE.md` 0.0 table so it gets read before anyone writes that device's copy, art spec or
-numbers. Whether it ever leaves paper is `QUESTIONS.md` **S1**.
+setting for the *Subspace Radiation Suppression Unit*. It started as **setting only**, and the
+operator built the physical thing the same day - six units named `BottomSuppressionStructure`
+in `Workspace.Folder.Chamber` (rebuild place), so the file's geometry now quotes **measured**
+values (section 4.5) rather than the design draft. **The code side is still zero**: nothing of
+it is in `ReactorBackend`, `Stats` or `ControlTrigger`, and `script_grep` finds no reference to
+the name anywhere in the place. It is registered in the `CLAUDE.md` 0.0 table so it gets read
+before anyone writes that device's copy, art spec or numbers. Wiring it into the simulation is
+the one open piece of `QUESTIONS.md` **S1**.
 

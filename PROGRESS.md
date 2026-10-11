@@ -12893,3 +12893,40 @@ EndGameFrame1.ReportUI.Bottom.ReportText      = [REPORT ACKNOWLEDGEMENT [HOVER]]
 - `README.md` `## Documentation layout` 加一段
 - `QUESTIONS.md` **S1**（新条目）
 - 取舍 **480**
+
+---
+
+### 附录（2026-10-11 当天晚些）—— 他当天就把实物建出来了：`BottomSuppressionStructure`
+
+**用户原话：**「建模我做了 BottomSuppressionStructure」（上一段设定刚写完）。
+**S1 因此答完了 —— 选的是 B（做实体、不接逻辑），而且是他在 Studio 里直搭的**，
+不是我在 S1 里写的 Blender `srsu_unit` 那条路（**结果一样，过程不回头补**）。
+
+**实测（只读 `execute_luau`，一个部件都没动）：**
+
+- **六台**，在 `Workspace.Folder.Chamber`（`Workspace` 下有 8 个叫 `Folder` 的东西，
+  认路靠 `…Folder.Chamber` 这个子件关系）。正六边形：中心 = 堆芯轴
+  `(−12.16, −85.41)`、半径 **54.35 ± 0.03**、方位 **0/60/…/300**、**六台全在 y = 34.76**。
+  每台 **541 件**、**38.79（切向）× 3.78 × 7.59（径向）**；底板在 y ≈ 11.13
+  （正下方射线 23.63）→ 这一圈**悬在底板上方 21.7 stud**。
+- **它嵌在洗涤环里**：`RadiationScrubberUnitMK2` 六台在 **r ≈ 56.1 / y = 36.90 /
+  az 30/90/…/330** —— 新环在它**里侧 1.75、下方 2.14、错开 30°**，正好落在六座洗涤塔的空档。
+- **每件都是两个**：`ConnectionNode`×2（**186 件 + 18 根绳 —— 一台三分之二的件都在这**）、
+  `SuppressionPanel`×2（混凝土块 + 5.85 高立柱，坐在 **r ≈ 56.8–57.4**）、`Grate`×2（17）、
+  `ManagementNode`×2（21）、`Light`×2（12）、`RedLight`×2（12）、`Frame`×1（UnionOperation）。
+  实物自带的字只有两句：`BOTTOM CHAMBER GRATE POINT` / `BOTTOM CHAMBER CONNECTION NODES`。
+- **母板**另留一份在 `Workspace.Folder`（543 件、15 个子件，多 2 个散件 + 一个 `Frame`），
+  在 `(−99.69, 5.14, 17.35)`。**没搬它** —— Workspace 里的东西在渲染（§0.12 第 3 条）。
+- **脚本里 0 命中**（`script_grep 'Suppress'`）→ **实体有了，逻辑仍然是零**：
+  `ReactorBackend` 无改动、`Stats` 无新字段、`ControlTrigger` 无新位。
+
+**文档侧（同一步改完）：** `docs/SRSU.md` 新增 **§4.5 实物**（上面这些数全进去了）；
+抬头从「纯设定」改成「设定 + 实物」；§0 的「三台 120° 装在 collar 上」**改成实物的六台 60°**；
+§3③ 的失效形态改成「单台只失一半 / 一相两台全失才塌成两束」；
+§9 记下 **S1 = B 已落地**；`QUESTIONS.md` **S1** 从待办划掉（只留「C 接不接」）。
+取舍 **481**。
+
+**没量到的（照实写）：** ① 环正上方的射线打空 200 stud —— 但「打不到」不等于「没有」，
+所以天花板一个字都没写；② 径向范围**不能**用包围盒对角线推（那会把 38.79 长的切向主梁
+算成伸到 r≈32）；③ `:28429`（原版）**这一轮仍然拒连**（`WinError 10061`），
+「原版没有这件东西」依旧只由 Wiki + 仓库**两份**证据撑着。

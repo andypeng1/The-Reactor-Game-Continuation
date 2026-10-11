@@ -1,8 +1,13 @@
 # S.R.S.U. — Subspace Radiation Suppression Unit（设定集）
 
-> **状态：纯设定。** 这一份是**文案 / 世界内术语 / 美术规格**，不接 `ReactorBackend`、
-> 不进 `Stats`、不新增任何控制原语 —— 现有玩法机制一个字没动（§1.4 第 1 条）。
-> 要不要让它进模拟，见 §9 与 `QUESTIONS.md` **S1**。
+> **状态（2026-10-11 当天更新两次）：设定 + 实物。**
+> 第一次是用户原话「Subspace Radiation Suppression Unit - S. R. S. U 你给他添加点设定」；
+> 当天晚些的第二句是 **「建模我做了 BottomSuppressionStructure」** —— 于是这件东西
+> **从纸上进了 place**：六台一组，实例名 **`BottomSuppressionStructure`**，
+> 装在 `Workspace.Folder.Chamber`（重建台）。**逐项实测见 §4.5。**
+> **代码侧仍然是零**：不接 `ReactorBackend`、不进 `Stats`、不新增任何控制原语 ——
+> 现有玩法机制一个字没动（§1.4 第 1 条）。要不要接进模拟，见 §9；
+> `QUESTIONS.md` **S1** 的 **B** 已经由他那一句答掉了。
 >
 > **来由：** 2026-10-11 用户原话 ——
 > 「Subspace Radiation Suppression Unit - S. R. S. U 你给他添加点设定」。
@@ -23,7 +28,8 @@
 | 缩写 | **S.R.S.U.**（本项目的点号缩写惯例：`S.A.M.O.S.` / `M.A.S.S` / `H.D.E.F` / `P.E.A` / `M.E.T.U` / `C.B.L`） |
 | 型号 | S.R.S.U. **Mk II** |
 | 制造商 | **Synthesis Manufacturing**（正典，手册 #91 / #130 逐字） |
-| 装在哪 | 腔体 **collar**，三台一组，120° 均布，各朝堆芯 |
+| 实物件名 | **`BottomSuppressionStructure`** —— place 里的实例名；设定里的全称是它的型号名 |
+| 装在哪 | 堆芯**底部**：六台一组、**60° 均布**（az 0/60/…/300），环半径 **54.35**，全都 **y = 34.76**；**正好嵌在洗涤环 `RadiationScrubberUnitMK2`（六台，az 30/90/…/330，r ≈ 56.1，y = 36.90）的内侧、下方、错开 30°** |
 | 干什么 | **不是挡辐射，是把它抵消掉。** |
 | 一句话 | M.A.S.S 洗腔体、H.D.E.F 挡控制室，**S.R.S.U. 掐源头**。 |
 | 玩家能不能操作 | **不能**（设定如此，见 §8）—— 它随启动序列自动通电 |
@@ -70,14 +76,21 @@ S.R.S.U. 的定位就是这个缺口：**在源头把泄漏抵消掉。**
 正是因为能做的只有**把已经泄进腔体的那部分捞走**。
 
 **② 它怎么抵消。**
-三台单元各自朝堆芯发一束**反相参考波**。三束在裂隙口叠加，把
+每个作业面朝堆芯发一束**反相参考波**，六束按三相分组、在裂隙口叠加，把
 泄漏场的**振幅**按相位差压下去 —— 不是吸收，是**对消**，
 所以单元本身不发热、不积垢，读数掉下来的时候腔体是**冷**的。
 
-**③ 为什么是三台。**
-三相。任意一台失谐，合成的抵消场就**塌成两束**，覆盖出现一道缝，
-辐射读数会在缝的方位上先涨。**这是设定里唯一可被玩家看见的失效形态** ——
-三台灯里坏一台，读数是**慢慢**往上爬的，不是跳变。
+**对消的是源头那一份**；从腔壁上弹回来、会再填回去的那一份，由每台外侧的
+**混凝土屏蔽板**收尾（就是实物里的 `SuppressionPanel`，§4.5）。
+这也解释了实物为什么一台里**走线走管的件比屏蔽板多得多** ——
+`ConnectionNode` 186×2 vs `SuppressionPanel` 22×2：**它主要是一台带电的机器，不是一堵墙。**
+
+**③ 为什么是六台（三相 × 两两正对）。**
+实物是**六台**（§4.5）：每相由**一对正对的作业面**产生，6 = 3 × 2。
+**单台**失谐只会让那一相弱掉一半 —— 读数是**慢慢**往上爬的，不是跳变；
+**一相的两台都失谐**，合成场才**塌成两束**，覆盖出现一道缝，缝的方位上读数先涨。
+**这是设定里唯一可被玩家看见的失效形态**。
+（六台也是它为什么刚好嵌得进去：**每 30° 一座洗涤塔，每 60° 一台抑制台**，两圈错开一格。）
 
 **④ 它为什么会失谐。**
 EFE / Equinox 会把单元扔出相位（手册 #93：Equinox 对电子设备有破坏性影响）。
@@ -96,7 +109,9 @@ unreliable… 需要手动干预校准」的调子：**设施里的精密东西�
 ## 4. 外观 / 美术规格
 
 底子按 `ART_DIRECTION.md`：近黑机身 + 青色发光 + 少量暖色点缀、黄黑警示。
-**灯色必须复用本 place 实测过的键**（`src/ReactorBackend/Config.luau` 的 `Visual`），
+**下表是「将来接逻辑时」的状态配色提案** —— 已经建出来的实物用的是它**自己**的一套
+蓝/红（§4.5 末尾），跟这张表**不是同一套值**；真要统一，统一到实物那边去。
+表里的键都取自本 place 实测过的键（`src/ReactorBackend/Config.luau` 的 `Visual`），
 一个都不要新调：
 
 | 状态 | 颜色键（实测值） | 为什么是它 |
@@ -108,15 +123,72 @@ unreliable… 需要手动干预校准」的调子：**设施里的精密东西�
 | 过载 | `Fault` (255,70,40) | |
 | 相位参考丢失 | `Purple` (150,60,220) / `Blue` (60,130,240) | 与 CBL 的状态码同族 |
 
-**形态：** 扁柱体 + 面向堆芯的一面**发射环**（不是镜面，是环形放电口），
+**形态（规格）：** 扁柱体 + 面向堆芯的一面**发射环**（不是镜面，是环形放电口），
 背面接两路：一路冷却、一路相位参考线缆（参考线缆**要能看出来是往 P.E.A 那边去的** ——
 这是 §3⑤ 那条取舍的唯一视觉线索）。
+
+> **实物和这条规格不一样 —— 以实物为准（§4.5）。** 他建出来的是一台**作业面**：
+> 38.79 长的切向主梁 + 两套成对的节点/格栅/灯 + 外侧的混凝土屏蔽板，
+> **不是「一个扁柱体」**。本节其余部分（尤其是下面那张灯色表）都还是**提案**。
 
 **同族件：** `_tools/blender/` 那批（`radiation_scrubber` / `laser_port` / `chamber_grate`
 / `chamber_wall_24` / `ring_bridge_18_24` / `transition_pillar`），共用件是 `trg.py`。
 设定上 S.R.S.U. 是 `radiation_scrubber` 的**祖辈** —— 手册 #96 说 M.A.S.S 是
 「deionization 腔体里那些 scrubber 的放大版」，那就让 S.R.S.U. 长得像
 **同一族的更老、更笨、更贵**的那一件。
+
+---
+
+## 4.5 实物 —— 重建台里已经有的那一圈（2026-10-11 逐项实测）
+
+用户原话：**「建模我做了 BottomSuppressionStructure」**。
+下面每一个数都是从 place 里**读回来的**（`execute_luau`，只读），不是照设计稿抄的。
+这一节取代了本文件早先那句「三台、120°、装在 collar 上」—— 那是设定稿，
+**实物是六台、60°、装在堆芯底部**。
+
+**摆在哪：**
+
+| 项 | 实测 |
+|---|---|
+| 实例名 | `BottomSuppressionStructure`（**同一个父级下有 6 个同名兄弟** —— Roblox 允许兄弟重名，§0.22） |
+| 在哪 | `Workspace.Folder.Chamber` 里 6 台；`Workspace.Folder` 里另留 **1 台母板**（543 件、15 个子件、比成品多 2 个散件 + 一个 `Frame`）。（`Workspace` 下有 **8 个**叫 `Folder` 的东西，所以认路要靠 `…Folder.Chamber` 这个子件关系，别靠名字。） |
+| 环的几何 | 中心 = 堆芯轴 **(−12.16, −85.41)**；半径 **54.35 ± 0.03**；方位角 **0 / 60 / 120 / 180 / 240 / 300**（±0.1°）；**六台全在 y = 34.76** |
+| 离地多高 | 腔体底板在 y ≈ **11.13**（正下方射线 23.63）→ 这一圈**悬在底板以上 21.7 stud** |
+| 每台多大 | **38.79（切向）× 3.78（高）× 7.59（径向）**，541 件 |
+| 和洗涤环的关系 | `RadiationScrubberUnitMK2` 六台在 **r ≈ 56.1、y = 36.90、az 30/90/…/330** —— 新环在它**里侧 1.75、下方 2.14、错开 30°**，**正好落在六座洗涤塔的空档里** |
+
+**每台由什么组成（541 件，全部成对）：**
+
+| 子件 | 台数 | 件数 | 实测尺寸 | 备注 |
+|---|---|---|---|---|
+| `ConnectionNode` | ×2 | 186 | 3.08×3.27×0.9 | **占掉一台的三分之二**；带 `RopeConstraint`（一台 18 根绳/线）—— §3⑤ 那条「相位参考线缆」在实物里就是它 |
+| `SuppressionPanel` | ×2 | 22 | 5.47×2.92×0.1 | **混凝土块 + 5.85 高的金属立柱**；坐在 r ≈ **56.8–57.4**，比作业面本体更靠外 |
+| `Grate` | ×2 | 17 | 3.17×5.9×0.53 | 带 SurfaceGui 文字 |
+| `ManagementNode` | ×2 | 21 | 1.1×3.13×0.13 | 带 SurfaceGui 文字 |
+| `Light` | ×2 | 12 | 1.05×2.98×0.21 | |
+| `RedLight` | ×2 | 12 | 2.97×0.19×0.8 | |
+| `Frame` | ×1 | — | 38.79×3.78×6.89（UnionOperation） | 主梁 |
+
+**每一类子件都是两个** —— 就是 §3③ 里「一相 = 一对正对的作业面」的物理形态。
+
+**它自己带的字（实物上本来就有，不是本文件的文案候选）：**
+
+- `BOTTOM CHAMBER GRATE POINT`（在 `Grate` 上）
+- `BOTTOM CHAMBER CONNECTION NODES`（在 `ManagementNode` 上）
+
+**它自己带的灯（实物自己的一套值，不是 `Config.Visual` 那套）：**
+蓝 `PointLight` `(0, 0.333, 1)`；红 `SurfaceLight` `(1, 0.313726, 0.313726)` ×2；
+白 `SurfaceLight`；红 `PointLight`（挂在粒子附件上）。粒子两套：
+`rbxassetid://10809840874`（rate 3）、`rbxassetid://7142136429`（rate 5），每台各 12 个。
+
+> **没量到的（说清楚，别当成量过了）：**
+> ① 环**正上方**打了 200 stud **打空** —— 但「打不到」不等于「没有东西」
+> （可能是 `CanQuery = false`），所以关于天花板/上盖**一个字都不写**。
+> ② **径向范围不能用包围盒对角线去推。** 一根 38.79 长的切向主梁，
+> 它的 AABB 半对角线会把它算成「伸到 r ≈ 32」—— 那是量法的产物，不是几何。
+> 能用的只有两句话：**本体在 r = 54.35，屏蔽板在 r ≈ 57**。
+> ③ `:28429` 那侧（原版）**这一轮仍然拒连**（`WinError 10061`），
+> 所以「原版没有这件东西」依旧只由 Wiki + 仓库**两份**证据撑着。
 
 ---
 
@@ -144,8 +216,8 @@ S.R.S.U. DETUNED - RECALIBRATION REQUIRED
 
 ## 6. 手册条目（英文，可直接进 `docs/airemake/INGAME_MANUAL.md` 的候选行）
 
-1. The S.R.S.U. does not block radiation; it cancels it. Three units sit on the
-   chamber collar and each has to be brought into phase with the other two
+1. The S.R.S.U. does not block radiation; it cancels it. Six units ring the
+   bottom of the chamber, and all three phases have to be brought into phase
    before the field holds.
 2. A detuned unit is not offline. It still draws power and still counts as
    installed, so read the field gauge rather than the unit lamp.
@@ -153,7 +225,8 @@ S.R.S.U. DETUNED - RECALIBRATION REQUIRED
    P.E.A extraction loop, so a stronger field means less net output to extract.
 4. An E.F.E. will throw the units out of phase. Nothing is damaged when this
    happens; the units simply have to be recalibrated.
-5. Vacate the collar walkway while the units are discharging.
+5. Vacate the chamber floor under the suppression ring while the units are
+   discharging.
 
 > 第 2 条是故意写成这样的：**它把本项目自己的那条教训（读对的那个东西）变成了世界内的一句话**
 > （§0.2 / §0.18 家族：错的量法不报错，它只安静地给你一个数）。
@@ -185,14 +258,15 @@ S.A.M.O.S. 在 `radiation > 600` 时不可用（`SAMRadiationLimit = 600`）。
 
 （✗ = 越过 S.A.M.O.S. 的 600 线。）
 
-**如果接入，提案长这样**（齐次乘一项，`srsu` = 同相的单元数 0..3）：
+**如果接入，提案长这样**（齐次乘一项；`srsu` = **同相的相数** 0..3 ——
+实物是六台 = **三相 × 两台**，所以计数单位是「相」，不是「台」）：
 
 ```
 radiation = … × max(0, 1 − mass × 0.2) × (1 − srsu × 0.10)
 netOutput = … × (1 − srsu × 0.025)
 ```
 
-- `SuppressionPerUnit = 0.10` —— **选的**（三台全同相 = ×0.7）。
+- `SuppressionPerPhase = 0.10` —— **选的**（三相全同相 = ×0.7）。
 - `OutputCostPerUnit = 0.025` —— **对的是实测值**：与 `MASSOutputCostPerLevel` 同量级，
   所以「更强的抑制 = 更少的净输出」这条取舍在数值上也和 M.A.S.S 同族。
 
@@ -209,18 +283,23 @@ netOutput = … × (1 − srsu × 0.025)
 - **名称不进 §6 的脚本绑定名单**：`ClickPart` / `LeverUnion` / `NeonPart` /
   `*ControlRoomMonitor` / `Text` / `Core` / `EFEParticlePart` / `Effects`
   **一个都不许被这个名字族占用**，也不许拿它们给 S.R.S.U. 的部件命名。
-- **这一版只在纸上**：盘上没有 S.R.S.U. 的部件，place 里也没有。
-  写进 `docs/` 是因为 §0.0 要求「改完同一步把文档补齐」，不是因为东西已经存在。
+- **实物已经在 place 里了**（2026-10-11，用户自己搭的，见 §4.5）——
+  但**代码侧依然是零**：`ReactorBackend` 一行都没有，`Stats` 里没有它的字段，
+  全 place 脚本里 `Suppress` **0 命中**（`script_grep` 量的，不是猜的）。
+  这一版进 `docs/` 是因为 §0.0 要求「改完同一步把文档补齐」。
+- **不要为了「布置得更整齐」去搬它**：东西在 `Workspace` 里就是**在渲染**，
+  搬走 = 改变世界（§0.12 第 3 条）。要挪，先问。
 
 ---
 
-## 9. 待拍板
+## 9. S1 的答案（2026-10-11 当天就给了）
 
-一句话：**S.R.S.U. 停在纸面上，还是要变成设施里真的存在的东西？**
-三个层次，代价递增 —— 明细与建议写在 `QUESTIONS.md` **S1**：
+`QUESTIONS.md` **S1** 问的是三个层次，**用户当天用一句话选了 B** ——
+「建模我做了 BottomSuppressionStructure」。所以：
 
-- **A（我默认走这条）** —— 只保留本文件。文案进手册候选池，美术进待建清单。
-- **B** —— 做实体：Blender 建 `srsu_unit`（同 `_tools/blender/trg.py` 那套），
-  导入重建台，**仍不接逻辑**（一件纯装饰/世界内物件）。
-- **C** —— 接逻辑：§7 那两行进 `Engine.luau`，加 `Stats` 字段与监视器一行。
-  **这一条会改到模拟的平衡**，按 §1.4 必须先拿到明确授权。
+- ~~**A —— 只停在纸上**~~ —— **过期**，他直接把实物做出来了。
+- **B —— 已经落地。** 六台 + 一台母板在重建台里，实测见 §4.5。
+  **做法和 S1 里写的不一样**：我写的是「Blender 建 `srsu_unit` 再导入」，
+  他是**在 Studio 里直接搭的**。**结果一样（有实体、不接逻辑），过程不必回头补。**
+- **C（接逻辑）—— 仍然是空的。** §7 那两行还是提案；要动它，
+  按 §1.4 第 1 条得他明确点头。
