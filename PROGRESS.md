@@ -12915,8 +12915,11 @@ EndGameFrame1.ReportUI.Bottom.ReportText      = [REPORT ACKNOWLEDGEMENT [HOVER]]
   `SuppressionPanel`×2（混凝土块 + 5.85 高立柱，坐在 **r ≈ 56.8–57.4**）、`Grate`×2（17）、
   `ManagementNode`×2（21）、`Light`×2（12）、`RedLight`×2（12）、`Frame`×1（UnionOperation）。
   实物自带的字只有两句：`BOTTOM CHAMBER GRATE POINT` / `BOTTOM CHAMBER CONNECTION NODES`。
-- **母板**另留一份在 `Workspace.Folder`（543 件、15 个子件，多 2 个散件 + 一个 `Frame`），
-  在 `(−99.69, 5.14, 17.35)`。**没搬它** —— Workspace 里的东西在渲染（§0.12 第 3 条）。
+- **母板**另留一份在 `Workspace.Folder`（**543 个 `BasePart`** vs 成品 541 —— 多的就是两块
+  `2.03 × 4.95 × 0.50` 的板，它因此**径向厚 19.74** 而不是 7.59），在 `(−99.9, 5.14, 17.6)`。
+  **没搬它** —— Workspace 里的东西在渲染（§0.12 第 3 条）。
+  （**2026-10-11 更正**：这里原写「543 件、15 个子件，多 2 个散件 + 一个 `Frame`」——
+  后半句**是错的**，成品自己也有 `Frame`。）
 - **脚本里 0 命中**（`script_grep 'Suppress'`）→ **实体有了，逻辑仍然是零**：
   `ReactorBackend` 无改动、`Stats` 无新字段、`ControlTrigger` 无新位。
 
@@ -12941,3 +12944,41 @@ EndGameFrame1.ReportUI.Bottom.ReportText      = [REPORT ACKNOWLEDGEMENT [HOVER]]
 所以天花板一个字都没写；② 径向范围**不能**用包围盒对角线推（那会把 38.79 长的切向主梁
 算成伸到 r≈32）；③ `:28429`（原版）**这一轮仍然拒连**（`WinError 10061`），
 「原版没有这件东西」依旧只由 Wiki + 仓库**两份**证据撑着。
+
+---
+
+### Phase 116（2026-10-11）—— 全场角度取整：319 个部件
+
+**用户原话：**「帮我把 studio 里面带有小数点的角度改成整数角度
+（-180.001->-180; -179.999->-180; 174.999->175; ......）」。
+
+**做完：** 全 DataModel **5,383** 个 `BasePart` 里 **319 个**的 `Orientation` 带小数
+→ 三个分量各自 `math.floor(v + 0.5)` → 全部改成整数。
+**`pcall` 失败 0，改完重读复查残留 0。** 整批包在一次
+`ChangeHistoryService:TryBeginRecording` 里 → **一步就能 undo**。
+319 个**全在 `Workspace`**（RS / SS / SSS **一个都没有** → `ReplicatedStorage.Levers`
+那套模板库没被碰）。
+
+**关键：这 319 个不是一种东西，是两种。**
+
+| 差多少 | 个数 | 是哪几件 |
+|---|---|---|
+| **0.001°** | **314** | 浮点尾巴（`114.999` / `-115.001` 这种）。取整后全场看不出来 |
+| 0.011° | 1 | `Workspace.Folder.Meshes/Cone`（`-77.989 → -78`） |
+| **0.119°** | 3 | `Workspace.OtherStuff.ReactorALARM.SpinnyPart` 的 `NeonPart` / `Part` / `Union`（`(-0.027,-131.881,89.993) → (0,-132,90)`） |
+| **0.262°** | 1 | `Workspace.Folder.RoofSupport`（`(-0.262,179.995,0.049) → (0,180,0)`）—— **全场最大的一次转动，四分之一度** |
+
+**验证（读实例，不读模块 —— §0.2）：** 改完把 5,383 个部件的 `Orientation` 全部重读，
+非整数 **0** 个。中途出现「1 个部件的 `Position` 动了（判据 > 1e-6）」，于是做了一次
+**对照实验**：把每个部件**写回它自己的 `Orientation`**（空操作），同一条判据下报出
+**2 个"动了"，最大 1.907e-06 stud** ⇒ 那 1 个是**写入本身的浮点往返**，不是位移。
+（**`Orientation` 的语义就是绕自身中心旋转，`Position` 定义上不参与** ——
+拿位置去验它，量的是别的东西。取舍 **482**。）
+
+**文档侧：** `docs/SRSU.md` §4.5 顺手改准两处 —— ① 母板那句「多 2 个散件 + 一个 `Frame`」
+**是错的**（成品自己也有 `Frame`），母板多的是**两块 `2.03×4.95×0.50` 的板**，
+543 vs 541 个 `BasePart`，它因此径向厚 **19.74** 而不是 7.59；② 每台的件数写明是
+**541 个 `BasePart`**（连灯/附件/粒子共 749 个后代）。
+
+**未完成的：** commit 推不出去 —— `github.com:443` 与 `api.github.com` 这一轮都拒连
+（§0.6 / Phase 51 的老毛病），本地 `main` 领先 `origin/main`。
