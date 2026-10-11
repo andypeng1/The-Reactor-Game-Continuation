@@ -9,18 +9,38 @@
 	TWO MOTIONS, chosen by the Motion attribute (both are kept; neither
 	replaces the other):
 
-	  "pulse" (default) -- the whole sheet heaves up and down together. The
-	    height is Amplitude * envelope(radius) * sin(2*pi*t/Period), so the
-	    middle swings the full +/- Amplitude and the rim does not move at all.
-	    The envelope is a raised cosine, 0.5*(1+cos(pi*r/RADIUS)): it is 1 at
-	    the centre and EXACTLY 0 at the rim, and its slope is 0 at both ends,
-	    so neither the middle nor the edge shows a seam. Speed and Width are
-	    not used by this motion.
+	  "wave" (default) -- a crest is born at the middle and travels outward at
+	    Speed studs per second, Width of a Period wide, and the next one
+	    follows Period seconds behind it. This is the Phase 118 look.
 
-	  "wave" -- a crest is born at the middle and travels outward at Speed
-	    studs per second, Width of a Period wide, and the next one follows
-	    Period seconds behind it. This is the Phase 118 look, kept because
-	    asking for another motion is not a reason to lose the first one.
+	  "pulse" -- the whole sheet heaves up and down together. The height is
+	    Amplitude * envelope(radius) * sin(2*pi*t/Period), so the middle swings
+	    the full +/- Amplitude and the rim does not move at all. Speed and
+	    Width are not used by this motion.
+
+	BOTH MOTIONS RUN THROUGH THE SAME ENVELOPE, and the Falloff attribute is
+	its exponent:
+
+	    envelope(r) = (0.5*(1 + cos(pi*r/RADIUS))) ^ Falloff
+
+	It is the raised cosine that gives 1 at the centre and EXACTLY 0 at the
+	rim, with slope 0 at both ends, so neither the middle nor the edge shows a
+	seam -- and raising a function to a power keeps the value and both slopes
+	at 0, so no Falloff value can introduce a crease. The exponent is what
+	decides HOW MUCH of the crest survives the trip out:
+
+	  Falloff = 0  -- no decay at all: every crest crosses the whole disc at
+	                  full height. This is exactly the Phase 118 wave, which is
+	                  why it is still reachable rather than deleted.
+	  Falloff = 1  -- a crest is half height at half the radius and gone at the
+	                  rim (the standing default).
+	  Falloff = 2  -- taller for longer near the middle, then drops away fast.
+
+	The rim is mathematically still for every Falloff above 0, and exactly
+	still, not nearly: cos(pi) is -1.0 to the last bit in double precision, so
+	the base is 0.0 and 0.0^p is 0.0 for any p > 0. At Falloff = 0 the rim
+	moves -- that is what "no decay" means, and it is the operator's choice to
+	make.
 
 	THE SHAPE IS AN 18-GON, and that is measured, not assumed. The disc
 	(Cylinder2) has 54 vertices on its rim but only 18 distinct angles, 20.00
@@ -499,9 +519,19 @@ local function step()
 	local width = math.min(number("Width", 0.5, 0.05), 1)
 	local transparency = number("Transparency", 0.15, 0)
 	local reassign = rig:GetAttribute("Reassign") == true
-	-- "pulse" unless the rig says "wave": one name, two motions, and the
-	-- default is the one that was asked for last
-	local heaving = rig:GetAttribute("Motion") ~= "wave"
+	-- Falloff is the exponent on the envelope the travelling crest is scaled
+	-- by. 0 switches the decay off and gives back the Phase 118 crest, which
+	-- crossed the whole disc at full height.
+	local falloff = number("Falloff", 1, 0)
+	-- Two motion names, and the fallback is the one that was asked for last.
+	-- Anything that is not "pulse" reads as the travelling "wave", so a typo
+	-- lands on the motion that can be seen moving rather than on the subtle
+	-- one.
+	local motion = rig:GetAttribute("Motion")
+	if motion ~= "pulse" then
+		motion = "wave"
+	end
+	local travelling = motion == "wave"
 
 	local startCost = os.clock()
 	local elapsed = now - started
@@ -513,21 +543,34 @@ local function step()
 		local height = 0
 		if active then
 			local radius = RADIUS * ring / builtRings
-			if heaving then
-				-- The whole sheet moves together: Amplitude at the middle,
-				-- nothing at all at the rim. The envelope is a raised cosine,
-				-- 0.5*(1 + cos(pi*r/RADIUS)) -- it is exactly 1 at the centre
-				-- and exactly 0 at r = RADIUS, and its slope is 0 at both ends,
-				-- so the middle does not come to a point and the rim does not
-				-- show a step where the motion stops.
-				local envelope = 0.5 * (1 + math.cos(math.pi * radius / RADIUS))
-				height = amplitude * envelope * math.sin(2 * math.pi * elapsed / period)
-			else
+			-- The one envelope both motions share. Raised cosine, so it is 1 at
+			-- the centre and EXACTLY 0 at r = RADIUS, and its slope is 0 at both
+			-- ends: the middle does not come to a point and the rim does not
+			-- show a step where the motion stops. Raising it to a power keeps
+			-- all three of those properties, so Falloff cannot crease either
+			-- end -- it only decides how much of a crest survives the trip out.
+			-- Falloff = 0 is deliberately the identity: one branch fewer, and
+			-- 0^0 in the exponent form is 1 by Lua's convention rather than by
+			-- anything this script controls.
+			local envelope = 1
+			if falloff > 0 then
+				envelope = (0.5 * (1 + math.cos(math.pi * radius / RADIUS))) ^ falloff
+			end
+			if travelling then
+				-- A crest is born at the middle and runs outward, and the
+				-- envelope is what makes it die on the way: at Falloff = 1 a
+				-- crest that is half height by half the radius is gone by the
+				-- rim, instead of stopping against it at full height.
 				local phase = (elapsed - radius / speed) / period
 				local frac = phase - math.floor(phase)
 				if frac < width then
-					height = amplitude * 0.5 * (1 - math.cos(2 * math.pi * frac / width))
+					height = amplitude * envelope
+						* 0.5 * (1 - math.cos(2 * math.pi * frac / width))
 				end
+			else
+				-- The whole sheet moves together: Amplitude at the middle,
+				-- nothing at all at the rim.
+				height = amplitude * envelope * math.sin(2 * math.pi * elapsed / period)
 			end
 		end
 		if height > maxHeight then
@@ -606,8 +649,8 @@ local function step()
 		if sheet ~= nil and sheet.Parent ~= nil then
 			sheetState = "yes"
 		end
-		live(string.format("t=%.2f active=%s motion=%s sheet=%s disc=%d ms/frame=%.2f h[0]=%.2f h[%d]=%.2f h[%d]=%.2f h[%d]=%.2f",
-			elapsed, tostring(active), heaving and "pulse" or "wave", sheetState, discSwaps,
+		live(string.format("t=%.2f active=%s motion=%s falloff=%.1f sheet=%s disc=%d ms/frame=%.2f h[0]=%.2f h[%d]=%.2f h[%d]=%.2f h[%d]=%.2f",
+			elapsed, tostring(active), motion, falloff, sheetState, discSwaps,
 			1000 * frameCost / frameCount,
 			heights[0], mid, heights[mid], far, heights[far], builtRings, heights[builtRings]))
 		frameCount = 0

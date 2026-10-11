@@ -879,7 +879,7 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 半格窗 + 物理判据替掉宽窗 argmax（取舍 466）。上手片段见 `docs/SNIPPETS.md` §5.26。
 
 
-### 2.21 `ShockRipple` —— 冲击波盘的涟漪（`Workspace.Folder.Model.ShockRipple`，2026-10-11，Phase 117 → 118）
+### 2.21 `ShockRipple` —— 冲击波盘的涟漪（`Workspace.Folder.Model.ShockRipple`，2026-10-11，Phase 117 → 118 → 119）
 
 **不是仿真，是画面。** 它不读 `GameState`、不写任何被玩的东西。它把那个特效模型自己的
 冲击波盘（`Cylinder2`，直径 120，**本质是个 18 边形**）**另做**一遍，
@@ -895,28 +895,37 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 - 形状：一张 `EditableMesh` 薄片，**18 个楔 × 24 个环 × 2 层**（`verts=1800 faces=1728`），
   外半径 60.000；每帧只改顶点的 Y，所以运动是**连续**的。0.85–1.13 ms/帧。
 - **两种运动**，由属性 `Motion` 选（两个都留着，没有互相取代）：
-  - `"pulse"`（**现在的默认**）：整张网同步上下呼吸 —— 中间 ±`Amplitude`，
-    到边缘衰减到**逐位的零**（包络是升余弦，在 `r = RADIUS` 处恰好 0）。用
-    `Amplitude` / `Period` / `Transparency`；`Speed` / `Width` 在这支里不参与。
-  - `"wave"`：鼓包从中间往外跑（Phase 118 那版）。用多的两个属性是 `Speed` / `Width`。
+  - `"wave"`（**现在的默认**）：一个鼓包在中间出生、以 `Speed` studs/秒往外跑，
+    宽度是 `Width` 个 `Period`，下一个隔 `Period` 秒跟上。
+  - `"pulse"`：整张网同步上下呼吸 —— 中间 ±`Amplitude`，到边缘衰减到零。
+    用 `Amplitude` / `Period` / `Transparency`；`Speed` / `Width` 在这支里不参与。
+- **两种运动共用同一个包络，`Falloff` 是它的指数**：
+  `envelope(r) = (0.5*(1 + cos(pi*r/RADIUS))) ^ Falloff`。升余弦在 `r = RADIUS` 处**恰好** 0
+  （`cos(pi)` 双精度就是 −1，底数是 0，`0^p` 对 p>0 就是 0），两端斜率都是 0，
+  而「取幂」不破坏这三条 —— 所以任何 `Falloff` 都不会在中间或边上折出棱来。
+  `Falloff = 0` 关掉衰减、就是 Phase 118 那版**全程满高跑到底**的波；
+  `1` 是「一半半径处一半高、到边上没了」；`2` 是贴着中间更久、然后陡然掉。
 - **它只活在本地客户端**：`Content.fromObject` 做的东西不跨进程（§0.23），
   每个客户端自己建一张 —— 所以**服务端和 Edit 模式都看不到它**，这是设计代价不是 bug。
 - 光环：运行中把原盘在本地隐掉（`Wave.Transparency = 1`，客户端本地写入）。
-- 调参全在属性面板（改完一帧内生效）：`Motion` / `WaveEnabled` / `Amplitude 1` / `Speed 60` /
-  `Period 1.2` / `Width 0.5` / `Transparency 0.15` / `Segments 18` / `Rings 24` / `Reassign false`。
-  改 `Segments`/`Rings` 会重建网格。
-  **`Amplitude` 这个名字和 12 环那个旧驱动共用的**（它现在 `Enabled = false`，
-  所以无害；哪天把环打回来，两边会同时被这一个数管住）。
-- 自检：每半秒把 `t / active / sheet / disc / ms/frame / 几个环的高度` 写进 `ShockRipple.Diag`
-  （`StringValue`）；**另有一次读回**，把"件里真的是多高"和"脚本这帧写了多高"并排印出来。
+- 调参全在属性面板（改完一帧内生效）：`Motion` / `Falloff 1` / `WaveEnabled` /
+  `Amplitude` / `Speed 60` / `Period 1.2` / `Width 0.5` / `Transparency 0.15` /
+  `Segments 18` / `Rings 24` / `Reassign false`。改 `Segments`/`Rings` 会重建网格。
+- 自检：每半秒把 `t / active / motion / falloff / sheet / disc / ms/frame / 几个环的高度`
+  写进 `ShockRipple.Diag`（`StringValue`）；**另有一次读回**，把"件里真的是多高"和
+  "脚本这帧写了多高"并排印出来。
+  **`Diag` 是唯一能读的东西** —— 服务端和 Edit 里那张网根本不渲染（见上）。
+  另：`Instance:GetAttributes()` 在这个助手的沙箱里**回空表**（`GetAttribute(name)` 正常），
+  所以按名字读，别指望枚举（取舍 495）。
 
-**Phase 117 那 12 个同心环还在，是停用不是删除**（`C1`..`C12`，停在 `y=44.675`、
-`Transparency 0.4`，服务端 `Rig` 也原样留着）：
+**Phase 117 那 12 个同心环（`C1`..`C12`）已经不在了 —— 不是停用，是从 DataModel 里删掉了。**
+2026-10-11 本轮改写时量的：`Workspace` / `ServerStorage` / `ReplicatedStorage` 三处搜 `C1`/`C12`
+**各 0 个**，`ShockRipple` 的兄弟只剩 `Cylinder2` + 18 个 `Neon` + `Ring` + `Script` + `Union`。
+**不是这一轮删的**（本脚本从不 `Destroy` 它们），原文里那句「停用不是删除、把 `Enabled` 打回 `true`
+就能回来」**已经作废** —— 开关还在、`Rig` 那个 4038 字节的服务端脚本还在，但它现在没有可动的对象。
+要恢复只能从旧存档 / 重新建，**别在这份文档的基础上承诺它还能回来**（取舍 496）。
 
-- 它自己的开关是 `Enabled`（**新薄片用 `WaveEnabled`，两个故意不共用**），
-  另有 `Amplitude` / `RingPeriod` / `RingLag` / `Gap` / `Transparency`。
-- 回到老效果：`WaveEnabled = false` + 删掉那个 `LocalScript`。
-- 要**碰撞 / 射线 / 一次给所有人看**的时候它仍然是对的版本（薄片做不到这三件）。
+- 老效果仍然值得留的场合：**碰撞 / 射线 / 一次给所有人看**（薄片做不到这三件）。
 
 - 一次性播放的入口（两个驱动共用）：`ShockRipple.Play`（`BindableEvent`）→ `rig.Play:Fire()`。
-- 上手片段：薄片见 `docs/SNIPPETS.md` §5.28，CSG 环见 §5.27；取舍 485–492。
+- 上手片段：薄片见 `docs/SNIPPETS.md` §5.28，CSG 环见 §5.27；取舍 485–498。
