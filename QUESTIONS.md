@@ -1472,7 +1472,9 @@ A1 说**新班次开局核心是冷的** —— 冷堆**按定义就在 2000 °F
 `SHUTDOWN PROTOCOL / CORE COLLAPSE DETECTED / REACTOR ENERGY QUOTA NOT MET`。
 
 **卡在哪：** 要再开一轮，游戏得离开这个画面。两条路，我都没走：
-1. **等它自己复位** —— 我已经在盯（300 秒两次采样），到目前**没有动静**。
+1. **等它自己复位** —— **实测：不会。** 从 `t=1791678064` 起连采四次（跨度 **358 秒**，
+到 `t=1791678422`），`TemperatureVal 9420 / PressureVal 7320 / RadiationVal 406 /
+HDEF.IntegrityVal 99` 与七台监视器的页面**逐字节不变**。**这条路已经排除掉了。**
 2. **按 `RETURN TO LOBBY` / `PostShiftButton`** —— 那是 Phase 103 明确列进**禁按名单**的
    （原话是「不要为了导航去按它」）。
 

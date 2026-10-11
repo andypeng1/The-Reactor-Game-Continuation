@@ -12612,8 +12612,12 @@ GameFail / GameStart`。
 所以这一轮可复现的是**「按了这 11 下，堆芯起来了，然后熔毁」**，**不是**「按第 N 下必起」。
 
 **轮次状态：** `SEAL shift over`；记录器还在跑，窗口仍 `state=open`。
-**下一轮需要游戏离开熔毁画面** —— 要么等它自己复位，要么按 RETURN TO LOBBY，
-而后者在 Phase 103 的禁按名单里。见 `QUESTIONS.md` **`R1`**。
+**熔毁之后它不会自己复位 —— 这是量出来的，不是等出来的。** 从 `t=1791678064` 起
+连采四次（`t = 1791678064 / 1791678143 / 1791678233 / 1791678422`，跨度 **358 秒**），
+`TemperatureVal 9420 / PressureVal 7320 / RadiationVal 406 / HDEF.IntegrityVal 99`
+与七台监视器的页面**逐字节不变**。所以「等它自己复位」这条路**已经排除掉了**，
+**下一轮只能走 RETURN TO LOBBY** —— 而它在 Phase 103 的禁按名单里。
+见 `QUESTIONS.md` **`R1`**。
 
 产物：`Data/flow/original_261011-074137`（3575 行事件 / 11 条 `CLICK` / 1 条 `COREGATE` / 1 条 `SEAL`）、
 `Data/originalwatch/261011-074207/`（`summary.txt` 2.6 MB 几何位移 / `rooms.txt` / `suppressed.txt` /
