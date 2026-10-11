@@ -1678,3 +1678,75 @@ for it in range(4):
 一个瞬态的 RMS 只是它峰值的一小撮，**按信号的性质选尺子，不是按项目里其他层用了什么**。
 
 细节 `PROGRESS.md` 112，取舍 **463..469**，`docs/SYSTEMS.md` **§2.20**，`docs/TODO.md` **§3.6**。
+
+## 5.27 把一个圆盘切成同心环，并让一圈一圈抬起来（CSG 版）★ Phase 117
+
+**场景：** 一块 `MeshPart` 圆盘（`Cylinder2`，直径 120）要变成会起伏的涟漪 ——
+从中心往外数 12 个环，C1 抬 → C2 抬 → C1 落 → C3 抬……（用户原话的节奏）。
+
+**一、切环。** Roblox 没有 ring 图元。三条路里选 CSG（另两条：一圈拿小件拼 → 太碎；
+Blender 出网格再导入 → 最后一公里要上传凭据，走不通）。**外圆盘减内圆盘**：
+
+```lua
+local GS = game:GetService("GeometryService")
+-- Part.Shape = Cylinder 的轴在【局部 X】，绕 Z 转 90 度把它立成"厚度沿世界 Y"
+local cf = CFrame.new(cx, y, cz) * CFrame.Angles(0, 0, math.pi / 2)
+
+local outer = Instance.new("Part")
+outer.Shape = Enum.PartType.Cylinder
+outer.Size = Vector3.new(0.25, dOuter, dOuter)   -- 厚度沿局部 X；直径 = min(Y, Z)
+outer.CFrame = cf
+outer.Anchored = true
+
+local inner = outer:Clone()
+inner.Size = Vector3.new(1, dInner, dInner)      -- 要挖穿它，所以做厚一点
+inner.CFrame = cf
+
+local ring = GS:SubtractAsync(outer, { inner })[1]   -- 一圈 0.02 秒
+ring.CFrame = cf
+ring.UsePartColor = true          -- ← 少了这一句，下面设的 Color 会被无视（取舍 486）
+ring.Color = Color3.new(1, 1, 1)
+ring.Material = Enum.Material.ForceField
+ring.Anchored = true
+ring.CanCollide = false
+ring.CanQuery = false             -- 特效不该拦住任何射线 / 点击
+ring.CanTouch = false
+ring.CastShadow = false
+ring.Parent = model
+```
+
+`dInner = 0` 的那一圈（最里面那块）就是一块实心小盘 —— 不用特殊照顾，`{}` 都不传。
+**12 圈、直径 120 → 每圈 5 stud。**
+
+**二、起波。** 一个环的位移只由它自己的相位决定：
+
+```lua
+-- u < 0：还没轮到它；u >= 1：它已经落回去了。
+-- 两头都是 0，所以一波过去以后盘面是平的，下一波再从中心开始。
+local function ringOffset(t, index, amplitude, period, lag)
+	local u = (t - (index - 1) * lag) / period
+	if u < 0 or u >= 1 then
+		return 0
+	end
+	return amplitude * 0.5 * (1 - math.cos(2 * math.pi * u))
+end
+```
+
+`lag = period / 4` → **同一刻约两圈在半空**（波峰长度 = 半个周期 / 每圈延迟）。
+想更像水面就加大 `lag`，想更"跳"就减小。
+整波长度 `(N-1)·lag + period`，加上静默期 `gap` 就是循环周期。
+
+驱动那一半照 §0.19 的规矩写成**具名函数**，连接只有一行 `RunService.Heartbeat:Connect(step)`；
+每帧只在**真的动了**的时候写 CFrame（静默期那些帧一个字节都不发）。
+
+**三、三个坑（都是这一轮踩的）**
+1. **`UsePartColor` 默认 false** —— union 出生时带着 CSG 烘进去的颜色，`Color` 照写、照读、
+   **不生效**。验收图会整盘一个颜色，看起来像"CSG 没挖洞"（取舍 486）。
+2. **射线答的是碰撞体** —— union 的 `CollisionFidelity` 默认落到凸包，
+   **环的凸包就是实心盘**，横向射线会"证明"这 12 个环全是实心叠在一起。
+   **要么看图，要么先把 `CollisionFidelity` 改成 `PreciseConvexDecomposition`**（取舍 485）。
+3. **`Cylinder` 的轴在局部 X** —— 判"平不平"要查 `RightVector`，
+   查 `UpVector` 会把 12 个环全报成"轴不竖直"（取舍 485 的同族）。
+
+**四、要改圈数：** `RING_COUNT` 在脚本里，但**几何是命名的**（`C1`..`C12`），
+所以改圈数 = 重建几何 + 改常量，不是一个数。**这是当初选 12 的代价**（取舍 487）。

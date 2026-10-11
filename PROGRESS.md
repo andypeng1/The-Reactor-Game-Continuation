@@ -13072,3 +13072,63 @@ EndGameFrame1.ReportUI.Bottom.ReportText      = [REPORT ACKNOWLEDGEMENT [HOVER]]
 它们是**真实设计角**（75°/45°/60° 那一族）经同一套矩阵分解留下的千分之几度的误差，
 按「尾巴」的定义**不是尾巴**（比上一轮 Attachment 那批的 1.5e-5° 大三十倍）；
 要清只能整个带上，而清它**多半也落不到**（同一张脸）。**留着，报出来。**
+
+#### Phase 117（2026-10-11）—— 把 `Cylinder2` 切成 12 个同心环，让一道波从中心往外跑
+
+**用户原话：**「你能不能做到把Cylinder2从中间往外扩散，我不知道咋说，就是加入你把他分为几个环
+（假设）C1C2C3(从内到外）然后就是C1抬起来->C2抬起来->C1降下去->C3抬起来->C2降下去…………以此类推」
+
+**做在哪个 `Cylinder2` 上：** 全 place 只有两个 —— `Workspace.Cylinder2`（10 × 0.25 × 10，
+`ForceField`，未锚定，摆在辐射净化器那一堆里）和 **`Workspace.Folder.Model.Cylinder2`**
+（120 × 0.25 × 120，`ForceField`，`Transparency 1`，躺在炉膛轴线上 `(−12.20, 44.40, −85.36)`）。
+选后者：**只有它被脚本引用**（`Workspace.Folder.Model.Script` 第 17 行 `local Mesh = Main.Cylinder2`），
+而且「从中间往外扩散」画在 120 stud 的盘上才看得见。
+**那个盘原地一个字节没动** —— 新东西全挂在新建的 `Model` `ShockRipple` 里。
+
+**交付：`Workspace.Folder.Model.ShockRipple`**
+
+| 件 | 是什么 |
+|---|---|
+| `C1`..`C12` | 12 个 `UnionOperation`，把直径 120 的盘从中心铺到 r=60，每圈 5 stud 宽、0.25 厚 |
+| 静止高度 | `y = 44.675`（大盘顶面 44.525 之上 0.15），`ForceField` 白、`Transparency 0.4` |
+| `Rig` | `Script`，`Heartbeat` 驱动，一帧一个 `step()` |
+| `Play` | `BindableEvent` —— 核弹那边接一次波的入口（`rig.Play:Fire()`） |
+| 属性 | `Enabled true` / `Amplitude 2.5` / `RingPeriod 0.8` / `RingLag 0.2` / `Gap 1.2` / `Transparency 0.15` |
+
+**怎么切出来的：** Roblox 没有圆环图元。`GeometryService:SubtractAsync(外圆盘, {内圆盘})`，
+两个都是 `Part.Shape = Cylinder`（**轴在局部 X**，靠 `CFrame.Angles(0,0,math.pi/2)` 立成厚度沿世界 Y）。
+**一圈 0.02 秒**，12 圈一次调用建完。上手片段 `docs/SNIPPETS.md` §5.27。
+
+**波：** `dy(t,k) = 0.5·A·(1 − cos(2π·u))`，`u = (t − (k−1)·Lag) / Period`，`u ∉ [0,1)` 时 `dy = 0`。
+`Lag = Period/4` 的后果是**同一刻只有约两圈在半空** —— 正是他画的那个顺序
+（C1 起、C2 起、C1 落、C3 起、C2 落……）。
+
+**验证（Play 里，`datamodel_type: Server`，每 0.25 秒采一次，覆盖一个多周期）：**
+
+```
+crest=C1   ............   <- Gap 里，整盘是平的
+crest=C1   21..........
+crest=C2   121.........   <- C1 起、C2 到顶、C3 跟上
+crest=C4   ..22........
+crest=C6   ....121.....
+crest=C9   .......121..
+crest=C11  ..........22
+crest=C12  ...........1
+crest=C1   ............   <- 归零，下一波从中心重来
+```
+（`1` = 抬 0.6–2.0 stud，`2` = 抬 >2.0，`.` = 0）**波峰从中心一路数到边上，然后归零重来**，
+周期 4.2 s（`(12−1)×0.2 + 0.8 + 1.2`）。
+停 Play 之后 `Edit` 里 12 个环仍在 `y=44.675`、`Transparency 0.40`，**Play 一个字节没写回工程**（§0.4）。
+
+**没验到的那一半：** 客户端的**动态观感**只有一张静态截图（Play 里、炉膛上方俯视），
+快慢高低好不好看**我没法替他判断** —— 那些全在属性面板上。
+
+**附带发现（不是我改出来的）：`Workspace.Folder.Model.Script` 整条是死的。**
+它第 3 行 `local Trigger = Main.Trigger.ClickDetector`，而那个 Model 的 22 个子件
+（18 个 `Neon` + `Union` + `Cylinder2` + `Ring` + `Script`）里**没有 `Trigger`**；
+`ReplicatedStorage.Functions.Tween` 是存在的，所以它死在**那一行**，不是死在 `require`。
+**也就是说核弹那套闪白 / 扩环 / 18 根光柱从来没有播过。** 补不补问 `QUESTIONS.md` **R2**。
+
+**这一轮量错三次，三次都被截图推翻**（取舍 485 / 486）：射线量到的是**碰撞体**
+（CSG 环的凸包 = 实心盘）、`UsePartColor = false` 把 `Color` 静静吃掉、
+`Cylinder` 的轴在局部 X 而我拿 `UpVector` 判平不平。

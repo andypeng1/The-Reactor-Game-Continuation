@@ -877,3 +877,21 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 **首个起音的位置** / 单声道兼容 / 无极性翻转 / 无点击。
 其中两条是**为了替代两把编错的尺子**而写的：旋转检验替掉 top-4 顺序（取舍 467）、
 半格窗 + 物理判据替掉宽窗 argmax（取舍 466）。上手片段见 `docs/SNIPPETS.md` §5.26。
+
+
+### 2.21 `ShockRipple` —— 冲击波盘的涟漪（`Workspace.Folder.Model.ShockRipple`，2026-10-11，Phase 117）
+
+**不是仿真，是画面。** 它不读 `GameState`、不写任何被玩的东西。它把那个特效模型自己的
+冲击波盘（`Cylinder2`，直径 120）**另做**成 12 个同心环 `C1`..`C12`，
+让一道波从中心跑到边上再归零。
+
+**为什么不去改那块盘本身：** 那个 `Model` 是导入件，`Cylinder2` 被它自己的 `Script` 引用
+（`Mesh.Transparency` 那条闪白链）。**原地不动、新件另挂** —— 环是新建的
+`UnionOperation`，`Cylinder2` 一个字节没改。
+
+- 调参全在属性面板：`Enabled` / `Amplitude` / `RingPeriod` / `RingLag` / `Gap` / `Transparency`。
+- 一次性播放的入口：`ShockRipple.Play`（`BindableEvent`）→ `rig.Play:Fire()`。
+- `Rig` 是**服务端** `Script`（和那台特效的 `Script` 同级），所以核弹那边可以直接勾上来。
+- 静止 `Transparency 0.4`（编辑模式下脚本不跑，**盘上存什么就是什么**），播放时 `0.15`。
+- 验证方式：Play 里用 `datamodel_type: Server` 读 12 个环的 `y`（一帧一行 ASCII，见 `PROGRESS.md` Phase 117）。
+- 上手片段 `docs/SNIPPETS.md` §5.27；取舍 485 / 486 / 487。

@@ -1606,3 +1606,35 @@ HDEF.IntegrityVal 99` 与七台监视器的页面**逐字节不变**。**这条�
 **顺带一句必须说清楚的：** 那 11 次按压**是哪一次把堆芯点起来的，我没有量出来** ——
 `GameActive` 起来之前的每一次我都判成了 `stats=[]`（判据窗口 1.4 秒比状态机短，
 见 `DECISIONS_2` 471）。所以下一轮我**不能**说「按第 N 下必起」，只能说「按了这 11 下，它起来了」。
+
+
+---
+
+# 本轮新增（2026-10-11，Phase 117）
+
+## R2 — 那台核弹特效**整条是死的**（缺 `Trigger`），补不补？
+
+**量出来的：** `Workspace.Folder.Model.Script` 第 3 行是
+`local Trigger = Main.Trigger.ClickDetector`，而 `Workspace.Folder.Model` 的 22 个子件
+（18 个 `Neon` + `Union` + `Cylinder2` + `Ring` + `Script`）**没有 `Trigger`**。
+`ReplicatedStorage.Functions.Tween` 是存在的，所以它不是死在 `require`，是死在**那一行**：
+**整个特效一出生就报错退出 —— 那套闪白 / 扩环 / 18 根光柱从来没有播过。**
+（不是我这轮改出来的：我只在它旁边新建了一个 `ShockRipple` 模型，它一个字节没动。）
+
+**选项：**
+- **A. 补一个 `Trigger`** —— 一个带 `ClickDetector` 的件，当 `Model` 的子件、名字就叫 `Trigger`。
+  **这会往世界里加东西**（§0.12），而且要挑位置和大小。
+- **B. 不管它** —— 那个 `Model` 可能只是从原版导进来的一份死资产，留着当参考，谁也不按它。
+- **C. 只改那一行、不建任何件** —— 把
+  `local Trigger = Main.Trigger.ClickDetector` 改成
+  `local Trigger = script.Parent:FindFirstChild("Trigger")`，
+  下面 `Trigger.MouseClick:Connect(...)` 整段用 `if Trigger then ... end` 包住。
+  这样**有 `Trigger` 它就正常工作，没有也只是这一半不起作用**，而不是整个脚本崩掉。
+
+**我倾向 C**（它把一个「整条死」变成一个「缺一个件」的**可观测**状态，
+而且**不往世界里加任何东西**），但 A 和 B 都合理。
+**你不回，我按 C 做** —— 那句改动只影响一个**本来就崩掉**的脚本。
+
+**顺带一条给后面的人：** 那个脚本在 `Mesh.Transparency = 0` 之后紧接着
+`Tween.MultiTween(Mesh, "Transparency", 0, false, 5)` —— **从 0 补间到 0**，这一句是空转。
+不一定是错的（可能本来就想要它突然出现），但值得知道。
