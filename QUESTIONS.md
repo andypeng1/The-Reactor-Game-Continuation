@@ -123,6 +123,75 @@ After you open the Creator Dashboard toggle on **Enable Mesh / Image APIs**.」
   关风扇抬压）→ 再动别的装置。
 - **C：先不判。** 你自己进游戏玩，我这边只读不写。
 
+### D7 追加（2026-10-11，Phase 114）—— 它已经不是「客气的问一下」，它是**唯一的门**；而且多出一扇**开工**的门
+
+这一轮我**一个字都没按**，但把它量清楚了：
+
+**1. 服务器换过（自己换的，我没按任何东西）。** `jobId` 从 `473258e5-…` 变成 `7bdd8b66-…`
+（07:41 与 08:44 之间），所以 Phase 113 结尾那句「下一轮只能走 RETURN TO LOBBY」
+**被现实解决了** —— 下面 `R1` 的前提作废。新服务器是**冷启动**，而且和第一轮开机前**逐值相同**：
+`TemperatureVal=0 / PressureVal=20 / HDEF.IntegrityVal=12 / ReportsDone=0 / ResetShift=false / NextShift=false`。
+
+**2. 屏幕自己在说它在等什么**（`PlayerGui.ScreenGui.IntermissionFrame`，逐字）：
+
+```
+WaitFrame.ShiftLabel      = [SHIFT 1]
+WaitFrame.PlayerLabel     = [WAITING FOR PLAYERS [60]]
+AdditionFrame.ServerLabel = [Waiting for report acknowledgement signatures [X]]
+   .SignatureLabel = [Your progress has been saved, and you will be teleported to your target
+                       destination soon. Rejoin if this takes too long, as roblox servers
+                       aren't known for their reliability.]
+```
+
+**两块牌子同时挂着** —— 「等签名」和「等玩家」。**我分不出哪一块在挡路**，也不打算假装能分。
+
+**3. 闸门本身是可观测的**：`EndGameFrame1.Title=[A.E.R.N - SHIFT [D] REPORT]`，
+`ReportUI.Bottom` 里 `HoldButton` 与 `PostShiftButton` 都 `vis=true act=true`。
+（`[D]` 是**班次字母**不是按键：大厅 `RLGatewayRoom…ProgressionFrame` 底下就是 `Shift1..Shift7`。）
+
+**4. 时钟是真的停着**（不是我看错）：读 `11:50 PM`，**32 分钟前也是 `11:50 PM`**；
+而第一轮那个时钟 `11:53 → 11:54 → 11:55 PM` 一路数到 `12:00 AM` 才 `GameActive` 变真 ——
+**它是活的分钟表**，所以「停」是真的停。
+
+**5. `workspace.Stats` 全表 39 个值里没有倒计时、也没有人数门** ——
+所以「在等玩家」若存在，只可能在服务端脚本的局部变量里，**读不到**。
+
+**6. 【新】大厅里**另有一扇门，而且是「开工」不是「结算」。**
+`Workspace.RLGatewayRoom` 的 `BottomText` **逐字**写着：
+
+> Currently this screen can not be interacted with, **just flip the lever to be
+> teleported to the prototype game.**
+
+那儿有三个**活的**可交互件：`GatewayConsole.LeverModel.LeverComponents.Union.ClickDetector`
+（`MaxActivationDistance=35`）、`GatewayConsole.ClickPart.ClickDetector`（`6`）、
+以及一个世界内 GuiButton `Monitor2…ProgressionFrame.ShiftD.InteractFrame.Button`
+（`text=[ACTIVATE?] vis=true act=true`）。**这不是 D7 说的那两个按钮。**
+
+**7. 能力这一半早就有了** —— `fireclickdetector` 打得到原版（Phase 113 实测：
+启动杆 `MaxActivationDistance=0`、`dist 5.16 of 0`，**照样生效**），而且**不碰你的光标**。
+所以卡住的**不是「我按不动」，是「这一下按不按」**。
+
+**所以现在是个四选一（或都不选）：**
+
+- **D7-A（原样）：你按。** 你进游戏把报告屏那一下按掉，我这边只读不写。
+- **D7-B（原样）：我按报告屏。** 明确授权我按 `PostShiftButton` 进 `Shift [2]`。
+  （代价比原先低：`fireclickdetector` 证明**不需要动你的鼠标**。）
+- **D7-D（新）：我按大厅那扇门。** 它是**开工/传送进去**，按字面**不结算任何东西**；
+  按钮是 `GatewayConsole` 的 ClickDetector，我按完当场读位置（`(110,283,2)` → 设施落点 `(268,280,-1)`）
+  来判它**到底动没动**，两遍都写进 flow。
+- **D7-E（新）：先不按，只测「它会不会自己开始」。→ ✅ 已出结果：否。**
+  ① 09:19:22→09:27:34（**492 s**，6 次进文件）逐字段相同；
+  ② 09:28:42→09:32:17（**215 s**，**8/8**）逐字段相同；
+  ③ 端点对照 08:44 与 09:16（**~32 min**）两次都读 `11:50 PM`。
+  **13 分钟连续 + 32 分钟端点对照里，九个字段一个都没动过**：
+  `11:50 PM / false / 1 / 110,283,2 / 0 / false / false / 0 / 20`。
+  **所以没有第三条「等它自己走」的路。**
+
+**所以只剩两个真选项：`D7-A`（你按报告屏）/ `D7-B`（我按报告屏）/ `D7-D`（我按大厅那扇门）。**
+**我推荐 `D7-D`** —— 它是「开始干活」（大厅 → 传送进设施），不是「动你的钱」；
+按完我当场读位置（`(110,283,2)` → 设施落点 `(268,280,-1)`）判它到底动没动，两遍都写进 flow。
+**你不回，我就保持现状**：只读不写（§4.1 的规矩是别反复问，所以我不再追问，`D7` 就停在上面这三条）。
+
 **一句话版：**
 0. ~~回两句~~ **已答（2026-10-03）**：`P10` = **B**（机房**只做症状**：监视器蓝屏/软重启 + 原文上屏 + 旗标翻起，
    QPU 数量仍建模为 6 —— 表现层，不改玩法）；`P9` = **A**（封存兜底**保持**读监视器 `m.temp`）。
@@ -1465,6 +1534,14 @@ A1 说**新班次开局核心是冷的** —— 冷堆**按定义就在 2000 °F
 # 本轮新增（2026-10-11，Phase 113）
 
 ## R1 — 原版停在「堆芯熔毁」终局，下一轮要**离开这个画面**，而那条路在禁按名单里
+
+> ### ⛔ 前提作废（2026-10-11，Phase 114）
+> **现实自己把它解决了**：07:41 与 08:44 之间发生过一次 **rejoin**，`jobId` 从
+> `473258e5-…` 换成 `7bdd8b66-…`，新服务器是**冷启动**（`TemperatureVal=0 /
+> PressureVal=20 / HDEF.IntegrityVal=12 / ReportsDone=0`）。
+> 所以「熔毁之后离不开那个画面」**不再是当前状态** —— 熔毁那台已经没了。
+> **不用再为这一条按任何东西**，下面全文留作当时的记录。
+> 现在挡路的换成了 `D7`，见上面的 **D7 追加**。
 
 **要什么：** 我在原版上驱动了一整班（`你自己操作`），它**熔毁并被封存**
 （`Data/flow/original_261011-074137`，`SEAL shift over`）。终局是**冻结**的 ——

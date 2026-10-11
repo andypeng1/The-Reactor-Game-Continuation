@@ -1,0 +1,1102 @@
+# coverage -- what this watcher has in front of it
+# 9062 instances, 67600 watched properties, 266 roots watched, 0 root(s) skipped
+# 7446 instance(s) needed a path suffix: their GetFullName was not unique
+
+## how the roots were chosen
+# pinned by name: Alarms, Monitors, MonitorsFacility
+# denied by name: (none)
+# a root is watched when its descendant count is <= 30000, unless it is
+#   pinned; roots are taken SMALLEST FIRST until 80000 instances are
+#   spoken for.  Anything else is listed as SKIPPED with its reason.
+
+## Audio/Disconnect (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Billy (Model) -- 0 descendants, 0 watched instances
+
+## Boom (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Camera (Model) -- 0 descendants, 0 watched instances
+
+## Camera (Camera) -- 0 descendants, 0 watched instances
+
+## Camera (Model) -- 0 descendants, 0 watched instances
+
+## ClickInfo (Folder) -- 0 descendants, 0 watched instances
+
+## Colossus_AttackLaunch1 (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## ComputerSounds (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Core (Model) -- 0 descendants, 0 watched instances
+
+## DebrisEffects (Folder) -- 0 descendants, 0 watched instances
+
+## GravGateTransitionCatwalk (Model) -- 0 descendants, 0 watched instances
+
+## GravGateTransitionCatwalk (Model) -- 0 descendants, 0 watched instances
+
+## GravityEmblem (Model) -- 0 descendants, 0 watched instances
+
+## GravityEmblem (Model) -- 0 descendants, 0 watched instances
+
+## GravityEmblem (Model) -- 0 descendants, 0 watched instances
+
+## GravityEmblem (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HighTemplar_PsionicStormImpact1 (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Large Beam (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Machine ON (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## MainGameControllerScript (Script) -- 0 descendants, 1 watched instances
+   Script                   1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Metal Crash 9 (SFX) (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## MiscScript (Script) -- 0 descendants, 1 watched instances
+   Script                   1
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## Model (Model) -- 0 descendants, 0 watched instances
+
+## POWER_SURGE (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Part (Part) -- 0 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Part (Part) -- 0 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Part (Part) -- 0 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Part (Part) -- 0 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## PhysicsObjects (Folder) -- 0 descendants, 0 watched instances
+
+## ProximityLights (Model) -- 0 descendants, 0 watched instances
+
+## ProximityLights (Model) -- 0 descendants, 0 watched instances
+
+## ProximityLights (Model) -- 0 descendants, 0 watched instances
+
+## RMEmblem (Model) -- 0 descendants, 0 watched instances
+
+## RMEmblem (Model) -- 0 descendants, 0 watched instances
+
+## ShootStyleLanding (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Skelebonejones (Model) -- 0 descendants, 0 watched instances
+
+## SpawnLocation (SpawnLocation) -- 0 descendants, 1 watched instances
+   SpawnLocation            1
+
+## Surge Ground Hit - Brawl Stars SFX (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## TARDIS Energy Recharge (Fixed) (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## TeamSpawns (Folder) -- 0 descendants, 0 watched instances
+
+## Terrain (Terrain) -- 0 descendants, 1 watched instances
+   Terrain                  1
+
+## Union (UnionOperation) -- 0 descendants, 1 watched instances
+   UnionOperation           1
+
+## WallLight (Model) -- 0 descendants, 0 watched instances
+
+## WallLight (Model) -- 0 descendants, 0 watched instances
+
+## WallLight (Model) -- 0 descendants, 0 watched instances
+
+## WallLight (Model) -- 0 descendants, 0 watched instances
+
+## WarningSigns (Model) -- 0 descendants, 0 watched instances
+
+## WarningSigns (Model) -- 0 descendants, 0 watched instances
+
+## generator_on_sfx (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## mri scan sound effects (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Baseplate (Part) -- 1 descendants, 2 watched instances
+   Part                     1
+   Texture                  1
+
+## ChamberCoolantPipe1 (Model) -- 1 descendants, 0 watched instances
+
+## ChamberCoolantPipe2 (Model) -- 1 descendants, 0 watched instances
+
+## ChamberCoolantPipe3 (Model) -- 1 descendants, 0 watched instances
+
+## HEV Suit Battery (Sound) -- 1 descendants, 2 watched instances
+   PitchShiftSoundEffect    1
+   Sound                    1
+
+## JetpackStart (Sound) -- 1 descendants, 2 watched instances
+   Sound                    2
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Model (Model) -- 1 descendants, 0 watched instances
+
+## Part (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Part (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Part (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## TrashMilitaryDoor1 (Model) -- 1 descendants, 0 watched instances
+
+## VentLever (Model) -- 1 descendants, 0 watched instances
+
+## ExitSound (Sound) -- 2 descendants, 3 watched instances
+   DistortionSoundEffect    1
+   EqualizerSoundEffect     1
+   Sound                    1
+
+## HallwayRoomConnector (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 0 watched instances
+
+## ReserviorCatwalk (Model) -- 2 descendants, 0 watched instances
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TrashMilitaryDoor (Model) -- 2 descendants, 0 watched instances
+
+## Vacuum Cleaner 1 (SFX) (Sound) -- 2 descendants, 3 watched instances
+   Sound                    2
+   PitchShiftSoundEffect    1
+
+## Model (Model) -- 3 descendants, 0 watched instances
+
+## Model (Model) -- 3 descendants, 0 watched instances
+
+## Model (Model) -- 3 descendants, 0 watched instances
+
+## EnterSound (Sound) -- 5 descendants, 6 watched instances
+   EqualizerSoundEffect     3
+   DistortionSoundEffect    1
+   PitchShiftSoundEffect    1
+   Sound                    1
+
+## CHMBRBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## CreepySounds (Script) -- 6 descendants, 7 watched instances
+   Sound                    6
+   Script                   1
+
+## GRAVBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## RMFBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## SHAFTHMBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## CoolingPanel (Model) -- 7 descendants, 0 watched instances
+
+## GravGate (Model) -- 7 descendants, 1 watched instances
+   Script                   1
+
+## GravGate (Model) -- 7 descendants, 1 watched instances
+   Script                   1
+
+## Monitors (Folder) -- 7 descendants, 0 watched instances
+
+## SpeakerPart (UnionOperation) -- 7 descendants, 8 watched instances
+   Sound                    7
+   UnionOperation           1
+
+## UISounds (Folder) -- 9 descendants, 9 watched instances
+   Sound                    7
+   EqualizerSoundEffect     2
+
+## Model (Model) -- 10 descendants, 0 watched instances
+
+## QPU (Tool) -- 10 descendants, 4 watched instances
+   BoolValue                2
+   LocalScript              1
+   Script                   1
+
+## QPU (Tool) -- 10 descendants, 4 watched instances
+   BoolValue                2
+   LocalScript              1
+   Script                   1
+
+## QPU (Tool) -- 10 descendants, 4 watched instances
+   BoolValue                2
+   LocalScript              1
+   Script                   1
+
+## SoundBlocks (Folder) -- 11 descendants, 11 watched instances
+   Sound                    6
+   EqualizerSoundEffect     2
+   Part                     2
+   PitchShiftSoundEffect    1
+
+## Model (Model) -- 13 descendants, 0 watched instances
+
+## Model (Model) -- 13 descendants, 0 watched instances
+
+## Model (Model) -- 13 descendants, 0 watched instances
+
+## Model (Model) -- 13 descendants, 0 watched instances
+
+## Model (Model) -- 13 descendants, 0 watched instances
+
+## MainframeToolStorageCull (Folder) -- 14 descendants, 0 watched instances
+
+## Model (Model) -- 14 descendants, 0 watched instances
+
+## RCBlastDoor (Model) -- 14 descendants, 0 watched instances
+
+## Model (Model) -- 15 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 18 descendants, 0 watched instances
+
+## HMGatewayRoom (Model) -- 20 descendants, 0 watched instances
+
+## RMGatewayRoom (Model) -- 20 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 21 descendants, 0 watched instances
+
+## Model (Model) -- 22 descendants, 0 watched instances
+
+## Model (Model) -- 22 descendants, 0 watched instances
+
+## Model (Model) -- 22 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 24 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 24 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 24 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 24 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 24 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 24 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 24 descendants, 0 watched instances
+
+## AscendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## AscendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## DescendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## DescendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## MES (Model) -- 26 descendants, 0 watched instances
+
+## CRC1_AscendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC1_DescendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC2_AscendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC2_DescendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC3_AscendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC3_DescendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## MedicalDispenser (Model) -- 30 descendants, 0 watched instances
+
+## Stats (Folder) -- 38 descendants, 32 watched instances
+   BoolValue                21
+   IntValue                 11
+
+## Rig (Model) -- 43 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## LoungeLights (Model) -- 45 descendants, 30 watched instances
+   Part                     27
+   SurfaceLight             3
+
+## Rig (Model) -- 46 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Rig (Model) -- 48 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Rig (Model) -- 50 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Rig (Model) -- 51 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Rig (Model) -- 52 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Model (Model) -- 59 descendants, 0 watched instances
+
+## MonitorsFacility (Folder) -- 80 descendants, 0 watched instances
+
+## LoungeTowerMonitor (Model) -- 92 descendants, 88 watched instances
+   Frame                    27
+   Part                     23
+   TextLabel                11
+   ImageLabel               8
+   Texture                  8
+   SurfaceGui               4
+   EqualizerSoundEffect     2
+   Sound                    2
+   Script                   1
+   SurfaceLight             1
+   UnionOperation           1
+
+## ToolStorageFacility (Model) -- 92 descendants, 12 watched instances
+   LocalScript              4
+   Script                   4
+   StringValue              4
+
+## ToolStorageFacility (Model) -- 100 descendants, 12 watched instances
+   LocalScript              4
+   Script                   4
+   StringValue              4
+
+## PowerExtractionAssembly (Model) -- 108 descendants, 0 watched instances
+
+## UpgradeTowerMonitor (Model) -- 124 descendants, 114 watched instances
+   Part                     23
+   Frame                    22
+   ImageLabel               22
+   TextLabel                18
+   TextButton               11
+   Texture                  8
+   Sound                    4
+   SurfaceGui               4
+   Script                   1
+   UnionOperation           1
+
+## 123434567963 (Model) -- 126 descendants, 70 watched instances
+   Attachment               21
+   Part                     9
+   Sound                    9
+   StringValue              9
+   LocalScript              7
+   Vector3Value             4
+   NumberValue              3
+   SpecialMesh              3
+   Decal                    2
+   BoolValue                1
+   IntValue                 1
+   Script                   1
+
+## GravatronUnit (Model) -- 147 descendants, 0 watched instances
+
+## ChamberWalls (Folder) -- 159 descendants, 0 watched instances
+
+## METU (Model) -- 163 descendants, 0 watched instances
+
+## IABlastDoor (Model) -- 213 descendants, 158 watched instances
+   Decal                    50
+   Part                     45
+   Texture                  24
+   UnionOperation           11
+   SurfaceLight             10
+   Sound                    7
+   SurfaceGui               4
+   TextLabel                4
+   EqualizerSoundEffect     2
+   ParticleEmitter          1
+
+## RoomLights (Folder) -- 227 descendants, 0 watched instances
+
+## EmployeeScreen (Model) -- 238 descendants, 221 watched instances
+   TextLabel                76
+   Part                     64
+   Frame                    44
+   ImageLabel               9
+   SurfaceGui               9
+   EqualizerSoundEffect     6
+   Sound                    6
+   Texture                  6
+   SurfaceLight             1
+
+## Alarms (Folder) -- 252 descendants, 86 watched instances
+   Part                     64
+   SpecialMesh              6
+   Attachment               4
+   SurfaceLight             4
+   Sound                    3
+   HingeConstraint          2
+   MeshPart                 2
+   EqualizerSoundEffect     1
+
+## Consoles (Folder) -- 258 descendants, 0 watched instances
+
+## Sounds (Folder) -- 278 descendants, 266 watched instances
+   Sound                    205
+   EqualizerSoundEffect     29
+   DistortionSoundEffect    14
+   ReverbSoundEffect        7
+   PitchShiftSoundEffect    5
+   CompressorSoundEffect    3
+   EchoSoundEffect          3
+
+## CRC1 (Model) -- 303 descendants, 0 watched instances
+
+## CRC2 (Model) -- 303 descendants, 0 watched instances
+
+## CRC3 (Model) -- 303 descendants, 0 watched instances
+
+## GravitationShafts (Folder) -- 370 descendants, 18 watched instances
+   NumberValue              6
+   ObjectValue              6
+   Script                   6
+
+## Lights (Folder) -- 544 descendants, 138 watched instances
+   Part                     118
+   PointLight               8
+   SurfaceLight             6
+   UnionOperation           6
+
+## RLGatewayRoom (Model) -- 662 descendants, 586 watched instances
+   Part                     289
+   MeshPart                 77
+   Frame                    63
+   UnionOperation           46
+   TextLabel                36
+   PointLight               15
+   SurfaceGui               13
+   Texture                  8
+   Sound                    7
+   Attachment               5
+   ImageLabel               5
+   ParticleEmitter          4
+   PitchShiftSoundEffect    4
+   Decal                    3
+   ClickDetector            2
+   EqualizerSoundEffect     2
+   StringValue              2
+   BoolValue                1
+   DistortionSoundEffect    1
+   ScrollingFrame           1
+   SpotLight                1
+   TextButton               1
+
+## ReactorCBLs (Folder) -- 882 descendants, 3 watched instances
+   Script                   3
+
+## MovingParts (Folder) -- 1562 descendants, 287 watched instances
+   Part                     100
+   ObjectValue              36
+   BoolValue                27
+   Attachment               19
+   MeshPart                 16
+   Script                   15
+   Decal                    12
+   Beam                     7
+   Sound                    6
+   Texture                  6
+   UnionOperation           6
+   ParticleEmitter          5
+   IntValue                 4
+   NumberValue              4
+   StringValue              4
+   EqualizerSoundEffect     3
+   Highlight                3
+   CompressorSoundEffect    2
+   DistortionSoundEffect    2
+   EchoSoundEffect          2
+   HingeConstraint          2
+   SurfaceLight             2
+   PointLight               1
+   SpecialMesh              1
+   SurfaceGui               1
+   TextLabel                1
+
+## QuantumMainframe (Model) -- 2208 descendants, 24 watched instances
+   BoolValue                12
+   LocalScript              6
+   Script                   6
+
+## CullFolder (Folder) -- 7409 descendants, 6699 watched instances
+   Part                     4293
+   Texture                  722
+   UnionOperation           511
+   MeshPart                 477
+   Decal                    249
+   Attachment               98
+   SurfaceGui               92
+   TextLabel                91
+   PointLight               40
+   RopeConstraint           30
+   Sound                    24
+   ParticleEmitter          19
+   Seat                     15
+   SurfaceLight             14
+   SpecialMesh              8
+   EqualizerSoundEffect     6
+   ImageLabel               5
+   DistortionSoundEffect    2
+   StringValue              2
+   Script                   1
+
+## Audio -- 7 instance(s) OUTSIDE the watched roots, kept as properties
+   SoundGroup               7
+
+## audio-only scope -- playback hooks, plus a property watch on the mixer only (963 hook(s) attached, 0 refused)
+   Sounds inside the watched roots 320
+   SoundService             SoundService, 8 descendant(s), 1 Sound(s) hooked
+   Workspace                Workspace, 18898 descendant(s), 320 Sound(s) hooked
+   ReplicatedStorage        ReplicatedStorage, 6450 descendant(s), 0 Sound(s) hooked
+   ReplicatedFirst          ReplicatedFirst, 1 descendant(s), 0 Sound(s) hooked
+   TOTAL Sounds hooked      321   (roots 320 + audio-only 1)
+
+## roots watched (266)
+   Audio/Disconnect                   Sound               0 descendants        0 parts
+   Billy                              Model               0 descendants        0 parts
+   Boom                               Sound               0 descendants        0 parts
+   Camera                             Model               0 descendants        0 parts
+   Camera                             Camera              0 descendants        0 parts
+   Camera                             Model               0 descendants        0 parts
+   ClickInfo                          Folder              0 descendants        0 parts
+   Colossus_AttackLaunch1             Sound               0 descendants        0 parts
+   ComputerSounds                     Sound               0 descendants        0 parts
+   Core                               Model               0 descendants        0 parts
+   DebrisEffects                      Folder              0 descendants        0 parts
+   GravGateTransitionCatwalk          Model               0 descendants        0 parts
+   GravGateTransitionCatwalk          Model               0 descendants        0 parts
+   GravityEmblem                      Model               0 descendants        0 parts
+   GravityEmblem                      Model               0 descendants        0 parts
+   GravityEmblem                      Model               0 descendants        0 parts
+   GravityEmblem                      Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HighTemplar_PsionicStormImpact1    Sound               0 descendants        0 parts
+   Large Beam                         Sound               0 descendants        0 parts
+   Machine ON                         Sound               0 descendants        0 parts
+   MainGameControllerScript           Script              0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Metal Crash 9 (SFX)                Sound               0 descendants        0 parts
+   MiscScript                         Script              0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   POWER_SURGE                        Sound               0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   PhysicsObjects                     Folder              0 descendants        0 parts
+   ProximityLights                    Model               0 descendants        0 parts
+   ProximityLights                    Model               0 descendants        0 parts
+   ProximityLights                    Model               0 descendants        0 parts
+   RMEmblem                           Model               0 descendants        0 parts
+   RMEmblem                           Model               0 descendants        0 parts
+   ShootStyleLanding                  Sound               0 descendants        0 parts
+   Skelebonejones                     Model               0 descendants        0 parts
+   SpawnLocation                      SpawnLocation        0 descendants        0 parts
+   Surge Ground Hit - Brawl Stars SFX Sound               0 descendants        0 parts
+   TARDIS Energy Recharge (Fixed)     Sound               0 descendants        0 parts
+   TeamSpawns                         Folder              0 descendants        0 parts
+   Terrain                            Terrain             0 descendants        0 parts
+   Union                              UnionOperation        0 descendants        0 parts
+   WallLight                          Model               0 descendants        0 parts
+   WallLight                          Model               0 descendants        0 parts
+   WallLight                          Model               0 descendants        0 parts
+   WallLight                          Model               0 descendants        0 parts
+   WarningSigns                       Model               0 descendants        0 parts
+   WarningSigns                       Model               0 descendants        0 parts
+   generator_on_sfx                   Sound               0 descendants        0 parts
+   mri scan sound effects             Sound               0 descendants        0 parts
+   Baseplate                          Part                1 descendants        0 parts
+   ChamberCoolantPipe1                Model               1 descendants        0 parts
+   ChamberCoolantPipe2                Model               1 descendants        0 parts
+   ChamberCoolantPipe3                Model               1 descendants        0 parts
+   HEV Suit Battery                   Sound               1 descendants        0 parts
+   JetpackStart                       Sound               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   TrashMilitaryDoor1                 Model               1 descendants        0 parts
+   VentLever                          Model               1 descendants        0 parts
+   ExitSound                          Sound               2 descendants        0 parts
+   HallwayRoomConnector               Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   ReserviorCatwalk                   Model               2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TrashMilitaryDoor                  Model               2 descendants        0 parts
+   Vacuum Cleaner 1 (SFX)             Sound               2 descendants        0 parts
+   Model                              Model               3 descendants        0 parts
+   Model                              Model               3 descendants        0 parts
+   Model                              Model               3 descendants        0 parts
+   EnterSound                         Sound               5 descendants        0 parts
+   CHMBRBlastDoor                     Model               6 descendants        0 parts
+   CreepySounds                       Script              6 descendants        0 parts
+   GRAVBlastDoor                      Model               6 descendants        0 parts
+   RMFBlastDoor                       Model               6 descendants        0 parts
+   SHAFTHMBlastDoor                   Model               6 descendants        0 parts
+   CoolingPanel                       Model               7 descendants        0 parts
+   GravGate                           Model               7 descendants        0 parts
+   GravGate                           Model               7 descendants        0 parts
+   Monitors                           Folder              7 descendants        0 parts
+   SpeakerPart                        UnionOperation        7 descendants        0 parts
+   UISounds                           Folder              9 descendants        0 parts
+   Model                              Model              10 descendants        0 parts
+   QPU                                Tool               10 descendants        0 parts
+   QPU                                Tool               10 descendants        0 parts
+   QPU                                Tool               10 descendants        0 parts
+   SoundBlocks                        Folder             11 descendants        2 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        0 parts
+   MainframeToolStorageCull           Folder             14 descendants        0 parts
+   Model                              Model              14 descendants        0 parts
+   RCBlastDoor                        Model              14 descendants        0 parts
+   Model                              Model              15 descendants        0 parts
+   MainHallwaySegment                 Model              18 descendants        0 parts
+   HMGatewayRoom                      Model              20 descendants        0 parts
+   RMGatewayRoom                      Model              20 descendants        0 parts
+   MainHallwaySegment                 Model              21 descendants        0 parts
+   Model                              Model              22 descendants        0 parts
+   Model                              Model              22 descendants        0 parts
+   Model                              Model              22 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   AscendingShaft                     Model              25 descendants        0 parts
+   AscendingShaft                     Model              25 descendants        0 parts
+   DescendingShaft                    Model              25 descendants        0 parts
+   DescendingShaft                    Model              25 descendants        0 parts
+   MES                                Model              26 descendants        0 parts
+   CRC1_AscendingShaft                Model              30 descendants        0 parts
+   CRC1_DescendingShaft               Model              30 descendants        0 parts
+   CRC2_AscendingShaft                Model              30 descendants        0 parts
+   CRC2_DescendingShaft               Model              30 descendants        0 parts
+   CRC3_AscendingShaft                Model              30 descendants        0 parts
+   CRC3_DescendingShaft               Model              30 descendants        0 parts
+   MedicalDispenser                   Model              30 descendants        0 parts
+   Stats                              Folder             38 descendants        0 parts
+   Rig                                Model              43 descendants        0 parts
+   LoungeLights                       Model              45 descendants       27 parts
+   Rig                                Model              46 descendants        0 parts
+   Rig                                Model              48 descendants        0 parts
+   Rig                                Model              50 descendants        0 parts
+   Rig                                Model              51 descendants        0 parts
+   Rig                                Model              52 descendants        0 parts
+   Model                              Model              59 descendants        0 parts
+   MonitorsFacility                   Folder             80 descendants        0 parts
+   LoungeTowerMonitor                 Model              92 descendants       24 parts
+   ToolStorageFacility                Model              92 descendants        0 parts
+   ToolStorageFacility                Model             100 descendants        0 parts
+   PowerExtractionAssembly            Model             108 descendants        0 parts
+   UpgradeTowerMonitor                Model             124 descendants       24 parts
+   123434567963                       Model             126 descendants        9 parts
+   GravatronUnit                      Model             147 descendants        0 parts
+   ChamberWalls                       Folder            159 descendants        0 parts
+   METU                               Model             163 descendants        0 parts
+   IABlastDoor                        Model             213 descendants       56 parts
+   RoomLights                         Folder            227 descendants        0 parts
+   EmployeeScreen                     Model             238 descendants       64 parts
+   Alarms                             Folder            252 descendants       66 parts
+   Consoles                           Folder            258 descendants        0 parts
+   Sounds                             Folder            278 descendants        0 parts
+   CRC1                               Model             303 descendants        0 parts
+   CRC2                               Model             303 descendants        0 parts
+   CRC3                               Model             303 descendants        0 parts
+   GravitationShafts                  Folder            370 descendants        0 parts
+   Lights                             Folder            544 descendants      124 parts
+   RLGatewayRoom                      Model             662 descendants      412 parts
+   ReactorCBLs                        Folder            882 descendants        0 parts
+   MovingParts                        Folder           1562 descendants      122 parts
+   QuantumMainframe                   Model            2208 descendants        0 parts
+   CullFolder                         Folder           7409 descendants     5296 parts

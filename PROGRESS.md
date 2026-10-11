@@ -12649,3 +12649,189 @@ GameFail / GameStart`。
 
 **一条方法更正**已进取舍 **474**：`HintText` 的「100 次变化」是**打字机重绘**、`NOISY` 路径的
 「8 次变化」是**整表重画** —— **事件计数 ≠ 状态变化计数**，而记录器**本来就标了 `NOISY`**。
+
+---
+
+## Phase 114（2026-10-11）—— 原版第二轮：**卡在休息屏**，闸门是 `D7`；顺带发现大厅里另有一扇门
+
+上一轮（Phase 113）以堆芯熔毁收尾，结尾写着「下一轮只能走 RETURN TO LOBBY」。
+**这句话被现实解决了，我一个字都没按** —— 会话**自己换过服务器**：
+
+| | |
+|---|---|
+| 第一轮 | `jobId 473258e5-…`（`original_261011-041352` 与 `original_261011-074137` 同属它） |
+| 现在 | `jobId 7bdd8b66-…` |
+
+即 07:41 与 08:44 之间发生过一次 **rejoin**。于是 `QUESTIONS.md` 的 **`R1` 前提作废**，
+「只能按 RETURN TO LOBBY」也不再成立。新服务器是**冷启动**。
+
+### 一、新服务器与第一轮开机前**逐值相同** —— 所以这是冷启动，不是残局
+
+`TemperatureVal=0 / PressureVal=20 / HDEF.IntegrityVal=12 / CBL{1,2,3}.TempVal=140 /
+ActiveQPUs=6 / Fans.Fan1..6=true / GameStart=false / GameActive=false /
+ReportsDone=0 / ResetShift=false / NextShift=false`。
+第一轮 `EVT2269` 那条**开机前**的状态行是同一组值（`PressureLabel=20`、`HDEFLabel=12`）。
+
+`workspace.Stats` **全表 39 个值**已逐条枚举：**里面没有任何倒计时 / 人数门 / `PlayersNeeded`**。
+所以「在等玩家」如果存在，只可能是服务端脚本的局部变量 —— 读不到，只能靠行为判。
+
+### 二、哪个 VM 在答话（**已证**，不是推断）
+
+| 读的东西 | 结果 |
+|---|---|
+| `game.PlaceId` | `17596243941`（原版） |
+| `RunService:IsStudio()` | `false` |
+| `ServerScriptService:GetChildren()` | `{}`（重建台那边是满的） |
+| 标记 | `orig_MainGameController=true` / `orig_Monitors=true` / `rebuild_*` 全 `false` |
+| `take-screenshot(workerId=…)` 拍到的 | **Studio 的窗口**（"The Reactor [Rebuild]"） |
+
+**工具集和「正在跑我脚本的那个 VM」对「这里」的定义不一致**（同 §0.2）。执行 `execute-script`
+的是**原版 Player 客户端**；截图工具抓到的是 Studio。`list-roblox-processes` 把那个 workerId
+映到 Studio pid `11412`，同时报 `player: RobloxPlayerBeta`（pid `7688`）。取舍 **477**。
+
+### 三、时钟**真的停着** —— 这是量出来的
+
+- 现在读 `11:50 PM`；**32 分钟前也是 `11:50 PM`**；
+- 而第一轮那个时钟是**活的分钟表**：`EVT3323 11:53 PM` → `EVT3330 11:54 PM` →
+  `EVT3338 11:55 PM` …… 一路数到 `12:00 AM` 才 `EVT3401 COREGATE Stats.GameActive went true`。
+
+**「活的分钟表」这四个字是那条斜坡给的**，不是单点读数给的 —— 取舍 **478**。
+所以这一台服务器**从没进入过那段倒计时**。`GameActive=false`、`GameStart=false`。
+
+### 四、屏幕自己在说它在等什么（逐字）
+
+`PlayerGui.ScreenGui` 三个帧**同时** `Visible=true`：`IntermissionFrame` / `EndGameFrame1` / `MESUI`。
+
+```
+IntermissionFrame.WaitFrame.ShiftLabel        = [SHIFT 1]
+IntermissionFrame.WaitFrame.PlayerLabel       = [WAITING FOR PLAYERS [60]]
+IntermissionFrame.AdditionFrame.ShiftLabel    = [ADDITIONAL SHIFT INFO]
+IntermissionFrame.AdditionFrame.ServerLabel   = [Waiting for report acknowledgement signatures [X]]
+   .SignatureLabel = [Your progress has been saved, and you will be teleported to your target
+                       destination soon. Rejoin if this takes too long, as roblox servers
+                       aren't known for their reliability.]
+EndGameFrame1.Title.TextLabel                 = [A.E.R.N - SHIFT [D] REPORT]
+EndGameFrame1.ReportUI.Bottom.ReportText      = [REPORT ACKNOWLEDGEMENT [HOVER]]
+```
+
+**两块牌子同时挂着**：「等报告签名」和「等玩家」—— 我**分不出**哪一块在挡路，也不该假装能分。
+`[D]` 是**班次字母**不是按键：大厅 `RLGatewayRoom…ProgressionFrame` 底下就是 `Shift1..Shift7`
+七个节点，`ShiftD` 是其中之一。（早先把它读成快捷键的那个猜测，在这里被自己的结构否掉了。）
+
+`ReportUI.Bottom` 里 `HoldButton` 与 `PostShiftButton` 都 `vis=true act=true`，
+另有隐藏的 `[RESTART SHIFT - R]` / `[RETURN TO LOBBY - L]` / `[CONTINUE [S0] - X]`。
+**这一轮我一个字都没按**（Phase 103 的禁按名单 + `D7`）。
+
+### 五、角色是**活的** —— 所以不是「客户端死了」，是「在等人/等按钮」
+
+`Health=100`、`Humanoid:GetState()=Running`、`HumanoidRootPart` 在、`CurrentCamera.CameraType=Scriptable`
+且 `CameraSubject` 就是它自己的 `Humanoid`。位置 `(110,283,2)`，而设施那个传送落点
+`MovingParts.PlayerTPSpawn1` 在 `(268,280,-1)` —— **它没被传送进去**。
+（一个「没起来的 pawn」和「在休息屏上等人的 pawn」从外面看会很像，所以这条非查不可。）
+
+### 六、【新】大厅里另有一扇门，而且是**开工**不是**结算**
+
+`Workspace.RLGatewayRoom`（员工晋级屏）的 `BottomText` **逐字**写着：
+
+> Currently this screen can not be interacted with, **just flip the lever to be
+> teleported to the prototype game.**
+
+那儿有三个**活的**可交互件：
+
+| 件 | 类 | 备注 |
+|---|---|---|
+| `RLGatewayRoom.GatewayConsole.LeverModel.LeverComponents.Union.ClickDetector` | ClickDetector | `MaxActivationDistance=35` |
+| `RLGatewayRoom.GatewayConsole.ClickPart.ClickDetector` | ClickDetector | `MaxActivationDistance=6` |
+| `RLGatewayRoom.Monitor2…ProgressionFrame.ShiftD.InteractFrame.Button` | **TextButton** | `text=[ACTIVATE?] vis=true act=true` |
+
+**这不是 `D7` 说的那两个按钮。** `D7` 是报告屏上的**结算**；这是大厅里的**开工/传送**。
+两条路的区别是「动你的钱/进度」和「开始干活」，所以我把新选项写进了 `QUESTIONS.md` 的 **D7 追加**。
+
+**顺带一条硬结论**：**全游戏 0 个 `ProximityPrompt`**（`game:GetDescendants()` 全表扫过）。
+所以 difz 那个 `interact-prompts`（参数只有 `range`，一次距离扫描）在这里**退化成
+已经被否掉的 `fireclickdetector`**。「工具存在」不等于「工具能在这儿做事」—— 取舍 **475**。
+
+### 七、输入路径：**有**，而且比 `D7` 早就在用了 —— 所以闸门是**政策**，不是能力
+
+我起手写这一节时把「我没有输入路径」当成前提，**这是错的，而错的地方 Phase 113 自己已经记过**
+（`PROGRESS.md` 12586 行「两条方法上的更正」）。两条都得在这里复述一遍，因为它们直接决定 `D7` 的代价：
+
+**① `fireclickdetector` 打得到原版的 ClickDetector。** 证据是**它自己的反例**：
+62 个控制台探测器里 61 个 `MaxActivationDistance=6`，唯一的例外是**启动杆自己**（`0`），
+而那一按实测 `dist 5.16 of 0`、**照样生效**。`fireclickdetector` 直接触发信号、**不走输入管线**，
+所以那道距离闸门不在它前面。第一轮那 11 次按压（`StartUpLever`×3 / `RoomLight` / `Shutters` /
+`MonitorPower` / `MonitorBoot`×4 / `Fan1`）就是**我按的**。
+
+**② 但 `CLICK` 通道不是独立证据 —— 它挂的就是执行器发的那个信号。**
+11 条 `CLICK` 对上 11 次按压，于是记录器**看见的就是我的探针**。
+我这一轮差点把它当成「服务端收到了」的判据，**那会是 §0.2 换一张脸**：
+拿**同一个 VM 里的回声**当**另一个 VM 的确认**。
+（它仍是一把**免费的对照尺**：按压计数对不上 = 探针出了问题。但它**不能**回答「服务端动没动」。）
+
+**③ 顺带**：第一轮「是哪一下把堆芯点起来的」**没量出来**（判据窗口 1.4 秒 < 状态机，取舍 471），
+可复现的只有「按了这 11 下，堆芯起来了，然后熔毁」。
+
+**所以卡住的不是「我按不动」，是「这一下按不按」** —— 也就是说 `D7` 是**一个政策问题**，
+不是技术问题。`move-mouse`/`click-mouse`/`hold-mouse` 那三条（真光标）**依旧禁用**
+（`「你别老动我鼠标」`），好在**不需要它们**。
+
+### 八、仪器更正：`health.txt` / `window.txt` 是**开机那一次**写的，不是每轮
+
+`Data/originalwatch/261011-084400/` 的 mtime 把它们分成两类：
+
+| 持续重写 | 只在启动写一次 |
+|---|---|
+| `summary.txt`（09:15:43）、`audio_tally.txt`（09:15:43）、`suppressed.txt`（09:09:38） | `alive` / `hello` / `inventory` / `rooms` / `tree` / **`health`** / **`window`**（全 08:44） |
+
+所以 `window.txt` 里那句 `lever_hooked=false reason=the path does not resolve` 和
+`health.txt` 里的 `clock=(never read)` 是**08:44 那一次的快照**，不是现在的主张 ——
+而 `clock=(never read)` **现在可证为假**（时钟读得好好的）。**我差一点把一条陈旧读数记成活的故障。**
+（同族 §0.18：错的尺子不报错，它只安静地给你一个数。）取舍 **476**。
+
+**那条 hook 为什么没挂上**：`attachWindow()` 在 `Start()` 里**只调一次**，而这个 place
+`StreamingEnabled=true` —— 注入那一刻流式世界还没到位。**但这不是致命**：
+`windowStep()` **每一轮**都去读 `CONFIG.Window.OpenFlagPath`，`Stats.GameActive` 一翻真就开窗。
+**这一句是读了源码才敢写的，不是推断。**
+
+### 九、这一轮的状态：**闸门是 `D7`（已更新为四选一）**，外加一条零代价的并行测试
+
+零代价那条已经在跑：**每 60 秒采一次**（时钟 / `GameActive` / 人数 / 位置 / `ReportsDone` /
+`ResetShift` / `NextShift` / 温度 / 压力），跑 12 分钟，看它**会不会自己开始** ——
+`Data/flow/watch_261011_0918.tsv`。**若它自己走，就什么都不用按。**
+（早先那次「它不会自己复位」是**旧服务器熔毁之后**量的，和这个「新服务器停在休息屏」不是同一个状态，
+所以这条**不算已经答过**。）
+
+产物：`Data/flow/watch_261011_0918.tsv`。取舍 **475..478**。
+`QUESTIONS.md`：**`D7` 追加**（新选项 `D7-D` 大厅那扇门 / `D7-E` 先只测自启动）、**`R1` 标作废**。
+
+---
+
+### 十、`D7-E` 的答案是**否** —— 它不会自己开始（这是量出来的，不是等出来的）
+
+| 批 | 时刻 | 产出 | 结果 |
+|---|---|---|---|
+| ① | 09:19:22 → 09:27:34（**492 s**） | 12 次采样，6 次进文件 | **6/6 逐字段相同** |
+| ② | 09:28:42 → 09:32:17（**215 s**） | 提取器修好后 **8/8 全中** | **8/8 逐字段相同** |
+| 端点对照 | 08:44 与 09:16（**~32 min**） | 两次读数 | `11:50 PM` 两次 |
+
+两次读的九个字段是 `clock / gameActive / players / pos / reports / reset / next / temp / press`，
+**13 分钟连续采样 + 32 分钟端点对照里没有一个动过**：
+
+```
+11:50 PM   false   1   110,283,2   0   false   false   0   20
+```
+
+所以 **`D7-E` 出结果了，而且是否定的**：**这台服务器不会自己进入倒计时**。
+挡路的就是 `D7` 那两扇门之一（报告屏「签名」，或大厅那扇「传送」），**没有第三条自动的路**。
+
+**批①那 6 次丢失全是提取器的**（`head -1` 撞上漂亮打印的响应，第一行正好是 `{`）；
+换成「先抹换行再找 `{"success"`」之后 **8/8**。取舍 **479** ——
+它值得单独记一条，因为**「采样跑完了」和「采样采到了」是两句话**，
+而丢掉的格子和「这一拍没事发生」在 TSV 里**长得一模一样**。
+
+> **批②的 8/8 同时否掉了一个险些成立的结论**：我原以为「工具大约一半的调用不稳」，
+> 差一点去换通道（§0.17 那条）。**是提取器不稳，不是通道不稳。**
+
+产物：`Data/flow/watch_261011_0918.tsv`（批①）+ `Data/flow/watch_261011_0930.tsv`（批②）。
+取舍 **475..479**。
+`QUESTIONS.md`：**`D7` 追加**（新选项 `D7-D` 大厅那扇门 / `D7-E` **已答：否**）、**`R1` 标作废**。

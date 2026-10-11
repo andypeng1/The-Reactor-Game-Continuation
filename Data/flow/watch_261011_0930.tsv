@@ -1,0 +1,11 @@
+# second batch: same state, newline-collapsed extraction so no sample is lost to formatting
+# time<TAB>clock<TAB>gameActive<TAB>players<TAB>pos<TAB>reports<TAB>reset<TAB>next<TAB>temp<TAB>press
+09:28:42	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:29:13	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:29:44	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:30:15	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:30:45	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:31:16	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:31:46	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:32:17	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+# done

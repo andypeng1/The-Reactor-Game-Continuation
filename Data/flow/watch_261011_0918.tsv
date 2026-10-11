@@ -1,0 +1,26 @@
+# interval sampling of the parked intermission -- does it self-start?
+# time<TAB>clock<TAB>gameActive<TAB>players<TAB>pos<TAB>reports<TAB>reset<TAB>next<TAB>temp<TAB>press
+09:19:22	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:19:46	{
+09:20:24	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:20:50	{
+09:21:25	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:21:52	{
+09:22:27	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:22:57	{
+09:23:29	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:23:59	{
+09:24:30	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:25:02	{
+09:25:32	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:26:04	{
+09:26:33	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:27:05	{
+09:27:34	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:28:07	{
+09:28:35	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:29:09	{
+09:29:37	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+09:30:11	{
+09:30:38	11:50 PM	false	1	110,283,2	0	false	false	0	20	true
+# done
