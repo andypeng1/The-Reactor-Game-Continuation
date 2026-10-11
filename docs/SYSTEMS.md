@@ -879,19 +879,37 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 半格窗 + 物理判据替掉宽窗 argmax（取舍 466）。上手片段见 `docs/SNIPPETS.md` §5.26。
 
 
-### 2.21 `ShockRipple` —— 冲击波盘的涟漪（`Workspace.Folder.Model.ShockRipple`，2026-10-11，Phase 117）
+### 2.21 `ShockRipple` —— 冲击波盘的涟漪（`Workspace.Folder.Model.ShockRipple`，2026-10-11，Phase 117 → 118）
 
 **不是仿真，是画面。** 它不读 `GameState`、不写任何被玩的东西。它把那个特效模型自己的
-冲击波盘（`Cylinder2`，直径 120）**另做**成 12 个同心环 `C1`..`C12`，
-让一道波从中心跑到边上再归零。
+冲击波盘（`Cylinder2`，直径 120，**本质是个 18 边形**）**另做**一遍，
+让一道波从中心跑到边上，一波接一波。
 
 **为什么不去改那块盘本身：** 那个 `Model` 是导入件，`Cylinder2` 被它自己的 `Script` 引用
-（`Mesh.Transparency` 那条闪白链）。**原地不动、新件另挂** —— 环是新建的
-`UnionOperation`，`Cylinder2` 一个字节没改。
+（`Mesh.Transparency` 那条闪白链）。**原地不动、新件另挂**，`Cylinder2` 一个字节没改。
 
-- 调参全在属性面板：`Enabled` / `Amplitude` / `RingPeriod` / `RingLag` / `Gap` / `Transparency`。
-- 一次性播放的入口：`ShockRipple.Play`（`BindableEvent`）→ `rig.Play:Fire()`。
-- `Rig` 是**服务端** `Script`（和那台特效的 `Script` 同级），所以核弹那边可以直接勾上来。
-- 静止 `Transparency 0.4`（编辑模式下脚本不跑，**盘上存什么就是什么**），播放时 `0.15`。
-- 验证方式：Play 里用 `datamodel_type: Server` 读 12 个环的 `y`（一帧一行 ASCII，见 `PROGRESS.md` Phase 117）。
-- 上手片段 `docs/SNIPPETS.md` §5.27；取舍 485 / 486 / 487。
+**当前跑的是 Phase 118 的那张薄片**（用户：「根本不丝滑」，要 EditableMesh）：
+
+- 件：`StarterPlayer.StarterPlayerScripts.ShockRippleClient`（`LocalScript`，
+  盘上原文 `_tools/shock_ripple_client.luau`）。
+- 形状：一张 `EditableMesh` 薄片，**18 个楔 × 24 个环 × 2 层**（`verts=1800 faces=1728`），
+  外半径 60.000；每帧只改顶点的 Y，所以起伏是**连续**的。0.85 ms/帧。
+- **它只活在本地客户端**：`Content.fromObject` 做的东西不跨进程（§0.23），
+  每个客户端自己建一张 —— 所以**服务端和 Edit 模式都看不到它**，这是设计代价不是 bug。
+- 光环：运行中把原盘在本地隐掉（`Wave.Transparency = 1`，客户端本地写入）。
+- 调参全在属性面板（改完一帧内生效）：`WaveEnabled` / `Amplitude 2.5` / `Speed 60` /
+  `Period 1.2` / `Width 0.5` / `Transparency 0.15` / `Segments 18` / `Rings 24` / `Reassign false`。
+  改 `Segments`/`Rings` 会重建网格。
+- 自检：每半秒把 `t / active / sheet / disc / ms/frame / 几个环的高度` 写进 `ShockRipple.Diag`
+  （`StringValue`）；**另有一次读回**，把"件里真的是多高"和"脚本这帧写了多高"并排印出来。
+
+**Phase 117 那 12 个同心环还在，是停用不是删除**（`C1`..`C12`，停在 `y=44.675`、
+`Transparency 0.4`，服务端 `Rig` 也原样留着）：
+
+- 它自己的开关是 `Enabled`（**新薄片用 `WaveEnabled`，两个故意不共用**），
+  另有 `Amplitude` / `RingPeriod` / `RingLag` / `Gap` / `Transparency`。
+- 回到老效果：`WaveEnabled = false` + 删掉那个 `LocalScript`。
+- 要**碰撞 / 射线 / 一次给所有人看**的时候它仍然是对的版本（薄片做不到这三件）。
+
+- 一次性播放的入口（两个驱动共用）：`ShockRipple.Play`（`BindableEvent`）→ `rig.Play:Fire()`。
+- 上手片段：薄片见 `docs/SNIPPETS.md` §5.28，CSG 环见 §5.27；取舍 485–492。

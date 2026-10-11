@@ -13132,3 +13132,102 @@ crest=C1   ............   <- 归零，下一波从中心重来
 **这一轮量错三次，三次都被截图推翻**（取舍 485 / 486）：射线量到的是**碰撞体**
 （CSG 环的凸包 = 实心盘）、`UsePartColor = false` 把 `Color` 静静吃掉、
 `Cylinder` 的轴在局部 X 而我拿 `UpVector` 判平不平。
+
+#### Phase 118（2026-10-11）—— 「根本不丝滑」：12 个环作废，换成**一张 EditableMesh 薄片**
+
+**用户原话：**「你这个根本不丝滑，能不能用editablemesh制作？」「那个图形本质上就是18边形」
+
+**作废的是 Phase 117 的 12 环**驱动**，不是那些件。** 12 个 `UnionOperation` 原样停在
+`y=44.675`、`Transparency 0.4`，服务端那个 `Script` 也原样留着 ——
+把 `ShockRipple` 的属性 `WaveEnabled` 设成 `false`、再删掉
+`StarterPlayer.StarterPlayerScripts.ShockRippleClient`，画面就回到 Phase 117 的样子。
+（两个驱动故意用**不同的开关**：新的是 `WaveEnabled`，旧的是 `Enabled`。
+共用一个开关就会「开新的顺带开旧的」。）
+
+**新交付：`StarterPlayer.StarterPlayerScripts.ShockRippleClient`**
+（`LocalScript`，592 行 / 21,457 字节，盘上 `_tools/shock_ripple_client.luau`）
+
+- 一张网格薄片：**18 个楔 × 24 个环 × 2 层**，`verts=1800 faces=1728`，外半径**正好 60.000**。
+- 每帧只改**顶点的 Y**（`SetPosition`），形状是连续变化的 —— 「丝滑」的全部来源就在这里。
+- 花费 **0.83–0.92 ms/帧**（自测），薄片 `Transparency 0.15`，同时把原盘在**本客户端**隐掉
+  （`Wave.Transparency = 1`；这是客户端本地写入，不动服务端）。
+- 属性（都挂在 `ShockRipple` 上，Play 里改完一帧内生效）：
+  `WaveEnabled` / `Amplitude 2.5` / `Speed 60` / `Period 1.2` / `Width 0.5` /
+  `Transparency 0.15` / `Segments 18` / `Rings 24` / `Reassign false`。
+  **改 `Segments` 或 `Rings` 会重建那张网格**（重建 ≠ 重算）。
+- 一次性播放的入口没变：还是 `rig.Play:Fire()`。
+
+**为什么必须跑在客户端（三条都是量出来的）：**
+① `MeshPart.MeshContent` **写不进去** —— `The current thread cannot write 'MeshContent'
+(lacking capability NotAccessible)`，**一个新建的空 `MeshPart` 一样拒绝**（所以这不是那个盘的毛病）；
+② 唯一能走的路是 `AssetService:CreateMeshPartAsync(Content.fromObject(em))`，它返回的件
+**直接持有那张 EditableMesh 本身**（抬一个顶点、再从件里读回来，读到的是抬高的值 —— 不是拷贝）；
+③ **`Content.fromObject` 做的东西不跨进程**（§0.23）：同一个件放服务端，每个客户端拿到的是
+**单位立方体占位**。所以「服务端建一张、所有人看」是死的，**每个客户端自己建一张**。
+
+**「那个图形本质上就是18边形」—— 量了，是对的。**
+那块导入的盘（`Wave.MeshContent`）在半径 100 处有**恰好 18 个不同的角度**：
+`10.00 30.00 … 350.00`（间隔 20°，`360/18`）。件 `Size` 是 120 → 缩放 0.6 → 世界半径 60。
+所以薄片**保留 18 个硬边楔面**（每楔的角点各自复制一份顶点，边才是硬的），
+只有**径向**的运动是连续的 —— 这一条约束来自用户那句话，不是我的选择。
+
+**Scale 的坑（一张截图就够，如果截图能用的话）：** `MeshPart` 把网格按 `Size / MeshSize` 拉。
+`MeshSize` 是**建件那一刻的快照**，而一个「生下来就是平的」网格在 Y 上快照到引擎的 **0.001** ——
+于是 `Size.Y = 0.25` 把厚度拉了 **250 倍**，屏幕上是一台**火山**（围着 650 stud 的坑口）。
+修法两条一起：**网格生下来就是 0.25 stud 的板**（`±0.125`），并且 **`Size = MeshSize`** ——
+这就是恒等映射，一个网格单位 = 一个 stud。量到 `MeshSize = Size = 118.1769, 0.25, 120`
+（X 小于 120 正是因为 18 边形的**对边距** `2·60·cos10°`）。
+
+**踩到并修掉的真 bug：把「圆盘换人了」当成「必须重建」。** 这个 place 开着
+`StreamingEnabled`，`Wave` 在客户端会被**流式送走再送回来 —— 而且是另一个实例**
+（服务端那边同一段时间里 `GetDebugId()` 三次采样完全一样，所以这不是服务端的动作）。
+旧版 `liveReferences()` 一见 `part.Parent == nil` 就 `sheet = nil` + `builtSegments = -1`，
+于是重建一次 1800 个顶点；那一轮重建了 **6 次**，把可编辑网格的内存预算耗到
+**连 `CreateEditableMeshAsync` 读回自己都返回 nil**。修法是设计上的：
+**薄片不依赖圆盘活着** —— 它的外形和站位是建的时候从圆盘身上拷走的（`Size = MeshSize`、
+`CFrame` 每帧跟一次），圆盘走了波照跑，圆盘回来了就再隐它一次。**只有薄片自己没了才重建**
+（那意味着整个 rig 被流式收走了，这时会打一行 note）。
+
+**验证（Play 里，`datamodel_type: Client`，全程 120 秒）：**
+
+```
+rig=Workspace.Folder.Model.ShockRipple | found Wave after 6.0s | listening on Pulse |
+built 18-gon x 24 rings: verts=1800 faces=1728 sheet MeshSize=118.17693328857422, 0.25, 120
+Size=118.17693328857422, 0.25, 120 | running |
+the part itself holds ymax=2.62; this script wrote 2.62
+|| t=119.98 active=true sheet=yes disc=0 ms/frame=0.85 h[0]=0.00 h[12]=0.00 h[24]=1.60
+```
+
+- **`built` 只出现一次**、`disc=0` —— 两分钟里圆盘一次都没被换走过（这是修复前后最直接的对照）。
+- **「the part itself holds」那一行是脚本自己读的**：把**件里**的那张网格要回来，
+  逐顶点取最大 Y，和「我这一帧写了多少」并排印出来。`2.62 = 0.125 + 2.5`（满峰）。
+  **这是「写进去了」和「件里真的是那个」之间那条缝的闭合**，别的量法都只回答前半句。
+- 半径剖面（另一个时间点，把顶点按半径分 6 桶取平均 Y）：
+
+```
+A: 0-10:0.92  10-20:0.01  20-30:0.00  30-40:0.00  40-50:0.02  50-60:1.11
+B: 0-10:0.00  10-20:0.48  20-30:2.13  30-40:1.71  40-50:0.17  50-60:0.00
+C: 0-10:1.03  10-20:0.01  20-30:0.00  30-40:0.00  40-50:0.01  50-60:1.00
+```
+A 拍一个隆起在中间、上一个正从边上离开；**B 拍隆起在 20–40 桶里往外走**；
+C 拍新隆起又在中心出生。**同一时刻只有一个隆起，而且它是往外走的** ——
+这就是他要的那条顺序，只是从 12 级台阶变成了连续曲线。
+
+**那两次「读数说平的」是竞态，不是缺陷。** 头一次读回 `ymax=0.12`（= `HALF`，全平）
+正是**重建后第一帧**：`install()` 把 `heights` 清成 0，`applyHeight` 要下一帧才写；
+第二次三连采样回 `no mesh`，是 `FindFirstChild("WaveSheet")` 正好落在
+「旧的已经 Destroy、新的刚 Parent」之间。**「读到平」和「真的是平」在盘上长得一样**，
+区别只在**采样落在生命周期的哪一格**。
+
+**没验到的那一半：观感本身还是没照片。** `screen_capture` 在 Play 下**不认我设的相机**
+（把 `CurrentCamera` 设成 `Scriptable` 再摆位，读回来是对的，拍出来还是玩家视角；
+三张图都是玩家在别处看到的厂房）。所以「丝滑不丝滑」我手上只有
+**几何 + 帧花费 + 时间序列**三组数，**没有一张能替眼睛的图**。要看得自己按 F5：
+**波不是立刻出现的** —— 圆盘要等 **4.5–6.0 秒**才被流式送进来（`found Wave after 6.0s`），
+之前屏幕上是原来那块静止的盘。
+
+**Edit 收尾（§0.4）：** 停 Play 后 12 个环仍在 `y=44.675`/`Transparency 0.4`、
+`Wave` 回到导入网格（`SourceType = Uri`、`Size 120 × 0.2 × 120`）、
+`ShockRipple` 上没有残留 `WaveSheet`（客户端建的，随 Play 一起消失）、
+属性还是 2.5 / 60 / 1.2 / 18 / 24（测试时改成 8 / 120 / 2 / 36 / 40 的那套**只在运行时**，
+Play 一停就没了）。

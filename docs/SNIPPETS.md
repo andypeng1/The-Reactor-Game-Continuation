@@ -1750,3 +1750,140 @@ end
 
 **四、要改圈数：** `RING_COUNT` 在脚本里，但**几何是命名的**（`C1`..`C12`），
 所以改圈数 = 重建几何 + 改常量，不是一个数。**这是当初选 12 的代价**（取舍 487）。
+
+> **§5.27 之后的版本（Phase 118）见 §5.28** —— 同一块盘，但 12 个 CSG 环被换成
+> **一张 `EditableMesh` 薄片**（用户：12 级台阶「根本不丝滑」）。§5.27 的那些件**没删**，
+> 只是停用；CSG 那套做法在需要**真几何**（要碰撞、要射线、要多人同步）时仍然是对的。
+
+---
+
+## 5.28 用**一张 EditableMesh 薄片**做连续的涟漪（+ 必须每客户端自建的东西怎么交付）★ Phase 118
+
+**场景：** 同一块 120 直径的盘要做涟漪，但台阶要**连续**。
+用户同时给了一条形状约束：「那个图形本质上就是18边形」。
+
+**一、先把那句话量成事实。** 网格的顶点角度分桶（这里是半径 100 处）：
+
+```lua
+-- 把网格要回来（建它的那个进程里才有，见 §5.25），然后按角度去重
+local em = AssetService:CreateEditableMeshAsync(part.MeshContent)
+local seen = {}
+for _, v in ipairs(em:GetVertices()) do
+	local p = em:GetPosition(v)
+	local deg = math.floor(math.deg(math.atan2(p.Z, p.X)) + 0.5) % 360
+	seen[deg] = true
+end
+-- 读数：18 个角度，10 30 50 … 350（间隔 360/18 = 20）
+```
+
+**量到 18 之后要把它拆成两半**：楔面是**硬**的（18 个），径向的运动是**连续**的。
+于是网格 = **18 个楔 × N 个环 × 2 层**，**每楔的两个角点各自复制一份顶点**（边才硬）。
+
+**二、建网。** 一层一层来，顶点按 `[层][环][楔][角]` 存住（后面每帧只按这个索引写 Y）：
+
+```lua
+local RADIUS, HALF = 60, 0.125      -- 世界半径；半厚（生下来就是 0.25 厚，见坑 1）
+local function build(segments, rings)
+	local em = AssetService:CreateEditableMesh()   -- 抠不出来时返回 nil，不抛错（§5.25）
+	local step = 2 * math.pi / segments
+	local first = step / 2              -- 第一个角点；角落在 first + k*step
+	local ids, xz = {}, {}
+	for layer = 1, 2 do
+		local y = HALF
+		if layer == 2 then y = -HALF end
+		ids[layer], xz[layer] = {}, {}
+		-- 环 0：圆心一楔一个（每楔各有一份，免得共享顶点把法线拉平）
+		ids[layer][0], xz[layer][0] = {}, {}
+		for wedge = 1, segments do
+			ids[layer][0][wedge] = { em:AddVertex(Vector3.new(0, y, 0)) }
+			xz[layer][0][wedge] = { Vector3.new(0, 0, 0) }
+		end
+		for ring = 1, rings do
+			ids[layer][ring], xz[layer][ring] = {}, {}
+			local radius = RADIUS * ring / rings
+			for wedge = 1, segments do
+				local a = first + (wedge - 1) * step
+				local b = a + step
+				ids[layer][ring][wedge], xz[layer][ring][wedge] = {}, {}
+				for i, ang in ipairs({ a, b }) do   -- 两个角点，各自一份顶点
+					local p = Vector3.new(radius * math.cos(ang), y, radius * math.sin(ang))
+					ids[layer][ring][wedge][i] = em:AddVertex(p)
+					xz[layer][ring][wedge][i] = Vector3.new(p.X, 0, p.Z)
+				end
+			end
+		end
+	end
+	-- 面：两层各自朝外，所以第 2 层的绕法相反（否则背面被剔除）
+	-- 圆心扇 2 个三角形 / 楔，环与环之间 2 个 / 楔，最外圈再加一圈侧壁把上下两层缝合
+	...
+	return em, ids, xz
+end
+```
+
+**三、交给渲染器：写 `MeshContent` 是写不进去的。** 唯一的门是
+`CreateMeshPartAsync`，而它返回的件**持有那张网本身**（不是拷贝）：
+
+```lua
+local created = AssetService:CreateMeshPartAsync(Content.fromObject(em))
+created.Anchored, created.CanCollide = true, false
+created.CanQuery, created.CanTouch, created.CastShadow = false, false, false
+created.Material, created.Color, created.DoubleSided = disc.Material, disc.Color, disc.DoubleSided
+created.Size = created.MeshSize        -- ← 恒等映射：1 网格单位 = 1 stud（见坑 1）
+created.CFrame = disc.CFrame
+created.Parent = rig
+```
+
+**四、每帧只动 Y。** 同一个环上所有顶点同高，所以形状永远是旋转体：
+
+```lua
+local function applyHeight(ring, height)      -- 具名函数（§0.19），连接里才没有逻辑
+	for wedge = 1, builtSegments do
+		for corner = 1, 2 do
+			local p = xz[ring][wedge][corner]     -- 建网时存下的 XZ，别再算 sin/cos
+			em:SetPosition(ids[1][ring][wedge][corner], Vector3.new(p.X, HALF + height, p.Z))
+			em:SetPosition(ids[2][ring][wedge][corner], Vector3.new(p.X, -HALF + height, p.Z))
+		end
+	end
+end
+```
+
+相位与 §5.27 完全一样（`frac = ((t - r/speed)/period) % 1`，`frac < width` 才抬），
+**区别只在于半径是连续的**：`radius = RADIUS * ring / rings`，
+所以隆起是**一个光滑的包**，不是几级台阶。实测一条波扫过去的半径剖面（按 10 stud 分桶取平均）：
+
+```
+0.00 0.48 2.13 1.71 0.17 0.00      <- 包在往外走；下一拍中心又起一个
+```
+
+**五、交付（这一半最容易被忽略）：`Content.fromObject` 做的东西不跨进程**（§5.25）。
+放服务端 → 每个客户端拿到**单位立方体占位**。所以：
+**效果脚本必须是 `StarterPlayerScripts` 里的 `LocalScript`，每个客户端自己建一张。**
+代价说清楚：**Edit 模式看不到它**（脚本不跑），**服务端也看不到它**（东西只活在那个客户端里），
+所以"它到底长什么样"只能靠**客户端读数 + 自检**，不能靠服务端检查。
+
+**六、四个坑（全部量过）**
+1. **`MeshSize` 是建件那一刻的快照。** 网格生下来是平的 → `MeshSize.Y` 快照到 **0.001**
+   → `Size.Y = 0.25` 就是 **250 倍** Y 拉伸，屏幕上是一台**火山**（直径 650 的坑口）。
+   修法两件一起做：**网格生下来就是 `±0.125` 的板** + **`Size = created.MeshSize`**。
+   自检读数：`MeshSize = Size = 118.1769, 0.25, 120`（X 小于 120 = 18 边形的**对边距**）。
+2. **`MeshContent` 的拒绝是关于权限的，不是关于那件资产的**：新建一个空 `MeshPart`
+   一样回 `lacking capability NotAccessible`。**判据永远是"换个空白同款件再试一次"**（取舍 488）。
+3. **重建条件别挂在别人的生命周期上。** `StreamingEnabled` 下 `Wave` 会被送走再送回来
+   （**另一个实例**）；一见 `part.Parent == nil` 就重建 → 6 次重建把可编辑网格的预算耗到
+   **连 `CreateEditableMeshAsync` 读回自己都返回 nil**。薄片要的只有**出生时的外形 + 站位**，
+   所以：**圆盘走了波照跑，圆盘回来了再隐它一次，只有薄片自己没了才重建**（取舍 489）。
+4. **读回来说是"平"的，有两种来源**：竞态（刚重建，`heights` 还是 0）、真的是平的。
+   分开它们的不是读数，是**时间**。所以自检要印**两句话并排**：
+
+```lua
+-- 每帧记下这一帧写进去的最大高度，找一个隆起真的起来的时刻读回一次：
+local ok, back = pcall(function() return AssetService:CreateEditableMeshAsync(part.MeshContent) end)
+-- ...逐顶点取 max Y...
+Diag.Value = string.format("the part itself holds ymax=%.2f; this script wrote %.2f", top, HALF + maxHeight)
+-- 实测：ymax=2.62  本脚本写了 2.62   （2.62 = 0.125 + 满峰 2.5）
+```
+
+**七、和 §5.27 的关系**（决定要哪一个）：要**碰撞 / 射线 / 一次给所有人看** → §5.27 的 CSG 件；
+要**连续变形**（丝滑）→ §5.28 的薄片，但它**只活在本地客户端**。两个可以同时留着
+（这次就是：12 个环原样停在盘上，只是用一个**不同的属性开关**停用 ——
+`Enabled` 管旧的、`WaveEnabled` 管新的，别共用一个，否则开新的顺带开旧的）。
