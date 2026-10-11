@@ -12835,3 +12835,61 @@ EndGameFrame1.ReportUI.Bottom.ReportText      = [REPORT ACKNOWLEDGEMENT [HOVER]]
 产物：`Data/flow/watch_261011_0918.tsv`（批①）+ `Data/flow/watch_261011_0930.tsv`（批②）。
 取舍 **475..479**。
 `QUESTIONS.md`：**`D7` 追加**（新选项 `D7-D` 大厅那扇门 / `D7-E` **已答：否**）、**`R1` 标作废**。
+
+---
+
+## Phase 115（2026-10-11）—— S.R.S.U. 的设定：一件「不存在的东西」的说明书
+
+**用户原话：**「Subspace Radiation Suppression Unit - S. R. S. U 你给他添加点设定」
+
+### 一、先量「它是不是已有的东西」（这一步省掉一次返工）
+
+| 查哪 | 怎么查 | 结果 |
+|---|---|---|
+| 仓库 | `grep -ri 'subspace / srsu / suppress'`（跳过 `Data/`） | **0 条** —— 只有 `.ai/vision/` 几份截图转述里有 "Subspace Reactor" |
+| Wiki 快照（207,437 字节，ns 0 ∪ 14） | `Suppression Unit` / `SRSU` / `Radiation Suppression` | **0 条**（`Subspace` 51 条，全是 "Subspace Reactor" / "Subspace Rift" / 徽章文案） |
+| 原版游戏实例 | `:28429` 上跑名字 + 屏幕文本两趟扫描 | **没跑成** —— `URLError [WinError 10061]`，客户端不在 |
+
+**结论：它是新造的。** 但这句话只有**两份**证据撑着，不是三份 ——
+第三份（原版实例）这一轮缺席，`docs/SRSU.md` 抬头和 `QUESTIONS.md` S1 都照实写了这一句。
+
+### 二、正典给了它什么（全部逐字 / 实测，不是我编的）
+
+- 堆芯 =「a wormhole or gateway into **Subspace**」（手册 #91）→ 辐射的来源是**那道门**
+- 启动序列里本来就有 `[WARN] - SUBSPACE RIFT ACTIVE, RADIATION WARNING`
+- **M.A.S.S Rails** =「deionization 腔体里那些 scrubber 的放大版」，「保护关键机械与人员
+  免受 chamber emissions」，代价是**降低可提取的 net output**（手册 #96 / #105 / #139）
+- **H.D.E.F** = 控制室那一侧的屏障；辐射过高会压垮它，E-Power 能补但会过热（#125 / #135）
+- 辐射单位是 **roentgen**；监视器读 *"chamber radiation in roentgens"*（Wiki）
+- 制造方 **Synthesis Manufacturing**（#91 / #130）
+
+### 三、设定定了什么（全文 `docs/SRSU.md`）
+
+- **定位**：三层闭合 —— **源头 抑制（S.R.S.U.）→ 腔体 洗涤（M.A.S.S）→ 房间 屏蔽（H.D.E.F）**。
+  三个动词刻意各不相同，它才不抢任何现有设备的活。
+- **原理**：泄漏出来的是**相位噪声**不是通量（所以铅和水没用 —— 顺手解释了
+  「为什么旧方案只能洗」）；三台反相参考波在裂隙口**对消**，三相，坏一台场塌成两束
+  →**这是设定里唯一看得见的失效形态**；EFE 把它扔出相位（**没坏**，拧回来即可）；
+  抑制场与 **P.E.A 抽取回路共用相位参考**，所以场越强净输出越低 ——
+  **代价的类型和 M.A.S.S 完全一样，不是新发明的一种。**
+- **灯色**：一个都不新调，全部复用 `Config.Visual` 的实测键。其中 **失谐 → `Amber`**，
+  因为那个键的语义**本来**就是「在役但不可用」。
+- **数值**：现有公式实测为 `radiation = 120 × (coreState+1) × max(0, 1 − mass×0.2)`
+  （`src/ReactorBackend/Engine.luau:328`；`mass` 是已启用 M.A.S.S **档位之和**，不是台数）。
+  **`SAMRadiationLimit = 600` 正好是 State 4 的裸值** → 不洗，S.A.M.O.S. 从 State 5 起自己不干。
+  接入的提案是齐次乘一项 `× (1 − srsu×0.10)`、代价 `× (1 − srsu×0.025)`
+  （0.025 对齐实测的 `MASSOutputCostPerLevel`）。**整节标题里就写着「提案，不是实测」。**
+
+### 四、边界（一个字的代码都没动）
+
+`ReactorBackend` 零改动、`Stats` 零新字段、`ControlTrigger` 零新位、§6 的脚本绑定名单
+零占用。设定里明确写了它**没有独立控制面**（随启动序列自动通电）—— 所以它将来进游戏
+也不会新增控制原语。要不要往上走（做实体 / 接逻辑）在 `QUESTIONS.md` **S1**，我倾向 **A**。
+
+### 五、产物
+
+- `docs/SRSU.md`（**新**，226 行）
+- `CLAUDE.md` §0.0 表格加一行（新文档「什么时候读」）
+- `README.md` `## Documentation layout` 加一段
+- `QUESTIONS.md` **S1**（新条目）
+- 取舍 **480**

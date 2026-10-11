@@ -1,11 +1,11 @@
-# 1378 Sound(s) hooked; 4134 hook(s) attached, 0 refused; 1935 play/stop/end event(s) seen
+# 1378 Sound(s) hooked; 4134 hook(s) attached, 0 refused; 2068 play/stop/end event(s) seen
 # 71 of them have been audible; 0 play(s) were caught by the poll and NOT by a hook
 # 64 were ALREADY playing when the watcher attached -- a hook cannot see those, and
 # their asset and bus were read off the instance instead of off a Played event
 # audible by bus: EnvironmentSounds=45  (none)=15  (unknown)=6  MESSounds=4  MusicSounds=1
 
 Audio              Part.Alarm | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://344440918 | last t=0000082.37 08:45:23
-Audio              Part.ShieldFormation | plays=960 stops=0 ends=955 | bus=(none) | id=rbxassetid://5243826810 | last t=0002961.89 09:33:22
+Audio              Part.ShieldFormation | plays=1026 stops=0 ends=1021 | bus=(none) | id=rbxassetid://5243826810 | last t=0003160.59 09:36:41
 Audio              ReplicatedStorage.CulledParts.LowerRMSector.LowerRMRoom.Model.Model.ShaftAmbientPart.ShaftAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000066.13 08:45:06
 Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX #2 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000084.92 08:45:25
 Audio              ReplicatedStorage.CulledParts.Mainframe.MainframeFan.MotorPart.FanSFX #3 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000088.22 08:45:28
@@ -72,6 +72,6 @@ SpeakerPart        SpeakerPart.Crystal Cave | plays=0 stops=0 ends=3 | bus=(unkn
 SpeakerPart        SpeakerPart.Cut Your Jacobs Off | plays=0 stops=0 ends=3 | bus=(unknown) | id=(none) | last t=0002414.39 09:24:15
 SpeakerPart        SpeakerPart.Funky Beats | plays=0 stops=0 ends=3 | bus=(unknown) | id=(none) | last t=0002320.26 09:22:41
 SpeakerPart        SpeakerPart.Hydraulic Mess | plays=0 stops=0 ends=3 [ALREADY PLAYING AT t=0] | bus=MusicSounds | id=rbxassetid://1847799874 | last t=0002159.90 09:20:00
-SpeakerPart        SpeakerPart.New Store | plays=0 stops=0 ends=2 | bus=(unknown) | id=(none) | last t=0001964.38 09:16:45
+SpeakerPart        SpeakerPart.New Store | plays=0 stops=0 ends=3 | bus=(unknown) | id=(none) | last t=0002999.99 09:34:00
 SpeakerPart        SpeakerPart.Reactor | plays=0 stops=0 ends=3 | bus=(unknown) | id=(none) | last t=0002825.73 09:31:06
 SpeakerPart        SpeakerPart.Rumble | plays=0 stops=0 ends=3 | bus=(unknown) | id=(none) | last t=0002760.83 09:30:01

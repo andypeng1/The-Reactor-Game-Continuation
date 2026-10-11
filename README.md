@@ -1534,3 +1534,9 @@ Section numbers were **not** renumbered, so every `0.13` / `2.6` / `5.9` cross-r
 stays in `PROGRESS.md` and `DECISIONS*.md`; `docs/PHASES.md` is the condensed look-up by
 Phase number.
 
+`docs/SRSU.md` (2026-10-11) is the first **device bible** in that layout: the in-universe
+setting for the *Subspace Radiation Suppression Unit*, a device that exists **on paper only** -
+zero lines of it are in `ReactorBackend`, and the file says so at the top. It is registered in
+the `CLAUDE.md` 0.0 table so it gets read before anyone writes that device's copy, art spec or
+numbers. Whether it ever leaves paper is `QUESTIONS.md` **S1**.
+

@@ -38,6 +38,7 @@
 | §5 关键代码片段 | `docs/SNIPPETS.md` | 抄 / 改任何一段实现之前 |
 | 采集器/监视器怎么跑 | `docs/RECORDER_HOWTO.md` | 注入前后 |
 | 原版 UI / 手册文案（**逐字**捕获） | `docs/ORIGINAL_UI_TEXT.md` | 写任何复刻文案之前 |
+| 新设备的**设定**（目前只有 S.R.S.U.） | `docs/SRSU.md` | 写这个设备的文案 / 美术规格 / 数值提案之前 |
 | 阶段记录 / 取舍 | `PROGRESS.md` / `DECISIONS.md`(1..74) + `DECISIONS_2.md`(75..) | 动手前后按需 |
 
 > **2026-10-10 拆分**（用户：「把那个CLAUDE.md精简一下，拆成多个文件什么的」）：
