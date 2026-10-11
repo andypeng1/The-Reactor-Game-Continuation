@@ -186,6 +186,16 @@ asstes/music/ReactorStartup_Remix.mp3
 asstes/music/ReactorStartup_Remix.ogg
 asstes/music/ReactorStartup_Remix.report.txt
 
+# --- the promo film's AUDIO is the reference track again (Phase 120): _bed.m4a
+#     is cut straight out of asstes/music/ReactorStartup.mp3, and the muxed
+#     promo/THE_REACTOR_promo.mp4 carries that bed in its audio stream.  Same
+#     someone-else's-master as the two blocks above, so both stay out of the
+#     public repo the same way; they live on disk next to the track they quote.
+#     The SILENT master and the plates ARE tracked -- those are our own render,
+#     exactly like intro/THE_REACTOR_GAME_intro.mp4. ---
+promo/_bed.m4a
+promo/THE_REACTOR_promo.mp4
+
 # --- any .mid dropped into asstes/music/ is a note-level transcription of the
 #     same composition, which is the most publishable-looking and least
 #     publishable thing in the folder: a MIDI file IS the notes, with no

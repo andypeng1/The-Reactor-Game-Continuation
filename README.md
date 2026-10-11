@@ -1141,6 +1141,56 @@ already" flag would turn scrubbing into a random walk.
 
 See PROGRESS.md Phases 91 and 92, DECISIONS 303 to 312.
 
+## The promo film - `promo/`
+
+`promo/index.html` is a **76-second, 1920x1080 trailer with music**, built on the same contract
+as the intro: **the whole film is `render(t)`, a pure function of one clock** (DECISIONS 303).
+`_tools/intro_render.js` rendered it **without a single change** -- a second film is another
+HTML page that keeps the same contract, not a second pipeline. It renders 2,281 frames over
+~22 minutes to `promo/THE_REACTOR_promo_silent.mp4` (video only; the renderer's encode is silent).
+
+**Its plates are captures, taken in Edit mode.** Fifteen camera-positioned `screen_capture`
+shots of the working place (`promo/shots/`), plus the game's own startup log for the text:
+the 13 lines typed out during the hush are verbatim from `docs/ORIGINAL_UI_TEXT.md` section 1,
+with `COMBUSTION LASERS FIRING` landing on the ignition frame. The temporary lighting rig used
+to take the shots (`Workspace.PROMO_LIGHTS`) was deleted afterwards and the deletion verified
+(`gone=true`) -- Workspace content is live, so moving it is changing the world (CLAUDE 0.12).
+
+**The music is the operator's reference track, not the remix -- and that correction re-measured
+the whole timeline.** The first cut synced to `ReactorStartup_Remix.mp3`; the operator corrected
+this ("**不是你做的，是最开始的那个**", 2026-10-11). The two files differ by 3 s in length but
+**not** in structure, and the difference is the one that matters:
+
+| | quiet stretch | sound returns |
+|---|---|---|
+| Remix | 10.30 -> 16.20 s | +18.8 dB at 16.20 s |
+| **`ReactorStartup.mp3` (used)** | **0.00 -> 2.25 s** | **+34.5 dB at 2.30 s** |
+
+The original has **only** its lead-in silence -- a 50 ms RMS sweep of all 263.9 s finds no
+mid-track gap at any of -30/-35/-40 dB. So the 6.5 s hush the film needs cannot come from the
+track's own gap and is **built**: `promo/_bed.m4a` is the original from 2.30->12.00 s, then a
+true 6.50 s of silence, then the original resumed at 12.00 s. The two music segments abut
+(12.00 meets 12.00), so the bed has **exactly one silence-to-sound transition** and it lands on
+the ignition. Measured on the delivered file, not on the ingredients:
+
+```
+SILENCE run 9.70..16.20 s (6.50 s)
+BIGGEST RISE 33.6 dB at t=16.25 s (-55.5 -> -21.9 dB)   <- the ignition frame
+```
+
+**One real defect was caught by reading the delivered file back.** Each plate faded out on
+`[t1-XF, t1]` while the next faded in on `[t1, t1+XF]` -- **non-overlapping windows**, so at
+every cut *both* were at zero and the film dipped to a fully black frame (12 cuts, 0.45 s each
+way). Both windows are now centred on the cut so the ramps are complementary
+(`sum=1.00 | max=0.50` at every boundary). It was found on a contact sheet pulled from the
+finished mp4 -- the twelve instants sampled had landed on the cuts, which is why a first glance
+read as "the extractor is broken" until the numbers were read (DECISIONS 499 to 501).
+
+**The promo's audio is not tracked.** `promo/_bed.m4a` and the muxed `promo/THE_REACTOR_promo.mp4`
+carry the reference recording, so they are gitignored for the same reason the track is; the
+silent master and the plates are our own render and are tracked. Rebuild both with the commands
+in `docs/PROMO.md`.
+
 ## The music - `asstes/music/ReactorShift.{ogg,mp3}`
 
 An original track, **263.84 s**, 89.25 bpm, F major pentatonic, 97 bars. It is composed in

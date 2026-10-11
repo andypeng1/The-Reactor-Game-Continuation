@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>THE REACTOR — PROMO</title>
+<style>
+/* ============================================================================
+   THE REACTOR —— 宣传片
+   ============================================================================
+   和 intro/index.html 是同一条流水线：整片是 render(t) 的纯函数，帧由
+   _tools/intro_render.js 逐帧截图得到，不是录屏。所以"同一秒"永远长得一样，
+   拖进度条不会改变任何东西。
+
+   这一版和片头片不同的地方只有一处，也是它存在的理由：
+   **音乐里 10.30 → 16.20 有一段没有声音，那一段是"开机前一刻"，
+      声音回来的那一瞬间（16.20）就是反应堆点火。**
+   所以全片的时间表是围着 t=16.20 排的 —— 那边不是"配乐对齐了画面"，
+   是画面等着那一下。CONTROL 段（灰色那几句）在静音里逐行打出来，
+   最后一句停在 [ALERT] - ALL SYSTEMS READY, CORE IGNITION IMMINENT，
+   而 [ALERT] - COMBUSTION LASERS FIRING 正好落在声音回来的那一帧。
+
+   画面是**在 Studio 里实拍的**（promo/shots/*.jpg，1248x600 原生）。
+   抓拍用的临时补光 Workspace.PROMO_LIGHTS 已经在拍完后删掉。
+   ========================================================================== */
+
+:root{
+  --void:    #07080a;
+  --panel:   #0b0d10;
+  --ready:   rgb(235,235,235);
+  --nominal: rgb(137,255,147);
+  --amber:   rgb(255,128,1);
+  --fault:   rgb(255,70,40);
+  --plasma:  #52dae2;
+  --yellow:  rgb(240,220,60);
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  --cond: "Arial Narrow", "Haettenschweiler", Impact, "Franklin Gothic Medium", sans-serif;
+  --cjk: "Microsoft YaHei", "Segoe UI", "Noto Sans SC", sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:1920px;height:1080px;background:#000;overflow:hidden;
+       transform-origin:center center;flex:0 0 auto}
+
+/* ---------- 画面层 ---------------------------------------------------- */
+/* background-size: auto Z%  —— 高度按 Z 撑开，横向由 2.08:1 的原始长宽比推出来。
+   所以 background-position 的百分比永远落在真实的多余量里，不会拉出黑边。 */
+.plate{position:absolute;inset:0;background-repeat:no-repeat;
+       background-position:50% 50%;background-size:auto 110%;
+       will-change:background-size,background-position,opacity}
+
+/* ---------- 调色 / 罩 -------------------------------------------------- */
+#grade{position:absolute;inset:0;pointer-events:none;
+       background:
+         radial-gradient(120% 90% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,.55) 100%),
+         linear-gradient(180deg, rgba(6,8,11,.72) 0%, rgba(0,0,0,0) 22%,
+                                rgba(0,0,0,0) 78%, rgba(6,8,11,.78) 100%);
+       mix-blend-mode:multiply}
+#scan{position:absolute;inset:0;pointer-events:none;opacity:.20;
+      background:repeating-linear-gradient(180deg, rgba(255,255,255,.055) 0 1px,
+                                                    rgba(0,0,0,0) 1px 3px)}
+#tint{position:absolute;inset:0;pointer-events:none;opacity:.0;background:var(--plasma)}
+/* 左下的角雾。存在的理由只有一个：说明条必须永远读得出来 —— 舱内那几张
+   亮到发白的实拍里，白字压在亮金属上会当场消失，而"看不清"不是一个能
+   从截图里看出"我漏了什么"的错误。 */
+#scrim{position:absolute;inset:0;pointer-events:none;z-index:4;
+       background:radial-gradient(74% 92% at 0% 100%, rgba(3,5,8,.88) 0%,
+                                  rgba(3,5,8,.52) 34%, rgba(0,0,0,0) 68%)}
+
+/* ---------- 上下黑边 + 角标 -------------------------------------------- */
+.bar{position:absolute;left:0;right:0;height:58px;background:#000;z-index:6}
+.bar.t{top:0;border-bottom:1px solid rgba(255,255,255,.10)}
+.bar.b{bottom:0;border-top:1px solid rgba(255,255,255,.10)}
+.bar .row{position:absolute;top:50%;transform:translateY(-50%);display:flex;
+          gap:14px;align-items:center;font-family:var(--mono);font-size:12px;
+          letter-spacing:.22em;color:rgba(235,235,235,.62)}
+.bar.t .row{left:40px}
+.bar.t .row.r{left:auto;right:40px}
+.bar.b .row{left:40px}
+.bar.b .row.r{left:auto;right:40px}
+.bar i{display:inline-block;width:7px;height:7px;background:var(--fault);
+       transform:rotate(45deg);opacity:.9}
+.bar .sep{width:1px;height:12px;background:rgba(255,255,255,.22)}
+
+/* ---------- 标题（开场） ----------------------------------------------- */
+#opening{position:absolute;left:110px;bottom:210px;z-index:5}
+#opening .big{font-family:var(--cond);font-size:112px;line-height:.92;
+              letter-spacing:.10em;color:#fff;text-transform:uppercase;
+              text-shadow:0 6px 40px rgba(0,0,0,.9)}
+#opening .sub{margin-top:16px;font-family:var(--mono);font-size:16px;
+              letter-spacing:.42em;color:rgba(235,235,235,.72);text-transform:uppercase}
+#opening .cjk{margin-top:10px;font-family:var(--cjk);font-size:22px;letter-spacing:.12em;
+              color:rgba(235,235,235,.55)}
+#openRule{width:0;height:2px;background:var(--plasma);margin-bottom:22px;box-shadow:0 0 18px var(--plasma)}
+
+/* ---------- 说明条（巡礼） --------------------------------------------- */
+#caps{position:absolute;left:110px;bottom:176px;z-index:5}
+#caps .idx{font-family:var(--mono);font-size:14px;letter-spacing:.34em;color:var(--plasma);
+           margin-bottom:14px}
+#caps .cap{font-family:var(--cond);font-size:88px;line-height:.94;letter-spacing:.075em;
+           color:#fff;text-transform:uppercase;text-shadow:0 5px 34px rgba(0,0,0,.92)}
+#caps .cjk{margin-top:12px;font-family:var(--cjk);font-size:26px;letter-spacing:.10em;
+           color:rgba(240,244,248,.88);text-shadow:0 3px 18px rgba(0,0,0,.9)}
+#caps .rule{width:100%;max-width:640px;height:1px;margin:18px 0 0;
+            background:linear-gradient(90deg, rgba(82,218,226,.95), rgba(82,218,226,0));
+            transform-origin:left center}
+
+/* ---------- 静音段的启动日志 ------------------------------------------- */
+#boot{position:absolute;inset:0;z-index:5;background:#000;
+      display:flex;align-items:center;justify-content:center}
+#bootInner{width:1290px;transform:translateY(24px);transform-origin:center center}
+/* 点火之后这块盘从"全屏黑底"变成"压在画面左下的一块小面板"（见 5.2）。
+   边框是有用的：舱内实拍最亮的地方是金属高光，白字压上去会当场消失。 */
+#bootPanel{border-left:2px solid rgba(82,218,226,.85);padding:14px 0 14px 22px;
+           background:rgba(4,6,9,.62)}
+#bootHead{font-family:var(--mono);font-size:13px;letter-spacing:.34em;
+          color:rgba(235,235,235,.34);margin-bottom:26px}
+#bootList{font-family:var(--mono);font-size:19px;line-height:1.72;letter-spacing:.055em;
+          white-space:pre}
+#bootList .l{opacity:0;color:rgba(214,220,228,.80)}
+#bootList .l.alert{color:var(--fault)}
+#bootList .l.warn{color:var(--amber)}
+#bootList .l.plain{color:rgba(190,226,240,.86)}
+#bootList .l.hot{color:var(--nominal);text-shadow:0 0 20px rgba(137,255,147,.7)}
+#cursor{display:inline-block;width:11px;height:19px;background:var(--nominal);
+        vertical-align:-3px;opacity:0}
+#hexMark{position:absolute;width:760px;opacity:.055;left:50%;top:50%;
+         transform:translate(-50%,-50%);filter:invert(1)}
+
+/* ---------- 点火闪光 ---------------------------------------------------- */
+#flash{position:absolute;inset:0;z-index:7;background:#dff2ff;opacity:0;pointer-events:none}
+#bloom{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;
+       background:radial-gradient(46% 60% at 52% 54%, rgba(180,238,255,.85),
+                                  rgba(90,180,255,.25) 46%, rgba(0,0,0,0) 72%)}
+
+/* ---------- 片尾 -------------------------------------------------------- */
+#end{position:absolute;inset:0;z-index:8;background:radial-gradient(72% 72% at 50% 50%,
+     rgba(4,6,9,.62) 0%, rgba(2,3,5,.95) 100%)}
+#endHex{position:absolute;left:50%;top:50%;width:560px;transform:translate(-50%,-50%);
+        opacity:0;filter:invert(1)}
+#endWrap{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center}
+#endTitle{font-family:var(--cond);font-size:132px;letter-spacing:.14em;color:#fff;
+          text-transform:uppercase;line-height:1;
+          text-shadow:0 0 80px rgba(82,218,226,.30), 0 10px 50px rgba(0,0,0,.9)}
+#endSub{margin-top:22px;font-family:var(--mono);font-size:15px;letter-spacing:.55em;
+        color:rgba(235,235,235,.70)}
+#endCjk{margin-top:16px;font-family:var(--cjk);font-size:21px;letter-spacing:.30em;
+        color:rgba(235,235,235,.46)}
+#endRule{width:0;height:1px;margin:34px auto 0;background:var(--plasma);
+         box-shadow:0 0 22px var(--plasma)}
+
+/* ---------- 播放器（预览用；渲染时被隐藏） ------------------------------ */
+#player{position:absolute;left:0;right:0;bottom:0;z-index:9;padding:14px 26px;
+        display:flex;gap:16px;align-items:center;background:linear-gradient(0deg,
+        rgba(0,0,0,.92), rgba(0,0,0,0));font-family:var(--mono);font-size:13px;color:#cfd6dd;
+        opacity:0;transition:opacity .22s}
+#player.on{opacity:1}
+#scrub{position:relative;flex:1;height:16px;cursor:pointer}
+#scrub::before{content:"";position:absolute;left:0;right:0;top:7px;height:2px;background:rgba(255,255,255,.22)}
+#scrubFill{position:absolute;left:0;top:7px;height:2px;background:var(--plasma)}
+#scrubHead{position:absolute;top:2px;width:2px;height:12px;background:#fff}
+.btn{cursor:pointer;user-select:none;padding:4px 9px;border:1px solid rgba(255,255,255,.22);border-radius:3px}
+.btn:hover{background:rgba(255,255,255,.10)}
+#time{min-width:118px;text-align:right;letter-spacing:.10em}
+#hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;
+      font-family:var(--mono);font-size:13px;letter-spacing:.3em;color:rgba(255,255,255,.55);
+      opacity:0;pointer-events:none;transition:opacity .3s}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+  <div id="plates"></div>
+  <div id="grade"></div>
+  <div id="scan"></div>
+  <div id="tint"></div>
+  <div id="scrim"></div>
+
+  <div id="boot">
+    <img id="hexMark" src="assets/hex.png" alt="">
+    <div id="bootInner">
+      <div id="bootHead">SMER · SUBSPACE REACTOR START-UP SEQUENCE</div>
+      <div id="bootPanel"><div id="bootList"><span id="cursor"></span></div></div>
+    </div>
+  </div>
+
+  <div id="opening">
+    <div id="openRule"></div>
+    <div class="big" id="openBig">The Reactor</div>
+    <div class="sub" id="openSub">Icarus Installation</div>
+    <div class="cjk" id="openCjk">亚空间反应堆 · 操作员</div>
+  </div>
+
+  <div id="caps">
+    <div class="idx" id="capIdx"></div>
+    <div class="cap" id="capBig"></div>
+    <div class="cjk" id="capCjk"></div>
+    <div class="rule" id="capRule"></div>
+  </div>
+
+  <div id="bloom"></div>
+  <div id="flash"></div>
+
+  <div id="end">
+    <img id="endHex" src="assets/hex.png" alt="">
+    <div id="endWrap">
+      <div id="endTitle">The Reactor</div>
+      <div id="endSub">ICARUS INSTALLATION</div>
+      <div id="endCjk">反应堆游戏 · 亚空间反应堆</div>
+      <div id="endRule"></div>
+    </div>
+  </div>
+
+  <div class="bar t"><div class="row"><i></i><span id="metaL">SMER</span><span class="sep"></span><span id="metaT">STANDBY</span></div>
+                     <div class="row r"><span id="metaR">ICARUS INSTALLATION</span></div></div>
+  <div class="bar b"><div class="row"><span id="metaShot">—</span></div>
+                     <div class="row r"><span id="metaTC">00:00:00</span></div></div>
+
+  <div id="hint">SPACE 播放 · ←→ 逐秒 · R 重播</div>
+  <div id="player">
+    <div class="btn" id="btnPlay">▶</div>
+    <div class="btn" id="btnRestart">⟲</div>
+    <div id="scrub"><div id="scrubFill"></div><div id="scrubHead"></div></div>
+    <div id="time">00:00 / 01:16</div>
+  </div>
+
+</div></div>
+
+<script>
+/* ============================================================================
+   0. 时间表
+   ============================================================================
+   全片唯一的一份时间表。IGNITE 是所有东西的锚 —— 它等于音乐里声音回来的
+   那一帧（ReactorStartup_Remix.mp3 的 16.20 s，前面 10.30→16.20 是静音）。
+   ========================================================================== */
+const T = {
+  total:   76.00,
+  dark:     9.70,   // 画面开始压黑（音乐 10.30 静下来，画面早 0.6 s 到位）
+  log0:    10.30,   // 启动日志第一行
+  logDt:    0.415,  // 每行间隔 -> 13 行收在 10.30..15.28
+  ignite:  16.20,   // ★ 声音回来 = 反应堆点火
+  logFade: 18.10,   // 日志开始淡出（点火之后它继续压在画面上）
+  endIn:   71.04,   // 片尾卡
+  endSub:  72.60,
+};
+
+/* ============================================================================
+   1. 启动日志
+   ============================================================================
+   逐字取自 docs/ORIGINAL_UI_TEXT.md §1（原版监视器上那 23 行的**前 15 行**，
+   连 `M.E.T.U DIAGNOSTICS ACCEPTABLE` 少一个点的写法都照抄）。
+   第 14 行 COMBUSTION LASERS FIRING 排在 IGNITE 那一帧 —— 这不是巧合，
+   是这张表存在的理由。
+   ========================================================================== */
+const BOOT = [
+  ['[ALERT] - SUBSPACE REACTOR START-UP SEQUENCE INITIATED','alert'],
+  ['[WARN] - ALL PERSONNEL ARE TO VACATE THE CHAMBER IMMEDIATELY','warn'],
+  ['[WARN] - ACTIVATING POWER EXTRACTION ASSEMBLY','warn'],
+  ['PRIMING ISOTOPE E COOLANT NETWORK','plain'],
+  ['CALIBRATING REACTOR SENSOR NETWORK','plain'],
+  ['E-VENT STRUCTURES PRIMED','plain'],
+  ['[WARN] - SUBSPACE RIFT ACTIVE, RADIATION WARNING','warn'],
+  ['PRIMING CHAMBER ATMOSPHERIC REGULATORY SYSTEM','plain'],
+  ['[WARN] - INITIATING DEEP SCAN PROCEDURE','warn'],
+  ['[ALERT] - PRIMING ALL COMBUSTION LASERS','alert'],
+  ['DEEP SCAN PROCEDURE COMPLETED','plain'],
+  ['M.E.T.U DIAGNOSTICS ACCEPTABLE','plain'],
+  ['[ALERT] - ALL SYSTEMS READY, CORE IGNITION IMMINENT','hot'],   // ← 静音里最后停在这一句
+  ['[ALERT] - COMBUSTION LASERS FIRING','hot'],                    // ← 落在声音回来那一帧
+  ['[ALERT] - START-UP COMPLETED','hot'],
+];
+
+/* ============================================================================
+   2. 镜头表
+   ============================================================================
+   k = [z0, z1, ax0, ay0, ax1, ay1]
+     z  = background-size 的高度百分比（>100 才有推拉余量，不会露黑边）
+     ax = 横向构图，-1 靠左 / +1 靠右；ay 同（正值往下）
+   每一镜的推拉方向都不一样，否则 12 个镜头会读成一张幻灯片。
+   grade 是逐镜曝光 —— 抓拍时控制室那几张只有监视器在发光，
+   全片统一一个数值的话它们会黑到看不出内容。
+   ========================================================================== */
+const SHOTS = [
+  {t0: 0.00, t1: 5.60, img:'shots/s09_est_far.jpg', g:[1.95,1.06,1.10],
+   k:[1.10,1.22, 0.10,0.00, -0.10,0.02]},
+  {t0: 5.60, t1: 9.70, img:'shots/s08_est.jpg', g:[2.05,1.05,1.10],
+   k:[1.20,1.08, -0.08,0.03, 0.06,-0.02]},
+
+  /* ---- 静音段：画面全黑 + 启动日志（没有镜头） ---- */
+
+  {t0:15.75, t1:22.20, img:'shots/s03_cbl.jpg', g:[1.04,1.10,1.14], punch:1.30,
+   k:[1.30,1.14, 0.00,-0.04, 0.14,0.05],
+   idx:'01 / 12', cap:'Core Ignition', cjk:'堆芯点火 · 5000 PSI · 9420 °F'},
+  {t0:22.20, t1:26.64, img:'shots/s01a_chamber.jpg', g:[1.04,1.10,1.14],
+   k:[1.12,1.22, 0.16,0.00, -0.10,-0.04],
+   idx:'02 / 12', cap:'Reactor Chamber', cjk:'反应堆舱 · 没有控制棒'},
+  {t0:26.64, t1:31.08, img:'shots/s13_chamber_hero.jpg', g:[1.02,1.10,1.14],
+   k:[1.22,1.10, -0.12,0.03, 0.06,-0.03],
+   idx:'03 / 12', cap:'CBL · Combustion Lasers', cjk:'化学泵浦激光 ×3 · 档位 1–5 · 堆芯 925 K'},
+  {t0:31.08, t1:35.52, img:'shots/s16_coretop.jpg', g:[1.04,1.10,1.14],
+   k:[1.10,1.24, 0.04,0.05, -0.06,-0.06],
+   idx:'04 / 12', cap:'Isotope E Coolant', cjk:'冷却回路 · 3 台泵 0–3 档 · 3 个储液罐'},
+  {t0:35.52, t1:39.96, img:'shots/s01b_chamber.jpg', g:[1.04,1.10,1.14],
+   k:[1.24,1.12, 0.10,-0.03, -0.08,0.02],
+   idx:'05 / 12', cap:'E-Vent / AVB', cjk:'环境压力 · AVB −3300 PSI · E-VENT −7000 °F'},
+  {t0:39.96, t1:44.40, img:'shots/s01d_chamber.jpg', g:[1.04,1.10,1.14],
+   k:[1.12,1.24, -0.14,0.02, 0.08,-0.05],
+   idx:'06 / 12', cap:'Power Extraction Assembly', cjk:'抽取档位 ×4 · 每档 +25% · 应力随之上升'},
+  {t0:44.40, t1:48.84, img:'shots/s12_monwall.jpg', g:[2.15,1.09,1.18],
+   k:[1.22,1.08, 0.12,0.00, -0.06,-0.02],
+   idx:'07 / 12', cap:'Control Room', cjk:'控制室 · 7 台监视器'},
+  {t0:48.84, t1:53.28, img:'shots/s15_console.jpg', g:[2.10,1.09,1.18],
+   k:[1.10,1.22, -0.10,0.02, 0.10,-0.03],
+   idx:'08 / 12', cap:'Main Reactor Console', cjk:'温度 · 压力 · 辐射 · 输出 · 配额'},
+  {t0:53.28, t1:57.72, img:'shots/s05_ctrl_wide.jpg', g:[2.30,1.08,1.18],
+   k:[1.24,1.10, 0.06,0.03, -0.12,-0.02],
+   idx:'09 / 12', cap:'M.A.S.S Rails', cjk:'撑住 H.D.E.F 完整性 · 不产生应力'},
+  {t0:57.72, t1:62.16, img:'shots/s07_metu.jpg', g:[1.06,1.10,1.14],
+   k:[1.10,1.26, 0.00,-0.05, 0.08,0.06],
+   idx:'10 / 12', cap:'M.E.T.U', cjk:'质量电子传输单元 · 用 ECC 阻止子空间熔毁'},
+  {t0:62.16, t1:66.60, img:'shots/s10_metutower.jpg', g:[2.00,1.06,1.10],
+   k:[1.24,1.10, -0.06,-0.02, 0.10,0.03],
+   idx:'11 / 12', cap:'Icarus Installation', cjk:'地表设施 · 值班 · 交班'},
+  {t0:66.60, t1:71.04, img:'shots/s01c_chamber.jpg', g:[1.04,1.10,1.14],
+   k:[1.12,1.26, 0.12,0.00, -0.06,-0.05],
+   idx:'12 / 12', cap:'Subspace Meltdown', cjk:'撑到交班'},
+
+  /* 片尾卡底下还垫着一张（没有再压黑它，只是把构图慢慢拉开）。
+     没有这一张的话片尾是纯黑 —— 能用，但"最后三秒黑掉"和一个有画面的
+     收束是两回事，而这一张本来就在手里。 */
+  {t0:71.04, t1:76.00, img:'shots/s08_est.jpg', g:[2.05,1.05,1.10],
+   k:[1.30,1.16, 0.04,0.02, -0.04,-0.02]},
+];
+
+/* ============================================================================
+   3. 工具
+   ========================================================================== */
+const clamp = (v,a,b)=>v<a?a:(v>b?b:v);
+const ramp  = (t,a,b)=> b<=a ? (t>=b?1:0) : clamp((t-a)/(b-a),0,1);
+const quadOut = x => 1-(1-x)*(1-x);
+const $ = id => document.getElementById(id);
+
+/* ============================================================================
+   4. 建 DOM（一次），render 只改样式
+   ========================================================================== */
+const host = $('plates');
+SHOTS.forEach((s,i)=>{
+  const d = document.createElement('div');
+  d.className = 'plate';
+  d.style.backgroundImage = `url("${s.img}")`;
+  d.style.opacity = 0;
+  host.appendChild(d);
+  s.node = d;
+});
+
+const bootNodes = BOOT.map(([text,kind])=>{
+  const d = document.createElement('div');
+  d.className = 'l ' + kind;
+  d.textContent = text;
+  d.style.opacity = 0;
+  return d;
+});
+const bootList = $('bootList');
+BOOT.forEach((_,i)=> bootList.insertBefore(bootNodes[i], $('cursor')));
+
+/* ============================================================================
+   5. RENDER —— t 的纯函数
+   ========================================================================== */
+function render(t){
+  const p = t;
+
+  /* ---- 5.1 画面 ------------------------------------------------------ */
+  const XF = 0.45;
+  for (let i=0;i<SHOTS.length;i++){
+    const s = SHOTS[i];
+    // 点火那一镜的"顿一下"：punch 让它从 1.30 收到 k[0]，再走正常推拉
+    let u = s.t0 < T.ignite ? ramp(p, s.t0, s.t1)
+                            : quadOut(ramp(p, s.t0, s.t1));
+    let z = s.k[0] + (s.k[1]-s.k[0])*u;
+    // 点火那一镜多一个"顿一下"：起手比 k[0] 更近，0.85 s 内收回来。
+    // 写成 punch 而不是把 k[0] 调大，是因为 u 已经跑了一段时间 —— 两者
+    // 只在第一帧相等，之后完全是两条曲线。
+    if (s.punch) z = s.punch + (z - s.punch) * ramp(p, T.ignite, T.ignite+0.85);
+    const axx = s.k[2] + (s.k[4]-s.k[2])*u;
+    const ayy = s.k[3] + (s.k[5]-s.k[3])*u;
+    s.node.style.backgroundSize = `auto ${(z*100).toFixed(2)}%`;
+    s.node.style.backgroundPosition = `${(50 + axx*50).toFixed(2)}% ${(50 + ayy*50).toFixed(2)}%`;
+    const g = s.g;
+    s.node.style.filter = `brightness(${g[0]}) contrast(${g[1]}) saturate(${g[2]})`;
+    // 两个窗口都跨在切点上（[t0-XF, t0+XF] 和 [t1-XF, t1+XF]）。相邻两镜的
+    // t1 与 t0 相等，所以「上一镜的淡出」和「下一镜的淡入」落在同一个区间上、
+    // 互为补数 —— 合成始终是 1，不会像单侧淡出那样每切一刀就黑一帧。
+    // 第一镜的 t0 是 0，用 max 让它在 p=0 时正好是 0（从黑里起）。
+    const op = ramp(p, Math.max(0, s.t0-XF), s.t0+XF)
+             * (1 - ramp(p, s.t1-XF, s.t1+XF));
+    // 静音段整体压黑：9.70 起把画面推到全黑，点火那一帧再顶回来
+    const blackout = 1 - ramp(p, T.dark, T.dark+0.75);
+    // 回来得比压黑快得多：这是一刀切，不是溶。压黑用 0.75 s 慢慢黑下去，
+    // 回来只给 0.16 s —— 两个方向给一样的时长会把"点火"读成"淡入"。
+    const back     = ramp(p, T.ignite-0.12, T.ignite+0.04);
+    s.node.style.opacity = (op * Math.min(blackout + back, 1)).toFixed(4);
+  }
+
+  /* ---- 5.2 启动日志 --------------------------------------------------- */
+  const bootIn  = ramp(p, T.log0, T.log0+0.30);
+  const bootOut = 1 - ramp(p, T.logFade, T.logFade+0.9);
+  $('boot').style.opacity = (bootIn * bootOut).toFixed(4);
+  // 画面层已经压黑之后 boot 才露出来；点火之后它继续盖在画面上
+  $('boot').style.visibility = (bootIn*bootOut > 0.001) ? 'visible' : 'hidden';
+  // 点火那一帧：黑底撤掉（画面就露出来了），整块盘缩到左下当小面板。
+  // 换的是 background 不是 opacity —— 用 opacity 会连字一起淡掉，
+  // 而这里要的恰恰是"字留着、底没了"。
+  const reveal = ramp(p, T.ignite, T.ignite+0.55);
+  $('boot').style.background = p < T.ignite ? '#000' : 'transparent';
+  $('bootInner').style.transform =
+      `translate(${(-262*reveal).toFixed(1)}px, ${(24 - 236*reveal).toFixed(1)}px) `
+    + `scale(${(1 - 0.34*reveal).toFixed(3)})`;
+  $('hexMark').style.opacity = (.055 * ramp(p, T.log0, T.log0+2.0) * (1-reveal)).toFixed(4);
+  for (let i=0;i<BOOT.length;i++){
+    const at = (i < 13) ? T.log0 + i*T.logDt                   // 静音里 13 行
+                        : T.ignite + (i-13)*0.36;              // 点火后 2 行
+    bootNodes[i].style.opacity = ramp(p, at, at+0.14).toFixed(3);
+  }
+  // 光标只在"打完了、还没点火"的那 0.9 秒里闪
+  const cursorOn = ramp(p, T.log0+12*T.logDt+0.2, T.log0+12*T.logDt+0.5)
+                 * (1 - ramp(p, T.ignite, T.ignite+0.4));
+  $('cursor').style.opacity = (cursorOn * (0.25 + 0.75*(Math.sin(p*7.0)>0?1:0))).toFixed(3);
+
+  /* ---- 5.3 点火闪光 --------------------------------------------------- */
+  // 门必须是 ramp(p, ignite, ...) 自己，不能是 `1 - ramp(...)`：
+  // 后者在 t < ignite 时恒等于 1，整个前 16 秒都盖着一层 92% 的白。
+  // 这不是"看起来有点亮"—— 开场黑底白字会被洗成一片白，而白底上的白字
+  // 恰好是"看不出少了什么"的那一类错。
+  const flashOn = ramp(p, T.ignite-0.06, T.ignite+0.02);   // 16.20 那一帧已经是满的
+  $('flash').style.opacity = (0.92 * flashOn * (1 - ramp(p, T.ignite+0.04, T.ignite+0.36))).toFixed(4);
+  const bl = ramp(p, T.ignite, T.ignite+0.10) * (1 - ramp(p, T.ignite+0.20, T.ignite+1.80));
+  $('bloom').style.opacity = (bl*0.85).toFixed(4);
+  $('tint').style.opacity  = (ramp(p, T.ignite, T.ignite+0.12) * 0.22
+                              * (1 - ramp(p, T.ignite+0.4, T.ignite+2.2))).toFixed(4);
+
+  /* ---- 5.4 开场标题 ---------------------------------------------------- */
+  const oIn  = ramp(p, 2.60, 3.60) * (1 - ramp(p, T.dark-0.85, T.dark-0.15));
+  $('opening').style.opacity = oIn.toFixed(4);
+  $('opening').style.transform = `translateY(${((1-oIn)*26).toFixed(2)}px)`;
+  $('openRule').style.width = (oIn*300).toFixed(1) + 'px';
+
+  /* ---- 5.5 巡礼说明条 -------------------------------------------------- */
+  let cap = null;
+  for (const s of SHOTS) if (s.cap && p >= s.t0 - 0.4 && p < s.t1 + 0.2){ cap = s; break; }
+  if (cap){
+    const ci = ramp(p, cap.t0+0.50, cap.t0+1.05);
+    const co = 1 - ramp(p, cap.t1-0.70, cap.t1-0.18);
+    const a  = ci*co;
+    $('caps').style.opacity = a.toFixed(4);
+    $('caps').style.transform = `translateY(${((1-ci)*34 + (1-co)*-18).toFixed(2)}px)`;
+    $('capIdx').textContent  = cap.idx;
+    $('capBig').textContent  = cap.cap;
+    $('capCjk').textContent  = cap.cjk;
+    $('capRule').style.transform = `scaleX(${ci.toFixed(4)})`;
+    $('capRule').style.opacity = co.toFixed(3);
+  } else {
+    $('caps').style.opacity = 0;
+  }
+
+  /* ---- 5.6 片尾 -------------------------------------------------------- */
+  const eIn = ramp(p, T.endIn, T.endIn+1.0);
+  $('end').style.opacity = eIn.toFixed(4);
+  $('endHex').style.opacity = (eIn*0.16).toFixed(4);
+  $('endWrap').style.opacity = ramp(p, T.endSub-0.5, T.endSub+1.1).toFixed(4);
+  $('endWrap').style.transform = `translateY(${(-50 + (1-ramp(p,T.endSub-0.5,T.endSub+1.1))*3).toFixed(2)}%)`;
+  $('endRule').style.width = (ramp(p, T.endSub+1.0, T.endSub+1.9)*260).toFixed(1)+'px';
+  $('end').style.visibility = eIn > 0.001 ? 'visible' : 'hidden';
+
+  /* ---- 5.7 角标 -------------------------------------------------------- */
+  const tc = t;
+  $('metaTC').textContent = '00:' + String(Math.floor(tc/60)).padStart(2,'0')
+                                  + ':' + String(Math.floor(tc%60)).padStart(2,'0');
+  if (cap){ $('metaShot').textContent = cap.cap.toUpperCase() + '  ·  ' + cap.idx; }
+  else if (p < T.dark){ $('metaShot').textContent = 'PROLOGUE'; }
+  else if (p < T.ignite){ $('metaShot').textContent = 'START-UP SEQUENCE'; }
+  else { $('metaShot').textContent = 'EPILOGUE'; }
+  $('metaT').textContent = p < T.ignite ? 'STANDBY' : 'CRITICAL';
+  $('metaT').style.color = p < T.ignite ? 'rgba(235,235,235,.62)' : 'var(--fault)';
+  $('metaL').textContent = p < T.ignite ? 'SMER' : 'SMER · SHIFT 1';
+}
+
+/* ============================================================================
+   6. 播放器（预览用，渲染时被 intro_render.js 隐藏）
+   ========================================================================== */
+let t = 0, playing = false, clock = 0, last = 0, ended = false;
+const stageK = ()=> Math.min(window.innerWidth/1920, window.innerHeight/1080);
+function tick(now){
+  if (playing){
+    const dt = (now-last)/1000; last = now; t = clock + dt;
+    if (t >= T.total){ t = T.total; playing = false; ended = true; setChrome(true); }
+  }
+  render(t); sync(); requestAnimationFrame(tick);
+}
+function reset(){ t = 0; clock = 0; ended = false; render(0); }
+function play(){ if (ended) reset(); playing = true; clock = t; last = performance.now(); setChrome(false); }
+function pause(){ if (playing){ playing = false; setChrome(true); } }
+function seek(v){ t = clamp(v,0,T.total); clock = t; ended = (t>=T.total); render(t); sync(); }
+function sync(){
+  $('scrubFill').style.width = (t/T.total*100)+'%';
+  $('scrubHead').style.left  = (t/T.total*100)+'%';
+  $('time').textContent = fmt(t)+' / '+fmt(T.total);
+  $('btnPlay').textContent = playing ? '❚❚' : '▶';
+  $('hint').style.opacity = (playing && t < 5) ? 0.9 : 0;
+}
+const fmt = s => String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
+function setChrome(show){ $('player').classList.toggle('on', show); }
+
+const stop = e => e.stopPropagation();
+$('player').addEventListener('click', stop);
+$('btnPlay').onclick    = ()=> playing ? pause() : play();
+$('btnRestart').onclick = ()=>{ reset(); play(); };
+$('stage').onclick      = ()=> playing ? pause() : play();
+(function(){
+  const bar = $('scrub'); let drag = false;
+  const at = e => { const r = bar.getBoundingClientRect(); return ((e.clientX-r.left)/r.width)*T.total; };
+  bar.addEventListener('pointerdown', e=>{ drag = true; bar.setPointerCapture(e.pointerId); pause(); seek(at(e)); });
+  bar.addEventListener('pointermove', e=>{ if (drag) seek(at(e)); });
+  bar.addEventListener('pointerup',   ()=>{ drag = false; });
+})();
+document.addEventListener('keydown', e=>{
+  const k = e.key.toLowerCase();
+  if (k === ' '){ e.preventDefault(); playing ? pause() : play(); }
+  else if (k === 'arrowright'){ pause(); seek(t+1); }
+  else if (k === 'arrowleft'){ pause(); seek(t-1); }
+  else if (k === 'r'){ reset(); play(); }
+  else if (k === 'i'){ pause(); seek(T.ignite); }
+});
+function fit(){ $('stage').style.transform = `scale(${stageK()})`; }
+window.addEventListener('resize', fit);
+fit();
+render(0);
+requestAnimationFrame(now=>{ last = now; play(); tick(now); });
+</script>
+</body>
+</html>
