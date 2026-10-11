@@ -13036,3 +13036,39 @@ EndGameFrame1.ReportUI.Bottom.ReportText      = [REPORT ACKNOWLEDGEMENT [HOVER]]
 **一句话结论：** 这场「清小数」的**边界是按属性分的，不是按部件分的** ——
 同一个 `ConnectionNode` 里，`Part` 的位置/尺寸能清到 0 残差，它身上的 `Attachment` 清不到。
 **做不到的那一半写进文档，不假装做完了。**
+
+#### Phase 116 第三轮（2026-10-11）—— 再扫一遍，以及第三个「清不掉」
+
+用户「再修」。同样一轮全扫，这次覆盖**他新加进来的部件**，以及上一轮没扫的两类
+（`Model.WorldPivot`、GUI）。
+
+| 类 | 尾巴（≤1e-4） | 修了 | 重读残留 |
+|---|---|---|---|
+| `BasePart.Orientation` | **17**（他新加的，全部 ≤0.01°） | 17 | **0** |
+| `BasePart.Size` | 0 | —— | 0 |
+| `Attachment.Position` | 0 | —— | 0 |
+| GUI：`Position`/`Size` 的 UDim2 | 0 | —— | 0 |
+| GUI：`AnchorPoint` / `Rotation` / `TextSize` | 0 / 0 / 0 | —— | 0 |
+| `Model.WorldPivot` **位置** | 0 | —— | 0 |
+| `Model.WorldPivot` **旋转** | 107 | 107 | **106 清不掉** |
+
+**部件数又涨了**（上一轮 5,470，他一直在往里加），**这一轮逮到 17 个新角度** ——
+所以「扫过一遍」不是一个可以在时间上说死的状态。
+
+**第三个「清不掉」：`Model.WorldPivot` 的旋转。** 107 个写进去，重读回来 **106 个还是小数**；
+再跑一遍**一模一样的判据**，落点**一模一样（106）** —— 与 `Attachment.Orientation`（126）
+**同一张脸**：它是那个 `CFrame` 矩阵的**分解**，不是存的值。
+取舍 **483①** 因此从「`BasePart` 对 `Attachment`」升成一条通则：
+**凡是只以矩阵存的坐标，取整都落不到。**
+
+**GUI 那一半是真干净** —— 整个 place 的 `GuiObject` 五类数值属性**一个尾巴都没有**。
+但注意这**不是**「修完了」：它**本来就整**（面板摆的落点就是整刻度）。
+**「改过又退回来」和「根本没改」从计数上看是同一个 0**（取舍 **484**）。
+
+**剩下 233 个 `Model.WorldPivot` 的旋转落在 1e-4–0.01 之间，没动。**
+最坏 **0.00655°**（`Workspace.OtherStuff.ReactorALARM.SpinnyPart`），其余集中在
+`Workspace.OtherStuff.DetailSegment2.Model`：`GiantWarningLight`×6（0.00496 / 0.00376°）、
+`Duct` / `Vent` / `ElectricalBoxDetail`×2（0.00268°）。
+它们是**真实设计角**（75°/45°/60° 那一族）经同一套矩阵分解留下的千分之几度的误差，
+按「尾巴」的定义**不是尾巴**（比上一轮 Attachment 那批的 1.5e-5° 大三十倍）；
+要清只能整个带上，而清它**多半也落不到**（同一张脸）。**留着，报出来。**
