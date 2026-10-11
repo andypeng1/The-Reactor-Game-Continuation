@@ -12627,3 +12627,25 @@ GameFail / GameStart`。
 `.gitignore` 只挡 `originalwatch*/**/inventory.txt`）。
 
 取舍 **470..473**；上手 `docs/RECORDER_HOWTO.md` **§13.9.17**。
+
+### Phase 113 的第二个产物：原版 UI / 手册文本（逐字）
+
+同一份 `Data/flow/original_261011-074137` 的 `TEXT` 通道（1418 条 / 929 个路径）里，
+还整段躺着**原版自己的界面文案**，已抽成 **`docs/ORIGINAL_UI_TEXT.md`**：
+
+- **启动日志 23 行**（`log.panel`，按首次出现顺序）—— 从 `SUBSPACE REACTOR START-UP SEQUENCE INITIATED`
+  到 `STATE 0 DETECTED, STALLOUT POSSIBLE`，完整叙事；
+- **提示文字 3 条**（打字机，第 3 条被班次截断）、**悬停提示 6 条**、**按键绑定 6 条**、
+  **CBL 状态机** `OFFLINE → POWERING → FIRING → ACTIVE → LOW OUTPUT`；
+- **数字反应堆手册 20 页逐字**（`ElectricGridConsole.DRMScreen`，帧名即目录）——
+  含两条把系统串起来的机制：**C-Pumps 运行时以两倍速率劣化**、**QPU 太少 → 全设施机器断电**；
+- **监视器三套故障页**（Disconnect / Reboot / Glitch）、配额面板 + 预报面板、
+  **灯色调色板 6 色**、终局文案。
+
+**还有 `UNATTR` 通道**（本轮最有用的一块）：它记**没有对应点击却变了的控制**，
+于是抓到了原版的**自动启动斜坡** —— `c.cbl{1,2,3}Lvl 4→2→1→0`、`Pct 100→50→10`、
+`cool1..3` 与 `fan1..6` 自己开，全程零点击。**顺带给出控制变量名清单**
+（`cool1..3` / `fan1..6` / `cbl{1,2,3}{On,Lvl,Pct}`）。
+
+**一条方法更正**已进取舍 **474**：`HintText` 的「100 次变化」是**打字机重绘**、`NOISY` 路径的
+「8 次变化」是**整表重画** —— **事件计数 ≠ 状态变化计数**，而记录器**本来就标了 `NOISY`**。

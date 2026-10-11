@@ -1307,3 +1307,8 @@ ReportsDone / GameActive / AutoMed / ResetShift / DecayFields / GameFail / GameS
 **没验的**：**是哪一次按压把堆芯点起来的**，量不出来 —— 只能说「按了这 11 下，它起来了」。
 产物 `Data/flow/original_261011-074137` + `Data/originalwatch/261011-074207/`。
 取舍 **470..473**；上手 `docs/RECORDER_HOWTO.md` **§13.9.17**；待办见 `QUESTIONS.md` **R1**。
+
+> **Phase 113 的第二个产物**：同一份 flow 的 `TEXT` 通道抽成了 **`docs/ORIGINAL_UI_TEXT.md`**
+> —— 启动日志 23 行 / 提示 3 条 / 悬停 6 条 / 按键 6 条 / CBL 状态机 / **数字反应堆手册 20 页逐字** /
+> 监视器三套故障页 / 灯色 6 色 / 控制变量清单（来自 `UNATTR`：原版的自动启动斜坡
+> `cblLvl 4→2→1→0`，零点击）。方法更正进取舍 **474**（事件计数 ≠ 变化计数）。
