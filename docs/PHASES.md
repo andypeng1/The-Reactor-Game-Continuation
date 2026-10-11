@@ -1284,3 +1284,26 @@ sub 按每小节最低响音、pad 按每小节自己的音级、marks 只在段
 另补**绝对尺子**：第一个音在 tick 0，实测音频首个起音 0 ms。**最终 20 项全过。**
 目标响度取 −19.0 不是 −16（波峰因数 21 dB，够 −16 要在每记起音上削 5 dB —— 限幅买来的响度还不回去）。
 版权：三份音频 + `.mid` + 报告全部 gitignore。取舍 **463..469**；系统 §2.20；上手 §5.26。
+
+**Phase 113（2026-10-11）—— 原版的一次完整班次：启动杆到堆芯熔毁。**
+`继续测试收集数据，多测几轮` + `你自己操作`：在**原版**（placeId 17596243941）上经 difz `:28429`
+用 `fireclickdetector` 驱动。这一轮**意外开始**——探「合成按键能不能到达服务器」时按了启动杆，
+记录器自己的 `window.txt` 在那一刻开窗（`opened_at=105.90 why=the start-up lever was clicked`），
+随后是**一整班没有人操作**的堆芯：`COREGATE Stats.GameActive went true` 到最后一行
+`SEAL shift over`。**终局冻结**（两次间隔 79 秒逐字节相同）：`TemperatureVal 9420 / PressureVal 7320 /
+RadiationVal 406 / HDEF.IntegrityVal 99 / OutputVal 144 / BreachVal false / GameActive false`，
+CBL 全退（`Active=false`、`TempVal 925`）；七台监视器停在 `SHUTDOWN PROTOCOL` +
+`CORE COLLAPSE DETECTED ...` + **`REACTOR ENERGY QUOTA NOT MET`**。
+**两条方法更正**：① 记录器的 `CLICK` 通道挂的就是执行器触发的那个信号 ——
+flow 里 11 条 `CLICK` 与我 11 次按压**一一对应**，所以 `window.txt` 那句「启动杆被点击」
+**是自证，不是服务器收据**（反过来的用法才有价值：**计数对不上就是探针坏了**）；
+② **1.4 秒的判据窗口比游戏的状态机短** —— 每一次按压都回 `stats=[]`，而堆芯真的起来了、真的烧到 9420，
+转变只出现在记录器自己的上游行里（同族 §0.19）。
+另：`MaxActivationDistance = 0`（62 个探测器里唯一的例外，正是启动杆自己）**拦不住 `fireclickdetector`** ——
+它管的是玩家输入那条路。
+**顺带取回原版 `Workspace.Stats` 的全量清单**（`STATADD` 38 条 = 32 叶子 + 6 文件夹，含 13 个顶层标量
+`ChamberGravity / GravatronActive / ISEBreach / MainframeMeltdown / ActiveQPUs / NextShift /
+ReportsDone / GameActive / AutoMed / ResetShift / DecayFields / GameFail / GameStart`）。
+**没验的**：**是哪一次按压把堆芯点起来的**，量不出来 —— 只能说「按了这 11 下，它起来了」。
+产物 `Data/flow/original_261011-074137` + `Data/originalwatch/261011-074207/`。
+取舍 **470..473**；上手 `docs/RECORDER_HOWTO.md` **§13.9.17**；待办见 `QUESTIONS.md` **R1**。

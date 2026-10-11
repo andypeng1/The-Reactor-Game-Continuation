@@ -12538,3 +12538,88 @@ ReactorShift 的八度轮廓拟合的，套在这里等于把这首往另一首�
 待办 `docs/TODO.md` **§3.6**。
 
 ---
+## Phase 113（2026-10-11）—— 原版的一次**完整班次**：启动杆 → 堆芯熔毁，`r60` 把整段封存了
+
+**请求**「继续测试收集数据，多测几轮」+「你自己操作」—— 在原版（placeId **17596243941**）上，
+经 difz 的 `:28429` 执行器驱动，一轮 = 一个记录窗口。
+
+**这一轮是意外开始的，而它是目前最完整的一轮。** 我在探「合成按键到底能不能到达服务器」
+的过程中按了 `Workspace.Consoles.MainReactorConsole.StartUpBigLever.StartClickPart`，
+记录器自己的 `window.txt` 在那一刻开窗：
+
+```
+state=open
+opened_at=105.90 why=the start-up lever was clicked at ...StartUpBigLever.StartClickPart
+lever_hooked=true  opened_by_fallback_flag=false
+```
+
+然后是一整班**没有人操作**的堆芯：`COREGATE  Stats.GameActive went true; the core is fully on`
+到最后一行的 `SEAL  shift over (GameActive true to false)`。**收尾是熔毁。**
+
+**终局读数**（两次间隔 79 秒**逐字节相同** → 冻结）：
+
+| 量 | 值 | 量 | 值 |
+|---|---|---|---|
+| `Core.TemperatureVal` | **9420** | `Core.BreachVal` | false |
+| `Core.PressureVal` | **7320** | `Core.HDEFVal` | 0 |
+| `Core.RadiationVal` | **406** | `HDEF.IntegrityVal` | **99** |
+| `Core.OutputVal` | 144 | `CBL1..3.Active` | **false**（`TempVal` 各 925） |
+| `GameActive` | **false** | `Fans.Fan1..6` | 全 true |
+
+**七台监视器全部翻到关机页**，原文（复刻那条失败路径的规格）：
+
+```
+BOOTING IN PROGRESS
+SHUTDOWN PROTOCOL          <-  Main / Power / Thermal 上是 REACTOR SHUTDOWN PROTOCOL
+CORE COLLAPSE DETECTED - PLEASE WAIT WHILE THE REACTOR COMPLETES ITS
+AUTOMATED SHUTDOWN INSTRUCTIONS. ANY INTERRUPTIONS IN THIS PROCESS
+MAY RESULT IN DAMAGE OR INJURY.
+REACTOR ENERGY QUOTA NOT MET
+SMER - CONTROL ROOM MONITOR
+```
+
+（Main / Power / Thermal 同时留着 `MS-1S DIAGNOSTIC MODE` / `MS-1S INFO LOG` /
+`SM.OS - MAINFRAME OPERATING SYSTEM`。）
+
+**两条方法上的更正，都是这一轮才看得见的：**
+
+**① 记录器的 `CLICK` 通道挂的，就是执行器触发的那一个信号。** flow 文件里有 **11 条 `CLICK`**，
+而我那一阵恰好按了 **11 次**（`StartUpLever`×3 / `RoomLight` / `Shutters` / `MonitorPower` /
+`MonitorBoot`×4 / `Fan1`）。所以 `window.txt` 里那句「启动杆被点击」**不是独立证据** ——
+**它看见的就是我的探针**。（好的一面：**两路都进得来** —— `fireclickdetector` 和
+`VirtualInputManager` 都会在通道里留一条，于是它同时是一把**免费的对照尺**：
+按压计数对不上，就是探针本身出了问题。）
+
+**② 1.4 秒的判据窗口比游戏自己的状态机短。** 我每一次按压都判成 `stats=[]`，
+**而堆芯真的起来了、真的烧到 9420、真的熔毁了**。转变只出现在 flow 文件自己的
+`COREGATE` / `SEAL` 两条**上游记录**里，不在我逐次的前后差里。
+**「按下去当场没动」推不出「没生效」** —— 与 §0.19（Wait 回来了推不出回调跑了）同族。
+
+**`MaxActivationDistance = 0` 不拦 `fireclickdetector`。** 62 个控制台探测器里 61 个是 `6`，
+唯一的例外正是**启动杆自己**（`StartUpBigLever.StartClickPart`，`0`）。那一按实测
+`dist 5.16 of 0`，**照样起来了**。官方文档只说这个属性用来「限制玩家离探测器的距离」；
+`fireclickdetector` 直接触发信号、**不走输入管线**，所以那道闸门不在它前面。
+
+**顺带取回一份可核对的清单：** 记录器的 `STATADD` 给了原版 `Workspace.Stats` 的**全部**变量
+（**38 条 = 32 个叶子 + 6 个文件夹**）。叶子是 `Core.{BreachVal,HDEFVal,OutputVal,PressureVal,
+RadiationVal,TemperatureVal}`、`CBL1..3.{Active,TempVal}`、`Fans.Fan1..6`、`HDEF.IntegrityVal`，
+外加 **13 个顶层标量**：`ChamberGravity / GravatronActive / ISEBreach / MainframeMeltdown /
+ActiveQPUs / NextShift / ReportsDone / GameActive / AutoMed / ResetShift / DecayFields /
+GameFail / GameStart`。
+
+**没验的（分开写）：** **是哪一次按压起来的** —— flow 只标出「哪一拍变真」，没有把责任
+指给某一次按压；而 `GameActive` 起来之前的那几次按压我全部判成了 `stats=[]`（见更正 ②）。
+所以这一轮可复现的是**「按了这 11 下，堆芯起来了，然后熔毁」**，**不是**「按第 N 下必起」。
+
+**轮次状态：** `SEAL shift over`；记录器还在跑，窗口仍 `state=open`。
+**下一轮需要游戏离开熔毁画面** —— 要么等它自己复位，要么按 RETURN TO LOBBY，
+而后者在 Phase 103 的禁按名单里。见 `QUESTIONS.md` **`R1`**。
+
+产物：`Data/flow/original_261011-074137`（3575 行事件 / 11 条 `CLICK` / 1 条 `COREGATE` / 1 条 `SEAL`）、
+`Data/originalwatch/261011-074207/`（`summary.txt` 2.6 MB 几何位移 / `rooms.txt` / `suppressed.txt` /
+`tree.txt` / `window.txt` / `health.txt`），以及更早那一段 `original_261011-041352` +
+`originalwatch/261011-041406/`（那一段 `state=closed`、`lever_hooked=false`：
+**窗口从没开过**，时间线就是整段运行）。**两者都在 git 里**（`Data/flow/original_*` 历来跟踪，
+`.gitignore` 只挡 `originalwatch*/**/inventory.txt`）。
+
+取舍 **470..473**；上手 `docs/RECORDER_HOWTO.md` **§13.9.17**。

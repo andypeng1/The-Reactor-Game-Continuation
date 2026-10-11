@@ -1,0 +1,16 @@
+# the recording window -- when this run was being recorded, and what was not
+# rule: from the start-up lever to the shift dial wrapping past 12:00 PM
+state=closed
+opened_at=not yet why=(nothing has opened it)
+closed_at=12485.94 why=the window never opened; the timeline is the whole run
+withheld_before_open=0 line(s), plus 0 audio line(s)
+recorded=1641 line(s)
+lever_path=Consoles.MainReactorConsole.StartUpBigLever.StartClickPart
+lever_hooked=false  reason=the path does not resolve: Consoles.MainReactorConsole.StartUpBigLever.StartClickPart
+opened_by_fallback_flag=false
+clock_path=Monitors.QuotaControlRoomMonitor.Screen.MonitorUI.MainMonitorFrame.TimeFrame.TimeLabel
+clock_text=11:50 PM
+clock_mins=710  (the close rule is the dial FALLING by >= 60 minutes, 2 poll(s) in a row)
+dial_previous_mins=710
+wrap_latched_from=(not latched)  (set when the fall was seen; cleared if the dial came back up)
+wrap_polls=0 of 2

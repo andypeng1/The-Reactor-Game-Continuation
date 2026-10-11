@@ -1,0 +1,3951 @@
+# coverage -- what this watcher has in front of it
+# 33796 instances, 258618 watched properties, 598 roots watched, 0 root(s) skipped
+# 26902 instance(s) needed a path suffix: their GetFullName was not unique
+
+## how the roots were chosen
+# pinned by name: Alarms, Monitors, MonitorsFacility
+# denied by name: (none)
+# a root is watched when its descendant count is <= 30000, unless it is
+#   pinned; roots are taken SMALLEST FIRST until 80000 instances are
+#   spoken for.  Anything else is listed as SKIPPED with its reason.
+
+## Audio/Disconnect (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Boom (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Camera (Camera) -- 0 descendants, 0 watched instances
+
+## Camera (Model) -- 0 descendants, 0 watched instances
+
+## Camera (Model) -- 0 descendants, 0 watched instances
+
+## ClickInfo (Folder) -- 0 descendants, 0 watched instances
+
+## Colossus_AttackLaunch1 (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## ComputerSounds (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## ControlRoomFloor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## Floor (Part) -- 0 descendants, 1 watched instances
+   Part                     1
+
+## GravGateTransitionCatwalk (Model) -- 0 descendants, 22 watched instances
+   Part                     20
+   Texture                  2
+
+## GravityEmblem (Model) -- 0 descendants, 10 watched instances
+   Texture                  6
+   MeshPart                 2
+   Decal                    1
+   Part                     1
+
+## GravityEmblem (Model) -- 0 descendants, 10 watched instances
+   Texture                  6
+   MeshPart                 2
+   Decal                    1
+   Part                     1
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HallwayRoomConnector (Model) -- 0 descendants, 0 watched instances
+
+## HighTemplar_PsionicStormImpact1 (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Large Beam (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Machine ON (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## MainGameControllerScript (Script) -- 0 descendants, 1 watched instances
+   Script                   1
+
+## Meshes/Circle (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Halfcone (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Halfcone (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Hexagon (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Hexagon (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Hexagon (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Hexagon (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Hexagon (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Meshes/Trapezoid (MeshPart) -- 0 descendants, 1 watched instances
+   MeshPart                 1
+
+## Metal Crash 9 (SFX) (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## MiscScript (Script) -- 0 descendants, 1 watched instances
+   Script                   1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 0 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## POWER_SURGE (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 0 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## PhysicsObjects (Folder) -- 0 descendants, 0 watched instances
+
+## ProximityLights (Model) -- 0 descendants, 0 watched instances
+
+## ProximityLights (Model) -- 0 descendants, 0 watched instances
+
+## ProximityLights (Model) -- 0 descendants, 0 watched instances
+
+## RMEmblem (Model) -- 0 descendants, 0 watched instances
+
+## RMEmblem (Model) -- 0 descendants, 0 watched instances
+
+## ShootStyleLanding (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## SpawnLocation (SpawnLocation) -- 0 descendants, 1 watched instances
+   SpawnLocation            1
+
+## Surge Ground Hit - Brawl Stars SFX (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## TARDIS Energy Recharge (Fixed) (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## TeamSpawns (Folder) -- 0 descendants, 0 watched instances
+
+## Terrain (Terrain) -- 0 descendants, 1 watched instances
+   Terrain                  1
+
+## Union (UnionOperation) -- 0 descendants, 2 watched instances
+   Texture                  1
+   UnionOperation           1
+
+## Union (UnionOperation) -- 0 descendants, 2 watched instances
+   Texture                  1
+   UnionOperation           1
+
+## Union (UnionOperation) -- 0 descendants, 2 watched instances
+   Texture                  1
+   UnionOperation           1
+
+## Union (UnionOperation) -- 0 descendants, 2 watched instances
+   Texture                  1
+   UnionOperation           1
+
+## Union (UnionOperation) -- 0 descendants, 2 watched instances
+   Texture                  1
+   UnionOperation           1
+
+## WallLight (Model) -- 0 descendants, 13 watched instances
+   Part                     11
+   SurfaceLight             1
+   UnionOperation           1
+
+## WallLight (Model) -- 0 descendants, 13 watched instances
+   Part                     11
+   SurfaceLight             1
+   UnionOperation           1
+
+## WarningSigns (Model) -- 0 descendants, 0 watched instances
+
+## WarningSigns (Model) -- 0 descendants, 0 watched instances
+
+## Wedge (WedgePart) -- 0 descendants, 1 watched instances
+   WedgePart                1
+
+## Wedge (WedgePart) -- 0 descendants, 1 watched instances
+   WedgePart                1
+
+## generator_on_sfx (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## mri scan sound effects (Sound) -- 0 descendants, 1 watched instances
+   Sound                    1
+
+## Baseplate (Part) -- 1 descendants, 2 watched instances
+   Part                     1
+   Texture                  1
+
+## ChamberCoolantPipe2 (Model) -- 1 descendants, 0 watched instances
+
+## ChamberCoolantPipe3 (Model) -- 1 descendants, 0 watched instances
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## ChamberRadIcon (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## HEV Suit Battery (Sound) -- 1 descendants, 2 watched instances
+   PitchShiftSoundEffect    1
+   Sound                    1
+
+## JetpackStart (Sound) -- 1 descendants, 2 watched instances
+   Sound                    2
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Line (Part) -- 1 descendants, 2 watched instances
+   Decal                    1
+   Part                     1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 1 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 1 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## TextPart (Part) -- 1 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 1 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## Union (UnionOperation) -- 1 descendants, 2 watched instances
+   Texture                  1
+   UnionOperation           1
+
+## ExitSound (Sound) -- 2 descendants, 3 watched instances
+   DistortionSoundEffect    1
+   EqualizerSoundEffect     1
+   Sound                    1
+
+## FloorTextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## FloorTextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## FloorTextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## FloorTextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## FloorTextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## HallwayRoomConnector (Model) -- 2 descendants, 0 watched instances
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 2 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Screen (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## Screen (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## TextPart (Part) -- 2 descendants, 3 watched instances
+   Part                     1
+   SurfaceGui               1
+   TextLabel                1
+
+## Vacuum Cleaner 1 (SFX) (Sound) -- 2 descendants, 3 watched instances
+   Sound                    2
+   PitchShiftSoundEffect    1
+
+## Model (Model) -- 3 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 3 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 3 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 3 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 3 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Part (Part) -- 3 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 3 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Model (Model) -- 4 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## EnterSound (Sound) -- 5 descendants, 6 watched instances
+   EqualizerSoundEffect     3
+   DistortionSoundEffect    1
+   PitchShiftSoundEffect    1
+   Sound                    1
+
+## CHMBRBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## CreepySounds (Script) -- 6 descendants, 7 watched instances
+   Sound                    6
+   Script                   1
+
+## DebrisEffects (Folder) -- 6 descendants, 6 watched instances
+   ParticleEmitter          4
+   Part                     2
+
+## GRAVBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## Part (Part) -- 6 descendants, 7 watched instances
+   Texture                  6
+   Part                     1
+
+## RMFBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## SHAFTHMBlastDoor (Model) -- 6 descendants, 0 watched instances
+
+## GravGate (Model) -- 7 descendants, 55 watched instances
+   Part                     31
+   Attachment               4
+   EqualizerSoundEffect     4
+   ParticleEmitter          4
+   UnionOperation           4
+   DistortionSoundEffect    2
+   PointLight               2
+   Sound                    2
+   PitchShiftSoundEffect    1
+   Script                   1
+
+## SpeakerPart (UnionOperation) -- 7 descendants, 8 watched instances
+   Sound                    7
+   UnionOperation           1
+
+## Model (Model) -- 8 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 8 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 9 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## UISounds (Folder) -- 9 descendants, 9 watched instances
+   Sound                    7
+   EqualizerSoundEffect     2
+
+## Billy (Model) -- 10 descendants, 10 watched instances
+   Part                     10
+
+## GravityEmblem (Model) -- 10 descendants, 10 watched instances
+   Texture                  6
+   MeshPart                 2
+   Decal                    1
+   Part                     1
+
+## GravityEmblem (Model) -- 10 descendants, 10 watched instances
+   Texture                  6
+   MeshPart                 2
+   Decal                    1
+   Part                     1
+
+## Model (Model) -- 10 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 10 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 10 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 10 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 10 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## QPU (Tool) -- 10 descendants, 4 watched instances
+   BoolValue                2
+   LocalScript              1
+   Script                   1
+
+## QPU (Tool) -- 10 descendants, 4 watched instances
+   BoolValue                2
+   LocalScript              1
+   Script                   1
+
+## QPU (Tool) -- 10 descendants, 4 watched instances
+   BoolValue                2
+   LocalScript              1
+   Script                   1
+
+## Skelebonejones (Model) -- 12 descendants, 12 watched instances
+   Part                     6
+   SpecialMesh              6
+
+## ChamberCoolantPipe1 (Model) -- 13 descendants, 12 watched instances
+   UnionOperation           4
+   Part                     2
+   SurfaceGui               2
+   TextLabel                2
+   ParticleEmitter          1
+   Sound                    1
+
+## Model (Model) -- 13 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 13 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 13 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 13 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 13 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## WallLight (Model) -- 13 descendants, 13 watched instances
+   Part                     11
+   SurfaceLight             1
+   UnionOperation           1
+
+## WallLight (Model) -- 13 descendants, 13 watched instances
+   Part                     11
+   SurfaceLight             1
+   UnionOperation           1
+
+## MainframeToolStorageCull (Folder) -- 14 descendants, 0 watched instances
+
+## RCBlastDoor (Model) -- 14 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 18 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## Model (Model) -- 19 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## HMGatewayRoom (Model) -- 20 descendants, 0 watched instances
+
+## RMGatewayRoom (Model) -- 20 descendants, 0 watched instances
+
+## MainHallwaySegment (Model) -- 21 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## GravGateTransitionCatwalk (Model) -- 22 descendants, 22 watched instances
+   Part                     20
+   Texture                  2
+
+## Model (Model) -- 22 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 22 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 22 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## MainHallwaySegment (Model) -- 24 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## MainHallwaySegment (Model) -- 24 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## MainHallwaySegment (Model) -- 24 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## MainHallwaySegment (Model) -- 24 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## MainHallwaySegment (Model) -- 24 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## AscendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## AscendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## DescendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## DescendingShaft (Model) -- 25 descendants, 1 watched instances
+   Script                   1
+
+## MES (Model) -- 26 descendants, 0 watched instances
+
+## Model (Model) -- 28 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## CRC1_AscendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC1_DescendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC2_AscendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC2_DescendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC3_AscendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## CRC3_DescendingShaft (Model) -- 30 descendants, 3 watched instances
+   NumberValue              1
+   ObjectValue              1
+   Script                   1
+
+## MedicalDispenser (Model) -- 30 descendants, 0 watched instances
+
+## Model (Model) -- 31 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## ReserviorCatwalk (Model) -- 31 descendants, 29 watched instances
+   Part                     27
+   Texture                  2
+
+## Stats (Folder) -- 38 descendants, 32 watched instances
+   BoolValue                21
+   IntValue                 11
+
+## Rig (Model) -- 43 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## TrashMilitaryDoor1 (Model) -- 44 descendants, 34 watched instances
+   Part                     12
+   Decal                    6
+   Texture                  6
+   SurfaceGui               4
+   TextLabel                4
+   UnionOperation           2
+
+## LoungeLights (Model) -- 45 descendants, 30 watched instances
+   Part                     27
+   SurfaceLight             3
+
+## Rig (Model) -- 46 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## VentLever (Model) -- 46 descendants, 45 watched instances
+   Part                     27
+   Decal                    6
+   Texture                  4
+   SurfaceGui               2
+   TextLabel                2
+   UnionOperation           2
+   WedgePart                2
+
+## Rig (Model) -- 48 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Rig (Model) -- 50 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Rig (Model) -- 51 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Rig (Model) -- 52 descendants, 13 watched instances
+   StringValue              8
+   NumberValue              3
+   LocalScript              1
+   ObjectValue              1
+
+## Model (Model) -- 55 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 55 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## CoolingPanel (Model) -- 57 descendants, 50 watched instances
+   Part                     33
+   SurfaceGui               6
+   TextLabel                6
+   Decal                    4
+   Texture                  1
+
+## Model (Model) -- 59 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## GravGate (Model) -- 63 descendants, 55 watched instances
+   Part                     31
+   Attachment               4
+   EqualizerSoundEffect     4
+   ParticleEmitter          4
+   UnionOperation           4
+   DistortionSoundEffect    2
+   PointLight               2
+   Sound                    2
+   PitchShiftSoundEffect    1
+   Script                   1
+
+## TrashMilitaryDoor (Model) -- 77 descendants, 75 watched instances
+   Part                     51
+   WedgePart                8
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  2
+
+## MonitorsFacility (Folder) -- 80 descendants, 0 watched instances
+
+## LoungeTowerMonitor (Model) -- 92 descendants, 88 watched instances
+   Frame                    27
+   Part                     23
+   TextLabel                11
+   ImageLabel               8
+   Texture                  8
+   SurfaceGui               4
+   EqualizerSoundEffect     2
+   Sound                    2
+   Script                   1
+   SurfaceLight             1
+   UnionOperation           1
+
+## ToolStorageFacility (Model) -- 92 descendants, 12 watched instances
+   LocalScript              4
+   Script                   4
+   StringValue              4
+
+## ToolStorageFacility (Model) -- 100 descendants, 12 watched instances
+   LocalScript              4
+   Script                   4
+   StringValue              4
+
+## UpgradeTowerMonitor (Model) -- 124 descendants, 114 watched instances
+   Part                     23
+   Frame                    22
+   ImageLabel               22
+   TextLabel                18
+   TextButton               11
+   Texture                  8
+   Sound                    4
+   SurfaceGui               4
+   Script                   1
+   UnionOperation           1
+
+## 123434567963 (Model) -- 126 descendants, 70 watched instances
+   Attachment               21
+   Part                     9
+   Sound                    9
+   StringValue              9
+   LocalScript              7
+   Vector3Value             4
+   NumberValue              3
+   SpecialMesh              3
+   Decal                    2
+   BoolValue                1
+   IntValue                 1
+   Script                   1
+
+## Model (Model) -- 137 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## SoundBlocks (Folder) -- 144 descendants, 144 watched instances
+   ParticleEmitter          36
+   Sound                    35
+   EqualizerSoundEffect     25
+   DistortionSoundEffect    22
+   Attachment               18
+   PitchShiftSoundEffect    5
+   Part                     3
+
+## Model (Model) -- 148 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 179 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## Model (Model) -- 182 descendants, 169 watched instances
+   Part                     149
+   Decal                    6
+   SurfaceGui               4
+   TextLabel                4
+   Texture                  3
+   SurfaceLight             1
+   UnionOperation           1
+   WedgePart                1
+
+## IABlastDoor (Model) -- 213 descendants, 158 watched instances
+   Decal                    50
+   Part                     45
+   Texture                  24
+   UnionOperation           11
+   SurfaceLight             10
+   Sound                    7
+   SurfaceGui               4
+   TextLabel                4
+   EqualizerSoundEffect     2
+   ParticleEmitter          1
+
+## EmployeeScreen (Model) -- 238 descendants, 221 watched instances
+   TextLabel                76
+   Part                     64
+   Frame                    44
+   ImageLabel               9
+   SurfaceGui               9
+   EqualizerSoundEffect     6
+   Sound                    6
+   Texture                  6
+   SurfaceLight             1
+
+## Sounds (Folder) -- 278 descendants, 266 watched instances
+   Sound                    205
+   EqualizerSoundEffect     29
+   DistortionSoundEffect    14
+   ReverbSoundEffect        7
+   PitchShiftSoundEffect    5
+   CompressorSoundEffect    3
+   EchoSoundEffect          3
+
+## RoomLights (Folder) -- 295 descendants, 68 watched instances
+   Part                     58
+   SurfaceLight             10
+
+## CRC1 (Model) -- 303 descendants, 0 watched instances
+
+## CRC2 (Model) -- 303 descendants, 0 watched instances
+
+## CRC3 (Model) -- 303 descendants, 0 watched instances
+
+## Core (Model) -- 320 descendants, 318 watched instances
+   ParticleEmitter          93
+   Sound                    60
+   Beam                     53
+   Attachment               27
+   PointLight               26
+   EqualizerSoundEffect     20
+   DistortionSoundEffect    19
+   Part                     9
+   ReverbSoundEffect        6
+   PitchShiftSoundEffect    2
+   Script                   2
+   MeshPart                 1
+
+## MainHallwaySegment (Model) -- 452 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## MainHallwaySegment (Model) -- 505 descendants, 481 watched instances
+   Part                     408
+   MeshPart                 28
+   UnionOperation           23
+   Attachment               12
+   RopeConstraint           6
+   ParticleEmitter          2
+   Texture                  2
+
+## ChamberWalls (Folder) -- 574 descendants, 415 watched instances
+   Part                     359
+   UnionOperation           15
+   Texture                  14
+   WedgePart                10
+   ParticleEmitter          8
+   MeshPart                 5
+   Attachment               4
+
+## METU (Model) -- 629 descendants, 429 watched instances
+   Part                     326
+   UnionOperation           25
+   MeshPart                 24
+   Texture                  11
+   Decal                    9
+   ParticleEmitter          8
+   PointLight               4
+   StringValue              4
+   SurfaceLight             4
+   SpecialMesh              3
+   SurfaceGui               3
+   TextLabel                3
+   ClickDetector            2
+   Sound                    2
+   Attachment               1
+
+## Alarms (Folder) -- 650 descendants, 354 watched instances
+   Part                     212
+   Sound                    20
+   Attachment               18
+   SurfaceLight             16
+   SpecialMesh              15
+   MeshPart                 13
+   EqualizerSoundEffect     11
+   DistortionSoundEffect    10
+   HingeConstraint          9
+   CompressorSoundEffect    8
+   EchoSoundEffect          8
+   UnionOperation           8
+   Decal                    2
+   SurfaceGui               2
+   TextLabel                2
+
+## RLGatewayRoom (Model) -- 662 descendants, 586 watched instances
+   Part                     289
+   MeshPart                 77
+   Frame                    63
+   UnionOperation           46
+   TextLabel                36
+   PointLight               15
+   SurfaceGui               13
+   Texture                  8
+   Sound                    7
+   Attachment               5
+   ImageLabel               5
+   ParticleEmitter          4
+   PitchShiftSoundEffect    4
+   Decal                    3
+   ClickDetector            2
+   EqualizerSoundEffect     2
+   StringValue              2
+   BoolValue                1
+   DistortionSoundEffect    1
+   ScrollingFrame           1
+   SpotLight                1
+   TextButton               1
+
+## GravatronUnit (Model) -- 663 descendants, 321 watched instances
+   Part                     192
+   ParticleEmitter          28
+   Attachment               19
+   Decal                    18
+   Texture                  12
+   Sound                    9
+   Beam                     8
+   EqualizerSoundEffect     6
+   DistortionSoundEffect    5
+   MeshPart                 4
+   SurfaceGui               4
+   SurfaceLight             4
+   TextLabel                4
+   Script                   2
+   UnionOperation           2
+   HingeConstraint          1
+   PitchShiftSoundEffect    1
+   ReverbSoundEffect        1
+   SpecialMesh              1
+
+## PowerExtractionAssembly (Model) -- 914 descendants, 806 watched instances
+   Part                     717
+   MeshPart                 44
+   Texture                  23
+   ParticleEmitter          10
+   UnionOperation           4
+   Attachment               3
+   PointLight               3
+   EqualizerSoundEffect     1
+   Sound                    1
+
+## Lights (Folder) -- 933 descendants, 527 watched instances
+   Part                     394
+   SurfaceLight             59
+   UnionOperation           27
+   PointLight               24
+   Sound                    15
+   EqualizerSoundEffect     4
+   ReverbSoundEffect        4
+
+## GravitationShafts (Folder) -- 1139 descendants, 783 watched instances
+   Part                     643
+   UnionOperation           28
+   Attachment               22
+   ImageLabel               16
+   PointLight               14
+   EqualizerSoundEffect     9
+   TextLabel                8
+   NumberValue              6
+   ObjectValue              6
+   ParticleEmitter          6
+   Script                   6
+   Sound                    5
+   DistortionSoundEffect    4
+   SurfaceGui               4
+   Texture                  4
+   PitchShiftSoundEffect    2
+
+## Monitors (Folder) -- 1754 descendants, 1648 watched instances
+   Frame                    742
+   TextLabel                501
+   ImageLabel               220
+   Part                     112
+   SurfaceLight             30
+   SurfaceGui               21
+   Texture                  7
+   ScrollingFrame           5
+   Script                   3
+   Sound                    3
+   EqualizerSoundEffect     2
+   PitchShiftSoundEffect    2
+
+## QuantumMainframe (Model) -- 2208 descendants, 24 watched instances
+   BoolValue                12
+   LocalScript              6
+   Script                   6
+
+## Consoles (Folder) -- 3636 descendants, 3362 watched instances
+   Part                     1903
+   TextLabel                350
+   Decal                    232
+   Frame                    181
+   SurfaceGui               174
+   StringValue              114
+   Texture                  82
+   Sound                    65
+   ClickDetector            62
+   UnionOperation           51
+   WedgePart                33
+   ParticleEmitter          17
+   EqualizerSoundEffect     16
+   TextButton               16
+   ScrollingFrame           15
+   MeshPart                 12
+   PitchShiftSoundEffect    12
+   ImageLabel               11
+   DistortionSoundEffect    7
+   Attachment               6
+   PointLight               1
+   Script                   1
+   SurfaceLight             1
+
+## CullFolder (Folder) -- 7409 descendants, 6699 watched instances
+   Part                     4293
+   Texture                  722
+   UnionOperation           511
+   MeshPart                 477
+   Decal                    249
+   Attachment               98
+   SurfaceGui               92
+   TextLabel                91
+   PointLight               40
+   RopeConstraint           30
+   Sound                    24
+   ParticleEmitter          19
+   Seat                     15
+   SurfaceLight             14
+   SpecialMesh              8
+   EqualizerSoundEffect     6
+   ImageLabel               5
+   DistortionSoundEffect    2
+   StringValue              2
+   Script                   1
+
+## ReactorCBLs (Folder) -- 8292 descendants, 7335 watched instances
+   Part                     3938
+   Texture                  1000
+   WedgePart                970
+   MeshPart                 420
+   SpecialMesh              312
+   UnionOperation           200
+   ParticleEmitter          140
+   Decal                    96
+   Attachment               54
+   BlockMesh                36
+   Sound                    26
+   SurfaceGui               24
+   TextLabel                24
+   EqualizerSoundEffect     20
+   PointLight               18
+   StringValue              16
+   DistortionSoundEffect    10
+   BoolValue                8
+   NumberValue              8
+   HingeConstraint          6
+   Script                   5
+   ReverbSoundEffect        4
+
+## MovingParts (Folder) -- 8683 descendants, 6022 watched instances
+   Part                     3100
+   MeshPart                 946
+   Decal                    474
+   Texture                  296
+   SurfaceLight             235
+   WedgePart                104
+   UnionOperation           102
+   ParticleEmitter          97
+   CornerWedgePart          96
+   Attachment               84
+   SurfaceGui               74
+   Sound                    71
+   TextLabel                70
+   EqualizerSoundEffect     36
+   ObjectValue              36
+   Beam                     31
+   BoolValue                31
+   PointLight               19
+   HingeConstraint          15
+   Script                   15
+   StringValue              14
+   ClickDetector            13
+   DistortionSoundEffect    11
+   PitchShiftSoundEffect    11
+   BillboardGui             9
+   ImageLabel               8
+   SpecialMesh              5
+   IntValue                 4
+   NumberValue              4
+   Highlight                3
+   ReverbSoundEffect        3
+   CompressorSoundEffect    2
+   EchoSoundEffect          2
+   Trail                    1
+
+## Audio -- 14 instance(s) OUTSIDE the watched roots, kept as properties
+   SoundGroup               7
+   EqualizerSoundEffect     4
+   DistortionSoundEffect    3
+
+## audio-only scope -- playback hooks, plus a property watch on the mixer only (1878 hook(s) attached, 0 refused)
+   Sounds inside the watched roots 621
+   SoundService             SoundService, 8 descendant(s), 1 Sound(s) hooked
+   Workspace                Workspace, 45584 descendant(s), 621 Sound(s) hooked
+   ReplicatedStorage        ReplicatedStorage, 23269 descendant(s), 4 Sound(s) hooked
+   ReplicatedFirst          ReplicatedFirst, 1 descendant(s), 0 Sound(s) hooked
+   TOTAL Sounds hooked      626   (roots 621 + audio-only 5)
+
+## roots watched (598)
+   Audio/Disconnect                   Sound               0 descendants        0 parts
+   Boom                               Sound               0 descendants        0 parts
+   Camera                             Camera              0 descendants        0 parts
+   Camera                             Model               0 descendants        0 parts
+   Camera                             Model               0 descendants        0 parts
+   ClickInfo                          Folder              0 descendants        0 parts
+   Colossus_AttackLaunch1             Sound               0 descendants        0 parts
+   ComputerSounds                     Sound               0 descendants        0 parts
+   ControlRoomFloor                   Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   Floor                              Part                0 descendants        0 parts
+   GravGateTransitionCatwalk          Model               0 descendants        0 parts
+   GravityEmblem                      Model               0 descendants        0 parts
+   GravityEmblem                      Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HallwayRoomConnector               Model               0 descendants        0 parts
+   HighTemplar_PsionicStormImpact1    Sound               0 descendants        0 parts
+   Large Beam                         Sound               0 descendants        0 parts
+   Machine ON                         Sound               0 descendants        0 parts
+   MainGameControllerScript           Script              0 descendants        0 parts
+   Meshes/Circle                      MeshPart            0 descendants        0 parts
+   Meshes/Halfcone                    MeshPart            0 descendants        0 parts
+   Meshes/Halfcone                    MeshPart            0 descendants        0 parts
+   Meshes/Hexagon                     MeshPart            0 descendants        0 parts
+   Meshes/Hexagon                     MeshPart            0 descendants        0 parts
+   Meshes/Hexagon                     MeshPart            0 descendants        0 parts
+   Meshes/Hexagon                     MeshPart            0 descendants        0 parts
+   Meshes/Hexagon                     MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Meshes/Trapezoid                   MeshPart            0 descendants        0 parts
+   Metal Crash 9 (SFX)                Sound               0 descendants        0 parts
+   MiscScript                         Script              0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   Model                              Model               0 descendants        0 parts
+   POWER_SURGE                        Sound               0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   Part                               Part                0 descendants        0 parts
+   PhysicsObjects                     Folder              0 descendants        0 parts
+   ProximityLights                    Model               0 descendants        0 parts
+   ProximityLights                    Model               0 descendants        0 parts
+   ProximityLights                    Model               0 descendants        0 parts
+   RMEmblem                           Model               0 descendants        0 parts
+   RMEmblem                           Model               0 descendants        0 parts
+   ShootStyleLanding                  Sound               0 descendants        0 parts
+   SpawnLocation                      SpawnLocation        0 descendants        0 parts
+   Surge Ground Hit - Brawl Stars SFX Sound               0 descendants        0 parts
+   TARDIS Energy Recharge (Fixed)     Sound               0 descendants        0 parts
+   TeamSpawns                         Folder              0 descendants        0 parts
+   Terrain                            Terrain             0 descendants        0 parts
+   Union                              UnionOperation        0 descendants        0 parts
+   Union                              UnionOperation        0 descendants        0 parts
+   Union                              UnionOperation        0 descendants        0 parts
+   Union                              UnionOperation        0 descendants        0 parts
+   Union                              UnionOperation        0 descendants        0 parts
+   WallLight                          Model               0 descendants        0 parts
+   WallLight                          Model               0 descendants        0 parts
+   WarningSigns                       Model               0 descendants        0 parts
+   WarningSigns                       Model               0 descendants        0 parts
+   Wedge                              WedgePart           0 descendants        0 parts
+   Wedge                              WedgePart           0 descendants        0 parts
+   generator_on_sfx                   Sound               0 descendants        0 parts
+   mri scan sound effects             Sound               0 descendants        0 parts
+   Baseplate                          Part                1 descendants        0 parts
+   ChamberCoolantPipe2                Model               1 descendants        0 parts
+   ChamberCoolantPipe3                Model               1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   ChamberRadIcon                     Part                1 descendants        0 parts
+   HEV Suit Battery                   Sound               1 descendants        0 parts
+   JetpackStart                       Sound               1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Line                               Part                1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Model                              Model               1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   Part                               Part                1 descendants        0 parts
+   TextPart                           Part                1 descendants        0 parts
+   TextPart                           Part                1 descendants        0 parts
+   Union                              UnionOperation        1 descendants        0 parts
+   ExitSound                          Sound               2 descendants        0 parts
+   FloorTextPart                      Part                2 descendants        0 parts
+   FloorTextPart                      Part                2 descendants        0 parts
+   FloorTextPart                      Part                2 descendants        0 parts
+   FloorTextPart                      Part                2 descendants        0 parts
+   FloorTextPart                      Part                2 descendants        0 parts
+   HallwayRoomConnector               Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Model                              Model               2 descendants        0 parts
+   Screen                             Part                2 descendants        0 parts
+   Screen                             Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   TextPart                           Part                2 descendants        0 parts
+   Vacuum Cleaner 1 (SFX)             Sound               2 descendants        0 parts
+   Model                              Model               3 descendants        0 parts
+   Model                              Model               3 descendants        3 parts
+   Model                              Model               3 descendants        3 parts
+   Model                              Model               3 descendants        0 parts
+   Model                              Model               3 descendants        3 parts
+   Part                               Part                3 descendants        0 parts
+   Part                               Part                3 descendants        0 parts
+   Model                              Model               4 descendants        4 parts
+   EnterSound                         Sound               5 descendants        0 parts
+   CHMBRBlastDoor                     Model               6 descendants        0 parts
+   CreepySounds                       Script              6 descendants        0 parts
+   DebrisEffects                      Folder              6 descendants        2 parts
+   GRAVBlastDoor                      Model               6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   Part                               Part                6 descendants        0 parts
+   RMFBlastDoor                       Model               6 descendants        0 parts
+   SHAFTHMBlastDoor                   Model               6 descendants        0 parts
+   GravGate                           Model               7 descendants        0 parts
+   SpeakerPart                        UnionOperation        7 descendants        0 parts
+   Model                              Model               8 descendants        8 parts
+   Model                              Model               8 descendants        8 parts
+   Model                              Model               9 descendants        8 parts
+   UISounds                           Folder              9 descendants        0 parts
+   Billy                              Model              10 descendants       10 parts
+   GravityEmblem                      Model              10 descendants        3 parts
+   GravityEmblem                      Model              10 descendants        3 parts
+   Model                              Model              10 descendants        3 parts
+   Model                              Model              10 descendants        3 parts
+   Model                              Model              10 descendants        7 parts
+   Model                              Model              10 descendants        3 parts
+   Model                              Model              10 descendants        3 parts
+   QPU                                Tool               10 descendants        0 parts
+   QPU                                Tool               10 descendants        0 parts
+   QPU                                Tool               10 descendants        0 parts
+   Skelebonejones                     Model              12 descendants        6 parts
+   ChamberCoolantPipe1                Model              13 descendants        6 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        0 parts
+   Model                              Model              13 descendants        5 parts
+   WallLight                          Model              13 descendants       12 parts
+   WallLight                          Model              13 descendants       12 parts
+   MainframeToolStorageCull           Folder             14 descendants        0 parts
+   RCBlastDoor                        Model              14 descendants        0 parts
+   MainHallwaySegment                 Model              18 descendants        0 parts
+   Model                              Model              19 descendants       10 parts
+   HMGatewayRoom                      Model              20 descendants        0 parts
+   RMGatewayRoom                      Model              20 descendants        0 parts
+   MainHallwaySegment                 Model              21 descendants        0 parts
+   GravGateTransitionCatwalk          Model              22 descendants       20 parts
+   Model                              Model              22 descendants        0 parts
+   Model                              Model              22 descendants        0 parts
+   Model                              Model              22 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   MainHallwaySegment                 Model              24 descendants        0 parts
+   AscendingShaft                     Model              25 descendants        0 parts
+   AscendingShaft                     Model              25 descendants        0 parts
+   DescendingShaft                    Model              25 descendants        0 parts
+   DescendingShaft                    Model              25 descendants        0 parts
+   MES                                Model              26 descendants        0 parts
+   Model                              Model              28 descendants       19 parts
+   CRC1_AscendingShaft                Model              30 descendants        0 parts
+   CRC1_DescendingShaft               Model              30 descendants        0 parts
+   CRC2_AscendingShaft                Model              30 descendants        0 parts
+   CRC2_DescendingShaft               Model              30 descendants        0 parts
+   CRC3_AscendingShaft                Model              30 descendants        0 parts
+   CRC3_DescendingShaft               Model              30 descendants        0 parts
+   MedicalDispenser                   Model              30 descendants        0 parts
+   Model                              Model              31 descendants       23 parts
+   ReserviorCatwalk                   Model              31 descendants       27 parts
+   Stats                              Folder             38 descendants        0 parts
+   Rig                                Model              43 descendants        0 parts
+   TrashMilitaryDoor1                 Model              44 descendants       14 parts
+   LoungeLights                       Model              45 descendants       27 parts
+   Rig                                Model              46 descendants        0 parts
+   VentLever                          Model              46 descendants       31 parts
+   Rig                                Model              48 descendants        0 parts
+   Rig                                Model              50 descendants        0 parts
+   Rig                                Model              51 descendants        0 parts
+   Rig                                Model              52 descendants        0 parts
+   Model                              Model              55 descendants       15 parts
+   Model                              Model              55 descendants       15 parts
+   CoolingPanel                       Model              57 descendants       33 parts
+   Model                              Model              59 descendants        0 parts
+   GravGate                           Model              63 descendants       35 parts
+   TrashMilitaryDoor                  Model              77 descendants       59 parts
+   MonitorsFacility                   Folder             80 descendants        0 parts
+   LoungeTowerMonitor                 Model              92 descendants       24 parts
+   ToolStorageFacility                Model              92 descendants        0 parts
+   ToolStorageFacility                Model             100 descendants        0 parts
+   UpgradeTowerMonitor                Model             124 descendants       24 parts
+   123434567963                       Model             126 descendants        9 parts
+   Model                              Model             137 descendants       90 parts
+   SoundBlocks                        Folder            144 descendants        3 parts
+   Model                              Model             148 descendants      102 parts
+   Model                              Model             179 descendants      133 parts
+   Model                              Model             182 descendants      151 parts
+   IABlastDoor                        Model             213 descendants       56 parts
+   EmployeeScreen                     Model             238 descendants       64 parts
+   Sounds                             Folder            278 descendants        0 parts
+   RoomLights                         Folder            295 descendants       58 parts
+   CRC1                               Model             303 descendants        0 parts
+   CRC2                               Model             303 descendants        0 parts
+   CRC3                               Model             303 descendants        0 parts
+   Core                               Model             320 descendants       10 parts
+   MainHallwaySegment                 Model             452 descendants      418 parts
+   MainHallwaySegment                 Model             505 descendants      459 parts
+   ChamberWalls                       Folder            574 descendants      389 parts
+   METU                               Model             629 descendants      375 parts
+   Alarms                             Folder            650 descendants      233 parts
+   RLGatewayRoom                      Model             662 descendants      412 parts
+   GravatronUnit                      Model             663 descendants      198 parts
+   PowerExtractionAssembly            Model             914 descendants      765 parts
+   Lights                             Folder            933 descendants      421 parts
+   GravitationShafts                  Folder           1139 descendants      671 parts
+   Monitors                           Folder           1754 descendants      112 parts
+   QuantumMainframe                   Model            2208 descendants        0 parts
+   Consoles                           Folder           3636 descendants     1999 parts
+   CullFolder                         Folder           7409 descendants     5296 parts
+   ReactorCBLs                        Folder           8292 descendants     5528 parts
+   MovingParts                        Folder           8683 descendants     4348 parts

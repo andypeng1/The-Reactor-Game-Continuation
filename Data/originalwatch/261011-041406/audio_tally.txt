@@ -1,0 +1,32 @@
+# 626 Sound(s) hooked; 1878 hook(s) attached, 0 refused; 86 play/stop/end event(s) seen
+# 26 of them have been audible; 0 play(s) were caught by the poll and NOT by a hook
+# 19 were ALREADY playing when the watcher attached -- a hook cannot see those, and
+# their asset and bus were read off the instance instead of off a Played event
+# audible by bus: EnvironmentSounds=14  (unknown)=6  (none)=4  MusicSounds=1  Interactables=1
+
+Audio              ReplicatedStorage.CulledParts.LowerRMSector.LowerRMRoom.Model.Model.ShaftAmbientPart.ShaftAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000156.33 04:16:42
+ChamberCoolantPipe1 ChamberCoolantPipe1.CoolantBlock.CoolantBlockUnion.CoolantVentSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000155.65 04:16:41
+Consoles           Consoles.ALTReactorConsole.ControlRoomSystems.RoomLightButton.ClickPart.ButtonSound | plays=1 stops=0 ends=1 | bus=Interactables | id=rbxassetid://5670209472 | last t=0000356.13 04:20:02
+Consoles           Consoles.HDEFGenerator.Glass.AmbientHDEFGen | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://1477617411 | last t=0000157.38 04:16:43
+Core               Core.CORE.Model.Modified_Energy_Sound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://13331862090 | last t=0000153.97 04:16:40
+Core               Core.CORE.Modified_Energy_Sound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://13331862090 | last t=0000153.98 04:16:40
+CullFolder         CullFolder.ReactorLounge.Model.Model.Model.Vent.Meshes/AThing.VentSFX #2 | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000001.23 04:14:07
+CullFolder         CullFolder.ReactorLounge.Model.Model.Model.Vent.Meshes/AThing.VentSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://1258244371 | last t=0000001.06 04:14:07
+GravatronUnit      GravatronUnit.CenterPart.LiftRunning | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9062616055 | last t=0000155.41 04:16:41
+GravatronUnit      GravatronUnit.CenterPart.ReactorAltSound | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://167115397 | last t=0000155.41 04:16:41
+GravatronUnit      GravatronUnit.SpinnyThing.EndSpinnyPart.SoundPart.AmbientMove | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9105868334 | last t=0000155.41 04:16:41
+GravatronUnit      GravatronUnit.SpinnyThing.EndSpinnyPart2.SoundPart.AmbientMove | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9105868334 | last t=0000155.36 04:16:41
+GravitationShafts  GravitationShafts.ShaftAmbientPart.ShaftAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://9116386389 | last t=0000157.34 04:16:43
+METU               METU.ECCModule.ECCReceptacle1.ECCWallNeon.ECCAmbience | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://379557765 | last t=0000157.66 04:16:43
+MovingParts        MovingParts.ChamberFan1.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000159.17 04:16:45
+MovingParts        MovingParts.ChamberFan6.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://6871727713 | last t=0000157.69 04:16:43
+MovingParts        MovingParts.LoungeInteriorFan.MotorPart.FanSFX | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=(none) | id=rbxassetid://6871727713 | last t=0000000.86 04:14:07
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.AmbientHum | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2884910274 | last t=0000157.03 04:16:43
+ReactorCBLs        ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.AmbientHum | plays=0 stops=0 ends=0 [ALREADY PLAYING AT t=0] | bus=EnvironmentSounds | id=rbxassetid://2884910274 | last t=0000158.33 04:16:44
+SpeakerPart        SpeakerPart.Crystal Cave | plays=0 stops=0 ends=12 | bus=(unknown) | id=(none) | last t=0012132.07 07:36:18
+SpeakerPart        SpeakerPart.Cut Your Jacobs Off | plays=0 stops=0 ends=12 | bus=(unknown) | id=(none) | last t=0011995.28 07:34:01
+SpeakerPart        SpeakerPart.Funky Beats | plays=0 stops=0 ends=12 | bus=(unknown) | id=(none) | last t=0011901.20 07:32:27
+SpeakerPart        SpeakerPart.Hydraulic Mess | plays=0 stops=0 ends=12 | bus=(unknown) | id=(none) | last t=0011740.86 07:29:47
+SpeakerPart        SpeakerPart.New Store | plays=0 stops=0 ends=12 [ALREADY PLAYING AT t=0] | bus=MusicSounds | id=rbxassetid://1835711635 | last t=0011545.25 07:26:31
+SpeakerPart        SpeakerPart.Reactor | plays=0 stops=0 ends=12 | bus=(unknown) | id=(none) | last t=0012406.72 07:40:53
+SpeakerPart        SpeakerPart.Rumble | plays=0 stops=0 ends=12 | bus=(unknown) | id=(none) | last t=0012341.76 07:39:48

@@ -1940,3 +1940,46 @@ Phase 106/107 那条**真的点亮了反应堆**的配方**没做这个算术**�
 **当前身份**（详见 §13.9.1）：`d9` = **48471** 字节 / **1233** 行 /
 md5 **`97f0e5d4ae6896a173cbb10729baf0b5`**。
 **它从没在活客户端里跑过** —— 活 VM 是 `d4`，而那个会话 Phase 103 就丢了。
+
+### 13.9.17 在原版里用**合成按键**驱动：哪条通道证明什么，以及一轮班次怎么算完（Phase 113）
+
+**这一节补的是 §13.9.15 之前就缺的那一格：按下去之后，是谁在说「它生效了」。**
+
+**① 三条通道，各证一件事，别混用。**
+
+| 通道 | 谁写的 | 它能证明 | 它不能证明 |
+|---|---|---|---|
+| flow 的 `CLICK` | 记录器的杠杆钩子，挂的是**执行器触发的那个信号** | **探针发出去了**（计数对得上） | 服务器收下了 —— 「被点击」是自证 |
+| `Workspace.Stats` | **服务端**写、客户端复制 | **服务器真的动了** | 是哪一次按压让它动的 |
+| flow 的 `COREGATE` / `SEAL` / `CLOCK` | 记录器的**上游**判据 | 状态机**在哪一拍**翻页 | 同样不指认某一次按压 |
+
+**实测对账（Phase 113）**：flow 里 **11 条 `CLICK`**，而我那一阵按了 **11 次** ——
+`StartUpLever`×3、`RoomLight`、`Shutters`、`MonitorPower`、`MonitorBoot`×4、`Fan1`。
+**11 : 11** 是「探针发了 11 发」的证据；它**同时**说明了 `window.txt` 那句
+`why=the start-up lever was clicked` **不能**当独立证据用。
+
+**② 1.4 秒的判据窗口比游戏的状态机短，于是每一次都回 `stats=[]`。**
+而这一次堆芯真的起来了 —— `COREGATE  Stats.GameActive went true; the core is fully on
+and the reactor readings start from this poll`，最后一行 `SEAL  shift over
+(GameActive true to false)`。**要判「生效」，读记录器的上游行，不要读自己前后几秒的差。**
+
+**③ `fireclickdetector` 不经过输入管线，所以 `MaxActivationDistance` 拦不住它。**
+62 个控制台探测器：**61 个 `6`，唯一一个 `0` 是启动杆 `StartUpBigLever.StartClickPart`**。
+实测 `dist 5.16 of 0`，照样起来。**别把这个属性当「够不够得着」的判据** ——
+它管的是**玩家输入**那条路。
+
+**④ 一轮的收尾长什么样。** 班次结束 → 记录器写 `SEAL`，窗口按「班次表盘回退 >= 60 分钟，
+连着两拍」关闭。`Data/originalwatch/<run>/window.txt` 的 `state=` 就是这一轮的账：
+
+| 字段 | 这次的值 | 读法 |
+|---|---|---|
+| `state` | `open` | 开过、还没关 |
+| `opened_at` | `105.90` | 距记录器启动的秒数 |
+| `why` | `the start-up lever was clicked at ...StartClickPart` | **自证**，见 ① |
+| `lever_hooked` | `true` | 钩子挂上了（对比 041406 那一段：`false  reason=the path does not resolve`，**窗口从没开过**） |
+
+**⑤ 别拿「世界动了」当读数。** 记录器的 `summary.txt` 是**几何位移**转储
+（这一轮：800822 个属性里动了 6363 个），**它不含 `Workspace.Stats`**；
+而环境霓虹（`AscendingShaft` / `DescendingShaft` / `CRC1..3_*` / `GravitationShafts.*`）
+一直在绿<->红之间振荡，**一次点击后的「50 个霓虹变了」大半是它**。
+**要状态就明写 `Workspace.Stats`**，不要从位移里猜。

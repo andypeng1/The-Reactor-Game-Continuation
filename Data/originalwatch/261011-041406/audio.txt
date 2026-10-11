@@ -1,0 +1,105 @@
+t=0000000.19 04:14:06 | SpeakerPart        | SpeakerPart.New Store | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0000000.86 04:14:07 | MovingParts        | MovingParts.LoungeInteriorFan.MotorPart.FanSFX | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=(none) | id=rbxassetid://6871727713 | vol=2.00 pitch=0.00 looped=true
+t=0000001.06 04:14:07 | CullFolder         | CullFolder.ReactorLounge.Model.Model.Model.Vent.Meshes/AThing.VentSFX | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=(none) | id=rbxassetid://1258244371 | vol=1.00 pitch=1.00 looped=true
+t=0000001.23 04:14:07 | CullFolder         | CullFolder.ReactorLounge.Model.Model.Model.Vent.Meshes/AThing.VentSFX #2 | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=(none) | id=rbxassetid://1258244371 | vol=1.00 pitch=1.00 looped=true
+t=0000153.05 04:16:39 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0000153.97 04:16:40 | Core               | Core.CORE.Model.Modified_Energy_Sound | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://13331862090 | vol=1.25 pitch=0.00 looped=true
+t=0000153.98 04:16:40 | Core               | Core.CORE.Modified_Energy_Sound | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://13331862090 | vol=1.60 pitch=0.00 looped=true
+t=0000155.36 04:16:41 | GravatronUnit      | GravatronUnit.SpinnyThing.EndSpinnyPart2.SoundPart.AmbientMove | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://9105868334 | vol=4.00 pitch=1.00 looped=true
+t=0000155.41 04:16:41 | GravatronUnit      | GravatronUnit.SpinnyThing.EndSpinnyPart.SoundPart.AmbientMove | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://9105868334 | vol=4.00 pitch=1.00 looped=true
+t=0000155.41 04:16:41 | GravatronUnit      | GravatronUnit.CenterPart.LiftRunning | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://9062616055 | vol=2.00 pitch=2.00 looped=true
+t=0000155.41 04:16:41 | GravatronUnit      | GravatronUnit.CenterPart.ReactorAltSound | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://167115397 | vol=1.40 pitch=1.00 looped=true
+t=0000155.65 04:16:41 | ChamberCoolantPipe1 | ChamberCoolantPipe1.CoolantBlock.CoolantBlockUnion.CoolantVentSFX | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=(none) | id=rbxassetid://1258244371 | vol=6.00 pitch=0.00 looped=true
+t=0000156.33 04:16:42 | Audio              | ReplicatedStorage.CulledParts.LowerRMSector.LowerRMRoom.Model.Model.ShaftAmbientPart.ShaftAmbience | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://9116386389 | vol=1.00 pitch=2.00 looped=true
+t=0000157.03 04:16:43 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.AmbientHum | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://2884910274 | vol=3.00 pitch=0.00 looped=true
+t=0000157.34 04:16:43 | GravitationShafts  | GravitationShafts.ShaftAmbientPart.ShaftAmbience | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://9116386389 | vol=1.00 pitch=2.00 looped=true
+t=0000157.38 04:16:43 | Consoles           | Consoles.HDEFGenerator.Glass.AmbientHDEFGen | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://1477617411 | vol=10.00 pitch=0.00 looped=true
+t=0000157.66 04:16:43 | METU               | METU.ECCModule.ECCReceptacle1.ECCWallNeon.ECCAmbience | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://379557765 | vol=2.50 pitch=1.00 looped=true
+t=0000157.69 04:16:43 | MovingParts        | MovingParts.ChamberFan6.MotorPart.FanSFX | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://6871727713 | vol=2.50 pitch=0.00 looped=true
+t=0000158.33 04:16:44 | ReactorCBLs        | ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.AmbientHum | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://2884910274 | vol=3.00 pitch=0.00 looped=true
+t=0000159.17 04:16:45 | MovingParts        | MovingParts.ChamberFan1.MotorPart.FanSFX | ALREADY-PLAYING | audible before the watcher attached, so no Played event can exist for it | bus=EnvironmentSounds | id=rbxassetid://6871727713 | vol=2.50 pitch=0.00 looped=true
+t=0000348.60 04:19:54 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0000355.78 04:20:02 | Consoles           | Consoles.ALTReactorConsole.ControlRoomSystems.RoomLightButton.ClickPart.ButtonSound | PLAYED    | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000356.13 04:20:02 | Consoles           | Consoles.ALTReactorConsole.ControlRoomSystems.RoomLightButton.ClickPart.ButtonSound | ENDED     | bus=Interactables | id=rbxassetid://5670209472 | vol=1.00 pitch=1.00 looped=false
+t=0000509.00 04:22:35 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0000603.06 04:24:09 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0000739.86 04:26:26 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0000949.49 04:29:55 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0001014.39 04:31:00 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0001188.69 04:33:55 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0001384.24 04:37:10 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0001544.60 04:39:50 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0001638.70 04:41:25 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0001775.51 04:43:41 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0001985.15 04:47:11 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0002050.07 04:48:16 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0002224.34 04:51:10 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0002419.89 04:54:26 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0002580.23 04:57:06 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0002674.34 04:58:40 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0002811.15 05:00:57 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0003020.81 05:04:27 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0003085.74 05:05:32 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0003260.01 05:08:26 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0003455.61 05:11:41 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0003615.91 05:14:22 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0003710.09 05:15:56 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0003846.81 05:18:13 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0004056.46 05:21:42 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0004121.35 05:22:47 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0004295.67 05:25:41 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0004491.23 05:28:57 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0004651.60 05:31:37 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0004745.68 05:33:11 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0004882.47 05:35:28 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0005092.12 05:38:58 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0005157.07 05:40:03 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0005331.35 05:42:57 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0005526.87 05:46:13 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0005687.25 05:48:53 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0005781.32 05:50:27 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0005918.11 05:52:44 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0006127.79 05:56:14 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0006192.70 05:57:19 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0006366.98 06:00:13 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0006562.55 06:03:28 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0006722.91 06:06:09 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0006816.97 06:07:43 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0006953.78 06:10:00 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0007163.45 06:13:29 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0007228.38 06:14:34 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0007402.63 06:17:28 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0007598.25 06:20:44 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0007758.54 06:23:24 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0007852.65 06:24:58 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0007989.47 06:27:15 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0008199.15 06:30:45 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0008264.01 06:31:50 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0008438.34 06:34:44 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0008633.90 06:38:00 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0008794.20 06:40:40 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0008888.29 06:42:14 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0009025.13 06:44:31 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0009234.76 06:48:01 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0009299.71 06:49:06 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0009473.93 06:52:00 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0009669.51 06:55:15 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0009829.89 06:57:56 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0009923.97 06:59:30 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0010060.78 07:01:47 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0010270.43 07:05:16 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0010335.33 07:06:21 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0010509.58 07:09:15 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0010705.17 07:12:31 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0010865.54 07:15:11 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0010959.62 07:16:45 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0011096.43 07:19:02 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0011306.07 07:22:32 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0011370.99 07:23:37 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0011545.25 07:26:31 | SpeakerPart        | SpeakerPart.New Store | ENDED     | bus=MusicSounds | id=rbxassetid://1835711635 | vol=0.50 pitch=1.00 looped=false
+t=0011740.86 07:29:47 | SpeakerPart        | SpeakerPart.Hydraulic Mess | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0011901.20 07:32:27 | SpeakerPart        | SpeakerPart.Funky Beats | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0011995.28 07:34:01 | SpeakerPart        | SpeakerPart.Cut Your Jacobs Off | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0012132.07 07:36:18 | SpeakerPart        | SpeakerPart.Crystal Cave | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0012341.76 07:39:48 | SpeakerPart        | SpeakerPart.Rumble | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false
+t=0012406.72 07:40:53 | SpeakerPart        | SpeakerPart.Reactor | ENDED     | bus=(none) | id=(none) | vol=0.50 pitch=1.00 looped=false

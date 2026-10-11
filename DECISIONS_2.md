@@ -7431,3 +7431,55 @@ top-4 照印，标 `PRINTED, not checked` 和理由 —— 一个自己知道自
 仓库是**公开的**（Phase 51）。派生出来的数字写在 Phase 112 里，因为那份 `.report.txt` 不进仓库。
 
 ---
+
+---
+
+## 470. 记录器的 `CLICK` 通道挂的就是执行器触发的那**一个**信号 —— 「被点击」不自证服务器接受了（Phase 113）
+
+`window.txt` 写着 `why=the start-up lever was clicked`，`opened_at=105.90`。
+**那不是独立证据**：flow 里 11 条 `CLICK` 与我那 11 次合成按压一一对应
+（`StartUpLever`×3 / `RoomLight` / `Shutters` / `MonitorPower` / `MonitorBoot`×4 / `Fan1`）。
+`lever_hooked=true` 挂的正是 `fireclickdetector` 与 `VirtualInputManager` 都要经过的那个信号。
+
+**一条只活在「自证」里的读数**不会报错 —— 它给出一句**恰好为真**的话（窗口确实在那一刻开了），
+而它**证明的是我的探针发出去了**，不是游戏收下了。
+
+**反过来的用法才是它值钱的地方**：**按压计数对不上，就是探针本身坏了**。
+这次 11 : 11 对上，于是「探针确实发了 11 发」这件事是**量出来的**，不是假设的。
+**要证明服务器收下了，得用 `Workspace.Stats`**（服务端写、客户端复制）——
+而它确实动了，一直烧到 9420。
+
+## 471. 判据窗口比被测状态机短时，「没动」不是判决（Phase 113）
+
+每一次按压都套着 `st0 -> fire -> wait(1.4) -> st1`，**每一次都回 `stats=[]`**。
+而堆芯起来了、烧到 9420、熔毁了。**转变比那 1.4 秒慢。**
+
+这与 §0.19 同族（`Heartbeat:Wait()` 回来了，推不出 `Connect` 的回调跑了）：
+**「当场没动」是「我的窗口里没动」，不是「没发生」。**
+
+**修法不是把窗口加大**（那只是把同一个猜测调大）—— 是**换一把尺子**：
+记录器有它自己的**上游**判据（`COREGATE` / `SEAL` / `CLOCK`），
+**几秒的一前一后差**永远量不过一个有自己的状态机、自己的时序的系统。
+**哪一半验了、哪一半没验，分开写。**
+
+## 472. `MaxActivationDistance = 0` 不拦 `fireclickdetector` —— 62 个里唯一的例外是**启动杆自己**（Phase 113）
+
+`Consoles` 下 62 个 `ClickDetector`：**61 个 `6`，1 个 `0`**，而那一个 `0` 正是
+`Consoles.MainReactorConsole.StartUpBigLever.StartClickPart`（110.4, 279.6, -0.7）。
+实测那一按 `dist 5.16 of 0`，**堆芯照样起来了**。
+
+官方文档对该属性只有一句：**「用来限制玩家离探测器多远之后就不再可点」** ——
+它是**输入管线**上的闸门。`fireclickdetector` 直接触发信号，闸门在它后面，不在它前面。
+（同族于 §0.2：探条只探它探的那件事 —— 我一度把「6」当成「这游戏的控制都够得着」的证据。）
+
+## 473. 原版的熔毁是一个**冻结的终局**，而且带一份可以照抄的文案（Phase 113）
+
+`SEAL shift over` 之后，两次间隔 79 秒的读数**逐字节相同** ——
+`TemperatureVal 9420 / PressureVal 7320 / RadiationVal 406 / HDEF.IntegrityVal 99 /
+OutputVal 144 / BreachVal false / GameActive false`，CBL 全退（`Active=false`、`TempVal 925`）。
+监视器留在 `SHUTDOWN PROTOCOL` + `CORE COLLAPSE DETECTED ...` + **`REACTOR ENERGY QUOTA NOT MET`**
+（最后这句说明结局不只是热崩溃，**配额也没挣到**）。
+
+**这是复刻那一条失败路径的参照**：它不是一段动画描述，是一个**可以逐项复算的终局状态**
+加一份**逐字可以照抄的文案**。**记住它是冻结的** —— 「还在降」和「停住了」在读法上不一样，
+而这里两次采样就分开了。
