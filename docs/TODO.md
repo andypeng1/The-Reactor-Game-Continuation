@@ -856,3 +856,20 @@ Play 起来之后按第 2 条读**实例状态**，**第一次就否掉了原来
 **`LightPart.Color` 一行都没有** —— 原版从不写它。我们的 ramp 会把这 9 件由黑推到白，
 原版让它们一直黑。**留着没改**，理由与推翻的配方（`Config.Cascade` 加一个按名字索引的
 `LightOnly` 名单，形状同 `LampColors`）写在 `DECISIONS_2` **511**。
+
+### 3.13 Phase 123 收尾后仍欠的东西（2026-10-13）
+
+**① 已销**：Play 会话里的端到端**已验**（Phase 123）—— 四次真点击全绿，
+`phase` 走到 `Running`、`RuntimeError` 为空，点火那一拍的读数与 `Config.Cascade` 的 cue
+逐条对上（`PROGRESS.md` Phase 123 第四节）。
+
+**② `LightPart` 的观感（原 §3.12 ②，未动）**：ClampLights 的 48 件 = 39 件
+`LightModel.Neon` + 9 件 `LightPart`；原版从不写 `LightPart.Color`，我们的 ramp 会把它由黑推到白。
+**推翻的配方**（`Config.Cascade` 加一个按名字索引的 `LightOnly` 名单，形状同 `LampColors`）
+写在 `DECISIONS_2` **511**。这一轮**没动**。
+
+**③ 新欠：Studio 与磁盘的同步没有守门的检查。** Phase 123 是靠**出事之后**把整个
+`ReactorBackend` 拉回来 `cmp` 才发现的（十个里一个不同）。现在没有「改完就比一次」的常设动作。
+要做的是给它一个家：**一次 `pull + cmp` 的脚本**（`receive.py` 8765 + 客户端 `PostAsync`，
+`serve.py` 8767 反方向），跑完打一份「哪些逐字节相同、哪个不同」的表 ——
+**先有这条，才有资格说「Studio 是新的」**（取舍 512）。

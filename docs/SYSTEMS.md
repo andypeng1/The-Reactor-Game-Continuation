@@ -975,3 +975,16 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 
 **验收**：`Data/startup_shots/` 三张同机位图（冷 / CBL 出射 / 点火）
 \+ 灯普查 `592/742`、`32` 盏（METU 的）。
+
+**实机验证（Phase 123，2026-10-13）**：整条链在**游戏自己的 Runtime**里跑过一遍
+（真点击 `MONITOR POWER → SHUTTERS → BOOT → START`，四条 oracle 全绿），
+113.4 s 后 `RuntimePhase=Running`、`RuntimeError` 空，点火那一拍逐条对上 cue：
+`CORE.Transparency=0`、`CORE.PointLight.Enabled=true`（brightness 30 / range 60 / 色 `0,149,255`）、
+`ProtoCoreLoop.Playing=true`、`ForcefieldShockwave` 111.19 / transp 0.926、
+`ExplosiveCoreEffect.Size` 120→80（+10.6 s）、`Laser.Main.Transparency` 3/3 = 0。
+灯火按 `>0.2` 同一把尺子前后量：Clamp **48→96**、Chamber **0→78**、Lounge **30→36**（Δ 正是 48/78/6）。
+证据图 `Data/startup_shots/4..7_live_*.jpg`；详细读数 `PROGRESS.md` Phase 123。
+
+**这条链在真机上曾被一个**落后的副本**挡住**：Studio 的 `Engine` 比磁盘旧一个版本
+（`c.Sim.PressureDivisor` 已被 Config 退休 ⇒ 第一次进 `Running` 就崩在 `Engine:273`）。
+十个模块里只有它不同 —— 取舍 **512**。

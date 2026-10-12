@@ -13684,3 +13684,136 @@ ClampLights 的 48 件灯 = 39 件 `LightModel.Neon` + 9 件 `LightPart`（**实
 （73 行，在每秒的逻辑门**之前**）+ 门里那次 `Refresh`（85 行）。
 §0.16 / §0.23 那一半仍然读不到；要读就看 `RuntimeError` / `RuntimePhase` 两个属性，
 或让游戏 VM 自己把结论写进 `workspace` 上的 `StringValue`（§0.23 ②）。
+
+---
+
+## Phase 123 — 开机链在真机上跑通（Play 会话里的点火级联）（2026-10-13）
+
+**这一轮补的就是上一节末尾写的那句「还没验的那一半」**：Edit 侧驱的始终是克隆模块，
+真 Runtime 那一半（`Heartbeat → FacilityCascade.Step(min(dt,0.5))`，73 行，在每秒的逻辑门之前
++ 门里那次 `Refresh`，85 行）没人看过。做法：真机 Play 会话，**真点击**把控制链走完
+（`MONITOR POWER → CONTROL ROOM SHUTTERS → MONITOR BOOT → MASTER START-UP`，
+四次全部被 `ControlBinder` 接受），然后等 113.4 s 的开机链自己走完。
+
+### 一、第一次跑就撞上：Studio 里的 `Engine` 落后磁盘**一个版本**
+
+真机上第一次进 `Running` 的那一拍就崩：
+
+```
+RuntimeError = ServerScriptService.ReactorBackend.Engine:273:
+               attempt to perform arithmetic (div) on number and nil
+phase 卡在 Starting，CORE transp=1，CBL 不动，Stats.Core.T=20 P=20
+```
+
+Studio 的 `Engine:273` 是 `if not s.equinox then s.pressure+=(math.floor(s.temperature/c.Sim.PressureDivisor)-…`，
+而 **`Config.Sim.PressureDivisor` 是 nil**。更关键的是：磁盘那份 `Config` 里**根本没有这个键** ——
+压力早就改成「按状态的直线」`g[state] + s[state]·T + d[PEA] − 60·fan`
+（Config 里是 `StatePressure={110,350,800}` / `StateSlope={0.01,0.0075,0.005}`），
+`PressureDivisor` / `HighPressureDivisor` / `State2Pressure` / `State3Pressure` **四个键一起退休了**。
+
+**判断哪边落后：把 Studio 的整个 `ReactorBackend` 拉回磁盘，逐文件 `cmp`**
+（`receive.py` 8765 ← 客户端 `PostAsync`，字节不进上下文）：
+
+| 模块 | 结果 |
+|---|---|
+| Config / Runtime / FacilityCascade / RoomShell / VisualFeedback / BootPanel / LogPanel / StateBridge / ControlBinder | **逐字节相同**（9/10） |
+| **Engine** | **磁盘 20592 B vs Studio 17703 B** |
+
+**十个里只有一个落后**，差的全在 `Engine:Step` 的函数体里（Studio 80 行 / 磁盘 120 行），
+就是那次压力重写加的注释与模型。修法：`serve.py --dir src/ReactorBackend --port 8767`
+（早已在跑）→ `HttpService:GetAsync` → `Engine.Source = body` → **回拉 `cmp` 逐字节相同**
+（两侧 md5 `398e72b8bc4d4b5775ba7c7f6249af30`，20592 B）。**比的是哈希不是长度**（§0.0）。
+取舍 **512**。
+
+### 二、先离线彩排，再上真机
+
+`luau-windows/luau.exe`（不在 PATH）+ 磁盘这一对，几秒钟跑完 260 个 1 s 步：
+
+```
+cold -> monitor_power/shutters/boot -> Ready(t=20) -> start
+step 3/7/10/12/14 按时推进
+>>> phase Starting -> Running at t=134.0 step=16 T=9556 P=4938
+run: t=140 T=10372 P=4575 cs=1  |  t=200 cs=2 net=404  |  t=259 Failed(Power extraction assembly overload)
+```
+
+**没有 nil 算术、没有崩**，而且 t=259 那个结局是**游戏自己的**（PEA 应力到 100，不是脚本死）。
+跑得动是因为 Config / Engine 都是纯模块：只用到 `Color3.fromRGB` 与 `Vector3.new`，
+两个 stub 就够。这一条把「真机一次会话 ≈ 20 分钟」压成「离线 3 秒」。取舍 **515**。
+
+### 三、真机：四次点击 + 点火（四条 oracle 全绿）
+
+拿回上一轮的点击装置（server 侧 park + 打哑身体、客户端 `BindToRenderStep` 保持相机、
+整数像素扫描、`tool y = viewport y − 58`，本轮实测：请求 `510,200` → `GetMouseLocation() 510,258`，
+inset 58，viewport 1020×480）。四个件的像素在本轮是
+`MONITOR POWER (510,239) n=225` / `SHUTTERS (512,238) n=4256` / `BOOT (510,239) n=169` /
+`START-UP (510,239) n=1470` —— **只有 2 px 之隔**，靠「每次改机位」保证不误点（§0.11 家族）。
+
+| 点击 | oracle 行 | 之后的属性 |
+|---|---|---|
+| MONITOR POWER | `[ReactorBackend][Control] andypeng1NB -> MONITOR POWER BUTTON` | `Stats.MonitorPower=true` |
+| SHUTTERS | `… -> CONTROL ROOM SHUTTERS SWITCH` | `Stats.ShuttersOpen=true` |
+| MONITOR BOOT | `… -> MONITOR BOOT BUTTON` | `RuntimePhase=Booting` → 16 s 后 `Ready` |
+| MASTER START-UP | `… -> MASTER START-UP SWITCH` | `RuntimePhase=Starting` → 113.4 s 后 **`Running`** |
+
+**四行都没有 `rejected:`**（有 `rejected:` 才是被拒；一行都没有是点空了 —— 三种情况分得开）。
+
+### 四、点火读数与 `Config.Cascade` 的 cue 逐条对上
+
+| 路径 | 真机读到的 | Config 里的目标 |
+|---|---|---|
+| `CORE.Transparency` | **0.000**（原 1） | `To = 0, Step = 16` ✔ |
+| `CORE.PointLight.Enabled` | **true**（brightness 30 / range 60 / 色 `0,149,255`） | `true, Step = 16` ✔ |
+| `CORE.ProtoCoreLoop.Playing` | **true** | `true, Step = 16` ✔ |
+| `ForcefieldShockwave.Size` | **111.19** | `111.1917495727539, Step = 16` ✔ |
+| `ForcefieldShockwave.Transparency` | **0.926** | `0.9259811043739319, Step = 16` ✔ |
+| `ExplosiveCoreEffect.Size` | 120（点火那一拍）→ **80**（+10.6 s 之后） | `120` step 16，`80` Delay 10.6 ✔ |
+| `CORE.IgnitonExplosion.Playing` | true（读到时 10.6 s 窗口已过 ⇒ 之后 false） | `true, Seconds = 10.6` ✔ |
+| `Laser.Main.Transparency` | **3/3 件 = 0** | `To = 0, Step = 14` ✔ |
+| `RuntimeError` | **空** | —— |
+
+灯火按**同一把尺子**（`Color.R/G/B > 0.2`）前后量，冷基线是停 Play 之后在 Edit 侧读的
+（那一侧已经证明与冷基线逐项相同，见下）：
+
+| 组 | 冷 (>0.2) | 点火后 (>0.2) | Δ |
+|---|---|---|---|
+| ClampLights | 48 / 96 | 96 / 96 | **+48** |
+| ChamberLights | 0 / 78 | 78 / 78 | **+78** |
+| LoungeLights | 30 / 84 | 36 / 84 | **+6** |
+| SubLoungeLights | 40 / 40 | 40 / 40 | 0 |
+| ControlRoomLowerLights | 60 / 60 | 60 / 60 | 0 |
+| METULights | 174 / 384 | 174 / 384 | 0 |
+
+三个 Δ = **48 / 78 / 6**，正是 cascade 给这三组点名的灯数（Phase 122 的算术：
+Clamp 48/96→96/96、Lounge 78/84→84/84 ⇒ 6 件）—— **真机这一次把它们复现了**。
+
+### 五、新量到的一条：**相机支架会蒙住 `screen_capture`**
+
+拍图时先后用**两个完全不同的显式机位**各拍一张，回来的是**逐字节相同**的两张
+（各 51242 B，md5 都是 `695cf696801842d88ec19177ae00b33f`）—— 图里是控制台，不是舱。
+当时客户端上有一根我自己装的 `BindToRenderStep` 相机保持器（为了点击可复现）：
+**它每帧把 `Camera.CFrame` 写回自己的机位，`screen_capture` 设的机位在成帧前被覆盖掉**，
+所以工具「成功了」而画面是自己的。`RunService:UnbindFromRenderStep('__probeCamHold')`
+之后，同一个调用立刻给出**请求的那张**（`7_live_ignition.jpg`）。
+再绑回去、请求舱内机位 → 回来的又是控制台（`10_capture_holder_wins.jpg`），
+**这一对正反两面都量到了**。取舍 **513**。三张证据留在 `Data/startup_shots/8..10`。
+
+### 六、交付的真机图（`Data/startup_shots/`）
+
+| 文件 | 时刻 | 看到什么 |
+|---|---|---|
+| `4_live_cold_chamber.jpg` | 冷 | 舱内暗 |
+| `5_live_chamber_lit.jpg` | 开机中 | 舱内照明全亮、堆芯筒体、CBL-3 / CLAMP / E-VENT 标识 |
+| `6_live_cbl_firing.jpg` | step 14 + | **CBL 光束横穿舱体** |
+| `7_live_ignition.jpg` | step 16 之后 | **堆芯亮起（transp=0 的黑氖球 + 青色 PointLight）+ 三束 CBL 汇聚** |
+
+### 七、收尾：Edit 世界仍然是冷的（逐组对上）
+
+停 Play 之后在 Edit 侧读回：`Clamp 48/96`、`Chamber 0/78`、`Lounge 78/84`、`SubLounge 40/40`、
+`ControlRoomLower 60/60`、`Maint 0/0`、`METU 366/384`（>0.02 那把尺子）、`CORE transp=1.00`、
+`workspace.__probe` **不存在**（Play 里的探针随会话消失）、部件总数 48847。
+**与开工前那份普查逐项相同** —— Play 没有动到授权的冷基线。
+
+### 八、还欠的（照实写）
+
+- `LightPart.Color`（Phase 122 取舍 511）：这一轮**没动**，那 9 件面板仍会跟着亮。
+- `docs/TODO.md` §3.12 ① 已完成；② 仍在。

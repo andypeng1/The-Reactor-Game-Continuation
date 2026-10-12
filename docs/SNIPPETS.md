@@ -2048,3 +2048,48 @@ Lounge `78/84 → 84/84` ⇒ 6 件。
 完了 `Refresh({startupStep=0, phase='Starting'})` 倒回去。实测逐项回到走之前
 （球 `30,30,30`、beam `1`、core `1`、PointLight `false`）——
 **这就是「拍完图世界还是干净的」的凭据**，不用进 §0.5 那张冷表。
+
+## 5.30 真机点一个控制：属性机位 + 客户端保持器 + 整数像素（★ Phase 123）
+
+Phase 122/123 用的全套装置，**全部在 Play 会话里**、`VirtualInputManager` 不可用的前提下
+（§0.11 家族：它 `lacking capability RobloxScript`）。分四件东西，各归各的 VM：
+
+**(1) 服务端做 park（**必须**服务端）**。客户端的 `hrp.CFrame = …` 只动客户端那一份，
+服务端仍把角色留在出生点、每一次点击都被 6 studs 的距离门拒掉，**两边都看不出来**（§0.11 第 6 条）。
+顺手把角色每个 `BasePart` 打哑（`Transparency=1, CanCollide=false, CanQuery=false, CanTouch=false`）
+—— `CanQuery=false` 让它同时从**我的射线**和 **Mouse 的射线**里消失。
+
+**(2) 机位写进属性，客户端保持器照着摆。** `workspace.__probe` 上放 6 个属性
+（`EyeX/Y/Z`、`AimX/Y/Z`）+ `Scan`（要扫的标签）+ `Result`（扫描结果）。
+`Players.<me>.PlayerScripts` 里插一个 `LocalScript`（§0.23 ②：**只有插进去的脚本才在游戏 VM 里跑**）：
+
+```lua
+RunService:BindToRenderStep('__probeCamHold', Enum.RenderPriority.Camera.Value + 1, function()
+  local ex, ey, ez = attr('EyeX'), attr('EyeY'), attr('EyeZ')
+  local ax, ay, az = attr('AimX'), attr('AimY'), attr('AimZ')
+  if ex and ax then
+    camera.CameraType = Enum.CameraType.Scriptable
+    camera.CFrame = CFrame.lookAt(Vector3.new(ex, ey, ez), Vector3.new(ax, ay, az))
+  end
+end)
+```
+
+**于是「重设机位」= 改 6 个属性**（服务端写，自动复制到客户端），
+不需要每次重建脚本，也不需要跨 VM 递函数。
+
+**(3) 像素扫描：解析投影 + 整数像素 ±34 + 首击命中判据。**
+`Camera:WorldToViewportPoint(aim)` 给出中心（实测总是 `510.5, 240.0`），
+在 ±34 px 的方格里逐**整数**像素 `Camera:ViewportPointToRay(px+0.5, py+0.5)`，
+只留**首击**实例沿父链四层内带着 `ClickPartText == 想要的标签` 的像素，
+取**最靠近命中点集质心**的那个。判据是「首击带对标签」而不是「射线打得中」——
+`Mouse.Target` 与相机射线在 `Transparency=1` 的件上**答案不同**（§0.11）。
+
+**(4) 官方鼠标工具点它，y 要减 58。** `tool_y = viewport_y − inset`
+（`GuiService:GetGuiInset().Y`，本轮实测 58：请求 `510,200` → `GetMouseLocation()` 回 `510,258`）。
+`moveTo` 之后**要留 ~450 ms** 再按，否则 `Mouse.Target` 还没更新。
+
+**两条不管就会白跑一遍的**：
+**① 机位和像素绑死** —— 缓存里必须连 `eye/aim` 一起存，点之前重设同一个 `lookAt`；
+本轮四个件里有三个的像素是 **(510,239)**、一个是 **(512,238)**，**2 px 之隔**。
+**② 拍图前先 `RunService:UnbindFromRenderStep('__probeCamHold')`** ——
+保持器会让 `screen_capture` 的显式机位静默失效（两张不同请求 → 逐字节相同，取舍 513）。

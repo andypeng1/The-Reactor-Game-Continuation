@@ -483,6 +483,28 @@ local ez = math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z
 
 取舍 **509/510/511**，上手 `docs/SNIPPETS.md` **§5.29**，系统说明 `docs/SYSTEMS.md` **§2.22**。
 
+### 0.25 【坑】Studio 里可以**只有**一个模块落后；而**自己装的相机保持器会蒙住截图**
+
+两条，Phase 123 各花了半轮，都是「工具报成功、结果不是你要的」那一族。
+
+**① 「我推过」不可证伪，「逐文件比」可证。** 真机第一次进 `Running` 就崩在
+`Engine:273`（`c.Sim.PressureDivisor` nil），而把整个 `ReactorBackend` 拉回磁盘 `cmp` 之后：
+**十个模块九个逐字节相同，只有 `Engine` 落后一个版本**（17703 vs 20592 B）。
+所以**要拉就拉整个文件夹** —— 只拉你怀疑的那一个，「其余的都对」这句话就没有证据；
+这一轮的值恰恰在于**九个相同**。比**哈希**不比字节数（§0.0），且**崩点不在出错的模块里**
+（同 §0.15/§0.23：报错的位置和出错的位置隔着一个文件）。拉/推两条通道：
+`receive.py 8765` ← 客户端 `PostAsync`（Studio→磁盘），`serve.py 8767` → `GetAsync`（磁盘→Studio）。
+
+**② 拍图和驱动输入不能同时开。** 点击装置要求相机**每帧**被钉在一个已知机位
+（`BindToRenderStep`），而 `screen_capture` 是**设一次**再截图 —— 于是工具设完、
+我的保持器在成帧前写回，**工具报成功、画面是自己的**。判据是老面孔：
+**两个完全不同的请求给出逐字节相同的两张图**（各 51242 B，md5 同）。
+`RunService:UnbindFromRenderStep('__probeCamHold')` 之后同一个调用立刻给对（名字全局，任何 VM 都能解绑）。
+这条与 §0.14 那句「两个相机逐字节相同」**同形但不同因** —— 那次是工具不可信，
+这次是**我自己的代码**按住了它，所以两次之间**不能互推**。
+
+取舍 **512/513/514/515**，上手 `docs/SNIPPETS.md` **§5.30**。
+
 ## 1. 项目概述
 
 ### 1.1 基本信息
@@ -622,9 +644,12 @@ local ez = math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z
 ## 8. 一句话总结
 
 仿真核心、控制系统、监视器、测试、灯光、材质**都已就绪并验证通过**。
-**开机链（点火级联）也已做进游戏本体**（Phase 122）：七组灯成波地亮灭、三台 CBL 充能/起旋/出射、
-舱内警报闪 ~11 s、堆芯转临界 —— 挂在引擎自己的 `StartupSteps` 上（`FacilityCascade`，
-`docs/SYSTEMS.md` §2.22，判据图在 `Data/startup_shots/`）。
+**开机链（点火级联）也已做进游戏本体并真机验证**（Phase 122 写、Phase 123 验）：七组灯成波地亮灭、
+三台 CBL 充能/起旋/出射、舱内警报闪 ~11 s、堆芯转临界 —— 挂在引擎自己的 `StartupSteps` 上
+（`FacilityCascade`，`docs/SYSTEMS.md` §2.22）。真机那趟是**点击装置真的点了四个控制**
+（`monitor_power`/`shutters`/`boot`/`start`，四条 `ControlBinder` 接受行）走到的 `phase=Running`，
+逐项读数对上了 Config 的提示表；过程中先撞出「**Studio 里只有一个模块落后**」这个坑（§0.25）。
+判据图在 `Data/startup_shots/`（`6_live_cbl_firing` / `7_live_ignition`）。
 **几何体重做已撤销**（用户 2026-09-26 原话：「不需要重做建模，请删除」）——
 `docs/TODO.md` §3.1 里那两条未开始的几何条目（设施外壳/房间内部的装饰与英雄资产、
 堆芯外壳与拉杆握把的 `generate_mesh` 重做）已删掉，该节剩下的只是已完成的施工记录。

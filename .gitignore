@@ -43,6 +43,15 @@ _tools/_attic/sink8765.err.log
 #     cold-baseline table to the Edit VM and had to kill it afterwards. ---
 _tools/_serve.log
 
+# --- receive.py's console, the same shape one port over: its first line names
+#     the listening port and the --dir this machine used, and each `RECV` line
+#     is a byte count + CRC for a file Studio pushed THIS session.  Phase 123
+#     started one to pull the whole ReactorBackend folder out of Studio for the
+#     per-file comparison (DECISIONS 512).  Machine state about a localhost
+#     port, not a fact about the project -- and the comparison it enabled is
+#     recorded in PROGRESS Phase 123 and DECISIONS_2 512, so nothing is lost. ---
+_tools/_recv.log
+
 # --- machine-local claude state (the shared settings.json, if one is ever
 #     added, is deliberately NOT ignored) ---
 .claude/settings.local.json
