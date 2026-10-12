@@ -37,6 +37,12 @@ _tools/_attic/logs/
 _tools/_attic/sink8765.log
 _tools/_attic/sink8765.err.log
 
+# --- serve.py writes its console to `_tools/_serve.log` when it is started
+#     detached; same rule as the two lines above, it just sits next to the
+#     script rather than under _attic/.  Phase 122 started one to hand the
+#     cold-baseline table to the Edit VM and had to kill it afterwards. ---
+_tools/_serve.log
+
 # --- machine-local claude state (the shared settings.json, if one is ever
 #     added, is deliberately NOT ignored) ---
 .claude/settings.local.json

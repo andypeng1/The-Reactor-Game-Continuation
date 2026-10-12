@@ -11,6 +11,7 @@ local ok, err = xpcall(function()
     local ControlBinder=require(backend.ControlBinder)
     local VisualFeedback=require(backend.VisualFeedback)
     local RoomShell=require(backend.RoomShell)
+    local FacilityCascade=require(backend.FacilityCascade)
     local LogPanel=require(backend.LogPanel)
     local BootPanel=require(backend.BootPanel)
     local engine=Engine.new(Config)
@@ -26,6 +27,17 @@ local ok, err = xpcall(function()
     -- and the identical rule that only one module writes a given property.
     RoomShell.Initialize(Config)
     RoomShell.Refresh(engine.state,Config)
+    -- FacilityCascade is the WORLD's half of the same chain RoomShell's monitors
+    -- and the log panel narrate: the lamp waves, the CBLs energising and firing,
+    -- the chamber alarms flashing and the core going critical. It is the one
+    -- adapter here that also needs every frame rather than the one-second logic
+    -- gate -- its ramps and bursts are continuous -- so its Step is driven from
+    -- the Heartbeat connection directly (CLAUDE.md section 0.19: the same code
+    -- reachable as a public function, never work hidden inside a connection).
+    -- Its lamp capture must run after RoomShell's for the same reason
+    -- BootPanel's does: they must never both believe they own a property.
+    FacilityCascade.Initialize(Config)
+    FacilityCascade.Refresh(engine.state,Config)
     -- BootPanel is the narrowest of the four adapters: it animates the lines
     -- INSIDE the boot face RoomShell has just chosen. It is initialized after
     -- RoomShell for that reason and no other -- the two write disjoint
@@ -42,6 +54,7 @@ local ok, err = xpcall(function()
         -- caused are never one tick apart.
         VisualFeedback.Refresh(state,Config)
         RoomShell.Refresh(state,Config)
+        FacilityCascade.Refresh(state,Config)
         BootPanel.Refresh(state,Config)
         LogPanel.Refresh(engine)
         StateBridge.Publish(state)
@@ -49,6 +62,15 @@ local ok, err = xpcall(function()
     backend:SetAttribute('BoundControls',bound)
     local accumulator=0
     RunService.Heartbeat:Connect(function(dt)
+        -- Before the gate, and deliberately so. Everything the cascade does that
+        -- is continuous -- the four lamp ramps, the CBL firing sphere's collapse,
+        -- the ten-second alarm flash -- is driven from here, and behind a
+        -- one-second accumulator a 1.6 s ramp would be two hard steps and a
+        -- 10.9 s flash would be an eleven-second cliff at its end. dt is
+        -- clamped inside the same step the accumulator uses, because a single
+        -- Heartbeat after a long frame stall can carry several seconds and the
+        -- cascade must not spend them all in one frame.
+        FacilityCascade.Step(math.min(dt,0.5))
         accumulator+=math.min(dt,0.5)
         if accumulator<Config.Visual.RefreshSeconds then return end
         local step=accumulator; accumulator=0
@@ -60,6 +82,7 @@ local ok, err = xpcall(function()
             -- input at all, and indicators must follow them.
             VisualFeedback.Refresh(engine.state,Config)
             RoomShell.Refresh(engine.state,Config)
+            FacilityCascade.Refresh(engine.state,Config)
             BootPanel.Refresh(engine.state,Config)
             LogPanel.Refresh(engine)
             StateBridge.Publish(engine.state)

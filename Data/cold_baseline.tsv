@@ -1,0 +1,562 @@
+Alarms.Coolant.CoolantALARM.NeonPart.Color	Color	0.0666667, 0.0666667, 0.0666667
+Alarms.Coolant.CoolantALARM.NeonPart.PointLight.Enabled	Enabled	false
+Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm.Looped	Looped	true
+Alarms.Coolant.CoolantALARM.Union.CoolantBreachAlarm.Playing	Playing	false
+Alarms.Facility.ReactorALARM.SpinnyPart.NeonPart.CFrame	CFrame	92.5459976, 287.574036, -28.7999992, -1.67386793e-09, 3.25876827e-05, -1, 1, 1.99073397e-10, -1.67386138e-09, 1.99018857e-10, -1, -3.25876827e-05
+Alarms.Facility.ReactorALARM.SpinnyPart.Part.CFrame	CFrame	92.5459976, 287.856567, -28.8000603, -1.67386793e-09, 3.25876827e-05, -1, 1, 1.99073397e-10, -1.67386138e-09, 1.99018857e-10, -1, -3.25876827e-05
+Alarms.Facility.ReactorALARM.SpinnyPart.Union.CFrame	CFrame	92.5459976, 287.524048, -28.7999382, -1.67386793e-09, 3.25876827e-05, -1, 1, 1.99073397e-10, -1.67386138e-09, 1.99018857e-10, -1, -3.25876827e-05
+Alarms.Rad.ControlRoomRadAlarm.NeonPart.AlarmLight.Enabled	Enabled	false
+Alarms.Rad.ControlRoomRadAlarm.NeonPart.Color	Color	0, 0, 0
+Alarms.Rad.ControlRoomRadAlarm.NeonPart.Siren.Playing	Playing	false
+Alarms.ReactorChamber.IndustrialAlarm.MainAlarmPart.IndustrialAlarmSound.Playing	Playing	false
+Alarms.ReactorChamber.IndustrialAlarm.MoterPart.HingeConstraint.AngularVelocity	AngularVelocity	2.5
+Alarms.ReactorChamber.IndustrialAlarm.NeonLight.CFrame	CFrame	-54.3006134, 243.80278, -78.731514, -0.409812152, -0.683534682, 0.604015291, -0.573630273, 0.707970262, 0.411978781, -0.709226549, -0.177647531, -0.68223089
+Alarms.ReactorChamber.IndustrialAlarm.NeonLight.Color	Color	0, 0, 0
+Alarms.ReactorChamber.IndustrialAlarm.NeonLight.IndustrialAlarmLight.Enabled	Enabled	false
+Alarms.ReactorChamber.IndustrialAlarm.Part.CFrame	CFrame	-54.7006836, 243.508301, -78.3657227, -0.409812152, -0.683534682, 0.604015291, -0.573630273, 0.707970262, 0.411978781, -0.709226549, -0.177647531, -0.68223089
+Alarms.ReactorChamber.IndustrialAlarm.SpinnyPart.Neon.CFrame	CFrame	-54.178196, 243.637161, -78.6683044, -0.409812152, -0.435745656, 0.801361263, -0.573630273, 0.806176126, 0.145012021, -0.709226549, -0.400257349, -0.580337524
+Alarms.ReactorChamber.IndustrialAlarm.SpinnyPart.Neon.Color	Color	0, 0, 0
+Alarms.ReactorChamber.IndustrialAlarm.SpinnyPart.Part.CFrame	CFrame	-55.0203476, 243.311859, -77.9186172, 0.409812152, -0.683534682, -0.604015291, 0.573630273, 0.707970262, -0.411978781, 0.709226549, -0.177647531, 0.68223089
+Core.CORE.CBLFireSound.Playing	Playing	false
+Core.CORE.CBLStartUpSound.Playing	Playing	false
+Core.CORE.ChamberVentSound.Pitch	Pitch	0
+Core.CORE.ChamberVentSound.Playing	Playing	false
+Core.CORE.CoolantFailiureSound.Playing	Playing	false
+Core.CORE.DestabilizationSound.Playing	Playing	false
+Core.CORE.EFESoundEnd.Playing	Playing	false
+Core.CORE.EFESoundStart.Playing	Playing	false
+Core.CORE.Effects.CoreParticle.Color	Color	0 0.541176 0.92549 1 0 1 0.541176 0.92549 1 0
+Core.CORE.Effects.CoreParticle.Enabled	Enabled	false
+Core.CORE.Effects.CoreParticle2.Color	Color	0 0.27451 0.345098 0.666667 0 1 0.27451 0.345098 0.666667 0
+Core.CORE.Effects.CoreParticle2.Enabled	Enabled	false
+Core.CORE.Effects.EFEParticle1.Enabled	Enabled	false
+Core.CORE.Effects.EFEParticle2.Enabled	Enabled	false
+Core.CORE.Effects.EFEParticle4.Enabled	Enabled	false
+Core.CORE.Effects.EFEParticle5.Enabled	Enabled	false
+Core.CORE.Effects.EFEParticle6.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionParticle.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionParticle2.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionParticle3.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionParticle4.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionParticle5.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionParticle6.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionParticle7.Enabled	Enabled	false
+Core.CORE.Effects.ExplosionSmoke.Enabled	Enabled	false
+Core.CORE.Effects.InstabilityParticle1.Enabled	Enabled	false
+Core.CORE.EquinoxExplosion.Playing	Playing	false
+Core.CORE.ExplosionLightning.Enabled	Enabled	false
+Core.CORE.ExplosionLightning2.Enabled	Enabled	false
+Core.CORE.IgnitonExplosion.Playing	Playing	false
+Core.CORE.IgnitonExplosion.Volume	Volume	1
+Core.CORE.Modified_Energy_Sound.Pitch	Pitch	0
+Core.CORE.Modified_Energy_Sound.Volume	Volume	1.600000023841858
+Core.CORE.PointLight.Brightness	Brightness	30
+Core.CORE.PointLight.Color	Color	0, 0.588235, 1
+Core.CORE.PointLight.Enabled	Enabled	false
+Core.CORE.ProtoCoreExplosion.Playing	Playing	false
+Core.CORE.ProtoCoreLoop.Pitch	Pitch	0.75
+Core.CORE.ProtoCoreLoop.Playing	Playing	false
+Core.CORE.Transparency	Transparency	1
+Core.CORE.WindAmbience.Playing	Playing	false
+Core.EFEParticlePart.AmbientParticles.Enabled	Enabled	false
+Core.EFEParticlePart.GravquakeParticle.Enabled	Enabled	false
+Core.EFEParticlePart.RingBottom.Beam.Enabled	Enabled	false
+Core.EFEParticlePart.RingBottom.Beam2.Enabled	Enabled	false
+Core.EFEParticlePart.RingBottom.BeamA.Enabled	Enabled	false
+Core.EFEParticlePart.RingBottom.BeamA2.Enabled	Enabled	false
+Core.EFEParticlePart.RingTop.Beam.Enabled	Enabled	false
+Core.EFEParticlePart.RingTop.Beam2.Enabled	Enabled	false
+Core.EFEParticlePart.RingTop.BeamA.Enabled	Enabled	false
+Core.EFEParticlePart.RingTop.BeamA2.Enabled	Enabled	false
+Core.ExplosiveCoreEffect.Size	Size	4, 4, 4
+Core.ExplosiveCoreEffect.Transparency	Transparency	1
+Core.ForcefieldShockwave.Size	Size	4, 4, 4
+Core.ForcefieldShockwave.Transparency	Transparency	1
+Lights.CRC1LowerLights.CoolantRoomLight.NeonPart.Color	Color	0.972549, 0.972549, 0.972549
+Lights.CRC1LowerLights.CoolantRoomLight.NeonPart.SurfaceLight.Brightness	Brightness	0.5
+Lights.CRC1LowerLights.CoolantRoomLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.CRC1LowerLights.PoolLight.NeonPart.Color	Color	1, 0.639216, 0.341176
+Lights.CRC1LowerLights.PoolLight.NeonPart.PointLight.Brightness	Brightness	0.5
+Lights.CRC1LowerLights.PoolLight.NeonPart.PointLight.Enabled	Enabled	true
+Lights.CRC1LowerLights.PoolLight.NeonPart.SurfaceLight.Brightness	Brightness	1
+Lights.CRC1LowerLights.PoolLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.CRC2LowerLights.CoolantRoomLight.NeonPart.Color	Color	0.972549, 0.972549, 0.972549
+Lights.CRC2LowerLights.CoolantRoomLight.NeonPart.SurfaceLight.Brightness	Brightness	0.5
+Lights.CRC2LowerLights.CoolantRoomLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.CRC2LowerLights.PoolLight.NeonPart.Color	Color	1, 0.639216, 0.341176
+Lights.CRC2LowerLights.PoolLight.NeonPart.PointLight.Brightness	Brightness	0.5
+Lights.CRC2LowerLights.PoolLight.NeonPart.PointLight.Enabled	Enabled	true
+Lights.CRC2LowerLights.PoolLight.NeonPart.SurfaceLight.Brightness	Brightness	1
+Lights.CRC2LowerLights.PoolLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.CRC3LowerLights.CoolantRoomLight.NeonPart.Color	Color	0.972549, 0.972549, 0.972549
+Lights.CRC3LowerLights.CoolantRoomLight.NeonPart.SurfaceLight.Brightness	Brightness	0.5
+Lights.CRC3LowerLights.CoolantRoomLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.CRC3LowerLights.PoolLight.NeonPart.Color	Color	1, 0.639216, 0.341176
+Lights.CRC3LowerLights.PoolLight.NeonPart.PointLight.Brightness	Brightness	0.5
+Lights.CRC3LowerLights.PoolLight.NeonPart.PointLight.Enabled	Enabled	true
+Lights.CRC3LowerLights.PoolLight.NeonPart.SurfaceLight.Brightness	Brightness	1
+Lights.CRC3LowerLights.PoolLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.ChamberLights.ChamberVentLights.Light1.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light1.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light1.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light1.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light10.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light10.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light10.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light10.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light11.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light11.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light11.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light11.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light12.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light12.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light12.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light12.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light13.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light13.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light13.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light13.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light14.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light14.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light14.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light14.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light15.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light15.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light15.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light15.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light16.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light16.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light16.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light16.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light17.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light17.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light17.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light17.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light18.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light18.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light18.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light18.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light19.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light19.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light19.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light19.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light2.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light2.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light2.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light2.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light20.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light20.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light20.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light20.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light21.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light21.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light21.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light21.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light22.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light22.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light22.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light22.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light23.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light23.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light23.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light23.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light24.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light24.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light24.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light24.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light3.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light3.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light3.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light3.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light4.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light4.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light4.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light4.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light5.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light5.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light5.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light5.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light6.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light6.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light6.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light6.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light7.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light7.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light7.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light7.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light8.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light8.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light8.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light8.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.ChamberVentLights.Light9.Color	Color	0, 0, 0
+Lights.ChamberLights.ChamberVentLights.Light9.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.ChamberVentLights.Light9.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.ChamberVentLights.Light9.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light1.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light1.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light1.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light10.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light10.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light10.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light11.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light11.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light11.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light12.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light12.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light12.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light13.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light13.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light13.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light14.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light14.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light14.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light15.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light15.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light15.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light16.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light16.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light16.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light17.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light17.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light17.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light18.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light18.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light18.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light19.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light19.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light19.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light2.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light2.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light2.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light20.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light20.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light20.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light21.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light21.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light21.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light22.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light22.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light22.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light23.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light23.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light23.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light24.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light24.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light24.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light3.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light3.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light3.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light4.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light4.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light4.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light5.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light5.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light5.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light6.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light6.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light6.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light7.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light7.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light7.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light8.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light8.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light8.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.LowerChamberLights.Light9.Color	Color	0, 0, 0
+Lights.ChamberLights.LowerChamberLights.Light9.SurfaceLight.Brightness	Brightness	1
+Lights.ChamberLights.LowerChamberLights.Light9.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light1.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light1.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light1.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light10.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light10.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light10.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light11.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light11.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light11.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light12.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light12.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light12.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light13.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light13.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light13.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light14.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light14.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light14.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light15.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light15.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light15.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light16.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light16.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light16.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light17.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light17.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light17.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light18.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light18.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light18.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light19.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light19.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light19.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light2.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light2.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light2.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light20.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light20.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light20.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light21.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light21.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light21.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light22.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light22.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light22.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light23.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light23.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light23.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light24.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light24.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light24.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light3.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light3.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light3.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light4.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light4.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light4.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light5.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light5.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light5.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light6.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light6.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light6.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light7.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light7.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light7.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light8.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light8.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light8.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.RoofChamberLights.Light9.Color	Color	0, 0, 0
+Lights.ChamberLights.RoofChamberLights.Light9.SurfaceLight.Brightness	Brightness	0.10000000149011612
+Lights.ChamberLights.RoofChamberLights.Light9.SurfaceLight.Enabled	Enabled	false
+Lights.ChamberLights.UpperChamberLights.Light1.Color	Color	0, 0, 0
+Lights.ChamberLights.UpperChamberLights.Light1.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.UpperChamberLights.Light2.Color	Color	0, 0, 0
+Lights.ChamberLights.UpperChamberLights.Light2.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.UpperChamberLights.Light3.Color	Color	0, 0, 0
+Lights.ChamberLights.UpperChamberLights.Light3.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.UpperChamberLights.Light4.Color	Color	0, 0, 0
+Lights.ChamberLights.UpperChamberLights.Light4.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.UpperChamberLights.Light5.Color	Color	0, 0, 0
+Lights.ChamberLights.UpperChamberLights.Light5.LargeLightFlicker.Playing	Playing	false
+Lights.ChamberLights.UpperChamberLights.Light6.Color	Color	0, 0, 0
+Lights.ChamberLights.UpperChamberLights.Light6.LargeLightFlicker.Playing	Playing	false
+Lights.ClampLights.LightModel.Neon.Color	Color	0, 0, 0
+Lights.ClampLights.LightModel2.Neon.Color	Color	0, 0, 0
+Lights.ClampLights.LightPart.SurfaceLight.Brightness	Brightness	1
+Lights.ClampLights.LightPart.SurfaceLight.Enabled	Enabled	false
+Lights.ControlRoomLowerLights.RoomLight.NeonPart.Color	Color	1, 1, 1
+Lights.ControlRoomLowerLights.RoomLight.NeonPart.PointLight.Brightness	Brightness	0.25
+Lights.ControlRoomLowerLights.RoomLight.NeonPart.PointLight.Enabled	Enabled	true
+Lights.ControlRoomLowerLights.RoomLight.NeonPart.SurfaceLight.Brightness	Brightness	0.25
+Lights.ControlRoomLowerLights.RoomLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.GatewayLights.GatewayLight.NeonPart.Color	Color	1, 1, 1
+Lights.GatewayLights.GatewayLight.NeonPart.PointLight.Brightness	Brightness	0.5
+Lights.GatewayLights.GatewayLight.NeonPart.PointLight.Enabled	Enabled	true
+Lights.GravatronLights.NeonPart.Color	Color	0.686275, 0.686275, 0.686275
+Lights.GravatronLights.NeonPart.SurfaceLight.Brightness	Brightness	0.25
+Lights.GravatronLights.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.HallwayLights.HallwayLight.NeonPart.Color	Color	0.972549, 0.929412, 0.717647
+Lights.HallwayLights.HallwayLight.NeonPart.PointLight.Brightness	Brightness	0.5
+Lights.HallwayLights.HallwayLight.NeonPart.PointLight.Enabled	Enabled	true
+Lights.METULights.ChambWallLight.NeonPart.Color	Color	0.960784, 0.803922, 0.188235
+Lights.METULights.ChambWallLight.NeonPart.SurfaceLight.Brightness	Brightness	0.5
+Lights.METULights.ChambWallLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.METULights.UpperWallLight1.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight1.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight1.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight10.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight10.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight10.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight11.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight11.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight11.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight12.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight12.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight12.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight13.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight13.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight13.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight14.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight14.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight14.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight15.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight15.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight15.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight16.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight16.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight16.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight17.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight17.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight17.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight18.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight18.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight18.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight2.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight2.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight2.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight3.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight3.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight3.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight4.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight4.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight4.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight5.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight5.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight5.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight6.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight6.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight6.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight7.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight7.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight7.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight8.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight8.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight8.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.UpperWallLight9.NeonPart.Color	Color	0, 0, 0
+Lights.METULights.UpperWallLight9.NeonPart.METULight.Brightness	Brightness	0.5
+Lights.METULights.UpperWallLight9.NeonPart.METULight.Enabled	Enabled	false
+Lights.METULights.WallLight.NeonPart.Color	Color	0.835294, 0.45098, 0.239216
+Lights.METULights.WallLight.NeonPart.SurfaceLight.Brightness	Brightness	2
+Lights.METULights.WallLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.MaintFacilityLights.FieldKitStationWallLight.NeonPart.Color	Color	0.666667, 1, 0.498039
+Lights.MaintFacilityLights.FieldKitStationWallLight.NeonPart.MainframeLight.Brightness	Brightness	0.25
+Lights.MaintFacilityLights.FieldKitStationWallLight.NeonPart.MainframeLight.Enabled	Enabled	true
+Lights.MaintFacilityLights.SuitRepairWallLight.NeonPart.Color	Color	1, 0.65098, 0.415686
+Lights.MaintFacilityLights.SuitRepairWallLight.NeonPart.MainframeLight.Brightness	Brightness	0.5
+Lights.MaintFacilityLights.SuitRepairWallLight.NeonPart.MainframeLight.Enabled	Enabled	true
+Lights.MaintFacilityLights.WallLight.NeonPart.Color	Color	0.972549, 0.972549, 0.972549
+Lights.MaintFacilityLights.WallLight.NeonPart.MainframeLight.Brightness	Brightness	0.5
+Lights.MaintFacilityLights.WallLight.NeonPart.MainframeLight.Enabled	Enabled	true
+Lights.MedStationLights.WallLight.NeonPart.Color	Color	1, 0.905882, 0.686275
+Lights.MedStationLights.WallLight.NeonPart.SurfaceLight.Brightness	Brightness	0.5
+Lights.MedStationLights.WallLight.NeonPart.SurfaceLight.Enabled	Enabled	true
+Lights.SubLoungeLights.SubHallwayLight.NeonPart.Color	Color	0.129412, 0.329412, 0.72549
+Lights.SubLoungeLights.SubHallwayLight.NeonPart.PointLight.Brightness	Brightness	0.5
+Lights.SubLoungeLights.SubHallwayLight.NeonPart.PointLight.Enabled	Enabled	true
+Lights.SynthWallLights.SynthWallLight.NeonPart.Color	Color	1, 0.65098, 0.415686
+Lights.SynthWallLights.SynthWallLight.NeonPart.MainframeLight.Brightness	Brightness	1
+Lights.SynthWallLights.SynthWallLight.NeonPart.MainframeLight.Enabled	Enabled	true
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.FiringEffectPart.Size	Size	30, 30, 30
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.FiringEffectPart.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.LaserParticles.Charge_Fire.DisplacedSmoke.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.LaserParticles.Charge_Fire.ParticleEmitter1.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.LaserParticles.Charge_Fire.ParticleEmitter2.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.LaserParticles.ParticleEmitter.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.LightningParticles.Lightning.SmokeParticle.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.LightningParticles.Lightning.TrailElectricityBlur.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SlightlyBetterSpinnyThing.Model.Union.CFrame	CFrame	-47.7676544, 278.357056, 1.57696116, 1, -5.69820404e-05, -2.35140324e-05, 5.69224358e-05, 0.70836705, 0.705844283, -2.35140324e-05, -0.705844283, 0.70836705
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SlightlyBetterSpinnyThing.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SlightlyBetterSpinnyThing.NeonPart.CFrame	CFrame	-47.7679596, 280.606018, -0.663790643, 1.00000012, -1.79642666e-05, 3.63727049e-05, 3.84325394e-05, 0.705831945, -0.708379388, -1.28522397e-05, 0.708379328, 0.705832005
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SlightlyBetterSpinnyThing.Thing.CFrame	CFrame	-47.7429161, 280.605835, -0.664072633, -5.69820404e-05, 1, 2.35140324e-05, 0.70836705, 5.69224358e-05, -0.705844283, -0.705844283, -2.35140324e-05, -0.70836705
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.AmbientHum.Pitch	Pitch	0
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SoundPart.LaserVentSFX.Playing	Playing	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SpinnyThingsBack.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SpinnyThingsBack.SpinnyLaserThingy.CFrame	CFrame	-90.9703751, 280.603058, -0.666256309, 1, 2.4754641e-07, -1.42932933e-07, -2.8584796e-07, 0.866007268, -0.500031412, -2.65022972e-14, 0.500031412, 0.866007268
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SpinnyThingsBack.WeldThing.CFrame	CFrame	-92.9209976, 280.603516, -0.6660254, 1, 2.4754641e-07, -1.42932933e-07, -2.8584796e-07, 0.866007268, -0.500031412, -2.65022972e-14, 0.500031412, 0.866007268
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SpinnyThingsFront.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SpinnyThingsFront.SpinnyLaserThingy.CFrame	CFrame	-63.0289268, 280.602905, -0.666204393, 1, 2.61072671e-07, -1.5074302e-07, -3.01467082e-07, 0.866007268, -0.500031412, 1.50857025e-14, 0.500031412, 0.866007268
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.SpinnyThingsFront.WeldThing.CFrame	CFrame	-64.878479, 280.603363, -0.665982962, 1, 2.61072671e-07, -1.5074302e-07, -3.01467082e-07, 0.866007268, -0.500031412, 1.50857025e-14, 0.500031412, 0.866007268
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.ThermalOutline.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_1.Effects.VentParticalPart.ParticleEmitter.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_1.Laser.LaserPart.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_1.Laser.Main.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_1.NeonStuff.DetailNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_1.NeonStuff.DetailNeon.Part2.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_1.NeonStuff.DetailNeon.Part3.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_1.NeonStuff.GrateNeon.Grate.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_1.NeonStuff.MidNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_1.NeonStuff.PillarNeon.Neon.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_1.NeonStuff.TankNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.FiringEffectPart.Size	Size	30, 30, 30
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.FiringEffectPart.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.LaserParticles.Charge_Fire.DisplacedSmoke.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.LaserParticles.Charge_Fire.ParticleEmitter1.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.LaserParticles.Charge_Fire.ParticleEmitter2.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.LaserParticles.ParticleEmitter.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.LightningParticles.Lightning.SmokeParticle.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.LightningParticles.Lightning.TrailElectricityBlur.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.OverHeatEffectPart.Lightning.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SlightlyBetterSpinnyThing.Model.Union.CFrame	CFrame	7.05512381, 278.359253, -34.5616379, -0.499990642, 0.61240232, -0.612350166, -2.24880187e-05, 0.70706749, 0.707146049, 0.866030812, 0.353580177, -0.35351336
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SlightlyBetterSpinnyThing.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SlightlyBetterSpinnyThing.NeonPart.CFrame	CFrame	8.99930096, 280.604095, -33.4392815, -0.49999997, -0.612363636, -0.612381399, -4.09582863e-05, 0.70713377, -0.707079828, 0.866025627, -0.353514731, -0.353591889
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SlightlyBetterSpinnyThing.Thing.CFrame	CFrame	8.98702621, 280.603912, -33.41745, 0.61240232, -0.499990642, 0.612350166, 0.70706749, -2.24880187e-05, -0.707146049, 0.353580177, 0.866030812, 0.35351336
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.AmbientHum.Pitch	Pitch	0
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SoundPart.LaserVentSFX.Playing	Playing	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SpinnyThingsBack.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SpinnyThingsBack.SpinnyLaserThingy.CFrame	CFrame	30.6058369, 280.603088, -70.8511047, -0.499989778, -0.432986617, -0.750021875, 1.67712024e-05, 0.866039932, -0.499974847, 0.866031289, -0.249994889, -0.433003843
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SpinnyThingsBack.WeldThing.CFrame	CFrame	31.5809288, 280.603516, -72.5405273, -0.499989778, -0.432986617, -0.750021875, 1.67712024e-05, 0.866039932, -0.499974847, 0.866031289, -0.249994889, -0.433003843
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SpinnyThingsFront.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SpinnyThingsFront.SpinnyLaserThingy.CFrame	CFrame	16.6350651, 280.602936, -46.6531372, -0.499989748, -0.432986617, -0.750021875, 1.67508715e-05, 0.866039932, -0.499974847, 0.866031289, -0.249994874, -0.433003843
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.SpinnyThingsFront.WeldThing.CFrame	CFrame	17.5596275, 280.603363, -48.2550163, -0.499989748, -0.432986617, -0.750021875, 1.67508715e-05, 0.866039932, -0.499974847, 0.866031289, -0.249994874, -0.433003843
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.ThermalOutline.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_2.Effects.VentParticalPart.ParticleEmitter.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_2.Laser.LaserPart.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_2.Laser.Main.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_2.NeonStuff.DetailNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_2.NeonStuff.DetailNeon.Part2.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_2.NeonStuff.DetailNeon.Part3.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_2.NeonStuff.GrateNeon.Grate.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_2.NeonStuff.MidNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_2.NeonStuff.PillarNeon.Neon.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_2.NeonStuff.TankNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_3.CBLBreaches.CBLParticlePart.Repaired.Value	Value	true
+ReactorCBLs.Reactor_Laser_Mk3_3.CBLBreaches.CBLParticlePart.SoftBurst.ParticleEmitter1.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.CBLBreaches.CBLParticlePart.SoftBurst.ParticleEmitter2.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.CBLBreaches.CBLParticlePart.SoftBurst.ParticleEmitter3.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.ExplosionEffectPart.Size	Size	1, 1, 1
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.ExplosionEffectPart.Transparency	Transparency	0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.ExplosionEffectRing.Size	Size	1, 0.20000000298023224, 1
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.ExplosionEffectRing.Transparency	Transparency	0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.ExplosionEffectRing2.Size	Size	1, 0.20000000298023224, 1
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.ExplosionEffectRing2.Transparency	Transparency	0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.FiringEffectPart.Size	Size	30, 30, 30
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.FiringEffectPart.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.LaserParticles.Charge_Fire.DisplacedSmoke.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.LaserParticles.Charge_Fire.ParticleEmitter1.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.LaserParticles.Charge_Fire.ParticleEmitter2.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.LaserParticles.ParticleEmitter.Color	Color	0 0.584314 0.584314 0.584314 0 1 0.584314 0.584314 0.584314 0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.LaserParticles.ParticleEmitter.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.LightningParticles.Lightning.SmokeParticle.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.LightningParticles.Lightning.TrailElectricityBlur.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.OverHeatEffectPart.BreachEffect1.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.OverHeatEffectPart.FireAttachment.Fire.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.OverHeatEffectPart.FireAttachment.FireLight.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.OverHeatEffectPart.FireAttachment.Smoke.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.OverHeatEffectPart.Lightning.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.OverHeatEffectPart.Smoke.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SlightlyBetterSpinnyThing.Model.Union.CFrame	CFrame	10.9473495, 278.359192, 30.9890785, -0.499990642, -0.612404704, 0.612347841, 2.22317485e-05, 0.707064867, 0.707148671, -0.866030812, 0.353581339, -0.353512198
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SlightlyBetterSpinnyThing.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SlightlyBetterSpinnyThing.NeonPart.CFrame	CFrame	9.0032692, 280.604004, 32.1116676, -0.499981433, 0.612355769, 0.612404406, 3.76152821e-06, 0.707136393, -0.707077205, -0.866036236, -0.353523135, -0.353557348
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SlightlyBetterSpinnyThing.Thing.CFrame	CFrame	8.99048996, 280.603882, 32.0901299, -0.612404704, -0.499990642, -0.612347841, 0.707064867, 2.22317485e-05, -0.707148671, 0.353581339, -0.866030812, 0.353512198
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.AmbientHum.Pitch	Pitch	0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.BreachAmbience.Playing	Playing	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.BreachExplosion.Playing	Playing	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.CBLExplosion.Playing	Playing	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SoundPart.LaserVentSFX.Playing	Playing	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SpinnyThingsBack.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SpinnyThingsBack.SpinnyLaserThingy.CFrame	CFrame	30.5996056, 280.603027, 69.5293808, -0.499989748, 0.432986259, 0.750022113, -1.73553708e-05, 0.866039991, -0.499974728, -0.866031349, -0.249995247, -0.433003604
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SpinnyThingsBack.WeldThing.CFrame	CFrame	31.5750999, 280.603516, 71.2185669, -0.499989748, 0.432986259, 0.750022113, -1.73553708e-05, 0.866039991, -0.499974728, -0.866031349, -0.249995247, -0.433003604
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SpinnyThingsFront.Moter.HingeConstraint.AngularVelocity	AngularVelocity	0
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SpinnyThingsFront.SpinnyLaserThingy.CFrame	CFrame	16.6289349, 280.602875, 45.3313522, -0.499989748, 0.432986289, 0.750022054, -1.73626649e-05, 0.866039991, -0.499974757, -0.866031289, -0.249995276, -0.433003604
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.SpinnyThingsFront.WeldThing.CFrame	CFrame	17.5538807, 280.603363, 46.9330101, -0.499989748, 0.432986289, 0.750022054, -1.73626649e-05, 0.866039991, -0.499974757, -0.866031289, -0.249995276, -0.433003604
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.ThermalOutline.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_3.Effects.VentParticalPart.ParticleEmitter.Enabled	Enabled	false
+ReactorCBLs.Reactor_Laser_Mk3_3.Laser.LaserPart.Color	Color	0.435294, 0.737255, 1
+ReactorCBLs.Reactor_Laser_Mk3_3.Laser.LaserPart.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_3.Laser.Main.Color	Color	0.439216, 0.945098, 1
+ReactorCBLs.Reactor_Laser_Mk3_3.Laser.Main.Transparency	Transparency	1
+ReactorCBLs.Reactor_Laser_Mk3_3.NeonStuff.DetailNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_3.NeonStuff.DetailNeon.Part2.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_3.NeonStuff.DetailNeon.Part3.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_3.NeonStuff.GrateNeon.Grate.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_3.NeonStuff.MidNeon.Part.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_3.NeonStuff.PillarNeon.Neon.Color	Color	0, 0, 0
+ReactorCBLs.Reactor_Laser_Mk3_3.NeonStuff.TankNeon.Part.Color	Color	0, 0, 0

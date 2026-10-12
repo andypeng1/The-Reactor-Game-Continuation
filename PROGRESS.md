@@ -13575,3 +13575,112 @@ t=17.4667（帧 524） 字块 "CBL Array"         op=0,0.4722,0.5278 ← f17.45 
 （写进交付表之前先量了一遍，因为「探条读数」和「抽帧的图」用的是**两个不同的时刻**。）
 
 
+
+## Phase 122（2026-10-13）—— 「把完整的开机做到游戏里面去」：点火级联进了世界，三张同机位的游戏内对照
+
+用户原话：「我想的是让你把完整的开机做到游戏里面去」（承接 Phase 121 宣传片里的那一版）。
+**做的不是宣传片的那一份，是游戏本体**：`src/ReactorBackend/FacilityCascade.luau`（新写，
+41,279 B，与 Studio 里 `SSS.ReactorBackend.FacilityCascade` 逐字节相同）
++ `Config.luau` 的 `Config.Cascade` 段 + `Runtime.server.luau` 的接线。
+
+### 一、它跟着引擎自己那条开机链走，不另开时间轴
+`Config.Shift.StartupSteps` 16 条，`state.startupStep` 是引擎「已经播了几条」的计数，
+所以判据一律是 `step >= N`。四段 zone 挂在链上：step 4 ClampLights（+48 个位置式散开）、
+step 8 ChamberLights + METULights + MaintFacilityLights、step 11 LoungeLights + SubLoungeLights、
+step 14 ControlRoomLowerLights；`Beats = {Dim=2, Energise=11, Fire=14, Ignite=16}`。
+`FadeSeconds=1.6`、`StaggerSeconds=0.9`、`FadeLevels=24`。
+
+**灯的收集规则**（这条是整轮的枢纽）：一件灯只有在**没亮着**（`Light.Enabled ~= true`）
+**且**它的 `Color` 不是它自己的「点亮色」时才被收进来 —— `on` 的优先序是
+它自己的 Light 的颜色 → 它自己的颜色 → `Config.Cascade.LampColors[名字]` → 默认色。
+`off` / `lit` / `brightness` **全部从世界读**，不写第二份在 Config 里（单一真相源）。
+ramp 的终点是 `lamp.brightness` —— **所以走一遍只坏 Color 与 Light.Enabled，不坏 Brightness。**
+
+### 二、怎么验的（§0.2：读实例，不读模块）
+把 `Config` + `FacilityCascade` `Clone()` 进一个临时 Folder 再 `require`（§0.15 的现成解法，
+官方 Edit VM 允许），用**它自己的公开函数**驱动：`Initialize(Config)` → `Refresh(state, Config)`
+逐 step 走 0..16 → `Step(dt)`（`dt=0.25`，每步至少 2 s 仿真）。跑出来：
+
+- 灯普查：Clamp `48/96→96/96`、Chamber `0/78→78/78`、Lounge `78/84→84/84`、
+  SubLounge `40/40`（只换色，灯 `0→8`）、ControlRoomLower `60/60`（灯 `0→2`）、
+  **METU 一件没动** —— 全设施亮灯从 32 升到 129。
+- CBL：firing 球 `30 → 7.5 → 0.001` 并**停在那里**；`7.5 = 30 × (1 − 9.5/12.6)`
+  —— `Seconds='Charge'` 那 12.6 s 的线性，**实测对上**（`Charge` 解析成
+  `stepTime(14) − stepTime(11)`）。`Laser.Main.Transparency` `1→0`。
+- 舱内警报：闪 10.9 s 后回位（`MoterPart.HingeConstraint.AngularVelocity` `2.5 → 0`、
+  neon `250,250,250 → 0,0,0`、灯灭、声音停）。
+- 堆芯：`Transparency 1→0`、`PointLight.Enabled` 开、`ExplosiveCoreEffect` 球 `4→80`、
+  `ForcefieldShockwave` `4→120` / 透明度 `0.926`、`ProtoCoreLoop.Playing` 开、
+  pitch 落 0、`Modified_Energy_Sound.Pitch` → 2。
+
+### 三、★ 这一轮新量到的：`rewind` 是**精确可逆**的
+把克隆走完整条链，再 `Refresh({startupStep=0, phase='Starting'})` 把它倒回去，读数：
+`non-black 592/742`、`lights on 32`、`Mk3_1 球 30,30,30`、`beam transparency 1`、
+`core transparency 1`、`PointLight false` —— **和走之前独立量到的 t0 描述逐项相同**。
+所以「拿克隆驱一遍」不是把世界留在亮着的状态里：它会把**自己写过的每一条**放回去。
+这三张图能拍、拍完世界还是干净的，靠的就是这条。
+
+### 四、★ 这一轮踩到的：探针把世界的授权基线点着了
+`FacilityCascade.Initialize` 的基线是**从世界读**的。这是对的设计（基线是世界的数，
+写一份进 Config 就是第二个真相源），代价是：**一次探针走完，下一次 `Initialize` 会把
+「亮着」当成「授权」**，于是整场开机**静默失效**（ramp 从 `on` 到 `on`，一步都不动）——
+而「什么都没发生」和「本该如此」在盘上长得一模一样（§0.19 同族）。
+`Config.Cascade.ColdBaseline=true` **救不了**：它把 `off` 也读给世界。
+
+**出路是原版自己的录像。** `_tools/cold_baseline.py` 读 `Data/originalwatch/*/changes.log`：
+每行是 `old → new`，所以**每个 (路径, 属性) 最早一次出现的 `old`，就是它的 t=0 值**
+→ `Data/cold_baseline.tsv`（562 行 / 49,250 B，4 个容器）。经本地 sink
+（`_tools/serve.py --dir Data --port 8769`，用完已杀）交给官方 Edit VM，
+apply 时**每一层的同名兄弟都要展开**（观察者的 ` ~(x, y, z)` / ` #n` 是它自己的寻址，
+去掉会塌成一行）：`wrote=809 failed=0`，`missingPath=9` —— **9 条全是
+`Lights.MaintFacilityLights.*`**，而这一组我们自己的 `Initialize` 本来就说它是空的。
+
+### 五、原版和我们的副本**在三处合法地不一样**
+`ControlRoomLowerLights` / `SubLoungeLights` 原版**静止时灯就是开的**
+（`RoomLight.NeonPart.PointLight/SurfaceLight.Enabled = true`、色 `1,1,1`；
+`SubHallwayLight.NeonPart.Color = 0.129412, 0.329412, 0.72549`），
+而我们这一份静止是暗的 —— t0 普查里**全设施 32 盏亮灯全是 METU 的**。
+所以那几组里**只回滚 `Enabled`**，颜色与亮度保留原版的值（颜色与 t0 普查本来就一致）。
+`ClampLights` 的 9 件 `LightPart` 与 `LoungeLights` 的 6 件**两处录像一行都没有**，
+按**测量**（见下表的算术）黑回去。
+
+回到 t0 的普查，与走之前那次独立的读数**逐项相同**：
+
+| 组 | 非黑 / 件 | 灯 |
+|---|---|---|
+| ChamberLights | 0 / 78 | 0 |
+| ClampLights | 48 / 96 | 0 |
+| ControlRoomLowerLights | 60 / 60 | 0 |
+| LoungeLights | 78 / 84 | 0 |
+| METULights | 366 / 384 | 32 |
+| MaintFacilityLights | 0 / 0 | 0 |
+| SubLoungeLights | 40 / 40 | 0 |
+| **合计** | **592 / 742** | **32** |
+
+`592` 与 `32` 是**两次独立**得到的同一对数（走之前 / 恢复之后），而且**逐组加起来
+正好落在那两个数上**。那 9 件与 6 件的黑色也不是猜的：t0 `48/96` 而点亮后 `96/96`
+⇒ **恰好 48 件由黑转白**，同理 Lounge `78/84 → 84/84` ⇒ 6 件 —— 亮度只升不降，
+所以「转白的那批」就是「t0 全黑的那批」。
+
+### 六、交付的三张图（`Data/startup_shots/`，同一机位 `[-25, 274, -58] → [-25, 272, 45]`）
+| 文件 | 时刻 | 看到什么 |
+|---|---|---|
+| `1_cold_chamber.jpg` | 冷 | 舱内暗，只有原版自己的红色装饰亮着 |
+| `2_lit_cbl_firing.jpg` | step 14 + 5 s | 舱内照明全亮，**两束青色 CBL 光束横穿舱体**，枪口球在缩 |
+| `3_lit_ignition.jpg` | step 16 + 6 s | 堆芯顶冠蓝光 + 射线，CBL 继续出射 |
+
+（§0.14b：图证明「看起来对」，读数证明「真的是那个值」 —— 这一轮两样都有。）
+
+### 七、留给操作员的一条判断：`LightPart`
+ClampLights 的 48 件灯 = 39 件 `LightModel.Neon` + 9 件 `LightPart`（**实测**：`isLamp` 48 件
+= 39 + 9）。原版录像里 `LightModel.Neon.Color` 有行（`0,0,0`），
+**`LightPart.Color` 一行都没有** —— 原版从不写它，只写 `LightPart.SurfaceLight.Enabled/Brightness`。
+我们的 ramp 会把这 9 件的 Color 一起推到它自己的灯色（白），于是开机时这 9 件由黑转白，
+而原版让它一直是黑的。**这一轮留着没改**，理由与怎么推翻写在 `DECISIONS_2` 511。
+
+### 八、还没验的那一半（照实写）
+**Play 会话里的端到端没看过**：Edit 侧驱的是克隆模块（同源同函数），
+真 Runtime 是 `Runtime.server.luau` 里 `Heartbeat → FacilityCascade.Step(min(dt,0.5))`
+（73 行，在每秒的逻辑门**之前**）+ 门里那次 `Refresh`（85 行）。
+§0.16 / §0.23 那一半仍然读不到；要读就看 `RuntimeError` / `RuntimePhase` 两个属性，
+或让游戏 VM 自己把结论写进 `workspace` 上的 `StringValue`（§0.23 ②）。

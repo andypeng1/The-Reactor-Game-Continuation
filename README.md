@@ -324,6 +324,15 @@ holds it; CBLSystem.GetBodyTemperature() exposes it; it never changes.
                to the next gateway.
 - GravLiftSystem the gravity lifts (重力电梯). Shafts carry operators up or down
                while the Gravatron is healthy; if it fails the shafts go dead.
+- FacilityCascade the world's half of the start-up chain (Phase 122): the seven lamp
+               groups dim and re-light in waves, the three CBLs charge, spin up and fire,
+               the chamber alarm flashes for ~11 s, and the core goes critical - all of it
+               riding the engine's own `StartupSteps` (beats at steps 2/11/14/16), never a
+               second timeline. It is the one adapter driven from Heartbeat directly
+               (`Step(dt)`) rather than the one-second logic gate, because its ramps are
+               continuous. Its baseline is READ FROM THE WORLD, so a probe that lights the
+               world in Edit mode destroys it - recover with `_tools/cold_baseline.py`,
+               see `docs/SNIPPETS.md` 5.29 and SYSTEMS.md 2.22.
 
 ## Control feedback
 Pulling a lever SLIDES it to a detent derived from live state - it does not rotate; the throw is a

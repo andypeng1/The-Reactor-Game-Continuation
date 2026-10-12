@@ -345,6 +345,263 @@ local Config = {
             },
         },
     },
+    -- ========== CASCADE (the start-up chain -> the world) ==========
+    --
+    -- The chain above is sixteen MESSAGES. This is what the same chain does to
+    -- the plant, transcribed from a recorded run of the original game's own
+    -- property changes (Data/originalwatch/261002-140021/changes.log): every
+    -- value here was read out of that file, and the messages each write rides
+    -- on were chosen to preserve the recording's ORDER.
+    --
+    -- The step numbers are OUR chain's, not the recording's. Ours is the same
+    -- sixteen messages in the same order but runs 113.4 s where the original's
+    -- ran about 66 s, so the recording supplies order and values and never
+    -- seconds. Any duration that IS a measurement says so in its comment; the
+    -- two that are not (the lamp fade and its stagger) say that too.
+    --
+    -- A path is read the way the recording writes it: the LAST segment is the
+    -- property, and the segment before it may name several siblings at once.
+    -- NeonStuff.MidNeon.Part.Color is one entry standing for twenty-four
+    -- parts -- three lasers times twenty-four is the recording's own count of
+    -- 72 -- and lighting only the first of them would leave two thirds of every
+    -- CBL dark with nothing anywhere saying so.
+    Cascade = {
+        -- The four beats that need a TIME, not just an index. Everything else
+        -- here is addressed by its step number directly.
+        Beats = {
+            Dim      = 2,   -- ALL PERSONNEL ARE TO VACATE THE CHAMBER IMMEDIATELY
+            Energise = 11,  -- PRIMING ALL COMBUSTION LASERS
+            Fire     = 14,  -- COMBUSTION LASERS FIRING
+            Ignite   = 16,  -- the step that finishes the chain; Engine turns Running here
+        },
+
+        -- The lamp waves, in the recording's order: clamp, then chamber, then
+        -- the far rooms, then the control room. Groups this place already has
+        -- at their authored look contribute no lamps and are reported as left
+        -- alone rather than being turned off and back on.
+        Zones = {
+            {step = 4,  groups = {'ClampLights'}},
+            {step = 8,  groups = {'ChamberLights', 'METULights', 'MaintFacilityLights'}},
+            {step = 11, groups = {'LoungeLights', 'SubLoungeLights'}},
+            {step = 14, groups = {'ControlRoomLowerLights'}},
+        },
+        -- NOT measurements. The recording polls the original's lamps and shows
+        -- the fade is staggered, but one poll per touched second cannot
+        -- describe a curve, so these three are what makes a wave read as a wave
+        -- instead of a switch. The stagger is a hash of the lamp's own
+        -- position, identical in every session, so two screenshots are
+        -- comparable; it is not claimed to be the original's order.
+        FadeSeconds = 1.6,
+        StaggerSeconds = 0.9,
+        FadeLevels = 24,
+        ColdBaseline = false,
+        -- The fallback chain for a lamp's ON colour is: its own Light, then its
+        -- own Colour, then this table by part name, then DefaultLampColor.
+        LampColors = {
+            Neon = Color3.fromRGB(255, 255, 255),
+            Light = Color3.fromRGB(255, 255, 255),
+            LightPart = Color3.fromRGB(255, 255, 255),
+        },
+        DefaultLampColor = Color3.fromRGB(255, 255, 255),
+
+        -- The non-lamp half. Each section names its ROOT, how to find its
+        -- repeating UNITS inside that root ('*' is every child; anything else
+        -- is a name prefix), and the moves that apply to each unit.
+        --
+        -- A move always names the PROPERTY as the last segment of its path and
+        -- carries:
+        --   To       the value to write.
+        --   Step     the chain message it happens on.
+        --   Delay    optional seconds after that message, instead of on it.
+        --   Seconds  optional: the write is a BURST. A number is that many
+        --            seconds; the string 'Charge' means the chain's own gap
+        --            from the energise beat to the fire beat, so that
+        --            everything belonging to charging stops when the lasers
+        --            fire however the chain is later retimed.
+        --   After    what a burst writes when it ends. Without it a burst
+        --            reverts to what the art had, which is right for every
+        --            burst here except the two that end in a new steady state.
+        Sections = {
+            -- The eight chamber alarms. The recording's very first act, before
+            -- any lamp in the plant, is these STOPPING: AngularVelocity
+            -- 2.5 -> 0 at t=65.4. The chamber is about to be evacuated and
+            -- nothing in it should still be spinning. They flash back white for
+            -- ten seconds when the lasers fire, and the rotors spin up again
+            -- for exactly that long -- 0 -> 2.5 at t=87.73, back to 0 at
+            -- t=98.63, which is 10.9 s.
+            {
+                Name = 'ChamberAlarms',
+                Root = 'Alarms.ReactorChamber',
+                Units = '*',
+                Moves = {
+                    {Path = 'MoterPart.HingeConstraint.AngularVelocity', To = 0, Step = 2},
+                    {Path = 'MoterPart.HingeConstraint.AngularVelocity', To = 2.5,
+                     Step = 14, Seconds = 10.9, After = 0},
+                    {Path = 'SpinnyPart.Neon.Color', To = Color3.fromRGB(250, 250, 250),
+                     Step = 14, Seconds = 10.9},
+                    {Path = 'NeonLight.Color', To = Color3.fromRGB(250, 250, 250),
+                     Step = 14, Seconds = 10.9},
+                    {Path = 'NeonLight.IndustrialAlarmLight.Enabled', To = true,
+                     Step = 14, Seconds = 10.9},
+                    {Path = 'MainAlarmPart.IndustrialAlarmSound.Playing', To = true,
+                     Step = 14, Seconds = 10.9},
+                },
+            },
+            -- The three combustion lasers, per laser. Two beats: everything
+            -- that CHARGES runs from the energise message to the fire message
+            -- and stops there, and the beam itself comes on at the fire.
+            --
+            -- The recording's own charge is 21.3 s and splits 10.1 s of vent
+            -- exhaust then 10.8 s of the firing sphere collapsing. Ours is the
+            -- chain's own step 11 -> step 14 gap, so that split is not
+            -- preservable and both halves run the whole window.
+            {
+                Name = 'CBL',
+                Root = 'ReactorCBLs',
+                Units = 'Reactor_Laser_Mk3_',
+                Tweens = {
+                    -- At rest this is a 30-stud transparent sphere; by the time
+                    -- the lasers fire it is a point. The recording supplies both
+                    -- ends (30 -> 0.001 and 1 -> 0 over t=89.04..99.86) and
+                    -- nothing about the middle, so the path between them is
+                    -- linear rather than fitted to polls that cannot describe
+                    -- one.
+                    {Path = 'Effects.FiringEffectPart.Size',
+                     To = Vector3.new(0.001, 0.001, 0.001), Step = 11, Seconds = 'Charge'},
+                    {Path = 'Effects.FiringEffectPart.Transparency',
+                     To = 0, Step = 11, Seconds = 'Charge'},
+                },
+                Moves = {
+                    -- the neon the recording lands on, per laser
+                    {Path = 'NeonStuff.PillarNeon.Neon.Color',
+                     To = Color3.fromRGB(100, 200, 255), Step = 11},
+                    {Path = 'NeonStuff.GrateNeon.Grate.Color',
+                     To = Color3.fromRGB(145, 245, 255), Step = 11},
+                    {Path = 'NeonStuff.TankNeon.Part.Color',
+                     To = Color3.fromRGB(255, 255, 255), Step = 11},
+                    {Path = 'NeonStuff.MidNeon.Part.Color',
+                     To = Color3.fromRGB(50, 255, 255), Step = 11},
+                    {Path = 'NeonStuff.DetailNeon.Part.Color',
+                     To = Color3.fromRGB(255, 255, 255), Step = 11},
+                    {Path = 'NeonStuff.DetailNeon.Part2.Color',
+                     To = Color3.fromRGB(255, 255, 255), Step = 11},
+                    {Path = 'NeonStuff.DetailNeon.Part3.Color',
+                     To = Color3.fromRGB(255, 255, 255), Step = 11},
+                    -- the three rotors, 0 -> 1 and they stay there
+                    {Path = 'Effects.SpinnyThingsFront.Moter.HingeConstraint.AngularVelocity',
+                     To = 1, Step = 11},
+                    {Path = 'Effects.SpinnyThingsBack.Moter.HingeConstraint.AngularVelocity',
+                     To = 1, Step = 11},
+                    {Path = 'Effects.SlightlyBetterSpinnyThing.Moter.HingeConstraint.AngularVelocity',
+                     To = 1, Step = 11},
+                    -- the hum is already PLAYING at pitch 0, i.e. silent; the
+                    -- start-up raises its pitch rather than starting it.
+                    {Path = 'Effects.SoundPart.AmbientHum.Pitch', To = 1, Step = 11},
+                    -- charging: the twelve lightning emitters and the two in
+                    -- Charge_Fire, on for the charge and off at the fire.
+                    {Path = 'Effects.LightningParticles.Lightning.SmokeParticle.Enabled',
+                     To = true, Step = 11, Seconds = 'Charge'},
+                    {Path = 'Effects.LightningParticles.Lightning.TrailElectricityBlur.Enabled',
+                     To = true, Step = 11, Seconds = 'Charge'},
+                    {Path = 'Effects.LaserParticles.Charge_Fire.ParticleEmitter1.Enabled',
+                     To = true, Step = 11, Seconds = 'Charge'},
+                    {Path = 'Effects.LaserParticles.Charge_Fire.ParticleEmitter2.Enabled',
+                     To = true, Step = 11, Seconds = 'Charge'},
+                    {Path = 'Effects.VentParticalPart.ParticleEmitter.Enabled',
+                     To = true, Step = 11, Seconds = 'Charge'},
+                    {Path = 'Effects.SoundPart.LaserVentSFX.Playing',
+                     To = true, Step = 11, Seconds = 'Charge'},
+                    -- firing: the sustained beam emitter comes on where the
+                    -- charge emitters stopped, and the beam itself becomes
+                    -- visible -- Main fully, LaserPart left at 0.75 because
+                    -- that is the value the recording leaves it holding.
+                    {Path = 'Effects.LaserParticles.ParticleEmitter.Enabled',
+                     To = true, Step = 14},
+                    {Path = 'Effects.LaserParticles.Charge_Fire.DisplacedSmoke.Enabled',
+                     To = true, Step = 14},
+                    {Path = 'Laser.Main.Transparency', To = 0, Step = 14},
+                    {Path = 'Laser.LaserPart.Transparency', To = 0.75, Step = 14},
+                },
+            },
+            -- The core. Everything below happens on the LAST message of the
+            -- chain, which is also where Engine sets phase = 'Running': the log
+            -- panel finishing and the reactor coming up are one event here, as
+            -- the engine's own comment says, so the ignition rides that step
+            -- rather than a clock of its own.
+            {
+                Name = 'Core',
+                Root = 'Core',
+                Moves = {
+                    -- The two CBL sounds live under Core in this rig rather than
+                    -- under the lasers, so they are declared here and ride the
+                    -- lasers' beats. The start-up sound runs for the charge
+                    -- (t=76.72..86.92); the fire sound runs from there into the
+                    -- core's settle, 21.4 s.
+                    {Path = 'CORE.CBLStartUpSound.Playing', To = true,
+                     Step = 11, Seconds = 'Charge'},
+                    {Path = 'CORE.CBLFireSound.Playing', To = true, Step = 14, Seconds = 21.4},
+
+                    -- latched at ignition
+                    {Path = 'EFEParticlePart.AmbientParticles.Enabled', To = true, Step = 16},
+                    {Path = 'CORE.Transparency', To = 0, Step = 16},
+                    {Path = 'CORE.ProtoCoreLoop.Playing', To = true, Step = 16},
+                    {Path = 'CORE.PointLight.Enabled', To = true, Step = 16},
+                    {Path = 'ExplosiveCoreEffect.Size',
+                     To = Vector3.new(120, 120, 120), Step = 16},
+                    {Path = 'ForcefieldShockwave.Size',
+                     To = Vector3.new(111.1917495727539, 111.1917495727539, 111.1917495727539),
+                     Step = 16},
+                    {Path = 'ForcefieldShockwave.Transparency',
+                     To = 0.9259811043739319, Step = 16},
+
+                    -- the bang: ten and a half seconds of emitters, then off
+                    {Path = 'CORE.Effects.ExplosionParticle2.Enabled',
+                     To = true, Step = 16, Seconds = 10.6},
+                    {Path = 'CORE.Effects.ExplosionParticle3.Enabled',
+                     To = true, Step = 16, Seconds = 10.6},
+                    {Path = 'CORE.Effects.ExplosionParticle4.Enabled',
+                     To = true, Step = 16, Seconds = 10.6},
+                    {Path = 'CORE.Effects.ExplosionParticle5.Enabled',
+                     To = true, Step = 16, Seconds = 10.6},
+                    {Path = 'CORE.Effects.ExplosionParticle6.Enabled',
+                     To = true, Step = 16, Seconds = 10.6},
+                    {Path = 'CORE.Effects.ExplosionSmoke.Enabled',
+                     To = true, Step = 16, Seconds = 10.6},
+                    {Path = 'CORE.ExplosionLightning2.Enabled',
+                     To = true, Step = 16, Seconds = 10.6},
+                    {Path = 'CORE.IgnitonExplosion.Playing',
+                     To = true, Step = 16, Seconds = 10.6},
+                    -- The recording sets its volume to 0.475 before playing it
+                    -- and to 0 when it stops, which is a second steady state
+                    -- rather than a revert: at rest the sound sits at volume 1
+                    -- without playing, so reverting would leave it armed loud.
+                    {Path = 'CORE.IgnitonExplosion.Volume', To = 0.4751743674278259,
+                     Step = 16, Seconds = 10.6, After = 0},
+                    -- The one emitter that outlasts the bang by twice as long:
+                    -- on at t=97.72, off at t=119.26, 21.5 s.
+                    {Path = 'CORE.Effects.InstabilityParticle1.Enabled',
+                     To = true, Step = 16, Seconds = 21.5},
+
+                    -- the settle, 10.6 s after the ignition, which is where the
+                    -- reactor stops moving and starts holding
+                    {Path = 'CORE.Effects.CoreParticle.Enabled',
+                     To = true, Step = 16, Delay = 10.6},
+                    {Path = 'CORE.Effects.CoreParticle2.Enabled',
+                     To = true, Step = 16, Delay = 10.6},
+                    {Path = 'CORE.ProtoCoreLoop.Pitch', To = 0, Step = 16, Delay = 10.6},
+                    {Path = 'ExplosiveCoreEffect.Size',
+                     To = Vector3.new(80, 80, 80), Step = 16, Delay = 10.6},
+                    {Path = 'ForcefieldShockwave.Size',
+                     To = Vector3.new(120, 120, 120), Step = 16, Delay = 10.6},
+
+                    -- and the long tail, another 11 s on: the running sound
+                    {Path = 'CORE.Modified_Energy_Sound.Pitch', To = 2, Step = 16, Delay = 21.5},
+                    {Path = 'CORE.Modified_Energy_Sound.Volume',
+                     To = 1.25, Step = 16, Delay = 21.5},
+                },
+            },
+        },
+    },
 }
 
 -- The start-up chain's total, kept as one number for the phase trace.

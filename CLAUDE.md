@@ -454,6 +454,35 @@ local ez = math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z
 
 细节取舍 **449/450/451/452**，上手 `docs/SNIPPETS.md` **§5.25**。
 
+### 0.24 【坑】点路径的最后一段是**属性**，不是子件；而**一次点亮的探针会烧掉开机的基线**
+
+两条都是 2026-10-13（Phase 122，把点火级联做进游戏本体）量出来的。
+
+**① 写回实例时，`.Path.To.Thing.Color` 的最后一段是属性。** 一个会话里踩了两次：
+`rotor=nil`（`…Moter.HingeConstraint.AngularVelocity` 被当成子件往下走），
+和 `missingPath=428 wrote=0`（把**整行**当路径解析，遍历在找名叫 `Playing` 的孩子）。
+**它报的是「这条路径找不到」，读起来正好像「世界里没有这些东西」**（同 §0.15：错的是**地址**，
+报错落在**消费者**）。三条规矩：**属性单独取**（`string.match(path,'^(.*)%.[^.]*$')`）；
+**每一层的同名兄弟都要展开**（否则 48 个同名件塌成 1 行，「写进 48 件」变成「写进 1 件」而**不报错**）；
+**值按形状认**（bool / 1 数 / 2 数 → NumberRange / 3 数 → Color3 或 Vector3）。
+
+**② 一个适配器的基线如果是「从世界读」的，那么一次把它点亮的探针就把基线点着了。**
+`FacilityCascade.Initialize` 读 `Color` / `Light.Enabled` / `Brightness` —— 这是对的
+（单一真相源），代价是下一次 `Initialize` 把**亮着**当成**授权**，整场开机
+**静默失效**（ramp 从 `on` 到 `on`），而「什么都没发生」与「本该如此」在盘上同形（§0.19 同族）。
+`Config.Cascade.ColdBaseline=true` **救不了**（它的 `off` 也读世界）。
+**出路是原版自己的录像**：`changes.log` 每行 `old → new`，所以每个 (路径, 属性)
+**最早一次出现的 `old` 就是它的 t=0 值** → `_tools/cold_baseline.py` → `Data/cold_baseline.tsv`。
+两个边界：它是**窗口开始时的值**（不是宇宙诞生时的值 —— `ControlRoomLower`/`SubLounge` 的
+`Enabled=true` 正是原版的静止状态，而我们这一份静止是暗的，**照抄就是破坏**，判据是
+**我们自己的 t0 普查**）；**录像没有行 ≠ 那件东西没有值**（`LightPart.Color` 与 LoungeLights
+一行都没有，靠算术黑回去）。
+
+**附一条能放心用的**：`rewind` **精确可逆** —— 克隆走完 step 0..16 再倒回 0，读数逐项回到走之前。
+所以「拿克隆驱一遍再拍图」是安全动作，世界会干净。
+
+取舍 **509/510/511**，上手 `docs/SNIPPETS.md` **§5.29**，系统说明 `docs/SYSTEMS.md` **§2.22**。
+
 ## 1. 项目概述
 
 ### 1.1 基本信息
@@ -593,6 +622,9 @@ local ez = math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z
 ## 8. 一句话总结
 
 仿真核心、控制系统、监视器、测试、灯光、材质**都已就绪并验证通过**。
+**开机链（点火级联）也已做进游戏本体**（Phase 122）：七组灯成波地亮灭、三台 CBL 充能/起旋/出射、
+舱内警报闪 ~11 s、堆芯转临界 —— 挂在引擎自己的 `StartupSteps` 上（`FacilityCascade`，
+`docs/SYSTEMS.md` §2.22，判据图在 `Data/startup_shots/`）。
 **几何体重做已撤销**（用户 2026-09-26 原话：「不需要重做建模，请删除」）——
 `docs/TODO.md` §3.1 里那两条未开始的几何条目（设施外壳/房间内部的装饰与英雄资产、
 堆芯外壳与拉杆握把的 `generate_mesh` 重做）已删掉，该节剩下的只是已完成的施工记录。

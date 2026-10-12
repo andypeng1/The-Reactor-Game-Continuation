@@ -1961,3 +1961,90 @@ Falloff=0   max h[0]=4.99   max h[12]=5.00   max h[24]=4.98     ← 全程满高
   `if motion ~= "pulse" then motion = "wave" end`，所以**删掉 `Motion` 属性得到的是行波**；
   上一次默认是呼吸 —— 兜底值和盘上的值不一致时，谁去「清一下属性」谁就会看到一个不同的效果
   （取舍 493 的同族）。
+
+## 5.29 把一个「探针点亮的 Edit 世界」恢复到授权（冷）状态 ★ Phase 122
+
+**什么时候用**：`FacilityCascade.Initialize` 的基线是**从世界读**的（对的设计），
+所以任何一次在 Edit 里跑过点亮级联的探针，都会把「亮着」变成下一次 `Initialize`
+认下的授权 —— 整场开机**静默失效**（ramp 从 `on` 到 `on`）。
+`ColdBaseline=true` 救不了（它的 `off` 也读世界）。
+
+**唯一的出路是原版自己的录像**：`Data/originalwatch/*/changes.log` 每行是
+`t=… | 容器 | 全路径 | old | new`，所以**每个 (路径, 属性) 最早一次出现的 `old`
+就是它的 t=0 值** —— 而我们的设施是从原版复制来的，实例路径按构造就对得上。
+
+### ① 生成冷表
+
+```
+PYTHONIOENCODING=utf-8 python _tools/cold_baseline.py Data/cold_baseline.tsv
+```
+
+`_tools/cold_baseline.py` 里两条写法是必须的，改回去会得到一张**看起来很合理**的错表：
+
+```python
+# 从右边切，不要用正则去套尾部：`.` 匹配 `|`，
+# 于是「懒组当路径 + 贪心组当值」会笑着把 `path | old` 交回来当路径。
+head, old, new = raw.rsplit(' | ', 2)
+```
+
+```python
+# 观察者的 ` ~(x, y, z)` 与 ` #n` 是它自己的寻址，不是游戏的；
+# 不去掉，48 个同名兄弟会塌成一行，「写进 48 件」变成「写进 1 件」，而张数不报错。
+TILDE = re.compile(r' ~\([^)]*\)')
+HASH = re.compile(r' #[0-9]+')
+```
+
+### ② 把表送进 Studio（字节不进上下文）
+
+```bash
+python _tools/serve.py --dir Data --port 8769      # 用完记得杀
+```
+
+官方 `rblx_execute_luau`（Edit 数据模型）里 `HttpGet` 到 `http://127.0.0.1:8769/cold_baseline.tsv`，
+逐行 apply。**三条必须写对**：
+
+```lua
+-- ① 点路径的最后一段是属性，不是子件（DECISIONS 509）
+local parentPath, prop = string.match(path, '^(.*)%.([^%.]*)$')
+
+-- ② 每一层的同名兄弟都要展开（父路径自己就可能指向多个同名件）
+local function resolve(base, seg)      -- 返回数组
+    local out = {}
+    for _, node in ipairs(base) do
+        for _, kid in ipairs(node:GetChildren()) do
+            if kid.Name == seg then table.insert(out, kid) end
+        end
+    end
+    return out
+end
+
+-- ③ 值要按形状认，不能一律当字符串
+--    1 个 -> number     2 个 -> NumberRange
+--    3 个 -> Color3（全在 0..1）/ Vector3（否则）
+--    true/false -> bool
+```
+
+实测一遍：`wrote=809 failed=0`，`missingPath=9`（全是 `Lights.MaintFacilityLights.*`,
+而我们自己的 `Initialize` 本来就说那一组是空的 —— **缺的东西先 `bool(x)` 再断言**，§0.6）。
+
+### ③ 录像没行的地方，用**我们自己的算术**（不是猜）
+
+原版和我们的副本在**三处合法地不一样**：`ControlRoomLowerLights` / `SubLoungeLights`
+原版**静止时灯就是开的**（`Enabled=true`），我们这一份静止是暗的 —— 判据是
+**我们自己的 t0 普查**（全设施 32 盏亮灯全是 METU 的）。所以那两组**只回滚 `Enabled`**,
+颜色与亮度保留原版值。`LightPart.Color`（9 件）与 `LoungeLights`（6 件）**录像一行都没有**，
+靠算术黑回去：t0 `48/96` 而点亮后 `96/96` ⇒ 恰好 48 件由黑转白（亮度只升不降），
+Lounge `78/84 → 84/84` ⇒ 6 件。
+
+### ④ 判据是**逐项相同**，不是「看起来回来了」
+
+恢复后必须与走之前**另一次独立**的普查逐项相同（这一轮 `592/742`、`32` 盏），
+且逐组加起来正好落在总数上。
+
+### ⑤ 附：`rewind` 精确可逆 —— 所以「克隆驱一遍」是安全动作
+
+把 `Config` + `FacilityCascade` `Clone()` 进一个临时 Folder 再 `require`（§0.15），
+用**它自己的公开函数**驱动：`Initialize` → 逐 step `Refresh` → `Step(dt)`；
+完了 `Refresh({startupStep=0, phase='Starting'})` 倒回去。实测逐项回到走之前
+（球 `30,30,30`、beam `1`、core `1`、PointLight `false`）——
+**这就是「拍完图世界还是干净的」的凭据**，不用进 §0.5 那张冷表。

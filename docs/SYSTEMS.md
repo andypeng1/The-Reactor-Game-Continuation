@@ -929,3 +929,49 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 
 - 一次性播放的入口（两个驱动共用）：`ShockRipple.Play`（`BindableEvent`）→ `rig.Play:Fire()`。
 - 上手片段：薄片见 `docs/SNIPPETS.md` §5.28，CSG 环见 §5.27；取舍 485–498。
+
+### 2.22 `FacilityCascade` —— 世界的开机（`SSS.ReactorBackend.FacilityCascade`，2026-10-13，Phase 122）
+
+**它是什么**：`Runtime.server.luau` 里的第 4 个适配器 —— `VisualFeedback` 管控制台、
+`RoomShell` 管控制台**指向**的那些东西（灯带 / 监视器 / 百叶窗）、`BootPanel` 管开机屏里的字，
+它管**世界本身**：七组灯、三台 CBL、舱内警报、堆芯。
+跟着引擎自己那条链走（`Config.Shift.StartupSteps` 16 条 / `state.startupStep`），
+`Config.Cascade.Beats = {Dim=2, Energise=11, Fire=14, Ignite=16}`。
+
+**它拥有哪些属性**（单一写入者，别的模块不许碰）：
+- `Workspace.Lights.<组>`：ClampLights / ChamberLights / LoungeLights / SubLoungeLights /
+  ControlRoomLowerLights / MaintFacilityLights / METULights 的 `Color`，以及每盏灯对象的
+  `Enabled` / `Brightness`。
+- `Workspace.ReactorCBLs.Reactor_Laser_Mk3_*`：`Effects.FiringEffectPart.Size/Transparency`、
+  三个转子（`Effects.SpinnyThingsFront/Back/SlightlyBetterSpinnyThing`）的
+  `Moter.HingeConstraint.AngularVelocity`、七处霓虹色、`SoundPart.AmbientHum.Pitch`、
+  各类粒子 `Enabled`、`SoundPart.LaserVentSFX.Playing`、`Laser.Main.Transparency` 与
+  `Laser.LaserPart.Transparency`。
+- `Workspace.Alarms.ReactorChamber`：`MoterPart.HingeConstraint.AngularVelocity`、
+  `SpinnyPart.Neon.Color` 与 `NeonLight.Color`、`NeonLight.IndustrialAlarmLight.Enabled`、
+  `MainAlarmPart.IndustrialAlarmSound.Playing`。
+- `Workspace.Core.*`：`CORE.Transparency`、`CORE.PointLight.Enabled`、`ProtoCoreLoop`、
+  `ExplosiveCoreEffect.Size`、`ForcefieldShockwave.Size/Transparency`、两种爆炸粒子、
+  `IgnitonExplosion`（**游戏自己的拼法，别改**）。
+
+**三个入口**（§0.19：每帧的活儿必须是公开函数，不许藏在 `Connect` 里）：
+`Initialize(Config)` 抓基线并登记 target；
+`Refresh(state, Config)` 跟着 `state.startupStep` 走状态、发事件（每秒的逻辑门与
+`ControlBinder` 各调一次）；
+`Step(dt)` **不做门控**，由 `Heartbeat` 直接驱动（`math.min(dt, 0.5)`）——
+所有连续的量（四段 ramp、firing 球的塌缩、10.9 s 的警报）都在这里，藏在 1 秒的门后面
+会把 1.6 s 的淡入变成两个硬台阶。
+
+**基线是世界的数**（不是 Config 里的第二份）：`Initialize` 读每盏灯的
+`Color` / `Light.Enabled` / `Brightness`；倒回去靠 `rewind`（`Refresh` 把 step 倒回时触发）。
+**实测精确可逆** —— 走完 step 0..16 再倒回 0，读数逐项回到走之前（`PROGRESS` Phase 122 第三节）。
+
+**两个坑**：
+1. **探针把世界点亮 = 把授权基线点着。** 下一次 `Initialize` 会把"亮着"当成"授权"，
+   整场开机**静默失效**（ramp 从 `on` 到 `on`）。`ColdBaseline=true` 救不了（它的 `off` 也读世界）。
+   恢复路线见 `docs/SNIPPETS.md` §5.29（`_tools/cold_baseline.py` → `Data/cold_baseline.tsv`）。
+2. **一件灯只有在"没亮着、且颜色不是它自己的点亮色"时才被收进来**：手动把某组点亮，
+   那一组就**不会**进这一场的 ramp（看起来像"少了几盏"）。
+
+**验收**：`Data/startup_shots/` 三张同机位图（冷 / CBL 出射 / 点火）
+\+ 灯普查 `592/742`、`32` 盏（METU 的）。

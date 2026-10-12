@@ -841,3 +841,18 @@ Play 起来之后按第 2 条读**实例状态**，**第一次就否掉了原来
   今天 `stride = 1` 与 `stride = 4` 各跑满 4 分钟都不复现（取舍 451）。
   分片（`CFG.SLICE_STRIDE = 4`）留着当保险。**如果操作员在真机上又看到棋盘格，这就是要追的那条线索。**
 
+
+### 3.12 `FacilityCascade` 还欠的两件事（Phase 122 收尾，2026-10-13）
+
+**① Play 会话里的端到端没看过。** Edit 侧驱的是克隆模块（同源同函数），
+真 Runtime 是 `Runtime.server.luau` 73 行的 `Heartbeat → FacilityCascade.Step(min(dt,0.5))`
+（在每秒的逻辑门**之前**）+ 85 行门里那次 `Refresh`。
+§0.16 / §0.23 那一半仍然读不到 —— 要读就看 `RuntimeError` / `RuntimePhase` 两个属性，
+或让**游戏 VM 自己**把结论写进 `workspace` 上的 `StringValue`（§0.23 ②）。
+**别把「源码看起来对」当成「验证过了」；也别把「读不到」当成「功能没做」。**
+
+**② `LightPart` 的观感是操作员的一句话。** ClampLights 的 48 件灯 = 39 件
+`LightModel.Neon` + 9 件 `LightPart`（实测）。原版录像里 `LightModel.Neon.Color` 有行，
+**`LightPart.Color` 一行都没有** —— 原版从不写它。我们的 ramp 会把这 9 件由黑推到白，
+原版让它们一直黑。**留着没改**，理由与推翻的配方（`Config.Cascade` 加一个按名字索引的
+`LightOnly` 名单，形状同 `LampColors`）写在 `DECISIONS_2` **511**。

@@ -8162,3 +8162,63 @@ t=16.8667（帧 506） 字块 "Chamber Lighting"  op=0.4722,0.5278
 返回什么" —— **说"图上写着 X"和说"t 处是 X"是两句不同的话**，而它们并排写在表里
 长得一模一样（§0.20「数出来多少个，先问数的是谁」的同族：这次问的是**"在哪个时刻"**）。
 抽帧之后要报时刻，就报**那一帧自己的时刻**（`i/fps`），不要报请求的那个时刻。
+
+**509. 一个点路径的最后一段是属性，不是子件 —— 一个会话里踩了两次（Phase 122）**
+
+把观察者的路径写回实例时，两次都栽在同一件事上：
+
+- `rotor=nil`：我把 CBL 的 `Effects.SpinnyThingsFront.Moter.HingeConstraint.AngularVelocity`
+  当**子件路径**往下走。`AngularVelocity` 是属性，不是子件；而且 `MoterPart` 属于**舱内警报**，
+  不属于 CBL（CBL 的三个转子叫 `SpinnyThingsFront/Back/SlightlyBetterSpinnyThing`）。
+- `missingPath=428 wrote=0`：更狠的一次 —— 我把**整行**当路径去解析，于是最后一段成了
+  `Playing` / `Color` / `AngularVelocity` 这样的**属性名**，而遍历在找名字叫 `Playing` 的孩子。
+  它报的是「这一条路径找不到」，**读起来正好像「这个世界里没有这些东西」**。
+
+规矩三条：**① 属性单独取**（`parent = string.match(path, '^(.*)%.[^.]*$')`）；
+**② 遍历时每一层的同名兄弟都要展开** —— 观察者的 ` ~(x, y, z)` / ` #n` 是**它自己的寻址**，
+去掉会把 48 个同名兄弟塌成一行，于是「写进 48 件」变成「写进 1 件」，而张数**不会报错**；
+**③ 这与 §0.17 同族**：报错落在赋值/最终消费者身上，而错的是**地址**。
+（写回的值形状也要认：bool / 1 个数 / 3 个 → Color3 或 Vector3 / 5 的倍数 → ColorSequence /
+3 的倍数 → NumberSequence / 2 个 → NumberRange。）
+
+**510. 世界的授权基线只能从原版自己的录像里恢复，而且录像与我们的副本会合法地不一样（Phase 122）**
+
+`FacilityCascade.Initialize` 从**世界**读基线（`off` / `lit` / `brightness`），
+这是对的（单一真相源，Config 里再写一份就是第二个真相源），代价是
+**一次「把世界点亮」的探针会把授权基线点着**：下一次 `Initialize` 把亮着的状态当授权，
+整场开机静默失效。`ColdBaseline=true` 救不了（它的 `off` 也读世界）。
+
+出路是 **`old` 就是 t=0**：`changes.log` 每行 `old → new`，所以每个 (路径, 属性)
+**最早一次出现**的 `old` 就是它的授权值（`_tools/cold_baseline.py` → `Data/cold_baseline.tsv`，562 行）。
+
+两个必须一起记住的边界：
+
+1. **它是「窗口开始时的值」，不是「宇宙诞生时的值」** —— 如果录像窗口从一个班次中间开始，
+   最早的 `old` 是那一刻的值。同一次里 `ControlRoomLowerLights` / `SubLoungeLights` 的
+   `Enabled=true` **正是原版的静止状态**，而我们这一份静止是暗的：
+   **原版和我们的副本在这里合法地不一致，照抄就是破坏**。判据是**我们自己的 t0 普查**
+   （全设施 32 盏亮灯全是 METU 的 ⇒ 其余各组静止时一律灭），所以那几组**只回滚 `Enabled`**。
+2. **录像没有行 ≠ 那件东西没有值**。`LightPart.Color` / LoungeLights 从头到尾没有一行，
+   它们的授权值只能靠**我们自己的算术**：t0 `48/96` → 点亮 `96/96` ⇒ 恰好 48 件由黑转白
+   （亮度只升不降，所以转白的那批就是 t0 全黑的那批）。**同一把算术给出 592 / 32 两个总数，
+   与走之前那次独立普查逐项相同** —— 这就是「回来了」，而不是「我觉得回来了」。
+
+**附带（这一轮新量到的）：`rewind` 是精确可逆的。** 克隆走完 step 0..16 再倒回 0，
+`non-black 592/742`、`lights on 32`、球 `30,30,30`、`beam transparency 1`、`core 1`、
+`PointLight false` —— 逐项回到走之前的读数。**所以「克隆驱一遍」是安全动作**：
+它把自己写过的每一条都放回去（这也是三张图拍完世界还干净的凭据）。
+
+**511. `LightPart.Color`：原版从不写，我们写了 —— 留着，可被操作员一句话推翻（Phase 122）**
+
+ClampLights 的 48 件灯 = **39 件 `LightModel.Neon` + 9 件 `LightPart`**（实测，`isLamp` 数出来的）。
+原版录像里有 `LightModel.Neon.Color`（`0,0,0` → 亮色），**没有 `LightPart.Color`**
+—— 它只写 `LightPart.SurfaceLight.Enabled/Brightness`。我们的 `authoredColour` 优先取
+**件自己的 Light 的颜色**，所以这 9 件的 `on` = 白的灯色，ramp 会把它们由黑推到白；
+原版让它们一直是黑的。
+
+**留着的理由**：这 9 件的授权色只能由算术得到（48/48，见 510），黑是对的；
+但「开机时那 9 块面板该不该跟着亮」**是一个美术判断，不是一个可测的事实** ——
+在只有一个缺省规则的 ramp 里，「亮起来」读起来更像开机，而且它只在 ClampLights 这一组出现。
+**要推翻它**：给这一组（或按名字给 `LightPart`）一个「只驱动灯、不驱动件色」的名单，
+`Config.Cascade` 已经有按名字索引的 `LampColors`，同一个形状加一个 `LightOnly` 即可 ——
+改的是 **9 件**的观感，不动任何已验过的时序。
