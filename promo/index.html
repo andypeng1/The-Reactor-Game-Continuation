@@ -19,6 +19,10 @@
    最后一句停在 [ALERT] - ALL SYSTEMS READY, CORE IGNITION IMMINENT，
    而 [ALERT] - COMBUSTION LASERS FIRING 正好落在声音回来的那一帧。
 
+   点火那一帧之后不是直接切巡礼，而是走一段 **19.45 结束的点火级联**
+   （§2b IGN）：舱灯关→舱灯开→CBL 出射→堆芯临界→监视器网络上线。
+   五张都是同机位实拍的两两对照，"亮起来"是画面里真的少了一层黑。
+
    画面是**在 Studio 里实拍的**（promo/shots/*.jpg，1248x600 原生）。
    抓拍用的临时补光 Workspace.PROMO_LIGHTS 已经在拍完后删掉。
    ========================================================================== */
@@ -49,6 +53,34 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 .plate{position:absolute;inset:0;background-repeat:no-repeat;
        background-position:50% 50%;background-size:auto 110%;
        will-change:background-size,background-position,opacity}
+
+/* ---------- 点火级联（16.20 → 19.45） ---------------------------------- */
+/* 放在 #plates 后面、#grade 前面，是为了让它吃到和巡礼镜一样的调色/扫描线/
+   雾化 —— 点火那几张和后面的巡礼必须是**同一部片子**，不是两种画面拼起来。
+   z-index 不写（auto），于是按 DOM 顺序：它在 #scrim(4)/#boot(5)/.bar(6)/
+   #flash(7) 底下 —— 启动日志那一块在点火后还压在画面上，是对的。 */
+#ignite{position:absolute;inset:0;visibility:hidden;will-change:transform}
+.iplate{position:absolute;inset:0;background-repeat:no-repeat;background-position:50% 50%;
+        background-size:auto 110%;opacity:0;will-change:opacity}
+/* 级联的说明是**一个字块**，不是每张图各带一个（理由写在 5.1b）。
+   挂点是原来 .cjk 的位置（left 110 / bottom 164），三个子件的偏移就是
+   原来那三个数各减 164 —— 换的是容器，屏幕上落点一个像素都没动。
+   **`right:0` 不是装饰**：子件是 `left:0` + auto 宽的绝对定位，宽度取的是
+   容器的可用宽。只给 left/bottom 的话容器是 0×0，字会**每词一行**地折下去
+   （实测 16.85 那一帧 "MAIN CHAMBER" 折成两行、24px 的中文折成 157px 高），
+   而它看起来仍然是"一段字"—— 不会报错，只会换行。`nowrap` 是同一件事的第二道闸。
+   **它不在 #ignite 里面**，和巡礼的 #caps 做邻居：字块要压过 #scrim（那个角雾
+   是给"说明条永远读得出来"用的），而 #ignite 带 transform，是个自成一体的
+   层叠上下文 —— 挂在里面的话 z-index 再大也出不去，角雾会把白字压成灰字。 */
+#ignCap{position:absolute;left:110px;right:0;bottom:164px;opacity:0;z-index:5}
+#ignCap .rule{position:absolute;left:0;bottom:128px;width:520px;height:1px;
+        background:linear-gradient(90deg, rgba(82,218,226,.95), rgba(82,218,226,0))}
+#ignCap .lab{position:absolute;left:0;bottom:36px;white-space:nowrap;
+        font-family:var(--cond);font-size:60px;line-height:1;letter-spacing:.09em;
+        color:#fff;text-transform:uppercase;text-shadow:0 5px 30px rgba(0,0,0,.95)}
+#ignCap .cjk{position:absolute;left:0;bottom:0;white-space:nowrap;
+        font-family:var(--cjk);font-size:24px;letter-spacing:.10em;
+        color:rgba(240,244,248,.88);text-shadow:0 3px 18px rgba(0,0,0,.9)}
 
 /* ---------- 调色 / 罩 -------------------------------------------------- */
 #grade{position:absolute;inset:0;pointer-events:none;
@@ -172,6 +204,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 <div id="viewport"><div id="stage">
 
   <div id="plates"></div>
+  <div id="ignite"></div>
   <div id="grade"></div>
   <div id="scan"></div>
   <div id="tint"></div>
@@ -191,6 +224,9 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
     <div class="sub" id="openSub">Icarus Installation</div>
     <div class="cjk" id="openCjk">亚空间反应堆 · 操作员</div>
   </div>
+
+  <div id="ignCap"><span class="rule"></span>
+    <span class="lab" id="ignLab"></span><span class="cjk" id="ignCjk"></span></div>
 
   <div id="caps">
     <div class="idx" id="capIdx"></div>
@@ -269,6 +305,27 @@ const BOOT = [
   ['[ALERT] - ALL SYSTEMS READY, CORE IGNITION IMMINENT','hot'],   // ← 静音里最后停在这一句
   ['[ALERT] - COMBUSTION LASERS FIRING','hot'],                    // ← 落在声音回来那一帧
   ['[ALERT] - START-UP COMPLETED','hot'],
+];
+
+/* ============================================================================
+   2b. 点火级联（16.20 → 19.45）
+   ============================================================================
+   用户 2026-10-12：「开机腔室得有点变化吧？开灯、CBL 开机什么的（注意有很多
+   东西要动比如子空间预测）你这个开机啥都没有是什么意思」。
+   原来的 16.20 只有一道白闪，闪完直接切到巡礼第一镜 —— 等于**没有开机**。
+
+   这五张是**同一套临时补光下按顺序实拍**的，不是同一张图上的调色：
+   ig1 舱灯全关，ig2 舱灯全开（98 盏），ig3 CBL 出射，ig4 堆芯俯视，
+   ig5 控制室监视器全部上电。逐张之间是**同机位**的（ig1/ig2 同一个相机，
+   ig5 和巡礼的 shots/s12_monwall.jpg 是同一个相机），所以"亮起来"是画面里
+   真的少了一层黑，不是把亮度拧大。
+   ========================================================================== */
+const IGN = [
+  {t0:16.20, t1:16.85, img:'shots/ig1_chamber_off.jpg', lab:'Main Chamber',        cjk:'主舱 · 待机'},
+  {t0:16.85, t1:17.45, img:'shots/ig2_chamber_on.jpg',  lab:'Chamber Lighting',    cjk:'舱内照明 ×98 · 上线'},
+  {t0:17.45, t1:18.05, img:'shots/ig3_cbl.jpg',         lab:'CBL Array',           cjk:'化学泵浦激光 · 出射'},
+  {t0:18.05, t1:18.65, img:'shots/ig4_core.jpg',        lab:'Reactor Core',        cjk:'堆芯 · 临界'},
+  {t0:18.65, t1:19.45, img:'shots/ig5_monwall.jpg',     lab:'Monitor Network',     cjk:'监视器网络 ×7 · 上线'},
 ];
 
 /* ============================================================================
@@ -364,6 +421,15 @@ const bootNodes = BOOT.map(([text,kind])=>{
 const bootList = $('bootList');
 BOOT.forEach((_,i)=> bootList.insertBefore(bootNodes[i], $('cursor')));
 
+const ignHost = $('ignite');
+IGN.forEach(ig=>{
+  const d = document.createElement('div');
+  d.className = 'iplate';
+  d.style.backgroundImage = `url("${ig.img}")`;
+  ignHost.appendChild(d);
+  ig.node = d;
+});
+
 /* ============================================================================
    5. RENDER —— t 的纯函数
    ========================================================================== */
@@ -401,6 +467,41 @@ function render(t){
     const back     = ramp(p, T.ignite-0.12, T.ignite+0.04);
     s.node.style.opacity = (op * Math.min(blackout + back, 1)).toFixed(4);
   }
+
+  /* ---- 5.1b 点火级联 -------------------------------------------------- */
+  // 窗口跨在切点上、互为补数（和 5.1 同一条 XF 规则），所以级联**内部**永远
+  // 不黑帧。相邻两张的淡出/淡入落在同一个区间上，两边的和恒等于 1 ——
+  // 这也正是可以用「和」当覆盖率的原因：交叠处两盏各 0.5，加起来还是 1。
+  // 用 max() 当覆盖率会在每一刀上掉到 0.5，那 0.2 秒里巡礼的说明条会漏出来。
+  const IG_XF = 0.30;
+  let ignCov = 0, ignBest = 0, ignStage = null;
+  for (const ig of IGN){
+    const op = ramp(p, ig.t0-IG_XF, ig.t0+IG_XF) * (1 - ramp(p, ig.t1-IG_XF, ig.t1+IG_XF));
+    ig.node.style.opacity = op.toFixed(4);
+    ignCov += op;
+    if (op > ignBest){ ignBest = op; ignStage = ig; }
+  }
+  ignCov = Math.min(ignCov, 1);
+  $('ignite').style.visibility = ignCov > 0.001 ? 'visible' : 'hidden';
+
+  // 说明是**一个字块**，全级联共用，跟着「哪张图在主导」硬切。
+  // 第一版是每张图各带一个 <span>，于是两张图交叉溶解的时候两段字也各自半亮 ——
+  // 19.45 那一帧（级联交给巡礼的那一下）实测就是「CORE IGNITION」和
+  // 「MONITOR NETWORK」叠在一起。**图像可以溶，文字不能溶**：两行大字叠起来
+  // 不是"转场"，是脏。所以文字改成硬切 —— 切点正好落在两张图各占 50% 的那一帧。
+  // 退场比图早 0.15 s：级联的最后一张开始溶（19.15）时字已经走完，把左下角
+  // 让给巡礼第一镜的说明条（它从同一刻起从 0 升上来，两条字永远不会同时存在）。
+  const labOp = ignCov * (1 - ramp(p, IGN[IGN.length-1].t1 - IG_XF - 0.15,
+                                        IGN[IGN.length-1].t1 - IG_XF));
+  if (ignStage){
+    $('ignLab').textContent = ignStage.lab;
+    $('ignCjk').textContent = ignStage.cjk;
+  }
+  $('ignCap').style.opacity = labOp.toFixed(4);
+  // 缓推写成**整层一条**单调曲线，不写成逐张的推拉：逐张会在交叠处同时存在
+  // 两个不同的缩放（正是"两个都看得见"的那 0.6 秒），读起来是一跳。
+  const cz = ramp(p, IGN[0].t0, IGN[IGN.length-1].t1);
+  $('ignite').style.transform = `scale(${(1 + 0.05*cz).toFixed(4)})`;
 
   /* ---- 5.2 启动日志 --------------------------------------------------- */
   const bootIn  = ramp(p, T.log0, T.log0+0.30);
@@ -452,7 +553,9 @@ function render(t){
     const ci = ramp(p, cap.t0+0.50, cap.t0+1.05);
     const co = 1 - ramp(p, cap.t1-0.70, cap.t1-0.18);
     const a  = ci*co;
-    $('caps').style.opacity = a.toFixed(4);
+    // 级联压着的时候说明条一个像素都不许露：巡礼第一镜的说明条从 16.25 就开始
+    // 淡入，而那时候画面上是舱内点火 —— 两条说明同时出现会把"开机"读成"巡礼"。
+    $('caps').style.opacity = (a * (1 - ignCov)).toFixed(4);
     $('caps').style.transform = `translateY(${((1-ci)*34 + (1-co)*-18).toFixed(2)}px)`;
     $('capIdx').textContent  = cap.idx;
     $('capBig').textContent  = cap.cap;
@@ -476,7 +579,10 @@ function render(t){
   const tc = t;
   $('metaTC').textContent = '00:' + String(Math.floor(tc/60)).padStart(2,'0')
                                   + ':' + String(Math.floor(tc%60)).padStart(2,'0');
-  if (cap){ $('metaShot').textContent = cap.cap.toUpperCase() + '  ·  ' + cap.idx; }
+  // 门用的是 labOp 不是 ignCov：左下角那块大字什么时候在，角标就什么时候换 ——
+  // 两处各用各的门就会出现「大字已经没了，角标还在报 STAGE」的一小段。
+  if (labOp > 0.5 && ignStage){ $('metaShot').textContent = ignStage.lab.toUpperCase() + '  ·  IGNITION'; }
+  else if (cap){ $('metaShot').textContent = cap.cap.toUpperCase() + '  ·  ' + cap.idx; }
   else if (p < T.dark){ $('metaShot').textContent = 'PROLOGUE'; }
   else if (p < T.ignite){ $('metaShot').textContent = 'START-UP SEQUENCE'; }
   else { $('metaShot').textContent = 'EPILOGUE'; }

@@ -1149,12 +1149,39 @@ as the intro: **the whole film is `render(t)`, a pure function of one clock** (D
 HTML page that keeps the same contract, not a second pipeline. It renders 2,281 frames over
 ~22 minutes to `promo/THE_REACTOR_promo_silent.mp4` (video only; the renderer's encode is silent).
 
-**Its plates are captures, taken in Edit mode.** Fifteen camera-positioned `screen_capture`
+**Its plates are captures, taken in Edit mode.** Twenty camera-positioned `screen_capture`
 shots of the working place (`promo/shots/`), plus the game's own startup log for the text:
 the 13 lines typed out during the hush are verbatim from `docs/ORIGINAL_UI_TEXT.md` section 1,
 with `COMBUSTION LASERS FIRING` landing on the ignition frame. The temporary lighting rig used
 to take the shots (`Workspace.PROMO_LIGHTS`) was deleted afterwards and the deletion verified
 (`gone=true`) -- Workspace content is live, so moving it is changing the world (CLAUDE 0.12).
+
+**The ignition is a cascade of five more plates, not a bigger flash (Phase 121).** The operator's
+note was that the startup showed nothing happening: "开机腔室得有点变化吧？开灯、CBL 开机什么的
+（注意有很多东西要动比如子空间预测）". A film built on stills cannot *brighten* its way to a lit
+chamber, so the five `ig1..ig5` plates were captured from the same camera positions in pairs --
+ig1/ig2 are one camera with the chamber's 98 `NeonPart` surface lights off and then on, so the
+light coming up is really the light coming up. They cross-dissolve over 16.20-19.45 with the
+tour's own window rule, and the coverage value is the **sum** of the stage opacities rather than
+their max: because the windows straddle each cut and are complementary, the sum is exactly 1
+across a dissolve, whereas `max()` would drop to 0.5 at every cut and leak the tour caption
+through (DECISIONS 502).
+
+Two defects in that cascade were caught **by looking at the frames, not by reading the probe** --
+the probe agreed with the code the whole time. At the hand-off the cascade's per-plate caption and
+the returning tour caption were both at 50%, printing two large captions on top of each other; the
+caption is now a single text block that **hard-switches** to whichever plate dominates while the
+images dissolve under it (DECISIONS 503). Moving it into a shared container then wrapped it
+silently -- an absolutely positioned child of a zero-width box breaks at every word boundary, and
+the measurement that catches it is the **height** of the box, not its presence (DECISIONS 504) --
+and that container sat inside the `transform`ed layer of the plates, which traps `z-index` in its
+own stacking context, so the corner scrim was dimming the white text to grey (DECISIONS 505).
+
+**One thing in the cascade is an honest substitute.** The operator named the subspace forecast
+panel specifically. Its plot is built at *runtime*, so in Edit mode that monitor is blank by
+construction -- a part-by-part comparison of the FORECAST and MAIN `MainMonitorFrame`s shows an
+empty `ScrollingFrame` and only the hidden template. Rather than fake it, the beat uses the
+monitor wall, and the caption says "Monitor Network" rather than naming the forecast.
 
 **The music is the operator's reference track, not the remix -- and that correction re-measured
 the whole timeline.** The first cut synced to `ReactorStartup_Remix.mp3`; the operator corrected
@@ -1174,9 +1201,23 @@ true 6.50 s of silence, then the original resumed at 12.00 s. The two music segm
 the ignition. Measured on the delivered file, not on the ingredients:
 
 ```
-SILENCE run 9.70..16.20 s (6.50 s)
-BIGGEST RISE 33.6 dB at t=16.25 s (-55.5 -> -21.9 dB)   <- the ignition frame
+silencedetect  silence_start 9.693492 | silence_end 16.201383 | duration 6.507891
+volumedetect   11-15 s (the hush)   mean -91.0 dB   <- digital zero; -91 is the quantiser floor
+               21-25 s (after ign.) mean -18.1 dB | max -5.8 dB
+straddling 16.20, two disjoint windows: 16.05-16.20 = -91.0 dB vs 16.22-16.37 = -19.5 dB
 ```
+
+That last pair is **at least** 71 dB, not 71 dB: the hush is a true digital zero, so where it
+reads -91.0 that is the floor rather than a level.
+
+**One figure from the previous round could not be reproduced, and it is left standing rather
+than rewritten.** The line here used to read `BIGGEST RISE 33.6 dB at t=16.25 s`. Rebuilding
+that metric from memory (`astats:reset=1` + `ametadata=print`, 50 ms RMS, biggest jump) gives
+**byte-identical output for the muxed film and for `_bed.m4a` alone** -- both report
+`BIGGEST RISE 63.5 dB at t=0.00 s`. The same number on two different files means the **ruler**
+is wrong, not either file (DECISIONS 507), so the old figure neither became evidence nor got
+quietly overwritten: the two reproducible measurements above replace it, and the fact that the
+original method is gone is recorded next to it (DECISIONS 507).
 
 **One real defect was caught by reading the delivered file back.** Each plate faded out on
 `[t1-XF, t1]` while the next faded in on `[t1, t1+XF]` -- **non-overlapping windows**, so at
@@ -1184,7 +1225,18 @@ every cut *both* were at zero and the film dipped to a fully black frame (12 cut
 way). Both windows are now centred on the cut so the ramps are complementary
 (`sum=1.00 | max=0.50` at every boundary). It was found on a contact sheet pulled from the
 finished mp4 -- the twelve instants sampled had landed on the cuts, which is why a first glance
-read as "the extractor is broken" until the numbers were read (DECISIONS 499 to 501).
+read as "the extractor is broken" until the numbers were read (DECISIONS 499 to 507).
+
+**And the cascade was checked on the delivered file, not in the browser** -- five instants
+(`16.85 / 17.45 / 18.40 / 19.15 / 19.45`) pulled back out of the finished mp4. "The renderer
+agrees" and "this file is right" are two different claims. `19.45` is the frame the
+double-caption defect lived on, and it now carries exactly one caption; in every frame the
+corner label names the same source as the large text, which is how the last one is known to be
+the tour's returning caption and not a leftover of the cascade. Note that a frame pulled at
+`-ss 16.85` is the frame *covering* 16.85 (16.8667) while a probe reads `render(16.85)` exactly,
+and the caption hard-switches at the cut -- so the two differ by one stage and neither is wrong
+(DECISIONS 508).
+
 
 **The promo's audio is not tracked.** `promo/_bed.m4a` and the muxed `promo/THE_REACTOR_promo.mp4`
 carry the reference recording, so they are gitignored for the same reason the track is; the
