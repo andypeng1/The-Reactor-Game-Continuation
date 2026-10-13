@@ -2194,6 +2194,13 @@ C:/Python314/python.exe _tools/compare_backend.py --pulled _tools/_pull/round124
 **任一非空即 exit 1**。Phase 124 那次是 **12/12 SAME**；Phase 123 那次正是靠这个格式
 暴露了「十个相同、`Engine` 一个落后一个版本」。
 
-**两条边界**：接收目录必须**每次新建**（残件会冒充这一次的结论）；
-`LuaSourceContainer` 只覆盖这个文件夹里的脚本 —— `StarterPlayerScripts.EndShiftResume`
+**三条边界**：
+**① 接收目录必须每次新建** —— 残件会冒充这一次的结论。
+**② 上一轮的 `receive.py` / `serve.py` 进程还活着，而且它可能抢走这一次的连接。**
+本轮实测：`netstat` 上有**三个** PID 同时 LISTENING 在 8765，命令行分别是三个不同的 `--dir`；
+我的 POST **没有**进我这一轮起的那个目录，而是进了**上一轮那个**（`--dir …/studio_backend`）。
+Windows 的 `SO_REUSEADDR` 让新 bind **成功而不报错**，所以「我起了新 sink」和
+「文件进了新 sink」是两件事。**动手前先 `netstat -ano | grep <port>` +
+`Get-CimInstance Win32_Process` 看命令行**，复用或杀掉，别假定端口是你的。
+**③ `LuaSourceContainer` 只覆盖这个文件夹** —— `StarterPlayerScripts.EndShiftResume`
 **不在** `SSS.ReactorBackend` 里，得单独拉一次（本轮就是单独拉的）。
