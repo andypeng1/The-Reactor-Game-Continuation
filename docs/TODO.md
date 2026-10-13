@@ -921,3 +921,39 @@ Phase 124 实测 **12/12 SAME、exit 0**；**变异测过**（改一个文件 �
 **④ 警报格那两行仍然留黑**（取舍 522）：`ENERGY FLUCTUATION` 与 `P.E.A MALFUNCTION`
 在这个 build 里没有对应量。**留黑是现状、不是结论** —— 哪天引擎建模了
 「能量波动」和「P.E.A 故障」，这两行该接线，接线时别再找一个「看起来像」的量顶上。
+
+### 3.16 五台监视器的**内容**是静态美术（2026-10-13 量出来的，属 **TODO**，不属已知）
+
+**量法**：把全 DataModel **129 个** `LuaSourceContainer` 的 `Source` 全读出来，
+对每个内容 frame 名做一次**字面**查找。结果：
+
+| frame | 谁写 |
+|---|---|
+| `AlertsFrame` / `AlertFrameN` | `AlertsPanel`（Phase 125 新写） |
+| `AnnouncementFrame` / `TimeSliceTemplate` | `ForecastPanel`（Phase 125 新写） |
+| `EFEFrame` | `ForecastPanel` |
+| `LogsFrame` | `LogPanel` |
+| `CBL1..3Frame`（Power） | **无** |
+| `C1..C3Frame` / `FanFrame`（Thermal） | **无** |
+| `QuotaFrame` / `TimeFrame` / `EquinoxFrame` | **无** |
+| `ReactorDiagramFrame` / `ReadingsFrame` / `CoreDiagramFrame` | **无** |
+| `MalfunctionFrame` / `SAMFrame`（Power/Thermal/Main） | **无** |
+
+**它们现在显示的是作者当初摆的静态值**：`140 F`、`100%`、`OFFLINE`、
+`NIL F`、`0 GW/H`、`40 R`、`20 PSI`、`524 GW`、`11:50 PM`、
+`12%`（HDEF INTEGRITY）。
+
+**原版的驱动代码不在这里。** 那 10 个 `GraphDetailThingy`（Power/Thermal/Main
+各一，另外 7 个在 `ServerStorage` 的复制件里）**全是空壳**，正文只有两行：
+
+```
+-- Saved by UniversalSynSaveInstance (Join to Copy Games) https://discord.gg/wx4ThpAsmw
+-- [FilteringEnabled] Server Scripts are IMPOSSIBLE to save
+```
+
+所以**没有可以移植的原版实现** —— 存档工具把服务端脚本丢掉了（这正是这行注释在说的）。
+`CBL1Frame`/`QuotaFrame` 这类名字在整个 DataModel 里**一次都没被引用过**，
+不是「有人写但写错了」。
+
+**这是「监视器内容」的欠账，不是「开机」的欠账** —— Phase 125 接上的是操作员点名的那两块
+（子空间预测 + 警报）。要不要接这五台，见 `QUESTIONS.md`。
