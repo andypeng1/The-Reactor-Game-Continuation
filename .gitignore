@@ -302,3 +302,14 @@ Data/shot_report.png
 #     worse than none: it looks exactly like this round's evidence. ---
 _tools/_pull/
 _tools/_pull.log
+
+# --- a screenshot of the LIVE post-shift report screen (Phase 127), taken from
+#     Studio's own viewport while the reactor sat in `Failed`.  Same rule as
+#     Data/shot_report.png further up and for the same reason: the screen is the
+#     ORIGINAL game's authored art, its English copy is the original's, and this
+#     repo is PUBLIC (Phase 51).  What the shot proves -- that the transport
+#     built in Phase 124 really puts that screen in front of a player -- is
+#     recorded as instance readings in PROGRESS.md Phase 127, which is the form
+#     that survives without publishing the art.  The other nine files in this
+#     directory ARE tracked: those are renders of the chamber, our own geometry. ---
+Data/startup_shots/11_live_shift_report.jpg

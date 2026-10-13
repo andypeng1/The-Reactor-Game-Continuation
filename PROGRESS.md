@@ -14144,3 +14144,163 @@ ok   typed temperature refused while armed   '68801'
 - **滑杆顶 40000 不是物理上限**：模型超过去时读数照实显示（读的是 `T(x)` 那一行和数字框），
   滑杆的滑块停在顶端 —— 一个把自己上方截断的控制台会**藏起它本就该展示的那个故障**。
 
+
+## Phase 127 — 「roblox给你接上了，自己测」：开机链最后两块屏的**真机**那趟（2026-10-14）
+
+**操作员原话**：「roblox给你接上了，自己测」。
+
+这一轮把 `docs/TODO.md` §3.15 ①② 两条欠账**在跑起来的游戏里**做掉 —— Phase 125 只在
+Edit 模式里 require 真模块驱动过，那两行欠账自己写着「**Play 里的真机那半没跑**」。
+顺带把这一趟撞出来的三件小事量清楚（第六节），其中两件进了 `QUESTIONS.md`（`R6`）。
+
+### 一、进 Play 之前：把「盘上的代码就是跑着的代码」钉死（§0.25）
+
+`SSS.ReactorBackend` **整个文件夹** + 两个 `StarterPlayerScripts` 模块推回磁盘
+（官方 VM 的 `PostAsync` → `_tools/receive.py` 8765），`_tools/compare_backend.py` 逐件比哈希：
+
+```
+14 same, 0 different, 0 unmatched, 0 absent        exit=0
+```
+
+**「我推过」不可证伪，逐文件比可证** —— 这条是 Phase 123 花半轮学会的，这轮照跑。
+
+### 二、点击装置：四个控制，各一次重新泊车 + 各一次重新瞄准
+
+Phase 123 那套（`docs/SNIPPETS.md` §5.30/§5.31）原样用，多出来一条简化：
+
+**相机是「每个目标各瞄准一次」的**，于是每个目标都投影到视口正中，四个控制解出的是
+**同一个**工具像素 `(287, 71)`（视口 575.2 × 259.2，`tool_y = viewport_y − GetGuiInset().Y`，
+inset = 58）。Phase 123 那次四个控制之间**差 2 px** 的歧义，这一轮是**构造上不存在**的。
+
+四条送达 oracle 全部出现，**没有一条 `rejected:`**：
+
+```
+[ReactorBackend][Control] andypeng1NB -> MONITOR POWER BUTTON
+[ReactorBackend][Control] andypeng1NB -> CONTROL ROOM SHUTTERS SWITCH
+[ReactorBackend][Control] andypeng1NB -> MONITOR BOOT BUTTON
+[ReactorBackend][Control] andypeng1NB -> MASTER START-UP SWITCH
+```
+
+（送达的判据是**服务端这四行**，不是 `Booted` —— §0.26 ①：能因为被测原因之外的原因
+失败的判据不是干净的实验。）
+
+### 三、§3.15 ①：深扫公告**在真机上真的播了**（一条 40 行的时序）
+
+采样器（`SSS.__probeSampler`，每拍比对、**只在变化时**写一行，写进 `workspace.__probe.Report`）
+拿到的逐拍时间戳，t=0 是 Play 开始（`Report` 首行是 `t=19.150 phase=Starting`）：
+
+| t (s) | 事件 | 相对公告 | 配置里的偏移 |
+|---|---|---|---|
+| 64.773 | `AnnouncementFrame.Visible=true` | +0.000 | 0 |
+| 64.774 | 文案 `PROCESSING DEEPSCAN TELEMETRY`，色 `(0,1,0)` | +0.001 | — |
+| 68.123 | `Beep` `Playing=true` | +3.350 | `BeepAt=3.35` |
+| 68.757 | `Beep` 灭 | +3.984 | — |
+| 69.824 | 文案→`HADEN THRESHOLD BREACH ~4:39 AM`、色 `(1,0,0)`；`EFEPing` 响 | +5.051 | `VerdictAt=5.04` |
+| 73.157 | `EFEPing` 灭 | +8.384 | `PingOffAt=9.37` ← **没到** |
+| 77.673 | 公告灭；`TimelineComplete` 响 | +12.900 | `EndAt=12.89` |
+| 79.407 | `TimelineComplete` 灭 | +14.634 | `TimelineOffAt=14.63` |
+| 132.407 | `phase=Running` | — | `StartupSeconds=113.4`（19.150→132.407 = 113.26） |
+| 256.523 | `phase=Failed` | — | 见第七节 |
+
+**§3.15 ① 结清**：六拍逐个落在录像的偏移上，最大偏差 **10 ms**（一帧）。
+
+### 四、§3.15 ②：七台屏**一起**亮 —— 同一个时间戳，间隔 **0 ms**
+
+同一份时序里的两行：
+
+```
+t= 69.824 BANNER Alerts/Power/Log/Forecast/Thermal/Quota/Main  Visible=true
+t= 80.074 BANNER Alerts/Power/Log/Forecast/Thermal/Quota/Main  Visible=false
+```
+
+- **七台在同一个 `t` 上开、同一个 `t` 上关** —— 采样器是**逐台逐属性**比对的，
+  「同一个时间戳」意味着七行写在同一拍里，实测**间隔 0 ms**
+  （原版录像 `261002-140021` 那 70 ms 的散布，我们这边没有）；
+- 窗口 **10.250 s**，与 `Config.Forecast.BannerSeconds = 10.25` **逐位相同**；
+- 时间点对得上判决：横幅在**判决那一拍**（+5.051）亮，不提前、不滞后。
+
+**§3.15 ② 结清**：「七份引用解析到同一个件」升级成「**真的同时亮，也同时灭**」。
+
+### 五、客户端那半：不靠截图，靠读数
+
+- **警报格 27 行**：同一时刻从 **Server** 与 **Client** 各读一遍
+  `AlertFrameN.Frame.Visible`，**27 行逐行相同**；
+- **公告**：客户端的 `AnnouncementText` 里就是 `HADEN THRESHOLD BREACH ~4:39 AM`
+  —— 与服务端那份是同一个字符串。
+
+### 六、这一趟顺带量到的三件
+
+**① `EFEPing` 的窗口由资产长度决定，不由 `PingOffAt` 决定。**
+`EFEPing.TimeLength = 3.3493 s`，而配置要它响到 `+9.37`（从 +5.04 算是 4.33 s）。
+实测 `Playing` 在 **+8.384** 变 false —— 差 **0.987 s**，正好是 `4.333 − 3.3493`。
+**它自己没响满，`PingOffAt` 那个数兑现不了**（同取舍 524 的形状：代码不认的常数就是安静地错着的数）。
+顺带 `Beep` 的 on→off 量到 **0.634 s**，而它的 `TimeLength` 是 **0.321 s**（约两倍）——
+**这一条没有结论**，只记成「量到的窗口比资产长」，不归因（§0.21 第 3 条）。
+
+**② 深扫判决只有一个可达分支。** `untilEquinox = EquinoxSeconds − state.elapsed`，
+而 `s.elapsed += dt` 在 `Engine.luau:233` 被 `if s.phase ~= 'Running' then return end` 挡着，
+`startupStep` 又只在 `Starting` 里推进 —— 深扫的触发窗（`startupStep >= 9`）**整个落在 `Starting` 内**，
+所以 `elapsed` **恒为 0**、`untilEquinox` **恒等于 720 ≤ 900**：**永远是 breach**。
+`Anomaly` / `AnomalyColor` 现在是**走不到的分支**。两次独立的量法都是 breach：
+Edit 驱动读出 `~3:15 AM`（Phase 125）、真机这趟 `~4:39 AM`。
+**这不是缺陷** —— `Config` 注释那句「rather than always clearing」说的正是这个选择；
+但「另一条判决永远出不来」这句话之前没写下来过。
+
+**③ 一条差点被我写成缺陷的读数**（§0.26 ① 同族）。我先后两次读警报格，第二次读到
+`13 excessiveTemperature` 亮、`14 excessPeaStress` 灭、`22 peaMalfunction` 灭 —— 看着自相矛盾
+（14 的门是 75、22 的门是 100，13 亮说明温度已过 17000）。真相是**两次读数不在同一拍**：
+第一次读时温度已过 17000 而应力还没满，之后应力才走到 100 并触发 `Failed`。
+**每一格都按自己的门槛亮着，一个都不错。**
+**同一趟会话里的两个读数不是同一个时刻的读数。**
+
+### 七、这一趟的终点：`Failed`，以及 Phase 124 那条传输的**第二次独立复现**
+
+没有人管它的时候，这一趟在 **256.523 s**（进 `Running` 之后 **143.3 s**）走到：
+
+```
+Stats.Core: TemperatureVal=29011  PressureVal=7435  StressVal=100  OutputVal=0  HDEFVal=94
+RuntimePhase=Failed
+[ReactorBackend] end-of-shift report: shift 1 Failed -> andypeng1NB
+```
+
+`Engine.luau:332`：`s.peaStress >= 100` → `Fail('Power extraction assembly overload')`。
+**这是 Phase 124 回答过的那件事**（操作员 2026-10-13「突然就是 shift ended 了」）——
+这一趟在**没人管的开机之后**把它**又复现了一遍**，而 Phase 124 给的出口**又出现了一次**：
+
+- 客户端 `PlayerGui.ScreenGui.EndGameFrame1.Visible=true`，
+  `Title.TextLabel='A.E.R.N - SHIFT [1] REPORT'`、`TotalText.MoneyText='$0 ... Good Job'`、
+  `ContinueButton='CONTINUE [S2] - X'`；
+- 截图 `Data/startup_shots/11_live_shift_report.jpg`（**已 gitignore** —— 那是原版的作者美术，
+  同 `Data/shot_report.png` 那条规则）。
+
+**顺带解掉一个我自己差点踩的坑**：那 17 个统计行的**内层** `StatFrame` 全是 `Visible=true`，
+看着像「屏幕上明晃晃 17 个假的 `$1,000,000`」—— 但它们的容器
+`StatContainerTemplate.Visible=false`，**截图里一个数字都没有**。
+Phase 124 记的「每一条逐项 `Visible=false`」量的是**容器**，两句话一致，不是矛盾。
+**`Visible=true` 不等于看得见**：要一路看祖先。
+
+**`screen_capture` 也回来了**：解绑 `__probeCamHold` 之后同一个调用立刻给出对的画面
+（§0.25 ② 的**正面**复现）。而这一次**两张请求逐字节相同** —— 不是工具坏，
+是那份 UI **真的停住了**（与 §0.14 那次同形不同因，两次之间不能互推）。
+
+### 八、收尾：停 Play，Edit 世界没被我碰过
+
+停 Play 之后在 Edit 侧读回：
+
+| 读数 | 值 | 与 Phase 123 §七 |
+|---|---|---|
+| `Workspace` 里 `BasePart` 总数 | **48847** | **逐位相同** |
+| `Workspace.Core.CORE.Transparency` | **1** | **逐位相同**（冷的） |
+| `workspace.__probe` / `SSS.__probeSampler` | **不存在** | 相同 |
+| `SSS.ReactorBackend` 的 `RuntimePhase` 属性 | **nil** | — |
+
+**这一轮在 Edit 侧一个字节都没写** —— 探针、相机保持器、采样器全是 Play 期插入的，
+按 §0.4 随会话消失；Edit 模式里我只做过**读**。所以「世界没被改」不只是量出来的，
+还有一层是**结构上不可能**。
+
+### 九、还欠的（照实写）
+
+- **正常完成配额的 `Report` 仍然没验**（Phase 124 欠的，这趟也没验）—— 这趟量的是 `Failed` 这条。
+- **§3.15 ③④ 没动**：判决的钟点映射仍是我们的；警报格那两行仍然留黑。
+- 新开 `QUESTIONS.md` **`R6`**（两个小口子：警报格在 `Failed` 之后全灭、`EFEPing` 比配置短）。
+- `LightPart.Color`（取舍 511）、`QUESTIONS.md` `R3`/`R5`、TODO §3.14 ①–⑤、§3.16、§3.17 —— 均未动。

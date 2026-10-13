@@ -425,11 +425,19 @@ variant, which is what its own `MainMonitorFrame` uses, byte-identical to the ot
 a restoration of a symmetric element, not new content, and it is purely additive - nothing
 existing was moved, renamed or deleted (DECISIONS_2 523).
 
-Both were verified in Edit mode by requiring the real modules against the real instances and
+Both were first verified in Edit mode by requiring the real modules against the real instances and
 reading back instance properties - 27 `Frame.Visible` values, the announcement's text and
 colour, three `Sound.Playing` flags and seven `EFEFrame.Visible` flags - which needs no Play
-session at all (DECISIONS_2 526, SNIPPETS.md 5.32). What is *not* verified is the Play-mode path
-from four clicked controls into `Running`; that boundary is unchanged. See SYSTEMS.md 2.24.
+session at all (DECISIONS_2 526, SNIPPETS.md 5.32). They have since been verified **in a running
+game** as well (Phase 127): four clicked controls drove the chain into `Running` and a per-frame
+sampler recorded the deep scan landing on the capture's offsets to within a frame (announcement at
++0.00, beep +3.350, verdict +5.051, timeline +12.900, stop +14.634), and the seven `EFEFrame`s
+going visible on one identical timestamp and hidden on another exactly 10.250 s later - a 0 ms
+spread where the capture had 70 ms. Two things the live run measured that the config cannot:
+`EFEPing` is 3.3493 s long, so it ends itself 0.987 s before `PingOffAt = 9.37` can stop it, and
+the deep scan always reaches the breach verdict, because it fires inside `Starting` where
+`elapsed` is still 0, so `untilEquinox` is always exactly 720 inside the 900 s horizon
+(DECISIONS_2 534/535, QUESTIONS.md R6). See SYSTEMS.md 2.24.
 
 ## Automated control test
 Workspace.GameCoreControlTest simulates operator clicks with a mock supervisor and asserts that
@@ -1602,7 +1610,34 @@ from the same values the step itself used, and they show a dash rather than a ze
 first step - a term from a step that has not happened cannot appear. `luau-windows/core_model_check.py`
 drives all of it: **70 checks, read back off the widgets** rather than off the model, because a
 value that is right in the model and wrong on the screen is the failure worth catching. It found
-two, and both are fixed. See PROGRESS.md Phase 126 and DECISIONS_2 527-531.
+two, and both are fixed. See PROGRESS.md Phase 126 and DECISIONS_2 527-530.
+
+
+### Phase 127 - the two new monitor panels, in a running game
+
+Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real
+modules in Edit mode. Both were owed a run in a live game, and 2026-10-14 provided one: the whole
+`ReactorBackend` folder was pulled back and compared file by file first (14 same, 0 different), then
+four clicked controls drove the chain from cold into `Running` with all four delivery lines and no
+refusals.
+
+The deep scan played on the capture's own offsets, to within one frame - announcement +0.00, beep
++3.350, verdict +5.051 (`HADEN THRESHOLD BREACH ~4:39 AM`, red), timeline +12.900, announcement off
++12.900, stop +14.634 against `TimelineOffAt = 14.63` measured off a 40-line per-frame sampler that
+only writes when a flag changes. The seven EFE banners went visible on **one identical timestamp**
+and hidden on another exactly 10.250 s later - a 0 ms spread, where the original's capture showed
+70 ms. Both panels replicate: the 27 alert rows read identically from Server and Client, and the
+client's announcement label holds the same verdict string.
+
+Three things the live run measured that no module-level test could. The ping asset is 3.3493 s, so
+`PingOffAt = 9.37` never gets to stop it - the sound ends itself 0.987 s early. The deep scan can
+only ever return the breach verdict, because it fires inside `Starting` where `elapsed` is still 0,
+leaving `untilEquinox` at exactly 720 inside the 900 s horizon; the anomaly branch is unreachable
+under this tuning. And a start-up left to itself fails 143.3 s into `Running` (P.E.A stress reaching
+100), which puts the Phase 124 end-of-shift screen in front of the player again - a second,
+independent reproduction of the exact complaint ("suddenly the shift ended") that transport was
+built for. Two of these are questions: QUESTIONS.md R6. See PROGRESS.md Phase 127 and
+DECISIONS_2 531-538.
 
 
 ### Phase 100 - the driver: the half of the channel that presses things

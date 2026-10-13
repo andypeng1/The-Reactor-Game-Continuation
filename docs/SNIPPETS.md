@@ -2362,3 +2362,76 @@ cd D:\rblxTRGproject\luau-windows
 python core_model_check.py        # 失败 exit 1
 ```
 
+
+### 5.34 真机那趟的读数：采样器写在 `StringValue` 上，判据是**同一个时间戳** ★ Phase 127
+
+跑的是 §5.31 那套点击装置（四条 `[ReactorBackend][Control] … -> <LABEL>` 是送达判据），
+下面只记这一轮**新长出来的那几件**。
+
+**① 进 Play 之前先比，不要先点。** `SSS.ReactorBackend` **整个文件夹** +
+两个 `StarterPlayerScripts` 模块 → `PostAsync` → `_tools/receive.py 8765` →
+`_tools/compare_backend.py`，要的是 **`0 different / 0 absent`，exit=0**。
+只拉你怀疑的那一个，「其余的都对」这句话就没有证据（取舍 512/531）。
+
+**② 相机**每目标重新瞄准**，于是所有控制共用一个像素。**
+`Camera.CFrame = CFrame.lookAt(eye, aim)` 每个目标各写一次（属性写在 `workspace.__probe` 上、
+客户端一个 `LocalScript` 用 `BindToRenderStep('__probeCamHold', Camera+1, …)` 每帧套用），
+于是目标永远落在视口正中：
+
+```
+tool_x = viewport_x/2                                  -- 575.2/2 = 287.6
+tool_y = viewport_y/2 − GuiService:GetGuiInset().Y     -- 259.2/2 − 58 = 71.6
+```
+
+四个控制解出**同一个** `(287, 71)` —— 取舍 519 那 2 px 的歧义**构造上不存在**了。
+点击后**等 450 ms** 再读，`moveTo` 到点击之间也要留时间。
+
+**③ 运行时的东西不靠截图、不靠运行日志，靠**跑在游戏里的脚本自己写出来**（§0.16 的正面出路）。**
+`SSS.__probeSampler`（一个 `Script`）每拍比对关心的那几件、**只在变化时**追加一行：
+
+```lua
+local RunService = game:GetService('RunService')
+local probe = workspace.__probe
+local T0 = os.clock()
+local function stamp(s) return string.format('t=%6.3f %s', os.clock() - T0, s) end
+local function scan()
+  -- 逐台逐属性比对（横幅七台 + 公告 + 三个音），只在变化时写
+  for _, name in ipairs({ 'Alerts', 'Power', 'Log', 'Forecast', 'Thermal', 'Quota', 'Main' }) do
+    local on = EFEFrame(name).Visible
+    if on ~= last[name] then last[name] = on; push(stamp('BANNER ' .. name .. ' Visible=' .. tostring(on))) end
+  end
+end
+RunService.Heartbeat:Connect(function()
+  local ok, err = pcall(scan)                    -- ④ 见下
+  if not ok then push(stamp('SAMPLER DIED: ' .. tostring(err))); script.Disabled = true end
+end)
+```
+
+三个要点：
+- **写进 `workspace.__probe.Report`（一个 `StringValue`）**，插件 VM 再读那个值 ——
+  这就是「让游戏 VM 说话」的标准做法（§0.23 ② 同款）。
+  `print` 进 playtest 日志**读不到**，所以不要用 `print`。
+- **逐台逐属性**记时间戳，**不要**记一个「七台都亮了」的汇总布尔。
+  `69.824 / 69.824 / …` 七行同 t 才是「写在同一拍里」的证据；
+  一个 `allOn=true` 只说明「查的时候都开着」（取舍 532）。
+- **`pcall` 里必须留下自己的死因**：它跑在 `task.spawn`／`Heartbeat` 里，没人 await 它，
+  **「在跑但没事发生」和「第一拍就崩了」从外面长得一模一样**（§0.17、§0.19）。
+  出错就写一行 `SAMPLER DIED: …`。
+
+**④ 停 Play 之前先解绑相机保持器**（`RunService:UnbindFromRenderStep('__probeCamHold')`），
+否则 `screen_capture` 报成功而画面是你的（§0.25 ②、取舍 513）。
+**注意这个现象有第二个因**：解绑之后如果两份请求还是逐字节相同，
+先问一句**画面是不是真的停住了** —— 静止的 UI 本来就只有一张图（取舍 538）。
+
+**⑤ 收尾的判据是**两个逐位相同的数**，不是「看起来回去了」：**
+
+```lua
+-- Edit 侧读回：要 48847 与 1.（Phase 123 §七 / Phase 127 §八 同两个数）
+local n = 0
+for _, d in ipairs(workspace:GetDescendants()) do if d:IsA('BasePart') then n = n + 1 end end
+-- n == 48847 ;  workspace.Core.CORE.Transparency == 1
+-- workspace.__probe == nil ;  SSS.__probeSampler == nil
+```
+
+**探针全部是 Play 期插入的**（§0.4：Play 里改的东西不进工程），
+所以「世界没被碰过」除了量得到的两个数，还有一层是**结构上不可能**。
