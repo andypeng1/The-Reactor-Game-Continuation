@@ -689,6 +689,13 @@ Phase 124 一次会话里踩齐了三条，都是「工具报成功/报了数，
 播深扫公告 + 七台屏共亮的 EFE 横幅；`AlertsControlRoomMonitor` 原本唯一没有 `EFEFrame`，已补回。
 两个模块都在 **Edit 模式**里 require 真模块、读**实例属性**验的（**没进 Play** —— §0.16 边界不变），
 配方见 `docs/SNIPPETS.md` §5.32，说明 `docs/SYSTEMS.md` §2.24，取舍 `DECISIONS_2` 522..526。
+**桌面那台控制台也有了温度模型**（Phase 126）：操作员自己的式子
+`T(x) = T_0 + (baseRate[s] * a/50 * pressFactor + noise(x)) * x` 进了 `luau-windows/gui.py`，
+**arm 上去的**（不勾就一行不跑）。他那个 `s` 是 `Engine.luau:320` 的 **`coreState`**（温度的纯函数、
+有第 0 行），**不是** latch 住的 `Sim.State` —— **两个 state 同名不同物**（取舍 527）；
+`noise(x)` 写在 `× x` 里面，逐字保留（取舍 528）。验法是 `luau-windows/core_model_check.py`：
+**70 项、读屏幕不读模型、exit 0**，配方 `docs/SNIPPETS.md` §5.33。
+一行游戏代码没动。
 **几何体重做已撤销**（用户 2026-09-26 原话：「不需要重做建模，请删除」）——
 `docs/TODO.md` §3.1 里那两条未开始的几何条目（设施外壳/房间内部的装饰与英雄资产、
 堆芯外壳与拉杆握把的 `generate_mesh` 重做）已删掉，该节剩下的只是已完成的施工记录。

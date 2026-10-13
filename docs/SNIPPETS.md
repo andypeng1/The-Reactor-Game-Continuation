@@ -2272,3 +2272,93 @@ additional values for the Capabilities property`、`cannot require 'Config' sinc
   不带 `.luau`，落盘就没有扩展名；而同一个目录里**可能躺着上一轮的 `X.luau`**，
   `find -newermt` 会把那个旧文件当成刚写完的。**「最新写进去的那个文件」不是
   「我要的那个文件」。**
+
+---
+
+### 5.33 无头驱动一个 tkinter 窗口，把读数**从屏幕上**读回来 ★ Phase 126
+
+要验的是一个桌面 GUI：它算出来的数对，不等于**屏幕上显示**的数对。
+所以检查器建窗口、**不 `mainloop`**、一拍一拍手动驱动，然后**走一遍 grid 把每个
+label 显示的值读回来** —— 不读模型属性，因为「模型里对、屏幕上错」这一类
+**读属性永远看不见**（§0.2 换了张脸）。
+
+```python
+import tkinter as tk
+import gui
+
+root = tk.Tk()
+root.withdraw()                  # 不弹窗；widget 照常存在、照常能读
+console = gui.Console(root)
+root.update_idletasks()          # 让 grid 的几何信息落地
+
+# 没有 mainloop → root.after 排的回调永远不会跑 → 窗口不会自己动。
+# 想推哪一拍就调哪一拍。
+console.arm_var.set(True)
+console.on_arm()
+for _ in range(4):
+    console.step_once()
+```
+
+**读回屏幕，而不是读回模型：**
+
+```python
+def text_of(widget):
+    """一个控件正在显示什么。
+
+    接了 textvariable 的 label 对 cget('text') 回的是空串 —— 只读 cget
+    会把整个窗口的读数都报成空白，而**对着空白屏幕的断言是永远不会失败的断言**。"""
+    try:
+        name = str(widget.cget("textvariable"))
+    except tk.TclError:
+        name = ""
+    if name:
+        return widget.getvar(name)
+    return widget.cget("text")
+
+
+def screen(parent):
+    """{标签文字: 显示的值}，按 grid 的真实位置读。
+
+    走控件树而不是走 Console 自己的 readouts 列表：**建了但没摆上 grid 的读数
+    在这里也是看不见的** —— 那才是对的，因为它在屏幕上同样看不见。"""
+    cells = {}
+    for widget in parent.winfo_children():
+        info = widget.grid_info()
+        if info:
+            cells.setdefault((int(info["row"]), int(info["column"])), []).append(widget)
+    out = {}
+    for (row, column), widgets in cells.items():
+        if column != 1 or (row, 0) not in cells:      # 只有成对的行才算读数
+            continue
+        out[text_of(cells[(row, 0)][0])] = " ".join(text_of(w) for w in widgets)
+    return out
+```
+
+**四条纪律**：
+
+- **① 锚点不许自证。** 检查器里**不重跑被测文件自己的算式**（两边一起错也会 PASS，
+  同 §0.0「绝不能用磁盘算出来的哈希去校验磁盘」）。锚点是**规格的第二份拼写**：
+  这一轮就是把操作员贴的那条式子**逐字转写**成 `his_temperature()`，用他自己的字面量。
+- **② 结构性断言比数值断言长寿。** 数值锚点会随他改常数而失效，而
+  「勾选前窗口行为逐字不变」「armed 时输入框里的字被放回显示真值」
+  「读数在第一步之前是 `-` 不是 `0`」这类断言，**改常数也不会失效**。
+- **③ 被拒的编辑要断言"屏幕恢复了"。** 只断言「模型没被改」是不够的 ——
+  这一轮的真缺陷就是**模型没事、屏幕上留着一个谎**（取舍 528 ④）。
+- **④ 判据不许有第二条通往失败的路径。** 这一轮我把行按钮的期望值写错，
+  因为**行按钮跟着 `auto` 走、不跟着 `armed` 走**（§0.26 ①）。
+  修法不是把期望值改成实际值（那是**拿观测迁就断言**），而是换成**更有信息量的判据**。
+
+**版面用 `winfo_reqwidth()` 量，别用眼睛：** 新增的 `Labelframe` 请求
+`363 x 152 px`，左列下限 400 —— **没有溢出**，而这个结论不需要截图。
+真要图的时候（§0.14b）**两次请求要给两张不同的图**；这一轮整窗与右列各一张、
+md5 不同，§0.25 那条「两次请求逐字节相同」没有复发。
+**视觉模型读数字不可靠**（同一个面板两次给出互斥的读数）：**图量形状，控件量数字。**
+
+**跑法**（`C:\Python314\python`，**不要加 `-I`** —— 那会藏掉用户级 site-packages，同
+`python-isolated-flag-hides-user-site`）：
+
+```
+cd D:\rblxTRGproject\luau-windows
+python core_model_check.py        # 失败 exit 1
+```
+

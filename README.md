@@ -1568,6 +1568,43 @@ deliverable.
 See PROGRESS.md Phase 97 and DECISIONS 341 to 348.
 
 
+### Phase 126 - the operator's own temperature model
+
+The console used to take Temperature as an input, because `calculation.luau` does. The operator
+handed over a model that *computes* it - read off the shipped game's own 477-tick log - and asked
+for it to live in this window. It is in, in its own block, and it is **armed rather than
+installed**: with the box unticked not one line of it runs and the console behaves exactly as it
+did before.
+
+```
+T(x) = T0 + (baseRate[state] * power/50 * pressFactor + noise(x)) * x
+baseRate    = [-455.7, 559, 580, 1036]      x = seconds since arming
+pressFactor = 1.15 below 2500, 1.08 below 4000, else 1.0
+noise(x)    = 40 sin(x/1.5) + 25 sin(x/0.7) + 15 sin(x/0.3)
+```
+
+His `state` is **not** the console's `Sim.State`. Two quantities in this game are both called
+"state": the latched pressure band (the original's if/elseif chain with no `else`, which is what
+`Sim.State` mirrors) and `coreState`, a pure function of temperature with a row 0 for the cold
+machine (`Engine.luau:320`). His rates were grouped by the second, which is why his table has a
+row 0 and why his `s` can fall. So the model derives its row from the temperature, and a
+`Core state (from Temperature)` readout now sits beside the latched one to keep the two apart.
+
+Two properties of the equation are kept as written rather than quietly corrected, and both are
+visible on screen. `x` is elapsed **time**, so the rate is multiplied by it - and `noise(x)` is
+**inside** that multiplication, which makes it a tremor on the slope rather than on the reading:
+a ±80 degree wobble is ±8000 at x = 100. It grows with time, the opposite of the "stop the number
+flickering" it was written for. Both are his to change; the alternative shape is named in the
+code beside each, not substituted.
+
+The right column gained `T0` / `x` / `row` / `rate` / `noise(x)` / `noise(x)*x` / `T(x)`, read
+from the same values the step itself used, and they show a dash rather than a zero until the
+first step - a term from a step that has not happened cannot appear. `luau-windows/core_model_check.py`
+drives all of it: **70 checks, read back off the widgets** rather than off the model, because a
+value that is right in the model and wrong on the screen is the failure worth catching. It found
+two, and both are fixed. See PROGRESS.md Phase 126 and DECISIONS_2 527-531.
+
+
 ### Phase 100 - the driver: the half of the channel that presses things
 
 The state recorder (`_tools/TRG_original_state.luau`, tag `s2`) is read-only by construction:
