@@ -14524,6 +14524,13 @@ Edit 侧全程只做过**读**。
 `Anchored=false`，站回 `(110, 280.5, 12)`），Play 留在报告屏那一拍上，
 不是留一个隐形锚定的角色给操作员。
 
+**收尾还卸了相机保持器**（`RunService:UnbindFromRenderStep('__probeCamHold')`，
+客户端侧），并把 `CameraType` 从 `Scriptable` 放回 `Custom` —— 否则
+「Play 还开着」这句话的代价是：**下一次 `screen_capture` 会报成功而画面是冻结的**，
+而且操作员在 Play 里转不动视角。这正是 §5.35 ④ 那条坑的现场（§0.25 ②、取舍 513）。
+探针本体（`__probe` / `__probeCmd` / `__probeReport`）仍在，但**没有命令排队 = 空闲**，
+而且它们都是 Play 期注入的，停 Play 即全部消失。
+
 **这一轮没有改任何游戏代码、没有改任何几何体。**
 
 ### 八、还欠的（照实写）
