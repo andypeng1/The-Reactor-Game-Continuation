@@ -880,10 +880,13 @@ Phase 124 实测 **12/12 SAME、exit 0**；**变异测过**（改一个文件 �
 
 ### 3.14 Phase 124 收尾后仍欠的东西（2026-10-13）
 
-**① 正常完成配额的 `Report` 没验**：Phase 124 验的是 `Failed` 那条路
-（PEA 过载 → 报告 → 按住确认 → 重开）。把 512 点能量跑满之后走到 `Report` 的那条，
-`EndShiftBridge.Payload` 里 `reason` 会变成 `'Quota'` —— 离线测覆盖了，
-**真机没跑过**。
+**① ✅ 已结清（Phase 128，2026-10-14）**：正常完成配额的那条 `Report` **真机跑过了** ——
+16 次真实点击透过真实 `ClickDetector`，`Running → Stopping` 363.563 s、`E=512/512`、
+`T=13811`、`P=2924`、压力探底 **2804**（地板 2200）、全程 `Stress=0`、0 次排气、
+16 行送达 / 0 行 `rejected:` / 0 行 `[Gate] refused`。
+`reason='Quota'` 由 `EndShiftBridge.luau:67` 构造，配额由「停机被接受」独立佐证。
+**顺带把离线模拟器自己的一个缺陷抓出来了**（它多算了 ~650 PSI 余量，因为置物块下发在开机链之后）——
+详见 `PROGRESS.md` Phase 128 §五、`DECISIONS_2` 539/540。
 
 **② `EndShiftHandler` 那 610 行仍然没有离线覆盖**：它在 `StarterGui` 里、跑在客户端上，
 离线跑不了。现有一条 66 项的离线检查（`_tools/endshift_payload_test.luau`）

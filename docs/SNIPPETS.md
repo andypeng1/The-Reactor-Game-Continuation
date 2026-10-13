@@ -2435,3 +2435,105 @@ for _, d in ipairs(workspace:GetDescendants()) do if d:IsA('BasePart') then n = 
 
 **探针全部是 Play 期插入的**（§0.4：Play 里改的东西不进工程），
 所以「世界没被碰过」除了量得到的两个数，还有一层是**结构上不可能**。
+
+---
+
+### 5.35 把一整班（6 分钟、16 次点击）在真机上跑完，并证明每一击都到了 ★ Phase 128
+
+§5.30 给了像素怎么算，§5.31 给了怎么证明一击送达，§5.34 给了读数写在哪儿。
+这一节是**把它们串成一条能跑 6 分钟的流水线**，外加两个只有跑长趟才会暴露的坑。
+
+**① 装置是两个文件，不是两个工具调用。**
+
+```
+_tools/_attic/scratch/__probe_agent.luau   ->  ServerScriptService     （采集器 + 执行器）
+_tools/_attic/scratch/__probe_camhold.luau ->  Players.<me>.PlayerScripts（只摆相机）
+```
+
+理由：**一趟 16 次点击、每次往返 15–17 s**，中间不能有人在场。
+服务端那个文件既**记**（`LogService` 抽 `[ReactorBackend]`、逐拍读 `Stats`）
+又**动**（听 `workspace.__probeCmd` 就泊车），因为「记什么」和「动什么」是同一个交互的两半，
+拆开就要两个注入去对齐名字。
+
+通信全走**属性**（`workspace.__probe` 上的 `EyeX/Y/Z`、`AimX/Y/Z`、`Status`），
+因为**属性会复制**，服务端写、客户端读，不用维护一个 RemoteEvent。
+
+**② 泊车点就是控制件自己的位置。**
+
+```lua
+root.CFrame = CFrame.new(part.Position)      -- reach == 0.00，构造出来的
+local dir = openDirection(part)              -- 八条水平射线，9 studs，第一条通的赢
+local eye = part.Position + dir * 3.5 + Vector3.new(0, 0.7, 0)
+```
+
+**别硬编码一个偏移量**：一排控制件面朝的方向不一样，对某一台对就是对另一台**安静地错**。
+实测 16/16 行都是 `reach 0.00`（`__probeLog` 里逐行印着）。
+
+**③ 角色必须 `CanQuery = false`，`Transparency = 1` 不够。**
+
+点击自己那条射线**第一个打中的就是角色**（§0.11：`Mouse.Target` 和相机射线
+对 `Transparency=1` 的件看法不一致）。所以四个属性一起改：
+`Transparency=1 / CanCollide=false / CanQuery=false / CanTouch=false`，外加 `Anchored=true`
+（不锚定的话，两次泊车之间它掉到地板上，点击落到时根**在别的地方**）。
+
+**④ 相机只能在客户端摆，且必须每帧摆。**
+
+```lua
+RunService:BindToRenderStep('__probeCamHold', Enum.RenderPriority.Camera.Value + 1, function()
+    local camera = ws.CurrentCamera
+    camera.CameraType = Enum.CameraType.Scriptable
+    camera.CFrame = CFrame.lookAt(eye, aim)     -- eye/aim 从属性读
+end)
+```
+
+服务端写 `CurrentCamera` 会被客户端默认相机脚本下一帧覆盖；
+`BindToRenderStep` 在相机那一步**之后**跑，所以属性里的机位就是这一帧点击用的机位。
+**收尾一定要 `UnbindFromRenderStep('__probeCamHold')`**，否则 `screen_capture` 报成功而画面是你的（§5.34 ④）。
+
+**⑤ 像素：视口正中减去 inset。** 这一趟实测（全趟同一个值）：
+
+```
+ViewportSize = 575.200012, 259.200012       GuiService:GetGuiInset().Y = 58
+WorldToViewportPoint(aim) = (287.6, 129.6)  ->  user_mouse_input 的像素 (287, 71)
+                                                        也就是 viewport.y − 58
+```
+
+**每次都要重算，不要背这个数**：上一趟的视口可能是别的大小，而点击区有时只有 ~16 px 高。
+
+**⑥ 长趟才会暴露的两个坑。**
+
+- **缓冲区会吃掉早先的行。** `__probeReport` 留最后 400 行，而统计流 ~3 行/s，
+  所以一行控制日志活 ~130 s。**读的时候按关键子串捞，不要读尾巴**；
+  并且**每一次点击之后马上读**，别等一班跑完再去翻。
+- **模拟器自己的下发顺序是结果的一部分。** 见 `DECISIONS_2` 539：
+  「在下一阶段的第一拍下发」和「在上一阶段之内下发」不是同一件事，
+  而错的那一种**报的是一个更好的数**。**跑真机之前，先问一句模拟器把每一步放在哪一拍。**
+
+  这两个数（`StartupSeconds` 和「循环第一拍时泵是关的」）不是推理出来的，是两个**离线探针**量出来的
+  —— 它们把 `Config.luau` + `Engine.luau` 在**桩环境**里 `luau.load`（`Config` 加载期只读
+  `Color3`/`Vector3`，`Engine` 一个 Roblox 全局都不读），跑**没有 Studio** 就能跑：
+
+  ```
+  _tools/_attic/scratch/__clock_probe.luau   打印 Sim.Step / StartupSeconds / 16 个 hold / 每次相位变化
+  _tools/_attic/scratch/__bump_probe.luau    复现模拟器的下发顺序，打印「循环开始时泵有几台是开的」
+  ```
+
+  它们给出的正是 `StartupSeconds = 113.39999999999999`（16 步之和，不是 9 步）
+  和 `at loop start: tick=132 phase=Running T=10187 P=4694 pumpsOn=0` —— 缺陷就是这么看见的。
+
+**⑦ 判定一趟成功，用四层互相独立的证据，不要只用一层：**
+
+```lua
+-- 1. 送达（每次点击后立刻捞）
+'[ReactorBackend][Control] <player> -> <LABEL>'      -- 到了
+'[ReactorBackend][Control] ... rejected: <err>'      -- 到了但被拒
+'[ReactorBackend][Gate] refused N out-of-range...'   -- 根本没到
+-- 2. 阶段（属性，不是模块状态；§0.2）
+SSS.ReactorBackend:GetAttribute('RuntimePhase')      -- 'Report'
+-- 3. 数字（workspace.Stats.Core.*，注意在子文件夹里）
+TemperatureVal=13811 PressureVal=2924 EnergyVal=512 QuotaVal=512
+-- 4. 结果本身（这一条不靠上面任何一条）
+--    Engine:Command('shutdown') 在配额不够时会拒绝；停机被接受 => energy >= quota
+```
+
+第 4 层是这一趟最有用的一层：**`phase=Report` 证明的是运输，不是配额**（`DECISIONS_2` 543）。

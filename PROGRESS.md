@@ -14304,3 +14304,236 @@ Phase 124 记的「每一条逐项 `Visible=false`」量的是**容器**，两�
 - **§3.15 ③④ 没动**：判决的钟点映射仍是我们的；警报格那两行仍然留黑。
 - 新开 `QUESTIONS.md` **`R6`**（两个小口子：警报格在 `Failed` 之后全灭、`EFEPing` 比配置短）。
 - `LightPart.Color`（取舍 511）、`QUESTIONS.md` `R3`/`R5`、TODO §3.14 ①–⑤、§3.16、§3.17 —— 均未动。
+
+---
+
+## Phase 128 — 真机跑完一整班：正常完成配额的那个 `Report`（2026-10-14）
+
+**结清 TODO §3.14 ①。** 同一个 `placeId 83752844701736` 的 Studio 会话
+（`d10f6387-ab8f-4f7f-a559-c0e7610adfc1`），**16 次真实点击**透过**真实的 `ClickDetector`**，
+把一班从冷机走到 `phase=Report`，`E=512/512`。
+
+Phase 124 欠的是这一条：那一趟走到的是 `Failed`（PEA 过载），
+它和 `Report` **共用同一条运输**、只是 `reason` 不同 —— 而**不相同的那个字段**从没跑过。
+
+### 一、装置：服务端泊车 + 客户端保持相机
+
+这一趟的点击装置是 §5.30/§5.31 那套重写的，落成两个文件（都在 `_attic/scratch/`，
+Play 期注入，随会话消失）：
+
+| 文件 | 注入到 | 干什么 |
+|---|---|---|
+| `__probe_agent.luau` | `ServerScriptService` | 采集器 + 执行器（同一个交互的两半，拆开就要两个注入去对齐名字） |
+| `__probe_camhold.luau` | `Players.<me>.PlayerScripts` | 只做一件事：每帧把相机摆到属性说的机位 |
+
+四条设计，每条都是**为了让一个会静默失败的环节变得不可能**：
+
+1. **泊车点是控制件自己的位置**（`root.CFrame = CFrame.new(part.Position)`），
+   所以 `reach == 0.00` 是**构造出来的**，不是算出来的。实测 16/16 行都是 `reach 0.00`。
+2. **朝向是八条水平射线打的**（9 studs，第一条通的赢）—— 控制室里每一台控制面朝哪边不一样，
+   硬编码一个偏移量对某一台对、对另一台就是**安静地错**。
+3. **角色静音且锚定**：`Transparency=1` **不够** —— 还必须 `CanQuery=false`，
+   否则点击自己那条射线**第一个打中的就是角色**（§0.11：`Mouse.Target` 和相机的射线
+   对 `Transparency=1` 的件看法不一致）。锚定是因为「两次泊车之间掉到地板上」的根
+   在点击落到时**在别的地方**。
+4. **相机只能客户端拿**：服务端写 `workspace.CurrentCamera` 会被客户端默认相机脚本
+   下一帧覆盖，而点击的射线是**客户端从它自己的相机**打出去的。
+   绑在 `RenderPriority.Camera + 1` 上，所以它跑在相机那一步**之后**。
+
+机位与像素（实测，全趟同一个值）：
+
+```
+ViewportSize = 575.200012, 259.200012     GuiService:GetGuiInset().Y = 58
+WorldToViewportPoint(aim) = 视口正中 (287.6, 129.6)
+user_mouse_input 的像素 = (287, 71)  也就是 viewport.y - 58
+```
+
+`VirtualInputManager` **第三次**被确认走不通（`lacking capability RobloxScript`）——
+批量点击只有 Studio 自己的 `user_mouse_input` 能发。
+
+### 二、配方：16 次点击
+
+`_tools/quota_policy_sim.luau` 的赢家 `pumps=1 fans=4 cbl=2 purgeAt=74`：
+**开机链 4 下**（monitor_power / shutters / boot / start）、
+**关两台风机 2 下**、**开三台冷却泵 3 下**、**6 次 CBL 泄压**、**1 下停机**。
+
+**置物块是在开机链**里**扔的**，不是链跑完之后 —— 因为 `fan` / `pump_on` / `cbl`
+**都没有阶段门**（`Engine:Command` 唯一的全局门是 `Failed`/`Report`），
+而风机只在 `s.sam` 打开时才被自动改写，SAM 是关的，所以这几下不会被覆盖。
+这个「在链里扔」和 §三 那个缺陷是同一件事的两面。
+
+### 三、真机的读数（逐字，取自 `workspace.__probeReport`）
+
+送达判据是 `[ReactorBackend][Control] <player> -> <LABEL>` 那一行。
+**16 行送达，0 行 `rejected:`，0 行 `[Gate] refused`。**
+
+```
+t=110.198 [Control] andypeng1NB -> MONITOR POWER BUTTON
+t=142.991 [Control] andypeng1NB -> CONTROL ROOM SHUTTERS SWITCH
+t=166.718 [Control] andypeng1NB -> MONITOR BOOT BUTTON
+t=166.727 phase=Booting
+t=180.228 phase=Ready
+t=197.658 [Control] andypeng1NB -> MASTER START-UP SWITCH
+t=197.668 phase=Starting
+t=220.552 [Control] andypeng1NB -> COOLING FAN SWITCH 1
+t=243.170 [Control] andypeng1NB -> COOLING FAN SWITCH 2
+t=260.071 [Control] andypeng1NB -> C-PUMP 1 ON BUTTON
+t=279.039 [Control] andypeng1NB -> C-PUMP 2 ON BUTTON
+t=295.727 [Control] andypeng1NB -> C-PUMP 3 ON BUTTON
+t=310.822 phase=Running
+t=448.480 [Control] andypeng1NB -> CBL-1 PRESSURE PURGE BUTTON
+t=463.752 [Control] andypeng1NB -> CBL-2 PRESSURE PURGE BUTTON
+t=481.972 [Control] andypeng1NB -> CBL-3 PRESSURE PURGE BUTTON
+t=621.768 [Control] andypeng1NB -> CBL-1 PRESSURE PURGE BUTTON
+t=640.387 [Control] andypeng1NB -> CBL-2 PRESSURE PURGE BUTTON
+t=655.800 [Control] andypeng1NB -> CBL-3 PRESSURE PURGE BUTTON
+t=674.385 phase=Stopping
+t=674.388 [Control] andypeng1NB -> MASTER SHUTDOWN SWITCH
+t=678.941 [ReactorBackend] end-of-shift report: shift 1 Report -> andypeng1NB
+t=678.956 phase=Report
+```
+
+阶段时长（都是两个时间戳相减，不是估计）：
+
+| 区间 | 秒 | 该是多少 |
+|---|---|---|
+| `Booting → Ready` | **13.501** | `Shift.BootSeconds = 14` ✓ |
+| **`Starting → Running`** | **113.154** | **`Shift.StartupSeconds = 113.4`** ✓ |
+| **`Running → Stopping`** | **363.563** | 见 §五 |
+| `Stopping → Report` | **4.571** | `Shift.ShutdownSeconds = 5` ✓ |
+| 第一下点击 → `Report` | 568.758 | — |
+
+**`Starting → Running` 这一条是白捡的独立证据**：`StartupSeconds = 113.4` 是
+`Config` 第 757–758 行**在加载时算出来的**（16 个 `StartupSteps` 的 `hold` 求和，
+我上一轮记的「109.4」是**漏了 `hold=4` 的那一步**），而真机量出来 113.154 ——
+**0.25 s 之差，正好是一个 Heartbeat 采样的量化**。
+
+最终读数：`phase=Report`、`TemperatureVal=13811`、`PressureVal=2924`、`StressVal=0`、
+`OutputVal=0`（输出只在 `Running` 里给）、`EnergyVal=512`、`QuotaVal=512`。
+
+窗口内的极值（`__probeReport` 里存活的 346 行统计行）：
+**`maxT=13811`、`minP=2804`**，最低点那一行是
+`t=602.150 TemperatureVal=12972 PressureVal=2804 EnergyVal=411` ——
+**在配额的 80% 处探底**（与 §五 修正后的模拟给的位置一致）。
+
+**余量**：2804 对 2200 的停堆地板 = **604 PSI**；13811 对 17000 的停机上限 = 3189 F。
+全程 `StressVal=0`、**0 次 E-VENT**、0 次拒绝。
+
+### 四、`reason` 是 `'Quota'`，而且这一趟**真的**达成了配额
+
+三句话，各是各的证据：
+
+1. **实例读到的是 `phase=Report`。**
+2. **`EndShiftBridge.luau:67`**：`reason = s.phase == 'Failed' and (s.failure or 'Failure') or 'Quota'`
+   —— 所以 `Report` ⟹ `'Quota'`，**这条是构造出来的**。
+   注意日志那行 `shift 1 Report -> andypeng1NB` 印的是 `s.shift, s.phase, player.Name`，
+   **中间那个是阶段不是 reason** —— 别把它读成 reason。
+3. **配额真的到了**，而且不靠第 1 条：`Engine:Command('shutdown')` 在配额不够时
+   会**拒绝**（`'Energy quota not yet met'`），而停机那一下**被接受了**。
+   一个被接受的停机 = 一次 `energy >= quota` 的证明。
+
+### 五、【本轮最有价值的一条】模拟器自己**多算了 650 PSI 的余量**，真机把它抓出来了
+
+修之前，`quota_policy_sim` 报 `Pmin 3226..3523`（12 个噪声流）；真机是 **2804**。
+两条轨迹**各自都自洽**，差的不是引擎，是**这个模拟器自己的下发顺序**。
+
+**根因**（量出来的，不是推出来的）：`plan()` 把「置物块」放在**循环的第一拍**，
+而循环在 `advance(StartupSeconds + 5)` **之后**才开 —— 链长 113.4 s、advance 118 s，
+于是**最后 4 次调用里阶段已经是 `Running` 而三台泵一台都没开**
+（泵是这个块自己开的）。实测：`at loop start: pumpOn=0`。
+没有冷却时 `heat = 3 台 × level 2 = 6`，温度线跑 **6 × 65 × 0.4 = 156 F/s**，
+四秒就是 **+615 F**。整条轨迹于是**带着 +615 F 进 `Running`**，
+而在 10000 F 附近 state-1 线值 `StateSlope 0.01`，
+**615 F 值 0.004 × 615 ≈ +2.5 PSI/s**，一班 350 s 就是 **~800 PSI**。
+
+**修法**：把置物块**挪到开机链里**（`must('start')` 之后、`advance` 之前）——
+这也是**真玩家会做的事**，也是这一趟真机做的事。
+
+修完之后的对照（同一个种子、同一条配方）：
+
+| | 模拟（修后） | 真机 |
+|---|---|---|
+| 到达 `Report` 的点击数 | 16 | 16 |
+| 泄压 / 排气 | 6 / 0 | 6 / 0 |
+| 进 `Running` 时的温度 | 9464 | ~9420（`StartupTemperature`） |
+| `Tmax` | 13652（12 流最差 13901） | 13811 |
+| **压力地板** | **2834**（12 流最差 2475） | **2804** |
+| `Running` 时长 | ~352 s | 363.6 s |
+| 能量 | 512/512 | 512/512 |
+
+**压力地板差 30 PSI（0.6%）**，`Tmax` 差 159 F，12/12 个噪声流都到 `Report`。
+
+**两个都值得记下来的推论：**
+- **修前的模拟器没报错，它报了一个更好的数。** 错的量法不报错，它只安静地给你一个数
+  —— 这一族在 §0.18 里已经有四张脸，这是第五张，而且这次骗的是**我们自己写的工具**。
+- **12 个噪声流里最差的那个地板是 2475**，离 2200 只有 **275 PSI**。
+  所以这条 16 下的配方**不是随便赢的**：噪声不好时它会贴着停堆地板走，
+  真玩家得准备好排气或者再关一台风机。**「12/12 都赢了」和「余量充足」不是一回事。**
+
+### 六、屏幕：两个结局在**第一班**逐字相同，是**构造上**相同
+
+报告屏的读数（客户端，逐项）：
+
+```
+EndGameFrame1.Visible=true
+  TextLabel.TextLabel     = "A.E.R.N - SHIFT [1] REPORT"
+  TextLabel.MoneyText     = "$0 ... Good Job"        (Visible=true)
+  TextLabel.StatText      = "TOTAL - "
+  TextLabel.ReportText    = "REPORT ACKNOWLEDGEMENT [HOVER]"
+  TextButton.PostShiftButton Visible=true, Text="L"
+  ContinueButton / RestartButton / LeaveButton  Visible=false
+  TitleLabel "POST-SHIFT OPTIONS"               Visible=false
+  Debt Text 下面 17 行 StatText + MoneyText 全是 "1,000,000$ X1"
+```
+
+**为什么 `reason` 到了屏幕却什么都没改变** —— `EndShiftHandler`（在 `StarterGui` 里，
+不在盘上）第 437 行：
+
+```lua
+if p2 == "Quota" then v6 = true end     -- p2 就是 reason
+```
+
+`v6` **只有两个读者，两个都以 `p4 == 3`（第三班）为条件**：
+
+```lua
+-- 第 308 行（按住确认之后）
+if v14 == 3 and v6 then SpecialEnd() return end
+-- 第 508 行（逐行往上贴统计的时候）
+if p4 == 3 and (v6 and k == "RadiationDamage") then task.defer(Diagnostic) end
+```
+
+第一班 `p4 = 1`，所以**这两个分支都不会走** ——
+Phase 124 记的「两个结局看起来一样」是**对的**，而这一趟给出了**为什么**，
+还顺带预言了**它们在哪里分岔**：`Quota` 只在**第三班**触发
+`Diagnostic`（那 22 行 SOFT TRANSFER 打字机）和 `SpecialEnd`（`SecretFrame` 那串聊天）。
+
+`$0 ... Good Job` 也是构造出来的：第 553 行 `if p3 == 0 then ... MoneyText.Text .. " ... Good Job"`，
+灰色 `(120,120,120)`；第 547 行 `if p3 < 0 then` 是红色并 `return`。
+本 build `NO_ECONOMY` 让 `total = 0`，所以**必然**落在这一支。
+
+截图 `Data/startup_shots/12_live_quota_report.jpg`（**已 gitignore** ——
+和 10/11 同一条理由：那是原版的作者美术，而这个仓库是公开的）。
+
+### 七、收尾：世界没被碰过
+
+探针、相机保持器全是 **Play 期注入**的（§0.4：Play 里改的东西不进工程），
+所以「世界没被改」除了量得到，还有一层是**结构上不可能**。
+Edit 侧全程只做过**读**。
+
+角色是**恢复过**的（23 个件 `Transparency=0`/`CanCollide/CanQuery/CanTouch=true`，
+`Anchored=false`，站回 `(110, 280.5, 12)`），Play 留在报告屏那一拍上，
+不是留一个隐形锚定的角色给操作员。
+
+**这一轮没有改任何游戏代码、没有改任何几何体。**
+
+### 八、还欠的（照实写）
+
+- **§3.14 ②**：`EndShiftHandler` 610 行仍然没有离线覆盖。这一趟**多知道了几件事**
+  （第 437/308/508/553/547 行的分支条件），但都是**读**出来的，不是**测**出来的。
+- **§3.14 ③（角色挡射线）仍然没有结论** —— 这一趟角色**根本不在射线上**（泵过静音、
+  `CanQuery=false`、锚定在控制件正中），所以它对那个问题**不构成证据**。
+- **`Running` 时长两边差 ~11 s**（模拟 352 s / 真机 363.6 s，3%）：
+  模拟的温度轨迹整体略低，而能量靠 `output` 攒、`output` 随温度 ——
+  **方向对上了，量没对上**，没有干净实验能说清剩下的 3%，**记成没解释**。
+- §3.14 ④（经济）、⑤（`ControlBinder:13` 的死 `split`）、§3.15 ③④、§3.16、§3.17 —— 未动。
+- `QUESTIONS.md` `R6` 仍未答（本轮没新增条目）。

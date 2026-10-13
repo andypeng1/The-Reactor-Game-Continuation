@@ -313,3 +313,11 @@ _tools/_pull.log
 #     that survives without publishing the art.  The other nine files in this
 #     directory ARE tracked: those are renders of the chamber, our own geometry. ---
 Data/startup_shots/11_live_shift_report.jpg
+# --- the same screen one phase later, and the SUCCESSFUL half of it (Phase 128):
+#     11 is the reactor in `Failed`, 12 is `Report` reached with the quota actually
+#     met -- `SHIFT [1] REPORT`, "Good Job", the acknowledgement prompt.  Same art,
+#     same copy, same public repo, so it is withheld for the same reason, and the
+#     session's own evidence is kept as the delivery lines and the instance
+#     readings in PROGRESS.md Phase 128.  Kept on disk anyway because the pair is
+#     the only record of what the two endings LOOK like beside each other. ---
+Data/startup_shots/12_live_quota_report.jpg

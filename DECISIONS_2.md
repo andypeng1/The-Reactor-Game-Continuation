@@ -8647,3 +8647,89 @@ Phase 127 解绑 `__probeCamHold` 之后，**同一个调用立刻给出对的�
 
 **同一个现象，两次不同的因**。分开它们的不是图，是**动作**：
 「解绑之后有没有变化」。两次之间**不能互推**。
+
+**539. 「在下一阶段的第一拍下发」不等于「在上一阶段之内下发」—— 而且它报的是个更好的数（Phase 128）**
+
+`_tools/quota_policy_sim.luau` 把它的「置物块」（关风机、开泵、定 CBL 档）放在**循环的第一拍**，
+而循环在 `advance(StartupSeconds + 5)` 之后才开。链长 113.4 s、advance 118 s，
+于是**最后四次调用里阶段已经是 `Running`，而三台冷却泵一台都没开**（泵是这个块自己开的）。
+实测 `pumpOn=0`：没有冷却时 `heat = 6`，入口温度线跑 `6 × 65 × 0.4 = 156 F/s`，
+四秒 **+615 F**；整条轨迹带着这 615 F 进 `Running`，
+而 615 F 值 `0.004 × 615 ≈ +2.5 PSI/s`，一班 350 s 就是 **~800 PSI**。
+模拟器报 `Pmin 3226..3523`，真机是 **2804**。
+
+**关键不在这个数，在它的形状**：修之前的模拟器**没有报错**，
+两次运行**各自都自洽**，而错的那一份**报了一个更好的结果**。
+「更好的数」比「更差的数」更难被怀疑 —— 它落在你想要的那一侧。
+错的那一侧你会去查，对的那一侧你不会（同 0.18 一族，但这张脸骗的是**我们自己写的工具**）。
+
+**修法是把块挪进链里**，而这不是为了迁就模拟器 ——
+**真玩家就是在开机链里扔这几下的**，真机这一趟也是这么做的。
+所以正确的写法是「跟被测对象一致」，不是「跟旧输出一致」。
+
+**540. `Engine:Update(dt)` 按**固定的** `Sim.Step` 走 —— 数调用次数不等于数秒（Phase 128）**
+
+```lua
+function Engine:Update(dt)
+    self.state.accumulator += dt
+    while self.state.accumulator >= self.config.Sim.Step and steps < self.config.Sim.MaxCatchupSteps do
+        self.state.accumulator -= self.config.Sim.Step
+        self:Step(self.config.Sim.Step)      -- 注意传的是 Config.Sim.Step，不是 dt
+        steps += 1
+    end
+end
+```
+
+`Step` **永远收到 `Sim.Step`**，`dt` 只决定累加器多久满一次。这里 `Sim.Step = 1`，
+所以 `Update(1)` 恰好等于 1 s —— **是巧合，不是规定**。
+换成 `Sim.Step = 2.5`（TRGWeb 的 tick），`Update(1)` 要 2.5 次才走一拍，
+而 `MaxCatchupSteps` 会在卡顿时**丢掉累加器里的时间**（注释自己写了「keep residual time」，
+但上限一到就丢）。**任何「我调了 N 次所以过了 N 秒」的推理，量的都是装置不是世界**（同 539）。
+
+顺带：`quota_policy_sim` 的 `r.seconds = r.tick - BOOT` 里 `r.tick` 是在
+`advance(ShutdownSeconds + 2)` **之后**取的，所以它比真正的 `Running` 长 7 s ——
+那个数一直是个**复合量**，只是没人问过它由什么组成。
+
+**541. 两个结局在**第一班**逐字相同，是**构造上**相同，不是巧合（Phase 128）**
+
+Phase 124 记过「`Failed` 和 `Quota` 的屏幕看起来一样」，当时只是个观察。
+Phase 128 读到了原因，`EndShiftHandler`（在 `StarterGui` 里，不在盘上）第 437 行：
+
+```lua
+if p2 == "Quota" then v6 = true end
+```
+
+而 `v6` **只有两个读者，两个都以「第三班」为条件**：第 308 行 `if v14 == 3 and v6 then SpecialEnd()`、
+第 508 行 `if p4 == 3 and (v6 and k == "RadiationDamage") then task.defer(Diagnostic)`。
+第一班 `p4 = 1`，**两个分支都不走**。
+
+所以「一样」不是我运气不好挑了个分辨不出差别的字段，**是 `reason` 在第一班没有消费者**。
+这条还**预言了它们在哪分岔**：`Quota` 只在第三班触发 `Diagnostic`（22 行 SOFT TRANSFER 打字机）
+和 `SpecialEnd`（`SecretFrame` 那串聊天）。
+
+**一条负面结论只有在找到它的机制之后才算结清** —— 在那之前它和「我没看仔细」同形。
+顺带同一个结构：`$0 ... Good Job` 不是「没钱所以显示 0」，
+是第 553 行 `if p3 == 0` 那一支**专门**把灰字和 ` ... Good Job` 拼上去的（第 547 行 `p3 < 0` 是红的并 `return`）。
+
+**542. 「没看到那行」只有在证明了「它本来该出现」之后才是读数（Phase 128）**
+
+这一趟 16 行 `[ReactorBackend][Control] … -> <LABEL>`，**0 行 `rejected:`、0 行 `[Gate] refused`**。
+后两个「0」**之所以算数**，是因为它们各自的时间窗被前 16 行钉住了：
+`[Gate]` 那行和它对应的点击是**同一拍**打印的，而那次点击自己的 `[Control]` 行**活下来了**
+（缓冲区 400 行、统计流 ~3 行/s 会挤掉 130 s 之前的东西，
+所以「一个同拍的行还在」证明「窗口没过期」）。**同一条点击的送达行在，拒收行不在** —— 这才叫证据。
+
+否则「日志里没有这一行」和「日志把那一节截掉了」是**同一个读数**（同 §0.8 的截断、同 274 一族）。
+
+**543. `phase=Report` 证明的是运输，不是配额（Phase 128）**
+
+`Report` 只说明 `EndShiftBridge.Send` 把事件发出去了。**配额真的到了**要另找证据，
+而现成的证据是：`Engine:Command('shutdown')` 在配额不够时**拒绝**
+（`'Energy quota not yet met'`），而停机那一下**被接受了**。
+**一个被接受的停机 = 一次 `energy >= quota` 的证明**，比读一个自己写进去的字段硬。
+
+`reason = 'Quota'` 本身也是构造出来的（`EndShiftBridge.luau:67`：
+`s.phase == 'Failed' and (s.failure or 'Failure') or 'Quota'`），
+不需要去读实例 —— 而且**读不到**：payload 是事件参数，`ReplicatedStorage.EndShift` 上**没有** `.Value`。
+顺带：日志那行 `end-of-shift report: shift 1 Report -> andypeng1NB` 印的是
+`s.shift, s.phase, player.Name`，**中间那个是阶段不是 reason**，别读错（同 §0.24 ① 一族：地址读错）。

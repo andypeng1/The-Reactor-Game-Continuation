@@ -1640,6 +1640,44 @@ built for. Two of these are questions: QUESTIONS.md R6. See PROGRESS.md Phase 12
 DECISIONS_2 531-538.
 
 
+### Phase 128 - a whole shift, run to the quota ending, in a live game
+
+Phase 124 connected the end-of-shift screen and live-verified only the **failure** ending; the same
+screen's other ending - quota met - had never been exercised. It now has. **16 real clicks through
+real ClickDetectors** took one shift from a cold machine to `phase=Report` with `Energy 512/512`:
+4 for the boot chain, 2 fans off, 3 coolant pumps on, 6 CBL purges, 1 shutdown. Sixteen delivery
+lines, zero `rejected:`, zero `[Gate] refused`.
+
+The window read out **113.154 s** from `Starting` to `Running` against a `Shift.StartupSeconds` of
+**113.39999999999999** - a number `Config` *derives* at load by summing the 16 `StartupSteps`'
+`hold` values (an earlier note of "109.4" had missed the `hold = 4` step). 0.25 s apart is one
+Heartbeat sample, so this is a free independent check on a derived constant. The other four
+intervals land on their configured values too: `Booting → Ready` 13.501 against `BootSeconds = 14`,
+`Stopping → Report` 4.571 against `ShutdownSeconds = 5`.
+
+**The phase's real find was a defect in my own offline planner.** `_tools/quota_policy_sim.luau`
+issued its set-and-forget block on the *loop's first iteration* - four `Update` calls after the
+startup chain had already ended, i.e. four seconds of `Running` with **no coolant in the machine**.
+With three CBLs at level 2 the entry temperature line runs `6 * 65 * 0.4 = 156 F/s`, so the whole
+trajectory entered `Running` **615 F hot**, and at those temperatures the state-1 pressure line is
+worth `0.004` per degree - about **+2.5 PSI/s**, roughly **800 PSI of margin the machine never had**.
+It reported `Pmin 3226`; the live shift reached **2804**. Fixed by moving the block into the chain,
+which is also where a real player throws those clicks. A wrong harness is worse when it reports a
+*better* number, because a worse one gets investigated.
+
+A genuine negative came out of the correction: across 12 noise streams the winner is not fragile
+(the floor bottoms at 2475 against the 2200 stall line) but "12/12 reached Report" is **not** the
+same claim as "there is plenty of margin", and the file now says so rather than averaging it away.
+
+Also measured, and owed to the same live run: `Engine:Update(dt)` steps at a fixed `Sim.Step`, so
+counting calls is not counting seconds; the two endings are byte-identical on shift 1 **by
+construction** (`EndShiftHandler:437` sets a `Quota` flag whose only two readers are both gated on
+shift 3), which predicts where shift 3 will differ rather than leaving it as "we never saw a
+difference"; and `phase=Report` proves the transport delivered, not that the quota was met - the
+quota is proved by the fact that `Engine:Command('shutdown')` *refuses* below it, and this one was
+accepted. See PROGRESS.md Phase 128, DECISIONS_2 539-543, docs/SNIPPETS.md 5.35.
+
+
 ### Phase 100 - the driver: the half of the channel that presses things
 
 The state recorder (`_tools/TRG_original_state.luau`, tag `s2`) is read-only by construction:
@@ -1781,7 +1819,7 @@ See PROGRESS.md Phase 106 and DECISIONS 426 to 430.
 
 `CLAUDE.md` is the file auto-loaded into an assistant's context every session, so as of
 2026-10-10 it carries only what must be seen **every round**: the doc-sync rules (0.0), the
-numbered "blood-and-tears" lessons (0 through 0.26), the project overview (1), the
+numbered "blood-and-tears" lessons (0 through 0.28), the project overview (1), the
 operator's preferences (4), the do-not-touch list (6), the references (7), a one-sentence
 summary (8), and the operational "before you act" rules. The per-Phase digest of Phases
 47-107 - **1155 lines, 67% of the old 1725-line file** - was moved out to `docs/PHASES.md`.
