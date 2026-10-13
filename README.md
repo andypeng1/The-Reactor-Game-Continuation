@@ -386,6 +386,51 @@ lobby it is rewritten to the engine's own `reset` - refusing instead would answe
 and there is no way out" with a console line and no exit. What the screen is genuinely missing is
 the economy it reports on; that is `QUESTIONS.md` R4, not a wiring decision.
 
+## Monitor content - the alerts grid and the subspace forecast
+`RoomShell` decides which *face* each of the seven control-room monitors shows. Nothing decided
+what was *on* those faces, and two of them had been dead since the place was built:
+`AlertsControlRoomMonitor`'s 27-row indicator grid and `ForecastControlRoomMonitor`'s deep-scan
+announcement. `script_grep` over the whole DataModel returned zero readers for `AlertsFrame`,
+`TimeSliceTemplate`, `AnnouncementFrame` and `EFEFrame`.
+
+`SSS.ReactorBackend.AlertsPanel` fills the grid. Each of the 27 tiles is a grey plate with a
+black label and, at ZIndex 0 behind it, a full-size child named `Frame` whose
+`BackgroundColor3` is that row's category colour - toggling that one child's `Visible` is the
+entire mechanism, and the original's recordings never wrote any property on this monitor except
+that one. The rows come from the in-game manual (`Workspace.Consoles.ElectricGridConsole.
+DRMScreen`, the `AlertsFrame.{General,Moderate,Major,Malfunctions}Frame` pages), so the
+thresholds are the originals': 400 GW/H for high energy output, 75% for P.E.A stress, 400F for
+temperature fluctuation, ~6000F for stallout. Rows 1-9 are the start-up family and light in any
+phase; rows 10-27 are live conditions and only count while the reactor is Running or Stopping.
+Two rows - `ENERGY FLUCTUATION` and `P.E.A MALFUNCTION` - have no engine counterpart this build
+models, so they are left dark and printed at boot rather than aliased onto something that only
+looks like them (DECISIONS_2 522). The refresh is signature-gated on the 27-bit lit set, so a
+quiet second writes nothing at all.
+
+`SSS.ReactorBackend.ForecastPanel` plays the deep scan, transcribed to the poll from the
+recording at `Data/originalwatch/260930-200834`: announcement at +0.00, beep at +3.35, verdict
+and ping at +5.04, ping off at +9.37, announcement off at +12.89, timeline off at +14.63. The
+verdict is not a fixed string - the only future subspace event this engine models is the
+Equinox, so the scan projects that clock and reports whether it lands inside the facility's
+horizon (`HADEN THRESHOLD BREACH ~3:15 AM` in red, or `ANOMALY DETECTED, MARGIN ~...` in
+yellow). The clock map itself is ours, not the capture's, and is labelled as such. The EFE
+banner is on **all seven** monitors - which is the manual's own words, "when an EFE is about to
+occur, all monitors will display a warning" - and it carries its own countdown, because the
+capture's `BannerSeconds = 10.25` is longer than the announcement timeline it used to be bound
+to (DECISIONS_2 524).
+
+`AlertsControlRoomMonitor` was also the one monitor with **no `EFEFrame`**, so the manual's
+"all monitors" would have skipped the alarms screen. It now has one: a clone of the full-width
+variant, which is what its own `MainMonitorFrame` uses, byte-identical to the other six. That is
+a restoration of a symmetric element, not new content, and it is purely additive - nothing
+existing was moved, renamed or deleted (DECISIONS_2 523).
+
+Both were verified in Edit mode by requiring the real modules against the real instances and
+reading back instance properties - 27 `Frame.Visible` values, the announcement's text and
+colour, three `Sound.Playing` flags and seven `EFEFrame.Visible` flags - which needs no Play
+session at all (DECISIONS_2 526, SNIPPETS.md 5.32). What is *not* verified is the Play-mode path
+from four clicked controls into `Running`; that boundary is unchanged. See SYSTEMS.md 2.24.
+
 ## Automated control test
 Workspace.GameCoreControlTest simulates operator clicks with a mock supervisor and asserts that
 lever pivots move and lamp colours change. A SECOND phase asserts on GameState and on the owning

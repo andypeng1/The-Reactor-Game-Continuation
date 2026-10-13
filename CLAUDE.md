@@ -684,6 +684,11 @@ Phase 124 一次会话里踩齐了三条，都是「工具报成功/报了数，
 （`monitor_power`/`shutters`/`boot`/`start`，四条 `ControlBinder` 接受行）走到的 `phase=Running`，
 逐项读数对上了 Config 的提示表；过程中先撞出「**Studio 里只有一个模块落后**」这个坑（§0.25）。
 判据图在 `Data/startup_shots/`（`6_live_cbl_firing` / `7_live_ignition`）。
+**开机链最后两块屏也接上了**（Phase 125）：`AlertsPanel` 驱动那 27 行警报格
+（阈值取自游戏内手册，两行无对应物**留黑不硬凑**），`ForecastPanel` 按录像的六个偏移
+播深扫公告 + 七台屏共亮的 EFE 横幅；`AlertsControlRoomMonitor` 原本唯一没有 `EFEFrame`，已补回。
+两个模块都在 **Edit 模式**里 require 真模块、读**实例属性**验的（**没进 Play** —— §0.16 边界不变），
+配方见 `docs/SNIPPETS.md` §5.32，说明 `docs/SYSTEMS.md` §2.24，取舍 `DECISIONS_2` 522..526。
 **几何体重做已撤销**（用户 2026-09-26 原话：「不需要重做建模，请删除」）——
 `docs/TODO.md` §3.1 里那两条未开始的几何条目（设施外壳/房间内部的装饰与英雄资产、
 堆芯外壳与拉杆握把的 `generate_mesh` 重做）已删掉，该节剩下的只是已完成的施工记录。

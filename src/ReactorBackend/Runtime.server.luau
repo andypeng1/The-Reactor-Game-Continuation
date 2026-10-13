@@ -13,6 +13,8 @@ local ok, err = xpcall(function()
     local FacilityCascade=require(backend.FacilityCascade)
     local LogPanel=require(backend.LogPanel)
     local BootPanel=require(backend.BootPanel)
+    local AlertsPanel=require(backend.AlertsPanel)
+    local ForecastPanel=require(backend.ForecastPanel)
     local EndShiftBridge=require(backend.EndShiftBridge)
     local engine=Engine.new(Config)
     backend:SetAttribute('RuntimePhase',engine.state.phase)
@@ -44,6 +46,17 @@ local ok, err = xpcall(function()
     -- properties, so their order is a readability choice, not a dependency.
     BootPanel.Initialize(Config)
     BootPanel.Refresh(engine.state,Config)
+    -- The two monitor-CONTENT adapters, on the same terms as BootPanel: they
+    -- write only properties RoomShell leaves alone -- the alerts grid's inner
+    -- colour frames, the forecast monitor's deep-scan announcement, and
+    -- EFEFrame, which MonitorUI's header names as deliberately unowned. Like
+    -- FacilityCascade they ride the chain's own cursor, so they need no gate of
+    -- their own; ForecastPanel also needs every frame, which is why its Step
+    -- joins FacilityCascade's on the Heartbeat below.
+    AlertsPanel.Initialize(Config)
+    AlertsPanel.Refresh(engine.state,Config)
+    ForecastPanel.Initialize(Config)
+    ForecastPanel.Refresh(engine.state,Config)
     -- The log panel is an output adapter on the same terms as the other two: it
     -- owns no state and only reads the engine's own event list, which until this
     -- was written had no reader anywhere in the place.
@@ -60,6 +73,8 @@ local ok, err = xpcall(function()
         RoomShell.Refresh(state,Config)
         FacilityCascade.Refresh(state,Config)
         BootPanel.Refresh(state,Config)
+        AlertsPanel.Refresh(state,Config)
+        ForecastPanel.Refresh(state,Config)
         LogPanel.Refresh(engine)
         StateBridge.Publish(state)
         -- The end-of-shift report is an output on the same terms as the log
@@ -80,6 +95,10 @@ local ok, err = xpcall(function()
         -- Heartbeat after a long frame stall can carry several seconds and the
         -- cascade must not spend them all in one frame.
         FacilityCascade.Step(math.min(dt,0.5))
+        -- The deep-scan announcement is the other continuous thing: three
+        -- sounds and a text swap over 14.63 s, whose own recorded gaps are 1.7 s
+        -- apart. Behind the one-second gate each would land a second late.
+        ForecastPanel.Step(math.min(dt,0.5))
         accumulator+=math.min(dt,0.5)
         if accumulator<Config.Visual.RefreshSeconds then return end
         local step=accumulator; accumulator=0
@@ -97,7 +116,7 @@ local ok, err = xpcall(function()
             warn('[ReactorBackend] update failed: '..tostring(updateErr))
         end
     end)
-    print(string.format('[ReactorBackend] runtime %s online: 62-control adapter, server-owned engine',Config.Version))
+    print(string.format('[ReactorBackend] runtime %s online: 62-control adapter, seven monitor panels, server-owned engine',Config.Version))
     -- The end-of-shift transport lives in its own module: it is the same shape
     -- as the other adapters (a public function over instance state, CLAUDE.md
     -- 0.19) and it is the missing half of a contract the legacy screen already

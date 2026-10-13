@@ -2204,3 +2204,71 @@ Windows 的 `SO_REUSEADDR` 让新 bind **成功而不报错**，所以「我起�
 `Get-CimInstance Win32_Process` 看命令行**，复用或杀掉，别假定端口是你的。
 **③ `LuaSourceContainer` 只覆盖这个文件夹** —— `StarterPlayerScripts.EndShiftResume`
 **不在** `SSS.ReactorBackend` 里，得单独拉一次（本轮就是单独拉的）。
+
+### 5.32 在 Edit 模式里**驱动真模块**、读回**实例属性** —— 不用进 Play ★ Phase 125
+
+**它解决的是什么。** §0.16 说「跑起来的游戏里发生了什么」读不到；§0.17 说官方 VM
+的 `require` 被 `Capabilities` 挡住。两条在 Phase 125 一起被绕开了：**把源码拉成
+一个崭新的、没有 `Capabilities` 的实例**，官方 VM 就能 require 它 —— 于是
+**真模块代码**可以对着**真实例**跑，全程在 Edit 模式，不需要 Play、不需要第三方插件 VM。
+
+**配方**（官方 `rblx_execute_luau`，`datamodel_type:"Edit"`）：
+
+```lua
+-- 1) 先起一个读盘的口（_tools/serve.py --dir src/ReactorBackend --port 8767）
+-- 2) 把每个模块的源码 GetAsync 下来，装进一个一次性的 Folder
+local Http = game:GetService('HttpService')
+local SSS = game:GetService('ServerScriptService')
+local names = {'Config','Engine','Runtime','AlertsPanel','ForecastPanel'}  -- 要谁拉谁
+local bin = Instance.new('Folder')
+bin.Name = '__drive' .. tostring(os.time())
+bin.Parent = SSS                      -- 必须在 DataModel 里 require 才稳
+local mods = {}
+for _, n in ipairs(names) do
+    local src = Http:GetAsync('http://127.0.0.1:8767/' .. n .. '.luau')
+    local m = Instance.new('ModuleScript')
+    m.Name = n
+    m.Source = src
+    m.Parent = bin
+    mods[n] = m
+end
+local Config = require(mods.Config)
+local ForecastPanel = require(mods.ForecastPanel)
+print('require ok; Config.Alerts.Rows=' .. #Config.Alerts.Rows .. ' Forecast.Step=' .. Config.Forecast.DeepScan.Step)
+
+-- 3) Initialize 一次，然后逐拍 Step，读回的全是实例属性
+local state = { ... }                 -- 合成状态，字段按 Engine 的形状给
+ForecastPanel.Initialize(Config.Step, Config)
+ForecastPanel.Step(0.05)
+print(workspace.Monitors.ForecastControlRoomMonitor.Screen.MonitorUI
+        .MainMonitorFrame.AnnouncementFrame.Visible)
+
+-- 4) 收摊：把 Folder 拆掉，等于把这次 require 的缓存一起扔了
+bin:Destroy()
+```
+
+**为什么「装成一个新实例」就过了。** §0.17 那三条报错——`cannot reparent … has
+additional values for the Capabilities property`、`cannot require 'Config' since
+'Config' has additional values …`——主语全是**目标**。`Instance.new('ModuleScript')`
+造出来的目标**没有任何 `Capabilities`**，所以三条一起消失。**不是沙箱变宽了，
+是我换了一个没有那个属性的目标。**
+
+**三条纪律**：
+- **① 读实例状态，不读模块状态**（§0.2）。这一轮读的是 27 个内层 `Frame.Visible`、
+  `AnnouncementText.Text`/`TextColor3`、三个 `Sound.Playing`、七台
+  `EFEFrame.Visible` —— 没有一个是模块里的表。
+- **② 会被自己写坏的东西先存后还**。合成状态会让模块**真的去写** 921 个部件的
+  `Color`/`Light.Enabled`；开跑前把原值读出来存进表，收摊前写回去。
+  声音没法靠 `Visible` 静音 —— 存 `Volume`、置 0、再还。
+- **③ 一个会话驱动一次**，驱动完立刻 `Destroy()`。留着那个 Folder 的话，下一轮
+  改完源码再 require 拿到的还是**旧字节码**（§0.3/§0.15），而报错会落在消费者身上。
+
+**两个会安静骗人的东西**（都是本轮现踩的）：
+- **自己写的扫描窗口可以比要测的事件还窄** —— 我用一个从 t=14 起、每 0.05 s 走一步的
+  循环去抓横幅的下降沿，而横幅**在循环起跑前就落下去了**，于是它报
+  `banner fell at t=-1.00`。**粗测的两个端点（15.25 亮 / 15.40 灭）才是证据**，
+  那次精扫量的是一个空窗口。**窗口是自己选的，所以它也能自己骗自己。**
+- **`receive.py` 的文件名就是 URL 的路径**（取舍 525）—— `PostAsync(url, src)` 里 URL
+  不带 `.luau`，落盘就没有扩展名；而同一个目录里**可能躺着上一轮的 `X.luau`**，
+  `find -newermt` 会把那个旧文件当成刚写完的。**「最新写进去的那个文件」不是
+  「我要的那个文件」。**

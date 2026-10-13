@@ -13898,3 +13898,115 @@ SAME  EndShiftResume.client
   离线跑不了；它验的是后端**加进去的那六个数**。
 - 取舍 **519 的两个负结果**照旧挂着：「角色挡射线」没有结论；沙箱连接不是可靠仪器。
 - `LightPart.Color`（Phase 122 取舍 511）、`QUESTIONS.md` R3、TODO 3.13 ③ —— 均未动。
+
+## Phase 125 — 「子空间预测的屏幕和警报屏幕」：开机链的最后两块屏（2026-10-13）
+
+**操作员原话**：「你再把开机完善一下，我记得还有个子空间预测的屏幕和警报屏幕」。
+这两块屏在 `Workspace.Monitors` 里一直是**没接线**的：`script_grep` 整个 DataModel，
+`AlertsFrame` 零个读者，`TimeSliceTemplate` / `AnnouncementFrame` / `EFEFrame` 同样。
+这一轮把它们接到引擎自己的状态上，并且**在进 Play 之前先把逻辑跑穿**（第三节）。
+
+### 一、两个新适配器
+
+| 文件 | 吃什么 | 写什么 |
+|---|---|---|
+| `AlertsPanel.luau`（**13863 B**） | `engine.state` | 27 行指示格的 `AlertFrameN.Frame.Visible` |
+| `ForecastPanel.luau`（**13605 B**） | `engine.state` + 每帧 `dt` | 深扫公告（3 个音 + 文案 + 颜色）、七台屏的 `EFEFrame.Visible` |
+
+**为什么各是一个模块。** `RoomShell` owns「显示哪一张脸」（`frame.Visible`）；
+`AlertsFrame` 就住在它显示的那张 `MainMonitorFrame` 里，而这两个模块写的都是
+**它不碰的属性**（格子内层彩条、公告子件、`EFEFrame`）—— 所以仍然是
+**一个属性一个写入者**，和 `BootPanel` 当初被切出来的理由一样。
+
+**警报格是什么。** 27 块 100×100 灰片，每块背后（**ZIndex 0**，label 在 ZIndex 1）
+压着一个同尺寸、`BackgroundColor3` 为**那一行类别色**的 `Frame`。
+**把那层 `Frame.Visible` 打开就是全部机制** —— 也是原版自己的录像在这块屏上
+**唯一**写过的属性（`Data/originalwatch` 里每一条 `AlertFrameN` 都是
+`<…>.AlertFrameN.Frame.Visible`）。
+
+**27 行的行义全部来自游戏内手册**（`Workspace.Consoles.ElectricGridConsole.DRMScreen`
+的 `AlertsFrame` 分页），阈值取手册数（400 GW/H、75%、400F、~6000F）或引擎自己的数
+（`ShutdownLimit=17000`、`Sim.HighPressure=11300`、`CBLStressThreshold=75`）。
+**两行故意留黑、并在 Initialize 打出来**：`POWER INTERRUPTION`（这个设施没有建模过供电）
+与 `ENERGY FLUCTUATION`（手册那条是**子空间 EFE**，而引擎的 `s.fluctuation` 是**温度差**，
+已经在下一行 `HIGH TEMP FLUCTUATION` 用掉了）。取舍 **522**。
+
+**深扫序列逐秒抄自原版录像**（`Data/originalwatch/260930-200834`，偏移相对公告出现）：
++0.00 公告亮；+3.35 `Beep`；+5.04 换判决文案与颜色、`Beep→EFEPing`；
++9.37 `EFEPing` 灭；+12.89 公告灭、颜色回绿、`TimelineComplete` 响；+14.63 停。
+判决**不是写死的字符串**：引擎唯一建模的子空间事件是 Equinox（`EquinoxSeconds=720`），
+深扫把那一刻**投影成钟点**再和 900 s 视界比 —— 现在调出来是
+`HADEN THRESHOLD BREACH ~3:15 AM`（红）。
+
+**触发点**是链自己的那句 `StartupSteps[9] = 'INITIATING DEEP SCAN PROCEDURE'`，
+和 `FacilityCascade` 骑同一根游标：**链给 WHEN，捕获给之后发生什么**。
+
+### 二、两处对**世界**的改动（都不改机制，都是加法）
+
+**① `AlertsControlRoomMonitor` 原本没有 `EFEFrame`。** 七台里六台有、它没有 ——
+于是手册那句「all monitors will display a warning」会**正好漏掉警报屏**。
+量过之后：六份 `EFEFrame` 的**子树逐字节相同**（两个黑底 `EventFrame`，黄字
+`EFE IMMINENT` / `BRACE FOR ENERGY FLUCTUATION EVENT`，字号 14），
+**只有根件自己的变换**不同（Power/Thermal/Main 半宽居中，Log/Forecast/Quota 全宽）。
+七台的 `Screen` **是同一个 part**（0.2 × 9.15 × 7.6），所以那两族不是设计，是作者漂移。
+给 Alerts 补的是**全宽那一版** —— 判据是**它自己**的 `MainMonitorFrame` 就是
+`{1,0},{1,0}` 锚 0,0。**纯加法**：没动任何已有件、没改名、没删。取舍 **523**。
+
+**② 顺带量到**：`BootFrame` 只有 **3/7** 台有（Power/Thermal/Main），
+所以这个 place 的监视器**本来就不齐** —— Alerts 缺 `EFEFrame` 不是「它被单独做坏了」。
+
+### 三、验证：在 Edit 模式里把真模块 **require 起来**驱动一遍（§4.4）
+
+§0.17 说官方 VM 里 `require` 工程模块会被 `Capabilities` 拒 —— 那是**对着带
+`Capabilities` 的那个文件夹**说的。把源码 `GetAsync` 成**临时 Folder 下的新
+`ModuleScript`**（父件没有 `Capabilities`）之后，`require` **直接成功**，
+于是不必进 Play 就能驱动真模块、读真实例（取舍 **526**）：
+
+- **警报 27 行**：11 个合成状态逐个 `Refresh`，读回 27 个 `Frame.Visible`（列 1..27）：
+  - `cold` / `step 0` → `000001000…`，**只有第 6 行 FAN(S) ACTIVE** ——
+    那是引擎 `fans` 默认全开的忠实转述，不是这一层挑的
+  - `step 7` → 第 2 行 SUBSPACE FIELD；`step 9/10` → 第 1 行 RECT ACTIVATION
+    只在 9..10 亮（它读的就是深扫窗口）；`step 12` → 第 3 行 CBL
+  - `Running` 正常 → 2/4/5/6/7/9 亮；过热（T=31000 P=12000 state3）→
+    12/13/14/16/18/19 亮；故障（pea=100、泵 0、CBL fault、E-VENT 用尽）→
+    10/14/17/20/21/22/23/24 亮，而 **25 LOW COOLANT 正确地没亮**（三台泵里还有两台在转）；
+    Equinox + T=1000 → 26 与 27 亮
+  - 回到 `cold`（`live=false`）→ 只有 1..9 行参与判定，回 `000001000…`
+- **预测屏**：`Initialize` → `Refresh(step 9)` → 每帧 `Step(dt)`，
+  六拍**逐个落在录像的偏移上**；横幅在 **7/7** 台屏幕上、判决那一刻（5.05）亮、
+  **15.25 还亮着**、15.40 灭 —— [15.25, 15.40] 夹住了 `5.04 + 10.25 = 15.29`。
+  `equinox=true → 7/7`、`false → 0/7`；退回 `step 0` 时公告与横幅**一起收干净**。
+
+### 四、这一轮量出来的**数字错误**（本轮最值钱的一条）
+
+横幅原写在 `Refresh` 里、用 `sequence ~= nil` 兜着。而 `sequence` 在
+`TimelineOffAt = 14.63` 就被丢掉 —— 判决（5.04）之后只活 **9.59 s**，
+**比它自己声明的 `BannerSeconds = 10.25` 短 0.66 s**。10.25 是从录像里量出来的，
+代码却兑现不了它：**一个代码不认的常数，就是一个安静地错着的数**（§0.18）。
+修法不是把常数改成 9.59（那是拿观测去迁就 bug），而是**让横幅自己走秒**
+（`Step` 里 `bannerLeft` 倒计时，`Refresh` 只 latch `equinox`）——
+顺带把两个边都变成逐帧精确（原先挂在 1 秒闸上，边最迟会晚 1 秒）。取舍 **524**。
+
+**顺带一条量法上的**（差点被我写成结论）：`PostAsync` 拉回来的 13 个文件里，
+`ForecastPanel.luau` 是 **11609 B**（旧版本），而 Studio 里明明是 13605 B。
+真相是**我把 URL 写成了 `child.Name`**，落盘的文件**没有 `.luau` 后缀**，
+而我读的是**上一趟**留在同一目录里的同名 `.luau`。两次读数都是真的，
+错的是「我读的是哪一趟」。取舍 **525**。
+
+### 五、收尾：Studio ↔ 磁盘逐文件比对（§0.25）
+
+整个 `SSS.ReactorBackend` 推回磁盘（官方 VM 的 `PostAsync` → `_tools/receive.py`），
+`_tools/compare_backend.py` 逐件比哈希：
+
+```
+13 same, 0 different, 0 unmatched, 0 absent        exit=0
+```
+
+### 六、还欠的（照实写）
+
+- **Play 里的真机那半没跑。** 这一轮驱动的是**模块**（真源码、真实例、真属性），
+  不是「点四个控制走进 `Running`」那条路。§0.16 的边界照旧：
+  源码看起来对 ≠ 真机验过。
+- 录像是**原版**的；remake 的钟点映射（`StartHour=23`、`MinutesPerSecond=1/3`）
+  **是我们定的**，录像只给了判决的形状 —— 已在 Config 注释里标成我们的数（取舍 524）。
+- `LightPart.Color`（取舍 511）、`QUESTIONS.md` R3、TODO 3.14 ①–⑤ —— 均未动。

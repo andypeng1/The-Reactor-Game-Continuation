@@ -602,11 +602,167 @@ local Config = {
             },
         },
     },
+    -- ========== ALERTS (the reactor-alerts monitor's 27 rows) ==========
+    --
+    -- Workspace.Monitors.AlertsControlRoomMonitor is a live 27-row indicator
+    -- grid that no script in the place has ever written to: script_grep over
+    -- the whole DataModel returns nothing for AlertsFrame, so the art was
+    -- authored and left unwired -- the same shape of hole as the world half of
+    -- the start-up chain (Shell above).
+    --
+    -- Each row is AlertFrameN: a grey 100x100 tile carrying a black label, and,
+    -- at ZIndex 0 BEHIND that label, a full-size Frame whose BackgroundColor3 is
+    -- the row's own category colour. Toggling THAT inner frame's Visible is the
+    -- whole mechanism, and it is the only property the original's own recordings
+    -- ever write here: every AlertFrameN write in Data/originalwatch is
+    -- <path>.AlertFrameN.Frame.Visible. The colours are the art's, not ours --
+    -- yellow for a running system, green for core active, orange for a moderate
+    -- alert, red for a major one, purple for a malfunction -- so this module
+    -- writes no colour at all.
+    --
+    -- Rows are numbered the way the art numbers them. `key` is resolved against
+    -- an explicit table inside AlertsPanel, and a key with no entry there is
+    -- REPORTED at Initialize and left dark, never quietly aliased onto a
+    -- neighbour (CLAUDE.md 0.13: a missing owner looks exactly like a row the
+    -- art meant to leave off).
+    Alerts = {
+        Rows = {
+            -- `active` rows report on the start-up chain and the devices it
+            -- brings up; they are the ones with something to say before
+            -- ignition. Everything else is a condition on a RUNNING reactor and
+            -- is forced dark until the chain finishes -- the Alerts grid only
+            -- becomes visible when RoomShell shows MainMonitorFrame, which is
+            -- Starting and Running, and a condition row lit during Starting
+            -- would be reporting on a core that is still at ambient.
+            {n=1,  key='rectActivation',      active=true},
+            {n=2,  key='subspaceField',       active=true},
+            {n=3,  key='cblActive',           active=true},
+            {n=4,  key='coreActive',          active=true},
+            {n=5,  key='pumpActive',          active=true},
+            {n=6,  key='fanActive',           active=true},
+            {n=7,  key='hdefActive',          active=true},
+            {n=8,  key='gGateActive',         active=true},
+            {n=9,  key='chamberRadiation',    active=true},
+            {n=10, key='radiationBreach'},
+            {n=11, key='powerInterruption'},
+            {n=12, key='highEnergyOutput'},
+            {n=13, key='excessiveTemperature'},
+            {n=14, key='excessPeaStress'},
+            {n=15, key='energyFluctuation'},
+            {n=16, key='highTempFluctuation'},
+            {n=17, key='eventsDepleted'},
+            {n=18, key='hazardousRadiation'},
+            {n=19, key='highPressure'},
+            {n=20, key='highCblPower'},
+            {n=21, key='highCblStress'},
+            {n=22, key='peaMalfunction'},
+            {n=23, key='pumpMalfunction'},
+            {n=24, key='cblMalfunction'},
+            {n=25, key='lowCoolant'},
+            {n=26, key='coreDestabilization'},
+            {n=27, key='stalloutPossibility'},
+        },
+        -- Thresholds. The four with a manual citation are the manual's own
+        -- numbers, quoted from the pages under the DRMScreen below; the three
+        -- marked ours are chosen because the manual is silent, and are said so
+        -- rather than dressed up as measured.
+        --
+        -- The manual is Workspace.Consoles.ElectricGridConsole.DRMScreen.
+        -- SurfaceGui.MainFrame, whose AlertsFrame.{General,Moderate,Major,
+        -- Malfunctions}Frame pages give each row's prose.
+        HighEnergyOutput = 400,        -- manual: output above 400 GW/H
+        ExcessPeaStress = 75,          -- manual: P.E.A stress above 75%
+        HighTempFluctuation = 400,     -- manual: above 400F fluctuation
+        StalloutTemperature = 6000,    -- manual: core temp below ~6000F
+        RadiationBreachIntegrity = 25, -- ours: 25 of the 0-100 HDEF scale
+        HazardousCoreState = 3,        -- ours: radiation peaks in core state 3
+        HighCblLevel = 4,              -- ours: the top two of the 1..5 ladder
+        -- Filled in below the literal, from the one source each already has, so
+        -- a threshold and its meaning can never drift into two numbers.
+        ExcessiveTemperature = nil,
+        HighPressure = nil,
+        HighCblStress = nil,
+    },
+    -- ========== FORECAST (the subspace-forecast monitor) ==========
+    --
+    -- Workspace.Monitors.ForecastControlRoomMonitor carries the facility's
+    -- subspace prediction: per its own manual page, EFE (Excessive Energy
+    -- Fluctuation) events and Equinox. Like the Alerts grid it has never been
+    -- written by any script -- script_grep returns nothing for TimeSliceTemplate
+    -- -- so this is transcribed from the original's own capture rather than
+    -- invented.
+    --
+    -- WHAT IS MODELLED, and what is not. The capture
+    -- (Data/originalwatch/260930-200834, the only run that carries the sequence
+    -- end to end) contains exactly the deep-scan announcement: the frame coming
+    -- on, three sounds, a text that turns into a verdict, and the frame going
+    -- off. It contains ZERO writes to TimeSliceTemplate, the ScrollingFrame,
+    -- BoundryFrame or Intensity -- the timeline curve is simply not in the
+    -- evidence, so it is not built. Inventing a curve would be the mistake
+    -- DECISIONS 274/340 warns about: a plausible answer with no ground truth is
+    -- a picked number, not a measured one.
+    --
+    -- The offsets and durations below ARE the capture's, in seconds from the
+    -- announcement appearing.
+    Forecast = {
+        DeepScan = {
+            -- The chain message this rides: Config.Shift.StartupSteps[9] is
+            -- 'INITIATING DEEP SCAN PROCEDURE'. Anchoring on the message rather
+            -- than on a clock is the same choice FacilityCascade makes, and it
+            -- is what survives a retime of the chain.
+            Step = 9,
+            BeepAt = 3.35,
+            VerdictAt = 5.04,
+            PingOffAt = 9.37,
+            EndAt = 12.89,
+            TimelineOffAt = 14.63,
+            Processing = 'PROCESSING DEEPSCAN TELEMETRY',
+            -- Verdict phrasings, read off the captures. Both end in the facility
+            -- clock at which the event is projected.
+            Breach = 'HADEN THRESHOLD BREACH ~',
+            Anomaly = 'ANOMALY DETECTED, MARGIN ~',
+            -- The three colours are the capture's, all pure: idle green,
+            -- breach red, anomaly yellow.
+            IdleColor = Color3.new(0, 1, 0),
+            BreachColor = Color3.new(1, 0, 0),
+            AnomalyColor = Color3.new(1, 1, 0),
+        },
+        -- The all-monitors banner. The manual's own words are that when an EFE
+        -- is about to occur, ALL monitors display a warning -- and the capture
+        -- bears it out: EFEFrame.Visible goes true on all seven at once
+        -- (261002-140021, t=373.82..373.89) and false together 10.25 s later.
+        -- EFEFrame is the one face inside MonitorUI that RoomShell deliberately
+        -- does not own, so this module is its only writer.
+        BannerSeconds = 10.25,
+        -- Ours, and said so. The deep scan has to decide between the two
+        -- verdicts, and the only future subspace event this engine models is the
+        -- Equinox (Engine:Step latches s.equinox at elapsed >= EquinoxSeconds).
+        -- A margin inside this horizon is called a breach. It sits ABOVE
+        -- EquinoxSeconds, so a normal run's deep scan genuinely forecasts the
+        -- Equinox rather than always clearing -- but the comparison is real and
+        -- a retuned EquinoxSeconds moves the verdict with it.
+        BreachHorizonSeconds = 900,
+        -- OURS, not measured: a SECONDS-TO-CLOCK map. The captures' verdicts name
+        -- a wall clock (~3:00 AM, ~4:00 AM, ~12:00 AM) and the Quota monitor is
+        -- authored at 11:52 PM, but nothing in the evidence fixes the rate. This
+        -- is chosen so a full shift's Equinox lands near the 3 AM the verdicts
+        -- name, and it is declared here for the same reason LampFadeSeconds is:
+        -- a shape that has to be shown is better declared than faked.
+        Clock = { StartHour = 23, MinutesPerSecond = 1 / 3 },
+    },
 }
 
 -- The start-up chain's total, kept as one number for the phase trace.
 local startupSeconds = 0
 for _, step in ipairs(Config.Shift.StartupSteps) do startupSeconds += step.hold end
 Config.Shift.StartupSeconds = startupSeconds
+
+-- The alert rows' thresholds that already exist elsewhere in this file, wired to
+-- their single source. Assigned here rather than written twice above, because a
+-- threshold and its meaning drifting apart is exactly the failure the two-value
+-- StartupSeconds above exists to prevent.
+Config.Alerts.ExcessiveTemperature = Config.Shift.ShutdownLimit
+Config.Alerts.HighPressure = Config.Sim.HighPressure
+Config.Alerts.HighCblStress = Config.Device.CBLStressThreshold
 
 return Config

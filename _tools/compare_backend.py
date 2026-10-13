@@ -36,9 +36,16 @@ from pathlib import Path
 # rather than a finding. Listed explicitly because "on disk and never arrived"
 # is exactly the signal this script exists to raise -- and a check that is
 # always red is noise (CLAUDE.md 0.13).
+#
+# Both entries are LocalScripts deployed to StarterPlayer.StarterPlayerScripts,
+# which is where they belong: they run on the client. Verified in the place
+# 2026-10-13 by walking Game:GetDescendants -- VisualFeedback at 6510 B and
+# EndShiftResume at 4245 B, each byte-equal to the disk file of the same name.
 NOT_IN_FOLDER = {
     "VisualFeedback.client.luau":
-        "the retired client reflector (DECISIONS_2 187); deployed nowhere",
+        "the client reflector; deployed to StarterPlayer.StarterPlayerScripts",
+    "EndShiftResume.client.luau":
+        "the end-of-shift transport client; deployed to StarterPlayer.StarterPlayerScripts",
 }
 
 parser = argparse.ArgumentParser()

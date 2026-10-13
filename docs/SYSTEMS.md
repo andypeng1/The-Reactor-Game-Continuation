@@ -1043,3 +1043,71 @@ metu    = 2                        -- ≥2 ⇒ 屏幕不动那行 'METU STATUS -
 **验收**：离线 66 项（`_tools/endshift_payload_test.luau`，含去重与三个词的走向）；
 真机一条完整链（`Failed` → 报告 → 按住确认 → `Cold` + 屏幕收下去 + 界面回来），
 读数见 `PROGRESS.md` Phase 124 第三节。
+
+### 2.24 `AlertsPanel` + `ForecastPanel` —— 开机链的最后两块屏（`SSS.ReactorBackend`，2026-10-13，Phase 125）
+
+**它们补的是什么。** `Workspace.Monitors` 下七台屏里，`AlertsControlRoomMonitor` 的
+27 行指示格和 `ForecastControlRoomMonitor` 的深扫公告**从来没有接线**：
+`script_grep` 整个 DataModel，`AlertsFrame` 零个读者，`TimeSliceTemplate`、
+`AnnouncementFrame`、`EFEFrame` 同样。`RoomShell` 只管**显示哪一张脸**
+（`Booting`/`Ready`/`Starting`/`Running`/`Stopping`/`Report`/`Failed` → 五个 frame 的
+`.Visible`），脸**里面**的内容一直没人写。
+
+**一个属性一个写入者。** 两个模块写的都是 **`RoomShell` 不碰的**属性：
+`AlertsFrame` 住在 `MainMonitorFrame`（`RoomShell` 写它的 `.Visible`）里，
+而 `AlertsPanel` 写的是**格子内层那个彩条 `Frame`**；`ForecastPanel` 写
+`AnnouncementFrame`（作者就设成 `Visible=false`）的子件、`EFEFrame`，
+以及 `Screen` 上的三个 `Sound` —— `MonitorUI` 自己的 header 已经把 `EFEFrame`
+列为「故意不拥有的」。所以切法和 `BootPanel` 同源。
+
+**警报格的机制**（`AlertsPanel`，13863 B）：27 块 100×100 灰片，每块背后
+（**ZIndex 0**，label 在 ZIndex 1）压着一个同尺寸、`BackgroundColor3` 为那一行类别色的
+`Frame`。**开关那层 `Frame.Visible` 就是全部机制** —— 也是原版录像在这块屏上
+**唯一**写过的属性。
+
+| 行 | 条件取自 |
+|---|---|
+| 1 RECT ACTIVATION | 深扫窗口（`startupStep ∈ {9,10}`）—— 依据是录像里它与深扫公告**同一对轮询**翻转 |
+| 2 SUBSPACE FIELD | `startupStep >= 7`（链自己那句 `SUBSPACE RIFT ACTIVE`） |
+| 3/4/5/6/7/8/9 CBL·CORE·PUMP·FAN·H.D.E.F.·G-GATE·RADIATION | 引擎的 `cbl[].active`、`coreState`、`pumps[].enabled/integrity`、`fans[]`、`hdef.enabled`、`grav.phase ~= 'Idle'`、`radiation` |
+| 10..27 | 手册的阈值（400 GW/H、75%、400F、~6000F）或引擎自己的数（`ShutdownLimit`、`Sim.HighPressure`、`CBLStressThreshold`）；**两行留黑**（取舍 522） |
+
+刷新按**点亮集合**做签名闸（27 个 `'0'`/`'1'` 拼成一个串），所以安静的一拍
+**一个属性都不写**。条件行只在 `Running`/`Stopping` 参与判定，1..9 行（起机那些）
+在任意相位都参与。
+
+**深扫公告**（`ForecastPanel`，13605 B）逐秒抄自原版录像
+(`Data/originalwatch/260930-200834`)：
+
+| 偏移 | 发生什么 |
+|---|---|
+| +0.00 | `AnnouncementFrame.Visible=true`，文案 `PROCESSING DEEPSCAN TELEMETRY`，绿 |
+| +3.35 | `Beep.Playing=true` |
+| +5.04 | 文案换判决、颜色换判决色、`Beep→EFEPing`（**同一拍三件事**），**横幅亮** |
+| +9.37 | `EFEPing` 灭 |
+| +12.89 | 公告灭、颜色回绿、`TimelineComplete` 响 |
+| +14.63 | `TimelineComplete` 灭 |
+
+判决**不是固定字符串**：引擎唯一建模的子空间事件是 Equinox
+（`Events.EquinoxSeconds = 720`），深扫把那一刻投影成钟点、再和
+`Forecast.BreachHorizonSeconds = 900` 比 —— 现在得到
+`HADEN THRESHOLD BREACH ~3:15 AM`（红）；不破界则是
+`ANOMALY DETECTED, MARGIN ~…`（黄）。钟点映射（`Clock.StartHour=23`、
+`MinutesPerSecond=1/3`）**是我们的数**，录像只给了判决的形状（取舍 524）。
+
+**横幅（`EFEFrame`）是七台屏一起亮的**，这就是手册那句「when an EFE is about to occur,
+all monitors will display a warning」。它有**自己的秒表**（`bannerLeft` 在 `Step` 里倒计时，
+`Refresh` 只 latch `equinox`）—— 原先兜在 `sequence ~= nil` 上会让落地时间比声明的
+`BannerSeconds = 10.25` **短 0.66 s**（取舍 524）。
+`AlertsControlRoomMonitor` 原本**没有这个件**，本轮补上（取舍 523）。
+
+**形状**：两个都按 `Initialize(config)` + `Refresh(state,config)` 的适配器惯例；
+`ForecastPanel` 另有一个 `Step(dt)` 挂在 Heartbeat 上（与 `FacilityCascade` 并列），
+因为它的边是亚秒级的 —— 公开函数，不是藏在连接里的活儿（§0.19）。
+
+**验收**（Edit 模式，**不需要 Play**，取舍 526）：把源码拉成临时模块 require 起来，
+11 个合成状态驱动警报格、逐帧驱动深扫，读回的全是**实例属性**
+（27 个 `Frame.Visible`、`AnnouncementFrame.Visible`、`AnnouncementText.Text`/`TextColor3`、
+三个 `Sound.Playing`、七台 `EFEFrame.Visible`）。读数见 `PROGRESS.md` Phase 125 第三节。
+**没验的是**：Play 里点四个控制走进 `Running` 那条**真机**路 —— §0.16 的边界照旧，
+这一轮验的是模块，不是跑起来的游戏。
