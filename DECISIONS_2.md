@@ -8281,3 +8281,117 @@ t=259 再走到游戏自己的 PEA 过载）。
 Studio 与磁盘的差异，而不是这一对代码本身 —— **一次会话省下来的是「同一件事试两遍」，
 不是「少干一步」**。边界：离线彩排不经过 `Runtime`、不碰实例、不碰 `FacilityCascade`，
 **它证明模型能跑，不证明游戏会亮**；两样都要，顺序是先离线后真机。
+
+**516. 结束班次缺的是**传输**，不是屏幕（Phase 124）**
+
+`StarterGui.ScreenGui.EndShiftHandler`（610 行）在这个 place 里**从来没有出现过一次**，
+因为它两头都没接上：没有任何东西 fire `ReplicatedStorage.EndShift`，没有任何东西监听
+`ReplicatedStorage.MiscEvent`（那才是这块屏幕真正 fire 的 remote），也没有任何东西 fire
+`ReplicatedStorage.ResetEvent`。后果是**一个走到 `Report` 或 `Failed` 的班次没有出口**：
+`Engine:Command` 过了结尾就以 `'Shift ended'` 拒绝一切，而那条拒绝是**服务端 console 上的
+一条 warn**，玩家一个字也看不到。操作员 2026-10-13 报的「突然就是 shift ended 了」量的正是这个。
+
+诊断本身不新鲜（`peaStress` 到 100 → `Engine:Fail('Power extraction assembly overload')` → `Failed`
+是按设计），**新鲜的是「之后没有路」**。所以这一轮补的是 `EndShiftBridge`：一个输出适配器
+（与 `LogPanel` 同族 —— 不持有状态，只读 `engine.state.phase`），`Publish` 每秒跑、
+每个结局**每位玩家**只发一次；屏幕自己的三个词路由到引擎自己的两个命令上，
+**每一道门都还是 `Engine` 的**（`next`/`reset` 是它的命令、它的相位检查），
+所以客户端只能要求一个引擎**本来就愿意**做的转换。回程 `MiscEvent` 带
+`{mode, shift, 'Accepted'|'Refused', err}`，`EndShiftResume` 依此收屏幕、或把屏幕交还给玩家。
+
+钱是 0，而这是一句真话：本 build 没有经济，`p1`（逐条钱的明细）**发空表**而不是填零
+—— 屏幕对空表**一行都不加**（`EndShiftHandler` line 505），总额 0 于是落在屏幕**自己写好的**
+零总额分支上（line 553：灰字 + ` ... Good Job`）。**屏幕真正缺的是它要报告的那套经济**，
+那是设计决定、属于操作员（`QUESTIONS.md`），不属于这里。
+
+**边界**：真机验的是「跨过结尾 + 按住确认 → 重开」这条链（`PROGRESS.md` Phase 124）；
+**没有**验的是一次**正常完成配额**的 `Report`（那要先把 512 点能量跑满）。
+
+**517. `Lobby` 是默认路径，所以它不能是死路 —— 把它改写成一个真的转换（Phase 124）**
+
+`EndShiftHandler` 里 `v15` 的默认值是 `'Lobby'`：玩家**按住那个确认按钮**时，
+三个按钮一个都没选，屏幕发出去的字符串就是 `Lobby`。原文里这一刻是**传送** ——
+一次重生重新克隆 `StarterGui`，一切复位。这个 place **没有传送、也没有大厅**
+（全场所没有任何一处 `TeleportService` 调用），也没有经济，所以没有地方可以送。
+
+三条候选：**拒绝**（回一条 console 说「没有出口」，等于把操作员的原始抱怨原样还给他）、
+**什么都不做**（同上，而且更安静）、**改写**。选了改写：`Lobby → 'Reset'`、`action = 'reset'`，
+并打一条 **print 而不是 warn**（它现在是常规路径，不是故障）。
+
+不改写成「`Lobby` 直传」的理由是**请求词也是回程词**：屏幕的回执处理器按第一个字段把它自己的
+`CONTINUE` / `RESTART` 变灰、让按钮停在 `L`（一个 lobby 回执），只有 `Reset` 回执才读 `R`。
+把 `Lobby` 原样传下去，屏幕就会显示**一个它没有做过的转换**。
+
+**边界**：这不等于「大厅功能已实现」—— 它等于「这个 build 里**唯一的那个**转换被接到了
+默认按钮上」。原文的大厅（下一次班次在那里买）仍然不存在，那是经济的一部分（取舍 516）。
+
+**518. 弱键表会在「键还活着」的时候把它收走（Phase 124）**
+
+`EndShiftBridge` 的去重表一开始是 `setmetatable({}, {__mode='k'})`、以 **Player 实例**为键，
+想法是「玩家离开之后自己掉出去」。**量出来不是这样**：2026-10-13 真机上，一个**仍然在
+`Players` 里**、Lua 侧没有任何其他引用的 Player，会被一个**纯分配**的循环在**第 8 次
+GC**（约 60 s 后）收集出那个表 —— 于是**同一个结局发了两次，正好隔 60 s**，
+中间没有任何相位变化：去重**被它自己的键收走了**。
+
+**同一个缺陷在 `ControlBinder.lastUse` 里是另一种症状**：冷却键也没了，于是那道「速率门」
+对一个**还在场**的玩家**悄悄不再生效**。
+
+修法：键改成 `player.UserId`，放在**普通表**里。数字收不走；代价是每个点过击的玩家留一个数字，
+直到那个结局结束（`Publish` 在离开结局时清表）。
+
+**两条可复用的**：① **弱键表的键能不能活，不由「数据模型还引用着它」决定** —— 那是**另一张**
+表里的事，弱表问的是「还有没有**别的**引用」；② **`__mode='k'` 的失效方式是静默的**，
+它不报错，它只是**不再去重**（同 §0.19：看不见的东西与没写的东西在盘上同形）。
+判据做成了离线的：`_tools/endshift_payload_test.luau` 里玩家表是**真的**（有内容），
+因为空玩家表会让**每一条**去重检查空洞地通过。
+
+**519. 能因为别的原因失败的判据，不是干净的实验（Phase 124 —— 本轮最贵的一条）**
+
+`MONITOR BOOT` 的点击**重复失败**，我去找原因，找到的是「角色挡住了射线」：
+`workspace:Raycast` 打到 `HumanoidRootPart @ 1.29`，把角色挪开之后**看起来**就好了。
+于是我做了对照：角色在 z=2.5 与 z=3.5、同一机位，**两次都失败**；反过来在 `MONITOR POWER`
+上做，点击**在角色的挂件 `Circle.015Accessory.Handle` 落在射线上 1.52 studs 时照样成功**。
+
+**真因是 `ShuttersOpen=false`**：`boot` 要求它（`Engine:Command` 的门），
+所以那些点击**送达了、被正确地拒绝了** —— 而读数 `Booted=false` 与「点空了」**逐字相同**。
+
+**规矩**：一个判据如果**能因为被测原因之外的原因失败**，它就不是一次实验，是一次巧合。
+用实例状态当判据是 §0.2 / §4.4 早就要求的，但**要求还不够** —— 还要问
+「**通向这个读数的路径有几条**」。这里通向 `Booted=false` 的有两条（点空了 / 门拒了），
+所以 `Booted` 单独**不足以**证明点击送达；真正送达的判据是服务端那条
+`[ReactorBackend][Control] <player> -> <LABEL>`（而这一轮控制台不可读，
+所以只能**先把门满足、再点**）。
+
+**顺带两个负结果，照实写：**
+**① 「角色挡射线」这件事没有结论。** 正实验（同机位、角色两个 z）两次都失败，
+反实验（挂件在射线上 1.52 studs）却成功 —— **一次失败的正实验加一次成功的反实验
+不构成一条结论**，因为正实验里的失败**已经被门解释了**。
+**② 本会话视口是 575.2 × 259.2**（上一会话 1020×550），启动按钮的点击区≈16 px 高，
+所以每一次点击都必须**读实例确认**、不能假定。`+58 px` 那条**再次逐位复现**：
+`user_mouse_input moveTo(x,y)` → `UIS:GetMouseLocation()` 回 `(x, y+58)`，
+`GuiService:GetGuiInset().Y = 58`。**由此得一条省事的推论**：请求
+`AbsolutePosition + AbsoluteSize/2`（CoreUISafe 空间的中点）时，那 58 恰好与 inset 抵消，
+**所以 GUI 中点的请求坐标就是中点本身**（本轮那一次成功的按住就是这么发的）。
+
+**520. `ok and v or default` 会吞掉 `false`（Phase 124）**
+
+探针写成了 `return ok and v or 'no-visible'`。当 `ok == true` 而 `v == false` 时，
+`ok and v` 求值为 `false`，于是 `false or 'no-visible'` 返回 `'no-visible'` ——
+**一个正常的 `false` 被报成「读不到」**。我据此怀疑 `EndShiftResume` 的界面复位没生效，
+去查 `VitalsFrame`；直接读 `pcall(function() return v.Visible end)` 得到
+`ok=true, visible=false`，而 `StarterGui` 侧的**作者值也是 `false`** —— 复位是**对的**。
+
+这不是 Lua 的冷知识，是 §0.18 那一族的第六张脸：**判据报了一个不是原因的原因**。
+`and/or` 这个惯用法**只在左侧为真时安全**；一旦值域里有 `false`/`nil`，就必须写 `if`。
+同族还有本轮那行 `local a=vg=nil`（我自己的笔误，被解析器当场拒绝 ——
+这是**好**的那种失败：它报出来，而不是安静地给一个数）。
+
+**521. Assistant 沙箱里一次 95 s 的阻塞等待会杀掉 Play 桥（Phase 124）**
+
+`task.wait(95)` 在 Assistant 的 `execute_luau` 里直接返回
+`Target is closed (HOST_INVOKE_createExecuteLuauBridge_runCodeToRequester, Client)`，
+Studio 随即回到 Edit 模式。**规矩：阻塞等待 ≤55 s**，需要更长的等待就切片。
+
+**顺带一个负结果**：这一轮里 `UIS.InputBegan:Connect` 在 Assistant 沙箱里**没有**触发
+（`_G.__clickLog` 一直是空的），而**更早的一次会话量到它触发过** —— 所以「沙箱里的连接」
+不是一个可靠的仪器，**两次之间不能互推**（同 519 的第二条）。能用的判据仍然是**实例状态**（§0.2）。

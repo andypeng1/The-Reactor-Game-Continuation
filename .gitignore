@@ -292,3 +292,13 @@ Data/gravity_lens.ppm
 #     unprompted here, so leaving it unlisted means the next push publishes his
 #     screen without anyone choosing to. ---
 Data/shot_report.png
+
+# --- the Studio-pull scratch: `_tools/receive.py --dir _tools/_pull/<round>` is
+#     where a `PostAsync` sweep of a Studio folder lands so the bytes never enter
+#     the conversation, and `_tools/compare_backend.py` is the reader that diffs
+#     it against the working tree.  Both are inputs to a comparison that is
+#     re-run in seconds, and the comparison's ANSWER goes into PROGRESS.md --
+#     same rule as Data/gravity_lens.ppm above.  A stale pull left on disk is
+#     worse than none: it looks exactly like this round's evidence. ---
+_tools/_pull/
+_tools/_pull.log

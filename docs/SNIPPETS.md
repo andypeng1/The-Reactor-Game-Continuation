@@ -2093,3 +2093,107 @@ end)
 本轮四个件里有三个的像素是 **(510,239)**、一个是 **(512,238)**，**2 px 之隔**。
 **② 拍图前先 `RunService:UnbindFromRenderStep('__probeCamHold')`** ——
 保持器会让 `screen_capture` 的显式机位静默失效（两张不同请求 → 逐字节相同，取舍 513）。
+
+---
+
+### 5.31 在真机上驱动一次点击并**证明它送达了**，以及三个会安静骗人的工具 ★ Phase 124
+
+Phase 123 的 §5.30 给了「怎么算像素」；这一节给的是 **「怎么知道那一下真的到了」**，
+以及三个当天踩到的、**报成功但不是那件事**的工具。
+
+**(1) 送达判据是服务端那条打印，不是 `Booted` 之类的状态位。**
+
+`ControlBinder` 每次**通过门**的点击会打一行：
+
+```
+[ReactorBackend][Control] <player> -> <LABEL>
+```
+
+而 `Engine:Command` 的每一次拒绝打的是 `[ReactorBackend][Control] <label> rejected: <err>`，
+另外 `noteGate` 每 5 s 汇一次 `[ReactorBackend][Gate] refused N out-of-range and M rate-limited…`。
+**三条分得开**：`->` 是送达、`rejected:` 是送达但被门拒、`[Gate]` 是根本没到。
+只有前两条的**并集**才证明「鼠标那一下打在了件上」。
+
+**本轮的反面教材**：`MONITOR BOOT` 反复失败，我拿 `Booted=false` 当判据，
+于是「点空了」和「门拒了」在我的读数里**逐字相同**；真因是 `ShuttersOpen=false`
+（`boot` 的门）。**读数相同、路径两条 ⇒ 那个读数不是证据**（§0.26 ①）。
+
+**(2) GUI 中点：请求坐标就是中点本身，不用加也不减 58。**
+
+```lua
+-- 视口点 V 与屏幕点的关系：V = absolutePosition + size/2 + inset
+-- user_mouse_input 请求的坐标 S 满足 GetMouseLocation() = (S.x, S.y+58)
+-- 而 GetGuiInset().Y = 58  ⇒  V.y = S.y + 58
+-- 两式相减：请求 absolutePosition.Y + size.Y/2 时，58 恰好抵消。
+local centre = button.AbsolutePosition + button.AbsoluteSize/2
+-- 于是请求 (centre.X, centre.Y) 即可（Phase 124 实测：HoldButton abs=490,111 size=55,60
+-- → 请求 (517,141) → 按住 1.7 s → 回执 {'Reset',1,'Accepted'}）
+```
+
+**边界**：只在**那个**视口下逐位成立（`AbsolutePosition` 量的是 CoreUISafe 空间，
+y 从顶栏**下面**量起）。本轮视口 575.2×259.2，上一轮 1020×550 —— 换视口要重量。
+
+**(3) 一个按住型按钮的完整发法**（`HoldButton` 要连续按住 ~1.5 s）：
+
+```lua
+actions = {
+  {action='moveTo', x=centre.X, y=centre.Y},
+  {action='mouseButtonDown', mouse_button='left'},
+  {action='wait', wait_time_ms=1700},        -- 比门槛留 ~200 ms 余量
+  {action='mouseButtonUp', mouse_button='left'},
+}
+```
+
+**(4) 三个会安静骗人的工具，用之前先想清楚它们报的是什么。**
+
+| 工具 | 它安静地报什么 | 判据 |
+|---|---|---|
+| `ok and v or 'default'` | `v==false` 时报成「读不到」 | 值域有 `false`/`nil` 就写 `if`（§0.26 ②） |
+| Assistant 沙箱里的 `Connect` | 「接上了」但回调这一轮**一次没跑** | 别把每帧的活儿藏在连接里（§0.19）；判据改用实例状态 |
+| 一次 >55 s 的阻塞等待 | 直接杀掉 Play 桥、Studio 回 Edit | 切片，每段 ≤55 s（§0.26 ③） |
+
+**(5) 一条「跨过结局」的端到端链，照这个顺序读**（本轮实测通过的）：
+
+```
+Server: RuntimePhase / Stats.Core.*        ← 结局真的发生了
+Client: 载荷字段逐个对屏幕读的那六个数      ← 发的是不是那个东西
+Client: 屏幕上的字（Title / MoneyText）     ← 玩家看到的是不是它
+Client: 回执 {mode, shift, 'Accepted'}     ← 请求有没有被接受
+Server: RuntimePhase 变回 'Cold'           ← 引擎真的转换了
+Client: 屏幕 Visible=false、界面复位回作者值 ← 玩家真的能继续玩
+```
+
+**最后一条要跟作者值比，不是跟「我记得应该是 true」比**：
+`VitalsFrame.Visible` 我一度以为是 `true`，直接读到 `false`、`StarterGui` 侧的
+**作者值也是 `false`** —— 复位是对的（§0.24：基线从世界读）。
+
+**(6) 拉回整个后端文件夹，逐件比 —— 「我推过」不可证伪，「逐文件比」可证。**
+
+```bash
+# 盘侧：起一个**空**目录当接收端（每次都用新的：旧目录里的残件会被当成这次的证据）
+C:/Python314/python.exe _tools/receive.py --port 8765 --dir _tools/_pull/round124
+```
+
+```lua
+-- Studio 侧（官方 execute_luau，datamodel_type='Edit'；PostAsync 在两个 VM 里都能用）
+local HttpService=game:GetService('HttpService')
+local b=game:GetService('ServerScriptService'):FindFirstChild('ReactorBackend')
+for _,k in ipairs(b:GetDescendants()) do
+  if k:IsA('LuaSourceContainer') then
+    HttpService:PostAsync('http://127.0.0.1:8765/'..k.Name..'.luau', k.Source)
+  end
+end
+```
+
+```bash
+C:/Python314/python.exe _tools/compare_backend.py --pulled _tools/_pull/round124
+```
+
+`_tools/compare_backend.py` 比的是**内容哈希**（不比长度 —— 同长不同字节在这里真发生过），
+逐件打 `SAME` / `DIFF` / `???`（没有唯一对应的盘上文件）/ `ABSENT`（盘上有、拉回来没有），
+**任一非空即 exit 1**。Phase 124 那次是 **12/12 SAME**；Phase 123 那次正是靠这个格式
+暴露了「十个相同、`Engine` 一个落后一个版本」。
+
+**两条边界**：接收目录必须**每次新建**（残件会冒充这一次的结论）；
+`LuaSourceContainer` 只覆盖这个文件夹里的脚本 —— `StarterPlayerScripts.EndShiftResume`
+**不在** `SSS.ReactorBackend` 里，得单独拉一次（本轮就是单独拉的）。

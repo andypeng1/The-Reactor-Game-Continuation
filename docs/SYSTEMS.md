@@ -988,3 +988,58 @@ python midi_song.py --mid "..." --bars 4                        # 前 4 小节�
 **这条链在真机上曾被一个**落后的副本**挡住**：Studio 的 `Engine` 比磁盘旧一个版本
 （`c.Sim.PressureDivisor` 已被 Config 退休 ⇒ 第一次进 `Running` 就崩在 `Engine:273`）。
 十个模块里只有它不同 —— 取舍 **512**。
+
+### 2.23 `EndShiftBridge` + `EndShiftResume` —— 班次结束的握手（`SSS.ReactorBackend.EndShiftBridge` / `StarterPlayerScripts.EndShiftResume`，2026-10-13，Phase 124）
+
+**它补的是什么。** `StarterGui.ScreenGui.EndShiftHandler`（610 行）在这个 place 里
+**从来没有出现过一次**，因为它两头都没接上：没人 fire `ReplicatedStorage.EndShift`、
+没人监听 `ReplicatedStorage.MiscEvent`（**那才是这块屏幕真正 fire 的 remote**）、
+没人 fire `ReplicatedStorage.ResetEvent`。于是一个走到 `Report` 或 `Failed` 的班次
+**没有出口**：`Engine:Command` 过了结尾就以 `'Shift ended'` 拒绝一切，
+而那是服务端 console 的一条 warn。操作员 2026-10-13 报的
+「突然就是 shift ended 了」量的正是这个（取舍 516）。
+
+**两个半边。**
+
+| 边 | 文件 | 做什么 |
+|---|---|---|
+| 服务端 | `SSS.ReactorBackend.EndShiftBridge` | `Publish(engine)` 每秒跑，相位是 `Report`/`Failed` 时给**每位玩家**发一次报告；`Bind(engine,publish)` 接 `MiscEvent` / `ResetEvent` 并返回绑定到的名字（`Runtime` 把它写成 `ShiftTransport` 属性） |
+| 客户端 | `StarterPlayerScripts.EndShiftResume` | 收到 `'Accepted'` 回执就收屏幕、把作者可见性**从世界读回来的**基线复位；`'Refused'` 就把报告交还（§0.24） |
+
+**发出去的六个字段**（`EndShift.OnClientEvent` 的载荷，屏幕 610 行读的就是这六个）：
+
+```lua
+lines   = {}                       -- p1 逐条钱的明细。空表 ⇒ 屏幕一行都不加（line 505）
+reason  = 'Power extraction assembly overload'  -- p2 也是「配额有没有达成」的判据
+total   = 0                        -- 本 build 没有经济，0 是**真话**
+shift   = s.shift                  -- 引擎的真值
+session = { OT, ST = {Hour,Min,Period,CurrentEnergy,TargetEnergy}, NG, NL }
+metu    = 2                        -- ≥2 ⇒ 屏幕不动那行 'METU STATUS - FULLY OPERATIONAL'
+```
+
+**三条设计上的取舍，都是「让它看起来像原文 / 不像赝品」：**
+
+1. **钱发空表，不发零表。** 屏幕对空 `lines` **一行都不加**，总额 0 于是落在
+   它**自己写好的**零总额分支上（line 553：灰字 + ` ... Good Job`）——
+   那是作者画的路径，不是我拼的载荷形状。
+2. **`OT` 是 `HH:MM.mmm`，不是 `HH:MM:SS.mmm`。** 标签
+   `IntermissionFrame.AdditionFrame.TextFrame.OperationalLabel` 的作者形状就是
+   `'%02d:%02d.%03d'`；`122.0 → '00:02.000'`、`7325 → '02:02.000'`
+   （**我曾把 `00:02.000` 读成 2 秒**，据此怀疑 `elapsed` 被重置 —— 没有，那是 2 分钟）。
+   它读 `s.elapsed` 而不是 `s.time`：`elapsed` 只在 `Running` 里累加，那才是运转时间。
+3. **`Lobby` 改写成 `Reset`，不改写成死路。** `HoldButton` 的默认 `v15` 就是 `'Lobby'`，
+   所以它是**默认路径**。原文这一刻是传送（重生重克隆 `StarterGui`），
+   而这个 place 没有传送也没有大厅。拒绝 = 把操作员的原始抱怨原样还给他（取舍 517）。
+
+**去重键是 `UserId`，放在普通表里**（取舍 518）：原先用 Player 实例做弱键（`__mode='k'`），
+真机上量到**一个仍然在 `Players` 里**的 Player 会在第 8 次 GC 被收出去 ——
+于是同一个结局**发了两次、正好隔 60 s**。同一个弱点在 `ControlBinder.lastUse` 里
+表现为「速率门对一个还在场的玩家悄悄不再生效」。
+
+**它为什么是一个独立模块。** 形状和其它适配器一样：**不持有状态**，
+只读 `engine.state.phase`，每帧/每秒的活儿写成公开函数（§0.19），
+`Bind` 返回**它真正绑到的**名字 —— 没挂上的传输和没有东西可报的传输长得一样。
+
+**验收**：离线 66 项（`_tools/endshift_payload_test.luau`，含去重与三个词的走向）；
+真机一条完整链（`Failed` → 报告 → 按住确认 → `Cold` + 屏幕收下去 + 界面回来），
+读数见 `PROGRESS.md` Phase 124 第三节。

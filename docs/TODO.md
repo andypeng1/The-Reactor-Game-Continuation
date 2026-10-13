@@ -868,8 +868,36 @@ Play 起来之后按第 2 条读**实例状态**，**第一次就否掉了原来
 **推翻的配方**（`Config.Cascade` 加一个按名字索引的 `LightOnly` 名单，形状同 `LampColors`）
 写在 `DECISIONS_2` **511**。这一轮**没动**。
 
-**③ 新欠：Studio 与磁盘的同步没有守门的检查。** Phase 123 是靠**出事之后**把整个
-`ReactorBackend` 拉回来 `cmp` 才发现的（十个里一个不同）。现在没有「改完就比一次」的常设动作。
-要做的是给它一个家：**一次 `pull + cmp` 的脚本**（`receive.py` 8765 + 客户端 `PostAsync`，
-`serve.py` 8767 反方向），跑完打一份「哪些逐字节相同、哪个不同」的表 ——
-**先有这条，才有资格说「Studio 是新的」**（取舍 512）。
+**③ ✅ 已销（2026-10-13，Phase 124）**：常设检查建好了 —— `_tools/compare_backend.py`
+（比**内容哈希**不比长度，逐件打 `SAME`/`DIFF`/`???`/`ABSENT`，**任一非空即 exit 1**），
+Studio 侧那半是 `docs/SNIPPETS.md` **§5.31 (6)** 里那段 `PostAsync` 循环。
+Phase 124 实测 **12/12 SAME、exit 0**；**变异测过**（改一个文件 → `DIFF`、
+挪走一个 → `ABSENT`，两次都 exit 1），所以它会绿也能红。
+写它的过程本身翻出一条：`VisualFeedback.luau` 与 `VisualFeedback.client.luau`
+**争同一个 Studio 实例名**，所以实例名→磁盘文件的映射**按内容解**，不按名字猜。
+
+---
+
+### 3.14 Phase 124 收尾后仍欠的东西（2026-10-13）
+
+**① 正常完成配额的 `Report` 没验**：Phase 124 验的是 `Failed` 那条路
+（PEA 过载 → 报告 → 按住确认 → 重开）。把 512 点能量跑满之后走到 `Report` 的那条，
+`EndShiftBridge.Payload` 里 `reason` 会变成 `'Quota'` —— 离线测覆盖了，
+**真机没跑过**。
+
+**② `EndShiftHandler` 那 610 行仍然没有离线覆盖**：它在 `StarterGui` 里、跑在客户端上，
+离线跑不了。现有一条 66 项的离线检查（`_tools/endshift_payload_test.luau`）
+覆盖的是**后端加进去的那六个数**，不是屏幕本身。
+
+**③ 「角色挡射线」这件事**（取舍 519 ①）**仍然没有结论**，别当成已答：
+正实验两次都失败，反实验在挂件落在射线上 1.52 studs 时成功 ——
+而正实验里的失败**已经被 `ShuttersOpen` 的门解释了**，所以它不是证据。
+
+**④ 经济**：`QUESTIONS.md` **R4** —— 报告屏的钱是 0，因为本 build 没有经济。
+连带「下一班 / 大厅」也是那条里的一部分。
+
+**⑤ 一处**既有的**死代码（只报不删）**：`ControlBinder` 第 13 行的
+`local function split(...)` **从来没有被调用过**（`commandFrom` 直接用 `string.find`/`string.match`）。
+它是**本轮之前就在**的、已提交的代码，不属于 Phase 124 的范围 ——
+所以按「不顺手删别人的东西」留在这里，谁下次动这个文件谁删。
+（本轮同族的另一处是我自己写进 `Runtime` 的那个未用的 `local ReplicatedStorage`，**已删**。）

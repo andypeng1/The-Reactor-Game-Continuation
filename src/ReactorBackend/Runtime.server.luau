@@ -4,7 +4,6 @@ backend:SetAttribute('RuntimeBooted',true)
 backend:SetAttribute('RuntimeError','')
 local ok, err = xpcall(function()
     local RunService=game:GetService('RunService')
-    local ReplicatedStorage=game:GetService('ReplicatedStorage')
     local Config=require(backend.Config)
     local Engine=require(backend.Engine)
     local StateBridge=require(backend.StateBridge)
@@ -14,6 +13,7 @@ local ok, err = xpcall(function()
     local FacilityCascade=require(backend.FacilityCascade)
     local LogPanel=require(backend.LogPanel)
     local BootPanel=require(backend.BootPanel)
+    local EndShiftBridge=require(backend.EndShiftBridge)
     local engine=Engine.new(Config)
     backend:SetAttribute('RuntimePhase',engine.state.phase)
     StateBridge.Publish(engine.state)
@@ -48,7 +48,11 @@ local ok, err = xpcall(function()
     -- owns no state and only reads the engine's own event list, which until this
     -- was written had no reader anywhere in the place.
     LogPanel.Refresh(engine)
-    local bound = ControlBinder.Bind(engine,function(state)
+    -- One closure, handed to every input path. A control arriving over a
+    -- ClickDetector and one arriving over a remote are then indistinguishable
+    -- downstream, and a shift restarted from the report screen repaints the same
+    -- adapters as one restarted from the console.
+    local function publish(state)
         backend:SetAttribute('RuntimePhase',state.phase)
         -- Refreshed before the publish so the lever and the monitor reading it
         -- caused are never one tick apart.
@@ -58,7 +62,12 @@ local ok, err = xpcall(function()
         BootPanel.Refresh(state,Config)
         LogPanel.Refresh(engine)
         StateBridge.Publish(state)
-    end)
+        -- The end-of-shift report is an output on the same terms as the log
+        -- panel: it owns no state, it only reads the engine's phase, and it
+        -- fires once per ending per player.
+        EndShiftBridge.Publish(engine)
+    end
+    local bound = ControlBinder.Bind(engine,publish)
     backend:SetAttribute('BoundControls',bound)
     local accumulator=0
     RunService.Heartbeat:Connect(function(dt)
@@ -75,17 +84,13 @@ local ok, err = xpcall(function()
         if accumulator<Config.Visual.RefreshSeconds then return end
         local step=accumulator; accumulator=0
         local updateOk,updateErr=pcall(function()
-            engine:Update(step)
-            backend:SetAttribute('RuntimePhase',engine.state.phase)
             -- The engine's own drift has to reach the levers too, not only the
             -- numbers: temperature, integrity and stress all move with no player
-            -- input at all, and indicators must follow them.
-            VisualFeedback.Refresh(engine.state,Config)
-            RoomShell.Refresh(engine.state,Config)
-            FacilityCascade.Refresh(engine.state,Config)
-            BootPanel.Refresh(engine.state,Config)
-            LogPanel.Refresh(engine)
-            StateBridge.Publish(engine.state)
+            -- input at all, and indicators must follow them. publish is the same
+            -- closure the console clicks and the report screen's buttons go
+            -- through, so there is one refresh order in the file, not three.
+            engine:Update(step)
+            publish(engine.state)
         end)
         if not updateOk then
             backend:SetAttribute('RuntimeError',tostring(updateErr))
@@ -93,24 +98,12 @@ local ok, err = xpcall(function()
         end
     end)
     print(string.format('[ReactorBackend] runtime %s online: 62-control adapter, server-owned engine',Config.Version))
-    -- ResetEvent has sat in ReplicatedStorage since before this backend and had
-    -- no listener, while Engine has implemented 'reset' and 'next' with no
-    -- caller: once a shift is Failed or Report every other action is refused,
-    -- so a shift that ended could never be left without restarting the place.
-    -- Binding the two here is the missing transport, not a new mechanic -- the
-    -- gates are Engine's own phase checks, and the two flags the legacy
-    -- end-shift UI already reads (Stats.ResetShift, Stats.NextShift) are
-    -- published from those same phases, so a client can only ask for a
-    -- transition the engine is already willing to make.
-    local resetEvent=ReplicatedStorage:FindFirstChild('ResetEvent')
-    if resetEvent and resetEvent:IsA('RemoteEvent') then
-        resetEvent.OnServerEvent:Connect(function(_,mode)
-            local ok,err=engine:Command(mode=='next' and 'next' or 'reset')
-            if not ok then warn('[ReactorBackend] shift transition refused: '..tostring(err)) end
-        end)
-    else
-        warn('[ReactorBackend] ResetEvent missing; shift transitions unavailable')
-    end
+    -- The end-of-shift transport lives in its own module: it is the same shape
+    -- as the other adapters (a public function over instance state, CLAUDE.md
+    -- 0.19) and it is the missing half of a contract the legacy screen already
+    -- states -- it waits on EndShift.OnClientEvent and fires MiscEvent, and
+    -- until 2026-10-13 neither one had a counterpart on this side.
+    backend:SetAttribute('ShiftTransport',EndShiftBridge.Bind(engine,publish))
 end, debug.traceback)
 if not ok then
     backend:SetAttribute('RuntimeError',tostring(err))

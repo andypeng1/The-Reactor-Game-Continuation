@@ -358,6 +358,34 @@ plate and really is pressed forward. A flat button cylinder is a 90 degree roll 
 face label needs no adjustment, because label() writes to NormalId.Right and Right becomes the
 top. See DECISIONS 55 and 56, PROGRESS Phase 19h.
 
+## Ending a shift
+A shift ends two ways: the quota is met (`phase = Report`) or the engine fails the plant
+(`phase = Failed`, e.g. `Power extraction assembly overload` when `peaStress` reaches 100).
+Past either ending `Engine:Command` refuses every control with `'Shift ended'` - and that refusal
+is a server-console warn, so a player sees the shift simply stop.
+
+That was the whole problem until Phase 124: `StarterGui.ScreenGui.EndShiftHandler` has been in
+this place all along and had **never once appeared**, because its two ends were never connected -
+nothing fired `ReplicatedStorage.EndShift`, nothing listened to `ReplicatedStorage.MiscEvent`
+(which is the remote that screen actually fires), and nothing fired `ReplicatedStorage.ResetEvent`.
+`SSS.ReactorBackend.EndShiftBridge` is the missing transport: an output adapter on the same terms
+as `LogPanel` (holds no state, reads `engine.state.phase`), publishing once per ending per player,
+with every gate left to `Engine` - a client can only ask for a transition the engine is already
+willing to make. `StarterPlayerScripts.EndShiftResume` is the other half: the original got the
+player out by *teleporting* them, and a respawn re-clones `StarterGui`, which is what put the
+interface back. This place has no teleport and no lobby (no `TeleportService` call exists anywhere
+in it), so that script closes the screen itself and restores visibility from a baseline **captured
+off the world at boot**. See SYSTEMS.md 2.23 and DECISIONS_2 516-518.
+
+THE MONEY ON THE REPORT IS ZERO, AND THAT IS A TRUE STATEMENT. This build has no economy, so the
+per-stat money lines are sent **empty** rather than zeroed - the screen appends no stat row at all
+for an empty table - and the total lands on the screen's own authored zero-total branch (grey money
+text and ` ... Good Job`). `OT` is `HH:MM.mmm`, not `HH:MM:SS.mmm`, because that is the shape the
+label was authored with. The acknowledge button holds `'Lobby'` by default, and since there is no
+lobby it is rewritten to the engine's own `reset` - refusing instead would answer "the shift ended
+and there is no way out" with a console line and no exit. What the screen is genuinely missing is
+the economy it reports on; that is `QUESTIONS.md` R4, not a wiring decision.
+
 ## Automated control test
 Workspace.GameCoreControlTest simulates operator clicks with a mock supervisor and asserts that
 lever pivots move and lamp colours change. A SECOND phase asserts on GameState and on the owning
@@ -1636,7 +1664,7 @@ See PROGRESS.md Phase 106 and DECISIONS 426 to 430.
 
 `CLAUDE.md` is the file auto-loaded into an assistant's context every session, so as of
 2026-10-10 it carries only what must be seen **every round**: the doc-sync rules (0.0), the
-numbered "blood-and-tears" lessons (0 through 0.22), the project overview (1), the
+numbered "blood-and-tears" lessons (0 through 0.26), the project overview (1), the
 operator's preferences (4), the do-not-touch list (6), the references (7), a one-sentence
 summary (8), and the operational "before you act" rules. The per-Phase digest of Phases
 47-107 - **1155 lines, 67% of the old 1725-line file** - was moved out to `docs/PHASES.md`.

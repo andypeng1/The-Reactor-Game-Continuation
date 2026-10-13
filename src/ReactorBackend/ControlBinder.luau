@@ -69,8 +69,17 @@ function ControlBinder.Bind(engine:any, publish:(any)->())
         warn(string.format('[ReactorBackend][Gate] refused %d out-of-range and %d rate-limited clicks (last: %s %s)',
             gates.range,gates.rate,reason,label))
     end
-    -- Weak keys so a player who leaves does not stay pinned by this table.
-    local lastUse=setmetatable({},{__mode='k'})
+    -- Keyed by UserId, not by the Player instance, and in an ordinary table.
+    -- This was `setmetatable({},{__mode='k'})` with the Player as the key, on the
+    -- theory that a weak key lets a player who leaves fall out of it. Measured
+    -- 2026-10-13: a Player that is still in Players, referenced nowhere else in
+    -- Lua, is collected out of a weak-keyed table within a few GC cycles before
+    -- any of that happens -- so the entry for a player who is STILL HERE
+    -- disappears, and this cooldown silently stops applying to them. (The same
+    -- defect sent the end-of-shift report twice; see EndShiftBridge.) A number
+    -- cannot be collected, so the cost is one number per player who has ever
+    -- clicked, and the alternative is a gate that is only sometimes there.
+    local lastUse={}
     local maximumDistance=engine.config.Interaction.MaximumDistance
     local cooldown=engine.config.Interaction.Cooldown
     for _, detector in ipairs(workspace.Consoles:GetDescendants()) do
@@ -87,8 +96,9 @@ function ControlBinder.Bind(engine:any, publish:(any)->())
                     -- mistake to be tolerated, it is a request the server refuses.
                     if reach(player,part)>maximumDistance then noteGate('range',label); return end
                     local now=os.clock()
-                    if lastUse[player] and now-lastUse[player]<cooldown then noteGate('rate',label); return end
-                    lastUse[player]=now
+                    local user=player.UserId
+                    if lastUse[user] and now-lastUse[user]<cooldown then noteGate('rate',label); return end
+                    lastUse[user]=now
                     local ok,err=engine:Command(action,index,value)
                     if not ok then warn('[ReactorBackend][Control] '..label..' rejected: '..tostring(err)) end
                     publish(engine.state)

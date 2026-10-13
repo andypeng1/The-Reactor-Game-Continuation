@@ -505,6 +505,40 @@ local ez = math.abs(R.Z)*s.X + math.abs(U.Z)*s.Y + math.abs(L.Z)*s.Z
 
 取舍 **512/513/514/515**，上手 `docs/SNIPPETS.md` **§5.30**。
 
+### 0.26 【坑】判据能因为**别的原因**失败时，它就不是实验；顺带两条会安静的错
+
+Phase 124 一次会话里踩齐了三条，都是「工具报成功/报了数，但报的不是那件事」。
+
+**① 能因为被测原因之外的原因失败的判据，不是干净的实验。** `MONITOR BOOT` 反复点不亮，
+我量到 `workspace:Raycast` 打到角色就归因于「角色挡射线」，还做了对照 ——
+**真因是 `ShuttersOpen=false`**：`boot` 要求它，所以那些点击**送达了、被正确地拒绝了**，
+而 `Booted=false` 与「点空了」**逐字相同**。**规矩**：用实例状态当判据（§0.2/§4.4）
+**还不够**，还要问「**通向这个读数的路径有几条**」；这里两条，所以 `Booted` 单独
+不构成送达证据（送达的判据是服务端那条 `[ReactorBackend][Control] <player> -> <LABEL>`）。
+**顺带两个负结果，不许合并成一条结论**：正实验（同机位、角色两个 z）两次都失败，
+反实验（挂件在射线上 1.52 studs）却成功 —— **角色挡射线这件事仍然没有结论**，
+因为正实验里的失败**已经被门解释了**。
+
+**② `ok and v or default` 会吞掉 `false`。** 探针写成 `return ok and v or 'no-visible'`，
+`ok==true, v==false` 时求值 `false or 'no-visible'` → **一个正常的 `false` 被报成「读不到」**，
+我据此白查了一轮界面复位。**`and/or` 这个惯用法只在左侧为真时安全**；
+值域里有 `false`/`nil` 就必须写 `if`。（同族的还有 `local a=vg=nil` 那种笔误 ——
+它被解析器当场拒绝，是**好**的失败。）
+
+**③ Assistant 沙箱里一次 95 s 的阻塞等待会杀掉 Play 桥。**
+`task.wait(95)` 直接返回 `Target is closed (HOST_INVOKE_createExecuteLuauBridge_runCodeToRequester, Client)`
+并让 Studio 回到 Edit 模式。**阻塞等待 ≤55 s**，更长就切片。
+**负结果**：沙箱里的 `UIS.InputBegan:Connect` 这一轮**没有**触发（`_G.__clickLog` 一直空），
+而更早一次会话量到它触发过 —— **沙箱连接不是可靠仪器，两次之间不能互推**。
+
+**一条省事的推论（GUI 点击）**：`user_mouse_input moveTo(x,y)` → `GetMouseLocation()` 回
+`(x, y+58)`，而 `GetGuiInset().Y` 也是 58 —— 所以请求
+`AbsolutePosition + AbsoluteSize/2`（CoreUISafe 空间的中点）时**那 58 恰好抵消**，
+请求坐标就是中点本身。**但只在那个视口下**：本轮视口 575.2×259.2（上一轮 1020×550），
+启动按钮的点击区≈16 px 高，**每次点击仍要读实例确认**。
+
+取舍 **519/520/521**，上手 `docs/SNIPPETS.md` **§5.31**。
+
 ## 1. 项目概述
 
 ### 1.1 基本信息

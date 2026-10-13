@@ -13817,3 +13817,84 @@ Clamp 48/96→96/96、Lounge 78/84→84/84 ⇒ 6 件）—— **真机这一次�
 
 - `LightPart.Color`（Phase 122 取舍 511）：这一轮**没动**，那 9 件面板仍会跟着亮。
 - `docs/TODO.md` §3.12 ① 已完成；② 仍在。
+
+## Phase 124 — 「突然就是 shift ended 了」：结束班次的出口（2026-10-13）
+
+**操作员原话**：「我现在是什么情况：在airemake里面开机之后玩了一会之后，突然就是shift ended了」。
+这一轮先回答这句话，再把缺的那半接上。
+
+### 一、诊断：那一下是**按设计**的，缺的是**之后**
+
+真机读出来的当场状态（`workspace.Stats.Core` + `SSS.ReactorBackend` 的属性，§0.2 的读法）：
+
+| 读数 | 值 | 含义 |
+|---|---|---|
+| `Stats.Core.StressVal` | **100** | PEA 应力满格 |
+| `RuntimePhase` | `Failed` | `Engine:Fail('Power extraction assembly overload')` |
+| `GameFail` | `true` | 失败旗标已立 |
+| `BoundControls` | 62 | 输入侧正常 |
+| `ShiftTransport` | `MiscEvent+ResetEvent` | 传输侧**这一轮才接上** |
+
+所以「突然结束」不是 bug：`peaStress` 到 100 → `Engine:Fail(...)` → `Failed`。
+**真正的 bug 是 `Failed` 之后没有任何出口** —— `Engine:Command` 过了结尾就以
+`'Shift ended'` 拒绝每一条命令，而那条拒绝是服务端 console 的 warn，玩家看不见。
+屏幕那侧 `EndShiftHandler`（610 行）**从来没有出现过**：没人 fire `EndShift`、
+没人监听 `MiscEvent`、没人 fire `ResetEvent`。取舍 **516**。
+
+### 二、补上的那一半
+
+- `src/ReactorBackend/EndShiftBridge.luau`（235 行）：输出适配器，
+  `Publish` 每秒跑、每个结局每位玩家发一次；`Request` 把屏幕的三个词
+  （`Next`/`Reset`/`Lobby`）路由到引擎自己的两个命令；`Bind` 返回
+  `'MiscEvent+ResetEvent'`，`Runtime` 把它写成 `ShiftTransport` 属性 ——
+  **一个没挂上的传输和一个没有东西可报的传输长得一样**（§0.19）。
+- `src/ReactorBackend/EndShiftResume.client.luau`（91 行）：原文那半是靠**传送**做的
+  （重生重新克隆 `StarterGui`）。这个 place 没有传送，所以由它在收到
+  `'Accepted'` 回执时把屏幕收下去、把作者可见性**从世界读回来的**基线复位（§0.24）。
+- `ControlBinder.luau`：冷却表键从 Player 弱键改成 `UserId` 普通表（同一个弱点，取舍 **518**）。
+- `Runtime.server.luau`：`publish` 里加一行 `EndShiftBridge.Publish(engine)`，
+  末尾 `backend:SetAttribute('ShiftTransport', EndShiftBridge.Bind(engine,publish))`。
+
+### 三、真机上量到的（Play 会话，§0.2 的读法）
+
+**跨过结尾 + 按住确认 → 重开**这条链，逐条 oracle：
+
+| 时刻 | 读数 | 来源 |
+|---|---|---|
+| 结局已发生 | `RuntimePhase='Failed'`、`StressVal=100`、`GameFail=true` | Server |
+| 报告发了一次 | `_G.__endWatch.n = 1`，`sinceFirst = 121.0 s` | Client |
+| 载荷逐字段 | `reason='Power extraction assembly overload'`、`lines=0`、`total=0`、`shift=1`、`metu=2`、`session.OT='00:02.000'`、`ST={Hour=11,Min=9,Period='PM',CurrentEnergy=353,TargetEnergy=512}`、`NG=0`、`NL=0` | Client |
+| 屏幕显示 | `Title='[A.E.R.N - SHIFT [1] REPORT]'`、`MoneyText='$0 ... Good Job'`，每一条逐项 `Visible=false` | Client |
+| **按住确认** | 回执 `{'Reset', 1, 'Accepted'}` | Client |
+| **转换** | `RuntimePhase='Cold'`、`GameFail=false`、`GameStart=true`、`stress=0`、`temp=20`、`press=20`、`energy=0`、`RuntimeError=''` | Server |
+| **屏幕收下去** | `EndGameFrame1.Visible=false`、`IntermissionFrame.Visible=false` | Client |
+| **界面回来** | `MESUI/AfflictionFrame/SettingsButton/SettingsShadow = true`、背包 `GetCoreGuiEnabled=true`、`VitalsFrame=false`（**作者值就是 false**，见取舍 520） | Client |
+| **没有重发** | `_G.__endWatch.n` 仍然是 1 | Client |
+
+**60 s 那条去重窗口跨过了**：`sinceFirst = 121.0 s` 而 `n` 仍然是 1 —— 旧的弱键实现在
+60 s 处会发第二遍（取舍 518）。
+
+### 四、收尾：Studio 与磁盘逐文件比对（§0.25 的纪律）
+
+停 Play 后把 `SSS.ReactorBackend` **整个文件夹**推回磁盘（官方 VM 的 `PostAsync` →
+`_tools/receive.py`），逐件 `cmp`：
+
+```
+SAME  Config   SAME  StateBridge   SAME  Engine   SAME  ControlBinder
+SAME  RoomShell  SAME  VisualFeedback  SAME  BootPanel  SAME  LogPanel
+SAME  EndShiftBridge  SAME  FacilityCascade  SAME  Runtime
+SAME  EndShiftResume.client
+```
+
+**12/12 逐字节相同** —— 上一轮那种「十个里有一个落后」这次没有发生。
+
+离线：`luau-windows/lune.exe run _tools/endshift_payload_test.luau` → **66 checks, 0 failed**，
+退出码 0（含那条把 `operatingTime` 钉死在 `HH:MM.mmm` 上的 `7325 → '02:02.000'`）。
+
+### 五、还欠的（照实写）
+
+- **正常完成配额的 `Report` 没验** —— 要先把 512 点能量跑满，本轮量的是 `Failed` 这条。
+- **`_tools/endshift_payload_test.luau` 不覆盖屏幕** —— 那 610 行在 `StarterGui` 里、跑在客户端上，
+  离线跑不了；它验的是后端**加进去的那六个数**。
+- 取舍 **519 的两个负结果**照旧挂着：「角色挡射线」没有结论；沙箱连接不是可靠仪器。
+- `LightPart.Color`（Phase 122 取舍 511）、`QUESTIONS.md` R3、TODO 3.13 ③ —— 均未动。
