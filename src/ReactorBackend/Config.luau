@@ -765,4 +765,111 @@ Config.Alerts.ExcessiveTemperature = Config.Shift.ShutdownLimit
 Config.Alerts.HighPressure = Config.Sim.HighPressure
 Config.Alerts.HighCblStress = Config.Device.CBLStressThreshold
 
+-- ========== MONITOR READOUTS (Phase 130) ==========
+-- Four of the seven monitors shipped carrying only the author's static art --
+-- 'NIL F', '140 F', '100%', '0 GW/H', '11:50 PM', '524 GW', 'OFFLINE' -- and
+-- nothing ever wrote them, because the drivers the original used
+-- (GraphDetailThingy) are empty Scripts in this place. ReadoutPanel fills them
+-- from engine state, and the SHAPE of every reading below is recovered from the
+-- original rather than invented: Data/originalwatch/*/changes.log records each
+-- label's observed value set verbatim ('5683 F', '-847 F', '1108 PSI',
+-- '120 GW/H', '25 %', '360 R', '3.001 TW', '11:50 PM').
+Config.Readouts = {
+    -- THE SHIFT CLOCK, and this one is MEASURED. Data/flow/original_* carry the
+    -- recorder's q.clock channel -- minutes since noon -- and across five
+    -- independent recordings it starts at 710 every time (which is also the
+    -- Quota screen's authored TimeLabel, 11:50 PM) and advances 0.977..0.990
+    -- minutes per second of wall time in steady state (74 min in 76.01 s;
+    -- 260927-111843 0.990; -123212 0.990; 261001-125206 0.988; 261002-140019
+    -- 0.989; 261011-074137 0.977). So the rate is 1 and the origin is 710, and
+    -- the channel closes its own loop: 710 reads 11:50 PM, 795 reads 1:15 AM,
+    -- and both are in the corpus.
+    --
+    -- This is NOT Forecast.Clock above, and the two stay separate on purpose.
+    -- That one is a FORECAST AXIS -- the deep scan's projection grid -- and it
+    -- is fitted so the verdict lands on the 3:00 AM the captures name: since
+    -- time + untilEquinox = EquinoxSeconds at every scan, 720 x 1/3 minutes past
+    -- 23:00 IS 3:00 AM, which is what fixes it. This one is the facility's wall
+    -- clock. Merging them would dress one fitted number up as a measured one.
+    Clock = { StartMinute = 710, MinutesPerSecond = 1 },
+
+    -- The label formats, one entry per reading family, all the capture's. They
+    -- are '%.0f' rather than '%d' because the corpus contains a negative
+    -- reading ('-847 F') and '%.0f' rounds it the way the capture shows it.
+    Format = {
+        Temperature = '%.0f F',
+        Percent = '%.0f %%',
+        Pressure = '%.0f PSI',
+        Output = '%.0f GW/H',
+        Radiation = '%.0f R',
+    },
+
+    -- The Quota target crosses into TW in the capture ('524 GW', then
+    -- '3.001 TW'). Ours divides exactly where the original's rounded, so a
+    -- 3072 GW quota reads '3.072 TW' here. Recorded divergence, not a
+    -- reconciliation: the engine's quota is an integer number of GW and the
+    -- label must not round it into a number the engine is not at.
+    Target = { SIThreshold = 1000, SIDivisor = 1000, SIDecimals = 3 },
+
+    -- The CBL state word ladder, verbatim from docs/ORIGINAL_UI_TEXT.md section
+    -- 5, in the capture's own measured order: OFFLINE at t=1841, POWERING 3319,
+    -- FIRING 3345, ACTIVE 3364, LOW OUTPUT 3508, and then the two failure logs.
+    CblState = { Offline = 'OFFLINE', Powering = 'POWERING', Firing = 'FIRING',
+        Active = 'ACTIVE', LowOutput = 'LOW OUTPUT' },
+    -- POWERING and FIRING are ignition transients, and this engine's only
+    -- ignition is the start-up chain, so both are anchored on its cursor rather
+    -- than on a clock. That is the same choice FacilityCascade and
+    -- ForecastPanel's DeepScan.Step make, and it is the one that survives a
+    -- retime of the chain: StartupSteps[11] is 'PRIMING ALL COMBUSTION LASERS'
+    -- and [14] is 'COMBUSTION LASERS FIRING'. startupStep counts COMPLETED
+    -- steps, so it rests on 14 for the whole 27.2 s hold of message 15 -- which
+    -- is why FIRING is a state a one-second refresh can actually sample.
+    CblPrimingStep = 11,
+    CblFiringStep = 14,
+
+    -- Levels read as a percentage of their own range. Two declared divergences
+    -- from the capture: it shows a CBL power of '10 %', which no integer level
+    -- produces over this engine's 1..5 ladder (Engine:109), and an extraction of
+    -- '0 %' where this engine's ladder starts at 1 (Engine:111). Neither is bent
+    -- to match; the label reports the level the engine is actually at.
+    LevelPercent = 25,
+    ExtractionMax = 4,
+    PumpLevelMax = 3,
+
+    -- The three bar families. Each names the UDim2 COMPONENT it drives, not just
+    -- an axis, and Full says what a fraction of 1 means in that component's own
+    -- units. Read verbatim out of the capture's Size writes:
+    --   CblGraph   {2,0},{0,N}    N integer 0..100   the title is CBL PRESSURE
+    --   Reservoir  {1,0},{f,0}    f 0..1
+    --   Energy     {f,0},{1,0}    f 0..1             the driven axis is X here
+    -- Component matters because Roblox stores Offset as an INTEGER and truncates
+    -- on assignment: the reservoir's own 0.441554189 can only ride Scale, and the
+    -- CBL graph's 0..100 can only ride Offset. Reading "replace the Y" without
+    -- asking which half of Y would have made the reservoir a bar that never moved
+    -- -- which is exactly what the first pass did, and it is silent, because a
+    -- truncated 0 and an unwritten 0 are the same number.
+    --
+    -- DisplayFull is declared rather than read because the authored Size is a
+    -- FLOOR, not a range: the reservoir's authored 0.01 is its EMPTY state, so
+    -- the authored value cannot tell you what full is.
+    Bars = {
+        CblGraph = { Component = 'YOffset', DisplayFull = 100 },
+        Reservoir = { Component = 'YScale', DisplayFull = 1 },
+        Energy = { Component = 'XScale', DisplayFull = 1 },
+    },
+
+    -- The Quota screen's equinox alarm: an exact colour inversion on
+    -- EquinoxFrame, both values the capture's own (1,0,0 and 0,0,0).
+    Equinox = {
+        AlarmBackground = Color3.fromRGB(255, 0, 0),
+        IdleBackground = Color3.fromRGB(0, 0, 0),
+        AlarmText = Color3.fromRGB(0, 0, 0),
+        IdleText = Color3.fromRGB(255, 0, 0),
+    },
+
+    -- The fan status words, the capture's.
+    FanOn = 'ON',
+    FanOff = 'OFF',
+}
+
 return Config

@@ -439,6 +439,47 @@ the deep scan always reaches the breach verdict, because it fires inside `Starti
 `elapsed` is still 0, so `untilEquinox` is always exactly 720 inside the 900 s horizon
 (DECISIONS_2 534/535, QUESTIONS.md R6). See SYSTEMS.md 2.24.
 
+## Monitor content - the four readout screens
+Four of the seven monitors - Main, Power, Thermal and Quota - shipped carrying the author's static
+placeholders (`NIL F`, `140 F`, `100%`, `0 GW/H`, `11:50 PM`, `524 GW`, `OFFLINE`) and nothing ever
+wrote them. The scripts the original used to drive them, the `GraphDetailThingy` family, are empty
+in this place - the save tool that produced it dropped server scripts - so the original's
+implementation is genuinely unrecoverable and was never going to be ported. What *is* recoverable is
+the shape of every reading: `Data/originalwatch/*/changes.log` records each label's observed value
+verbatim, so the formats (`%.0f F`, `%.0f PSI`, `%.0f GW/H`), the quotas' crossing into `TW`, and the
+two clocks are all read off the original's own recordings rather than invented.
+
+`SSS.ReactorBackend.ReadoutPanel` wires 36 readings: Main's eight-row `ReadingsFrame` (temperature,
+P.E.A stress, fluctuation, chamber pressure, **net** output, extraction, radiation, HDEF integrity),
+Power's three CBL groups (body temperature, stress, power, a state *word*, and a pressure bar),
+Thermal's three reservoir bars and six chamber-fan `ON`/`OFF` labels, and Quota's clock, target,
+progress bar and `EquinoxFrame` colours. It writes `Text`, `Size` and two colours and nothing else,
+so it is disjoint from every adapter above it - `RoomShell` still owns which face is shown, and the
+two write no property in common.
+
+THE THREE BAR FAMILIES DO NOT RIDE THE SAME HALF OF THE `UDim2`. The reservoirs ride `Y.Scale`,
+the CBL graphs ride `Y.Offset` as integers 0..100, and the quota bar rides `X.Scale`. `Offset` is an
+integer in Roblox and truncates on assignment, which is invisible from the outside - a truncated 0
+and an unwritten 0 are the same number, and the first version of this module read back as though it
+had never written anything. So the driven *component* is declared per bar in `Config.Readouts.Bars`
+rather than inferred from the axis, and `barSize` writes both halves of the driven axis and
+preserves the other one whole (DECISIONS_2 549/550).
+
+`ReadingsFrame.StressLabel` is the one reading wired that the original never drove - there is not a
+single `StressLabel.Text` write in the whole corpus. It is a real engine field, and the alternative
+was a label reading the author's `0 %` for the life of the place. Everything deliberately *not*
+wired is printed at boot instead of being left for a reader to notice: the seven colour tints (the
+corpus carries every colour but not the predicate that chooses one), the `NET C-PUMP FLOW RATE` bar
+(corpus 0..75 against this engine's 0..9 pump-level sum, no ratio), and `REACTOR ENERGY INTENSITY`
+(corpus 75/150/250, no clue which state produced any of them). Scaling 9 onto 75 would be a picked
+number wearing a measured one's clothes (DECISIONS_2 552).
+
+Verified in a running game: four clicked controls drove the chain into `Running`, the CBL state word
+walked its whole ladder (`OFFLINE` → `POWERING` → `FIRING` → `ACTIVE`), and a real click on
+`C-PUMP 1 ON BUTTON` left the first reservoir bar at `{1, 0}, {0.333333343, 0}` - a *fraction*
+riding `Scale`, which the integer path could never have produced (DECISIONS_2 553). See SYSTEMS.md
+2.25, SNIPPETS.md 5.37 and PROGRESS.md Phase 130.
+
 ## Automated control test
 Workspace.GameCoreControlTest simulates operator clicks with a mock supervisor and asserts that
 lever pivots move and lamp colours change. A SECOND phase asserts on GameState and on the owning

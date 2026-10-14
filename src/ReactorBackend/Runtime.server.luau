@@ -15,6 +15,7 @@ local ok, err = xpcall(function()
     local BootPanel=require(backend.BootPanel)
     local AlertsPanel=require(backend.AlertsPanel)
     local ForecastPanel=require(backend.ForecastPanel)
+    local ReadoutPanel=require(backend.ReadoutPanel)
     local EndShiftBridge=require(backend.EndShiftBridge)
     local engine=Engine.new(Config)
     backend:SetAttribute('RuntimePhase',engine.state.phase)
@@ -57,6 +58,11 @@ local ok, err = xpcall(function()
     AlertsPanel.Refresh(engine.state,Config)
     ForecastPanel.Initialize(Config)
     ForecastPanel.Refresh(engine.state,Config)
+    -- The four monitors that shipped carrying only the author's static art. It
+    -- writes Text, Size and EquinoxFrame's colours and nothing else, so it is
+    -- disjoint from every adapter above it and from StateBridge below.
+    ReadoutPanel.Initialize(Config)
+    ReadoutPanel.Refresh(engine.state,Config)
     -- The log panel is an output adapter on the same terms as the other two: it
     -- owns no state and only reads the engine's own event list, which until this
     -- was written had no reader anywhere in the place.
@@ -75,6 +81,7 @@ local ok, err = xpcall(function()
         BootPanel.Refresh(state,Config)
         AlertsPanel.Refresh(state,Config)
         ForecastPanel.Refresh(state,Config)
+        ReadoutPanel.Refresh(state,Config)
         LogPanel.Refresh(engine)
         StateBridge.Publish(state)
         -- The end-of-shift report is an output on the same terms as the log

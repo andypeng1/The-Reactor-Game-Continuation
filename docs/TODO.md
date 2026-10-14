@@ -957,11 +957,11 @@ Phase 123 那套点击装置点了四个控制（四条 `[ReactorBackend][Contro
 | `AnnouncementFrame` / `TimeSliceTemplate` | `ForecastPanel`（Phase 125 新写） |
 | `EFEFrame` | `ForecastPanel` |
 | `LogsFrame` | `LogPanel` |
-| `CBL1..3Frame`（Power） | **无** |
-| `C1..C3Frame` / `FanFrame`（Thermal） | **无** |
-| `QuotaFrame` / `TimeFrame` / `EquinoxFrame` | **无** |
-| `ReactorDiagramFrame` / `ReadingsFrame` / `CoreDiagramFrame` | **无** |
-| `MalfunctionFrame` / `SAMFrame`（Power/Thermal/Main） | **无** |
+| `CBL1..3Frame`（Power） | `ReadoutPanel`（Phase 130 新写）── 除染色与两张图见下 |
+| `C1..C3Frame` / `FanFrame`（Thermal） | `ReadoutPanel` ── 除 NET C-PUMP FLOW RATE 那条 |
+| `QuotaFrame` / `TimeFrame` / `EquinoxFrame` | `ReadoutPanel` |
+| `ReactorDiagramFrame` / `ReadingsFrame` / `CoreDiagramFrame` | `ReadoutPanel` ── `ReadingsFrame` 的八行接了；两张图只接得了形状，见下 |
+| `MalfunctionFrame` / `SAMFrame`（Power/Thermal/Main） | **仍然无**（Phase 130 没接） |
 
 **它们现在显示的是作者当初摆的静态值**：`140 F`、`100%`、`OFFLINE`、
 `NIL F`、`0 GW/H`、`40 R`、`20 PSI`、`524 GW`、`11:50 PM`、
@@ -981,6 +981,32 @@ Phase 123 那套点击装置点了四个控制（四条 `[ReactorBackend][Contro
 
 **这是「监视器内容」的欠账，不是「开机」的欠账** —— Phase 125 接上的是操作员点名的那两块
 （子空间预测 + 警报）。要不要接这五台，见 `QUESTIONS.md`。
+
+---
+
+**2026-10-14 更新（Phase 130）：这五台里的四台接上了。**
+
+操作员点了一句「**airemake似乎没有把屏幕上的数据（比如温度什么的）应用上去捏**」，
+`QUESTIONS.md` 的 **R5** 选项 A（全接）落地 —— 新模块
+`SSS.ReactorBackend.ReadoutPanel`，**36 个读数**（Main 八行 + Power 三条 CBL 各五 +
+Thermal 三条储液条与六台风扇 + Quota 时钟/目标/进度条/Equinox 两色），
+真机点击验证见 `PROGRESS.md` Phase 130、取舍 `DECISIONS_2` 549..554、
+说明 `docs/SYSTEMS.md` §2.25、配方 `docs/SNIPPETS.md` §5.37。
+
+**这四台里仍然没接的**（都不是「忘了」，是**证据里没有那把尺子**，
+`Initialize` 每次启动都打印一份）：
+
+| 没接的 | 缺什么 |
+|---|---|
+| 七族**染色**（`CBLImageLabel` / `CPumpImageLabel` / `FanImageLabel` / `CoreImageLabel` / `CoronaImageLabel` / `PowerLabel.TextColor3` / `FluctuationLabel.TextColor`） | 录像记全了**颜色**，没记**按什么选** —— 接它 = 发明规则 |
+| `FanFrame` 的 **NET C-PUMP FLOW RATE** 条 | 录像 0..75，本引擎唯一流量量是 `Σ pump.level ∈ 0..9`，**没有比值** |
+| `CoreDiagramFrame.GraphFrame1` 的 **REACTOR ENERGY INTENSITY** 条 + 三盏 `WarnningImageLabel*.Visible` | 录像三处 75/150/250，**不知道哪个状态出的**；灯同染色 |
+| `CoreDiagramFrame.GraphFrame2`（P. E. A. EXTRACTION） | 录像里**只有 `Visible`**，一条 `Size` 都没有 —— 没有可复刻的条 |
+| Power/Thermal/Main 的 `MalfunctionFrame` / `SAMFrame` 两个告警浮层 | 它们的 `Visible` 由一套**没有证据**的谓词决定（R5 里点名过，本轮没做） |
+
+**顺带一条反向的**：`ReadingsFrame.StressLabel` **接了，虽然原版从没驱动过它**
+（全库一条 `StressLabel.Text` 写入都没有）—— 它是真引擎字段（`state.peaStress`），
+而另一种做法是让一个标签读着作者的 `'0 %'` 过一辈子。
 
 ### 3.17 温度模型的欠账（Phase 126，桌面工具侧）
 
