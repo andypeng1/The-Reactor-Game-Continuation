@@ -14544,3 +14544,162 @@ Edit 侧全程只做过**读**。
   **方向对上了，量没对上**，没有干净实验能说清剩下的 3%，**记成没解释**。
 - §3.14 ④（经济）、⑤（`ControlBinder:13` 的死 `split`）、§3.15 ③④、§3.16、§3.17 —— 未动。
 - `QUESTIONS.md` `R6` 仍未答（本轮没新增条目）。
+
+---
+
+## Phase 129 — 「你去里面测」：角色挡不挡点击射线，三臂单变量（2026-10-14）
+
+**这一轮改了游戏本体零行。** 起因是 `docs/TODO.md` §3.14 ③ 那条挂了两轮的欠账：
+「角色挡不挡点击射线」**一直没有结论**。这一趟把它做成了干净实验，结论是
+**不挡** —— 而且**我原先量的那条射线根本不是点击那条射线**。
+
+### 一、为什么这条悬着两轮
+
+Phase 124 量到「从相机往控制件打 `Workspace:Raycast`，第一个打中的是角色」，
+于是归因于**角色挡住了点击**，还做了对照实验。但那次**正实验的失败**
+**已经被 `ShuttersOpen` 的门解释了** —— `boot` 要求它，所以那些点击是
+**送达了、被正确地拒了**，而 `Booted=false` 与「点空了」**逐字相同**。
+**一条能因为被测原因之外的原因失败的判据，不是干净的实验**（§0.26 ①，
+取舍 519 ①）。反实验（挂件落在射线上 1.52 studs）反而成功 ——
+**两个方向相反的结果不能合并成一条结论**。所以此后这件事**只有一句从没被证伪的归因**，
+没有任何证据；而「没复现的那一半要写成没复现」（§0.21 第 3 条）本来是当时的正确收尾。
+
+### 二、装置：一个变量，两条独立通道
+
+三臂，**只动 `CanQuery`**，其余全部锁死：
+
+| 臂 | `CanQuery` | 身体位置 | `onSegment` | `reach` |
+|---|---|---|---|---|
+| `off` | false | 压在控制件正中（`lift=0`） | 0 | 0.00 |
+| **`on`** | **true** | **压在控制件正中（`lift=0`）** | **4** | 0.00 |
+| `up` | true | 抬高 4 stud（`lift=4`） | 0 | 4.00 |
+
+三条设计约束，都是为了「只有那一个变量能动」：
+
+1. **控制件选 `MONITOR POWER BUTTON`。** 它在 `Engine:Command` 里是一个**光秃秃的翻转**
+   （`s.monitorPower = not s.monitorPower`，第 121 行），**没有任何分支自己的相位门** ——
+   唯一的全局门是第 119 行 `if s.phase=='Failed' or s.phase=='Report'`，而这一趟全程
+   `phase=Cold`。**开机链、百叶窗、配额、相位全部在第一次点击之前就出局了。**
+2. **`reach` 靠构造满足。** 泊车点就是控制件自己的 `Position`，所以「六 stud 交互距离」
+   这件事不需要争取 —— `off`/`on` 是 0.00，`up` 是 4.00，三臂全部在门内。
+3. **eye 由一条确定性的搜索给出，且搜索时排除角色**，所以**三臂拿到同一个 eye**。
+   三臂的 `eye` 读数**逐位相同**（`(125.63, 280.68, 19.06)`），`off`/`on` 的 `root` 也逐位相同
+   （`(122.13, 279.98, 19.06)`）。**装置没动，差的就是那个 flag。**
+
+**两条独立通道**，因为任何一条单独都不够硬：
+
+- **送达判据**（服务端）：引擎自己的 `[ReactorBackend][Control] <player> -> <LABEL>`。
+  读法是一条**对**：`-> ` 行在 **且**它旁边没有 `rejected:`；`[Gate] refused` 是另一回事
+  （`ControlBinder` 根本没被够到）。第 105 行那行 `-> `**在 `Command` 返回 false 时也印**，
+  所以单看它不算数。
+- **机制判据**（客户端）：点击射线**实际打中了什么**。它把「没送达」变成「打中的是 X」。
+  **一条没有机制的送达中断是巧合，一条机制写着 `rayAll hits Handle` 的才是原因。**
+
+### 三、三臂三送达
+
+```
+arm off   t=90.932  DETECTOR MONITOR POWER BUTTON by andypeng1NB
+          t=90.961  [ReactorBackend][Control] andypeng1NB -> MONITOR POWER BUTTON
+arm on    t=211.336 DETECTOR MONITOR POWER BUTTON by andypeng1NB
+          t=211.342 [ReactorBackend][Control] andypeng1NB -> MONITOR POWER BUTTON
+arm up    t=248.294 DETECTOR MONITOR POWER BUTTON by andypeng1NB
+          t=248.314 [ReactorBackend][Control] andypeng1NB -> MONITOR POWER BUTTON
+```
+
+三对都是「检测器响 + 送达行」，**全程 0 行 `rejected:`、0 行 `[Gate] refused`**。
+四次点击、四次翻转。
+
+**`on` 那一臂就是答案**：角色 `CanQuery=true`、**身体压在射线上**（`onSegment=4`，
+四个件）—— **照样送达**。`up`（`CanQuery=true` 但抬离射线）是**对照**：
+它的作用是排除「flag 本身做了别的事」。`on` 和 `up` 一起送 ⟹ **这个 flag 对送达没有影响**。
+
+### 四、【本轮最有价值的一条】我量的那条射线不是点击那条射线
+
+客户端在**同一个瞬间**（`t=98.183`，两行相隔 1 ms）给了两个互相矛盾的读数：
+
+```
+t=98.183 MEASURE MONITOR POWER BUTTON|on|... mouseTarget=ClickPart(Part) in MonitorPowerButton
+t=98.184   mouseRay  Handle(MeshPart) d=1.01        <- 我自己 cast 的，不过滤
+t=98.185   eyeNoChar ClickPart(Part) d=3.52         <- 排除角色之后
+```
+
+**引擎自己的鼠标（`Mouse.Target`）说指针在控制件上，而我自己从同一条 `mouse.UnitRay`
+打的 `Workspace:Raycast` 说 1.01 stud 处撞上了角色的 `Handle`。** 两条射线不是同一条。
+
+**`Workspace:Raycast` 不排除点击者自己的角色；引擎派发点击时用的那条射线排除。**
+（`Mouse.TargetFilter` 读出来是 `nil` —— 但那表示「没有**额外**排除」，
+引擎对本地角色的内置排除**不在这个属性里露出来**。Phase 124 就是把这个 `nil`
+读成了「没有排除角色」。）既然**引擎是派发点击的那个**，它以 `ClickPart` 为准，
+所以点击送达。
+
+三臂的机制表正好把这件事摆成一排：
+
+| arm | `mouseTarget`（引擎的） | `mouseRay`（我自己的裸 cast） | `onSegment` | queryable |
+|---|---|---|---|---|
+| off | `AlarmMuteButton.Part`（指针还没挪过去） | `AlarmMuteButton.Part d=2.42` | 0 | 0 |
+| **on** | **`ClickPart in MonitorPowerButton`** | **`Handle d=1.01`** | 4 | 23 |
+| up | `ClickPart in MonitorPowerButton` | `ClickPart d=3.40` | 0 | 23 |
+
+**唯一一条裸 cast 撞上角色的臂，正是唯一一条 flag 开着的臂，而那条臂照样送达。**
+
+### 五、第四层证据：值
+
+`StateBridge.luau:63` 把状态映成一个真 observable：`Stats.MonitorPower`。
+四臂之间做了一次直接的 before/after：读 `true` → 点一下 → 读 `false`。
+四次点击对应四次翻转，全部自洽。**这一层不依赖日志、不依赖射线，只依赖状态。**
+
+### 六、它推翻了什么
+
+`docs/SNIPPETS.md` §5.35 ③ 写的是：
+
+> **角色必须 `CanQuery = false`，`Transparency = 1` 不够。**
+> 点击自己那条射线**第一个打中的就是角色**。
+
+**这个「必须」是错的**，而且错的理由正是第四节能说的那件事：
+「第一个打中的就是角色」量的是 `Workspace:Raycast`，**不是点击的射线**。
+§5.35 ③ 已在原处加了更正标记（**不改原文** —— 当时确实那么量过，
+同 §0.14 那条「不改它，因为当时确实如此」）。
+
+**剩下的是什么**：`CanQuery=false` 不再**必需**，但仍然**值得保留**，
+换一条理由 —— 它让角色从**你自己的诊断 cast** 里消失，
+于是你的读数与引擎的读数一致。**同一个动作，一个新的、正确的理由。**
+
+### 七、顺带三条（都是「读数不是你以为的那个读数」）
+
+1. **`mouseAtAim` 判据是假阳性。** 它写成「鼠标目标离 aim 小于 3 stud」，
+   而臂 `off` 那行 `mouseAtAim=true` 配着 `mouseRay AlarmMuteButton.Part d=2.42` ——
+   `AlarmMuteButton.Part` 恰好就在 aim 的 3 stud 以内，**指针当时在隔壁**。
+   **「靠得近」是另一条判据的读数**（同 §0.18 第五张脸：一个词替你把选择做完了）。
+   该按「是不是那一件」判，不该按距离。
+2. **aim 本身必须是读数。** 这一趟写探针时才发现：Phase 128 那套
+   `openDirection`（**在控制件自己的高度水平投一圈，取第一个通畅方向**）回答的是别的问题。
+   `COOLING FAN SWITCH 1` 凹在 `ThermalConsole` 面板后面，**16 个候选方向全部「通畅」**，
+   而真正要走的「eye → 控制件」那条**下降**的线段从每一个候选都被挡住 ——
+   那套装置会点到一个 `CFLever` 上，然后记下一个**干干净净、彻底错误**的负结果。
+   现在 `findEye` 要求**点击真正会走的那条线段**命中控制件，并把「这条线段打中了什么」
+   写成 `eyeHits` 属性。**一个 `eyeHits` 不是控制件的泊车是 VOID 泊车，Status 行自己会说出来。**
+3. **`Destroy()` 不杀 `task.spawn` 出来的线程。** 往一个活着的探针上再注入一份，
+   旧的执行器和旧的日志挂钩**继续跑** —— 量到的形态是**同一次报告里两组 `t=` 相同的行**。
+   修法是每个循环自己检查 `script.Parent == nil`（这是 `Destroy()` 唯一会改变的东西），
+   外加渲染步绑定在死的时候 `UnbindFromRenderStep`。
+
+### 八、收尾
+
+探针、相机保持器全是 **Play 期注入**的（§0.4），停 Play 即全部消失。
+收尾按 §0.25 ② 先 `UnbindFromRenderStep('__probeCamHold')` 再停 Play。
+停完量了一次：**`BaseParts=48847 roots=625`**，正是 Play 之前的基线，
+`Workspace` 无 `__probe*` 残留、`SSS` 无 `__ray*` 残留。**游戏本体一行没动，Edit 侧全程只读。**
+
+装置源码留在 `_tools/_attic/scratch/`：`__ray_probe.luau`（服务端，送达判据）、
+`__ray_camhold.luau`（客户端，机制判据）、`__bytecheck.py`（注入前的字节自检）。
+
+### 九、还欠的（照实写）
+
+- **§3.14 ②**：`EndShiftHandler` 那 610 行仍然没有离线覆盖（未动）。
+- **§3.14 ④**（经济 = `QUESTIONS.md` R4）、**⑤**（`ControlBinder:13` 的死 `split`）、
+  §3.15 ③④⑤、§3.16、§3.17 —— 未动。
+- **一个仍未测的边界**：这一趟角色**始终是静音 + 锚定的**（`Transparency=1 / CanCollide=false /
+  CanTouch=false / Anchored=true`），只动了 `CanQuery`。**「一个正常站着、会动的角色挡不挡」
+  没有测** —— 而那是操作员真实的姿势。**这一条不许从本轮外推**
+  （本轮答的是「`CanQuery` 挡不挡」，不是一个普通角色挡不挡）。
+- `QUESTIONS.md` `R6` 仍未答（本轮没新增条目）。

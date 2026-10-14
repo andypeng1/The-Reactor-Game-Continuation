@@ -1678,6 +1678,61 @@ quota is proved by the fact that `Engine:Command('shutdown')` *refuses* below it
 accepted. See PROGRESS.md Phase 128, DECISIONS_2 539-543, docs/SNIPPETS.md 5.35.
 
 
+### Phase 129 - a two-round-old open question, closed: the character does not block the click
+
+**No game code was changed this phase.** The target was `docs/TODO.md` 3.14 (3), open since Phase 124:
+"does the character block the click ray" had **no conclusion** - the positive experiment failed twice,
+but that failure was already explained by the `ShuttersOpen` gate, and a criterion that can fail for a
+reason other than the one under test is not an experiment (CLAUDE 0.26 (1)). It now has a conclusion.
+
+Three arms, one variable. The only thing that moves is the character's `CanQuery`:
+
+| arm | `CanQuery` | body | parts on the eye-to-control segment | delivered |
+|---|---|---|---|---|
+| `off` | false | on the control | 0 | yes |
+| **`on`** | **true** | **on the control** | **4** | **yes** |
+| `up` | true | lifted 4 studs | 0 | yes |
+
+`on` is the question; `up` is the control for "the flag did something else". Both deliver, so the flag
+has no effect on delivery. All three arms read the **same** root and eye coordinates to two decimals
+(the eye search excludes the character, so it is `CanQuery`-independent) - the rig did not move.
+The target is `MONITOR POWER BUTTON`, chosen because `Engine:Command` toggles it in a bare branch with
+**no phase gate of its own**, so the boot chain, the shutters, the quota and the phase are all out of
+the picture before the first click. A fourth piece of evidence that needs neither logs nor rays:
+`Stats.MonitorPower` read `true`, the click landed, it read `false`.
+
+**The real find is that the ray I had been measuring is not the ray the click uses.** At one instant,
+1 ms apart: the engine's own `Mouse.Target` said `ClickPart in MonitorPowerButton`, while a
+`Workspace:Raycast` sent from the *same* `mouse.UnitRay` hit the character's `Handle` at 1.01 studs.
+`Workspace:Raycast` does not exclude the clicking player's own character; the ray the engine dispatches
+the click with does. `Mouse.TargetFilter` reading `nil` only means "no *extra* exclusion" - the engine's
+built-in exclusion of the local character is not visible through that property, and Phase 124 read that
+`nil` as "the character is not excluded". Both readings are kept, because *whose* ruler it is, is part
+of the conclusion.
+
+**So `docs/SNIPPETS.md` 5.35 (3) - "the character must be `CanQuery = false`" - is wrong**, and it is
+wrong for exactly that reason. It has a correction marker rather than a rewrite (a wrong ruler had
+written its conclusion into the document the next run would read; the original text was true of what
+was measured at the time). `CanQuery = false` is no longer *required*, but still worth keeping, on a
+different ground: it removes the character from your own diagnostic casts, so your readings agree with
+the engine's.
+
+**Boundary, not to be extrapolated:** the character was muted and anchored throughout
+(`Transparency=1 / CanCollide=false / CanTouch=false / Anchored=true`) and only `CanQuery` moved.
+"Does a normal, standing, moving character block the click" was **not** measured.
+
+Three side lessons from the same session, each a reading that was not the reading it looked like:
+the old aiming rule (cast horizontally at the control's own height, take the first clear direction)
+answers "clear at that height", not "clear line of sight" - a recessed switch had all 16 candidates
+clear while the actual descending segment was blocked from every one, so the rig would have clicked the
+wrong part and recorded a clean, silent, wrong negative, and "the park is aimed" is now the `eyeHits`
+readout rather than an assumption; `Destroy()` does not kill `task.spawn`-ed threads (measured as two
+sets of lines at the same `t=` in one report), so every loop has to check `script.Parent == nil` itself;
+and "it is within 3 studs" is not "it is that part" - a guard criterion against stale pointers returned
+a false positive because it asked about proximity instead of identity. See PROGRESS.md Phase 129,
+DECISIONS_2 544-548, docs/SNIPPETS.md 5.36.
+
+
 ### Phase 100 - the driver: the half of the channel that presses things
 
 The state recorder (`_tools/TRG_original_state.luau`, tag `s2`) is read-only by construction:

@@ -2471,6 +2471,16 @@ local eye = part.Position + dir * 3.5 + Vector3.new(0, 0.7, 0)
 
 **③ 角色必须 `CanQuery = false`，`Transparency = 1` 不够。**
 
+> **【2026-10-14 更正，Phase 129】这个「必须」是错的。**
+> 三臂单变量量下来：`CanQuery=true` 且身体**压在射线上**（`onSegment=4`）时，
+> 点击**照样送达**（检测器响 + `-> ` 行，无 `rejected:`）。角色**不挡点击射线**。
+> **下面那句「点击自己那条射线第一个打中的就是角色」量的是 `Workspace:Raycast`，
+> 不是点击那条射线** —— `Workspace:Raycast` 不排除点击者自己的角色，引擎派发点击的射线排除
+> （取舍 544/545）。
+> **`CanQuery=false` 不再必需，但仍值得保留，换一条理由**：它让角色从**你自己的诊断 cast**
+> 里消失，于是你的读数与引擎的读数一致。
+> 原文不改 —— 当时确实那么量过（同 §0.14 那条的写法）。配方见 §5.36。
+
 点击自己那条射线**第一个打中的就是角色**（§0.11：`Mouse.Target` 和相机射线
 对 `Transparency=1` 的件看法不一致）。所以四个属性一起改：
 `Transparency=1 / CanCollide=false / CanQuery=false / CanTouch=false`，外加 `Anchored=true`
@@ -2537,3 +2547,70 @@ TemperatureVal=13811 PressureVal=2924 EnergyVal=512 QuotaVal=512
 ```
 
 第 4 层是这一趟最有用的一层：**`phase=Report` 证明的是运输，不是配额**（`DECISIONS_2` 543）。
+
+---
+
+## 5.36 「到底挡不挡点击射线」这一类问题：三臂单变量装置（Phase 129）
+
+装置源码：`_tools/_attic/scratch/__ray_probe.luau`（服务端，**送达判据**）、
+`__ray_camhold.luau`（客户端，**机制判据**）、`__bytecheck.py`（注入前自检）。
+**两半都是 Play 期注入**，停 Play 全部消失（§0.4）。结论与取舍见 `DECISIONS_2` 544..548。
+
+**① 先挑一个「没有相位门」的控制件。**
+
+被点的那一下如果在 `Engine:Command` 里会撞上不只一条拒绝路径，就**又回到 §0.26 ① 那口井**。
+`MONITOR POWER BUTTON` 是现成的好靶子：`Engine.luau:120` 就是一个光秃秃的翻转
+（`s.monitorPower = not s.monitorPower`），**分支自己没有门**，唯一的全局门是第 119 行
+`if s.phase=='Failed' or s.phase=='Report'`。全程 `phase=Cold` 就没有任何东西能拒绝它。
+
+**② 一个变量，写成一个 spec 字符串，`|` 分开。**
+
+```lua
+local label, arm = string.match(spec, '^(.-)|(.*)$')   -- 'MONITOR POWER BUTTON|on'
+local queryable = (arm == 'on' or arm == 'up')
+local lift      = (arm == 'up') and 4 or 0             -- 抬离射线的那一臂
+```
+
+`off` / `on` / `up` 三臂，`on` 是问题、`up` 是对照（「flag 干了别的事」）。
+**判「装置没动」的凭据是「不依赖被测变量的那批数」**：三臂的 `root` 和 `eye`
+绝对坐标写进 `Status`，逐位相同才叫同一个装置。
+
+**③ eye 必须是**读数**，不是假设。**
+
+```lua
+-- 要求「点击真正会走的那条线段」命中控制件；搜索时排除角色 => 与 CanQuery 无关，
+-- 所以三臂拿到同一个 eye。eyeHits 把这个结论写出来。
+local hit = ws:Raycast(eye, aim - eye, params)
+if hit and (hit.Instance == part or hit.Instance:IsDescendantOf(part)) then return eye, ... end
+```
+
+**别用「在控制件自己的高度水平投一圈取第一个通畅方向」**（那是 Phase 128 的旧规则）：
+它测的是「同高度水平通畅」，而视线是**下降**的。取舍 546 里那把尺子会点错件、
+给出一个安静的错答案。**一个 `eyeHits` 不是控制件的泊车是 VOID 泊车。**
+
+**④ 两条通道读同一次点击。**
+
+```lua
+-- 送达（服务端）：读一对，不是读一行
+'[ReactorBackend][Control] <player> -> <LABEL>'   -- 到了（Command 返回 false 时也印！）
+'[ReactorBackend][Control] ... rejected: <err>'   -- 到了但被拒
+'[ReactorBackend][Gate] refused N ...'            -- 根本没到（累计，5 s 一条）
+-- 机制（客户端）：同一条 mouse.UnitRay 打两遍，一遍不过滤、一遍排除角色
+```
+
+**⑤ 把「引擎自己的读数」和「你自己的读数」并排放。** 这一趟最有价值的一行是两个数打架：
+
+```
+mouseTarget=ClickPart(Part) in MonitorPowerButton     <- 引擎的 Mouse.Target
+mouseRay  Handle(MeshPart) d=1.01                     <- 我自己的 Workspace:Raycast
+```
+
+**两个数都留着。** 是**谁**的那把尺子，本身就是结论的一部分（取舍 544）。
+
+**⑥ 值层面再验一层。** `StateBridge.luau` 把状态映成 `workspace.Stats` 下的 observable
+（这里 `MonitorPower` 是个 `BoolValue`），读一次 → 点一下 → 再读一次。
+**这一层不依赖日志、不依赖射线，只依赖状态。**
+
+**⑦ 收尾。** 先 `RunService:UnbindFromRenderStep('__probeCamHold')` 再停 Play（§0.25 ②）——
+顺序反了的话，Play 若被留着，下一次 `screen_capture` 会报成功而画面是冻结的。
+停完量一次 `BaseParts`/`roots` 与 Play 之前的基线对齐。
