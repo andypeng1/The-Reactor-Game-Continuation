@@ -17,13 +17,17 @@ that writes `self.sim` then calls `self.on_input(...)`.  To add a readout: one
 more `add_readout` line in `_build_readouts`.  There is no framework here.
 
 THE CORE MODEL IS A SECOND, SEPARATE MODEL.  The pressure tables are copied
-from `calculation.luau` and are that file's numbers.  The temperature table in
-`CORE MODEL` below is the operator's own, read off the shipped game's 477-tick
-log (`DataCollection.Log`) as the mean dT per unit time at each core state --
-it is not in calculation.luau, which takes Temperature as an input and never
-computes it.  So the two are kept in their own blocks and neither is allowed to
-rewrite the other's tables: what joins them is the single Temperature value,
-which the core model writes and the pressure terms read.
+from `calculation.luau` and are that file's numbers.  The temperature model in
+`CORE MODEL` below is the operator's own, fitted to his LEVEL 1-5 logs and
+handed over in two passes (2026-10-13, revised 2026-10-14) -- it is not in
+calculation.luau, which takes Temperature as an input and never computes it.
+So the two are kept in their own blocks and neither is allowed to rewrite the
+other's tables: what joins them is the single Temperature value, which the core
+model writes and the pressure terms read.
+
+The 2026-10-14 revision (the spec headed "temperature calculation") changed the
+temperature model from a closed form to a per-tick STEP.  `core_model_check.py`
+is the second spelling of that spec and is what says the window agrees with it.
 """
 
 import math
@@ -83,11 +87,11 @@ def luau_number(value):
 
 
 # ========== THE CORE MODEL ==========
-# The operator's own temperature model (2026-10-13).  Not from calculation.py --
-# that file takes Temperature as an input and never computes one.  These numbers
-# come from the shipped game's own 477-tick log (`DataCollection.Log`, one record
-# per second): the mean dT per unit time at each core state, which is an
-# empirical linearisation of what Engine.luau does tick by tick.
+# The operator's own temperature model (2026-10-13, revised 2026-10-14).  Not
+# from calculation.py -- that file takes Temperature as an input and never
+# computes one.  `ACTIVE` is a linear fit he took from his own LEVEL 1-5 logs,
+# one line per core state, which is an empirical linearisation of what
+# Engine.luau does tick by tick.
 #
 # THE ROW INDEX HERE IS NOT `Sim.State`.  Two different quantities are both
 # called "state", and Engine.luau's own comment says so (lines 287-290 there):
@@ -104,63 +108,105 @@ def luau_number(value):
 # it has no row 0 and it lags after a collapse, so feeding it here would hold the
 # heat on after a scram.  `core_state()` below is the pure function.
 
-BASE_RATE = {0: -455.7, 1: 559.0, 2: 580.0, 3: 1036.0}
+# His two lists, in his own order -- index = row, so his `[s+1]` (his lists are
+# 1-based) is this `[row]` and the slot he never indexes by hand is row 0.
+#
+# `active` is held as (slope, intercept) rather than as evaluated numbers
+# because what he fitted is a LINE in `a`, one per row: `a = level * 25` in the
+# spec, which is the same number the CBL radios carry (PW1 = 25 ... PW5 = 125).
+# Evaluating it here would bake one point of that line into the table and lose
+# the fact that it is a line at all.
+ACTIVE = {0: (0.0, 0.0), 1: (6.86, 65.5), 2: (7.24, 37.0), 3: (6.8, 534.0)}
+PASSIVE = {0: -455.7, 1: -19.2, 2: 0.0, 3: 0.0}
 
-CBL_REFERENCE = 50.0       # his LEVEL2: the power the rates above were taken at
-PRESS_BANDS = ((2500.0, 1.15), (4000.0, 1.08))   # first match wins, else 1.0
-NOISE_TERMS = ((40.0, 1.5), (25.0, 0.7), (15.0, 0.3))   # (amplitude, period)
+CBL_UNIT = 25.0            # one CBL level, his `a = level * 25`
+CBL_START = 50.0           # PW2: the level the console starts on
 
-# Engine.luau:320's three thresholds, written the way that line writes them.
-# They are the same Config.Sim numbers the band constants above encode, but for
-# a float temperature the encoding does not round the same -- State 3 is "greater
-# than 29500", and STATE_2_MAX is 29499 only because a pressure reading is whole.
-CORE_ROW_1_AT = 5600       # >= is row 1
-CORE_ROW_2_ABOVE = 17500   # >  is row 2
-CORE_ROW_3_ABOVE = 29500   # >  is row 3
+# His pMultiplier, as a table: the first limit the pressure is at or below wins,
+# and past the last one the amplification is 4.  Replaces the old hand-set
+# pressFactor bands ((2500, 1.15), (4000, 1.08)), which came from the Desmos
+# sliders rather than from the wall he describes.
+PRESS_AMP = ((11500.0, 1.0), (27000.0, 2.0))    # else 4.0
+
+# (amplitude per CBL level, period).  His amplitudes, scaled by `level`; the
+# 2026-10-13 version had these as flat 40/25/15 with no level term.
+NOISE_TERMS = ((15.0, 1.5), (10.0, 0.7), (5.0, 0.3))
+
+# The row thresholds, written the way the spec writes them:
+#   s = {T < 17500: 1, T < 29500: 2, 3}
+# Row 0 is not in that rule; it is the cold floor from Engine.luau:320 above,
+# kept because PASSIVE[0] is a measured number (-455.7 was the old BASE_RATE[0])
+# and because the row radios below are built from the tables, so a row that no
+# temperature could reach would be a button that does nothing.
+#
+# NOTE the spelling differs from Engine.luau:320's by one degree at each of the
+# two upper boundaries, and that is the spec's spelling, not an accident: it says
+# `T < 17500` where that line says `T > 17500`, so exactly 17500 is row 2 here
+# and row 1 there, and exactly 29500 is row 3 here and row 2 there.  Both points
+# are measure zero on a float run; recorded rather than smoothed over, because a
+# silent one-degree drift between two spellings of one threshold is the kind of
+# thing this file's own comments exist to prevent.
+CORE_ROW_1_AT = 5600       # below this, row 0 (the cold machine)
+CORE_ROW_2_AT = 17500      # <  is row 1; >= is row 2
+CORE_ROW_3_AT = 29500      # <  is row 2; >= is row 3
 
 # CBL power, at the levels Engine.luau:109 accepts (`integer(value, 1, 5)`).
-# "off" is ours: the original has no off, but a machine with every laser dark is
-# the condition his row 0 was measured in, and without a zero the model could
-# never be told to stop making heat.
+# "off" is ours: the original has no off, and the spec's fit covers levels 1..5
+# only.  Without a zero the model could never be told to stop, so off is defined
+# as "add nothing" rather than by extrapolating the fit down to a = 0.
 CBL_LEVELS = ((0, "off"), (25, "PW1"), (50, "PW2"), (75, "PW3"),
               (100, "PW4"), (125, "PW5"))
 
 
 def core_state(temperature):
-    """Engine.luau:320, threshold for threshold, including the 0.
+    """The spec's `s`, plus the row-0 floor -- a read of the temperature, so it
+    is recomputed every tick and can fall.
 
-    Not Sim.State: that one is latched and has no row below 5600.  This is a
-    read of the temperature, so it is recomputed every tick and can fall.
+    Not Sim.State: that one is latched and has no row below 5600.
     """
-    if temperature > CORE_ROW_3_ABOVE:
-        return 3
-    if temperature > CORE_ROW_2_ABOVE:
-        return 2
-    if temperature >= CORE_ROW_1_AT:
+    if temperature < CORE_ROW_1_AT:
+        return 0
+    if temperature < CORE_ROW_2_AT:
         return 1
-    return 0
+    if temperature < CORE_ROW_3_AT:
+        return 2
+    return 3
 
 
-def press_factor(pressure):
-    """His `pressFactor`, read from the LIVE pressure at the start of the step.
+def fluctuation(row, power):
+    """His `baseFluc` for one tick: `active[row] + passive[row]`.
 
-    His Desmos has this as a hand-set slider; here it is that slider wired to
-    the chamber, so it bends the rate once the pressure model has been dragged
-    down.  The console starts at 6000, so it starts at 1.0.
+    `power` is his `a`.  This is the temperature change per tick before pressure
+    has its say, and it is the term the old model did not have: there, the row
+    picked a rate the CBL could only scale, so level and state were one product.
+    Here every row has its own line in `a`, which is what his LEVEL 1-5 logs
+    bought.
     """
-    for limit, factor in PRESS_BANDS:
-        if pressure < limit:
+    slope, intercept = ACTIVE[row]
+    return slope * power + intercept + PASSIVE[row]
+
+
+def press_multiplier(pressure):
+    """His `pMultiplier`: at or below 11500 normal, at or below 27000 doubled,
+    above that quadrupled -- the chamber pressure amplifying the temperature
+    swing rather than replacing it."""
+    for limit, factor in PRESS_AMP:
+        if pressure <= limit:
             return factor
-    return 1.0
+    return 4.0
 
 
-def noise(x):
-    """His `noise(x)`: three sines instead of a random number.
+def noise(x, power):
+    """His `noise(t)`: three sines instead of a random number, amplitude scaled
+    by the CBL level.
 
-    Deliberately reproducible -- the same x has to give the same temperature, or
-    there is nothing to compare a rerun against.
+    Deliberately reproducible -- the same t has to give the same temperature, or
+    there is nothing to compare a rerun against.  Unlike the 2026-10-13 version
+    this is added to the READING, not multiplied into a rate, so its amplitude
+    is what it says it is: +-30 degrees at level 2, not +-30 degrees per second.
     """
-    return sum(amplitude * math.sin(x / period)
+    level = power / CBL_UNIT
+    return sum(amplitude * level * math.sin(x / period)
                for amplitude, period in NOISE_TERMS)
 
 
@@ -215,33 +261,38 @@ class Sim:
 class Core:
     """The operator's temperature model, driving Sim.Temperature.
 
-    His equation, literally:
+    His equation, literally (2026-10-14):
 
-        T(x) = T_0 + (baseRate[s] * a/50 * pressFactor + noise(x)) * x
+        T' = T + baseFluc * pMultiplier + noise(t)
 
-    Two properties of it are worth knowing before reading the code.
+    with `baseFluc = active[row] + passive[row]` and `t` = seconds since armed.
+    The three helpers above are the three named parts of it, so this class is
+    only the order they are applied in.
 
-    ONE: it is a closed form, not a step.  T is recomputed from T_0 and the
-    whole elapsed x every tick, so when the row changes the line changes slope
-    and the reading JUMPS by (new rate - old rate) * x -- small going 1 -> 2
-    (559 to 580, so 21 * x, about 460 at the crossing) and large going 2 -> 3
-    (580 to 1036, so 456 * x, about nineteen thousand at its crossing).  That is
-    his model, not a defect: in Desmos, dragging `s` moves the line, and the
-    graph is a line through T_0.  The alternative (adding a small increment per
-    tick, which is what Engine.luau does) would give a kinked curve and no jump,
-    and would be a different model.  The row is read from the temperature the
-    PREVIOUS tick ended on, the way Engine.luau gates its own state terms on the
-    temperature before the update.
+    It is a STEP, and that is the whole of the revision.  What it replaced was a
+    closed form, `T0 + (rate + noise)*x`: a line through T0, whose slope the row
+    picked, recomputed from scratch every tick.  All three of the things wrong
+    with that were known while it was in use -- the docstring here said so -- and
+    the spec fixes each one:
 
-    TWO: `noise(x)` is inside the multiplication by x, exactly as written.  So it
-    is not a tremor on a reading, it is a tremor on the SLOPE: at x = 100 the
-    +-80 degree wobble is a +-8000 degree spread, and two runs that differ only
-    in where you stopped are hundreds of degrees apart.  Its stated purpose was
-    to stop the number flickering, and as written it does do that (the sines are
-    fixed, not random) -- but it is also the largest term in the model by about
-    x = 30, where 80x overtakes 559.  Kept as written.  If it is ever wanted as a
-    tremor on the value instead of the slope, the shape is
-    `T_0 + rate * x + noise(x)` -- the wobble OUTSIDE the x.
+      * `noise(x)` was INSIDE the multiplication, so it was a tremor on the slope
+        and not on the reading: at x = 100 the +-80 degree wobble was a +-8000
+        degree spread, and two runs that differed only in where you stopped were
+        hundreds of degrees apart.  The spec puts it outside, added to T.
+      * the rate table was one level-averaged number per row, so the CBL could
+        only scale it.  That is also why the old table had no `a` in it at all
+        while the CBL control moved a multiplier beside it.  The spec fits each
+        row against the LEVEL 1-5 logs, so every row has its own line in `a`.
+      * a row change moved the WHOLE line: the reading jumped by (new rate - old
+        rate) * x, which crossing 2 -> 3 was about nineteen thousand degrees.
+        That is a property of a line through T0, not of a reactor.  A step has no
+        such jump; what a row change does here is change the increment.
+
+    The noise amplitudes went from flat 40/25/15 to 15/10/5 x level, and the
+    hand-set pressFactor bands to his pMultiplier (1/2/4).  Same sines, same
+    periods, same row thresholds, and the old row-0 number survives verbatim --
+    `PASSIVE[0]` is -455.7, which was `BASE_RATE[0]`.  This is his model refined,
+    not a different one.
 
     Arming is what makes it live.  The slider is this file's own way of setting a
     temperature and the model is a way of computing one; they cannot both be in
@@ -252,32 +303,34 @@ class Core:
     def __init__(self):
         self.armed = False
         self.auto = True
-        self.power = CBL_REFERENCE
+        self.power = CBL_START
         self.state = 0            # the row held by hand, when auto is off
-        self.t0 = 0.0             # his T_0: the temperature when armed
-        self.x = 0.0              # his x: seconds elapsed since armed
+        self.t = 0.0              # his t: seconds elapsed since armed
         self.reset_trace()
 
     def reset_trace(self):
         """The last step's numbers, for the readout.  Cleared rather than zeroed,
         so a tile cannot show a term belonging to a step that never happened."""
         self.last_row = None
-        self.last_rate = 0.0
-        self.last_factor = 1.0
+        self.last_base = 0.0
+        self.last_amp = 1.0
+        self.last_actual = 0.0
         self.last_noise = 0.0
+        self.last_start = 0.0
         self.last_temperature = 0.0
 
     def rearm(self, sim):
-        """Take the current temperature as T_0 and put his x back to 0."""
-        self.t0 = float(sim.Temperature)
-        self.x = 0.0
-        self.reset_trace()
+        """Put his t back to 0.
 
-    def multiplier(self):
-        """His `cblMulti`: how far the CBL power is from the level-2 point the
-        rates were measured at.  Off gives exactly 0, because the lasers ARE the
-        heat -- with no way to reach zero the model could never stop making it."""
-        return self.power / CBL_REFERENCE
+        There is no T0 to take any more: a step has nothing to re-anchor, because
+        the temperature is carried by Sim and the model only ever adds to it.
+        What arming restarts is the clock the noise rides on, so two runs of the
+        same length see the same tremor.  `sim` is still passed in because the
+        caller has one and because a future anchor would need it -- not because
+        anything below reads it.
+        """
+        self.t = 0.0
+        self.reset_trace()
 
     def row(self, sim):
         return core_state(sim.Temperature) if self.auto else self.state
@@ -287,25 +340,32 @@ class Core:
 
         Called BEFORE sim.tick(), which is the order Engine.luau uses: the
         temperature moves first, and the pressure state is read off the
-        temperature the same tick ended with, so the slope term uses the new
-        value rather than the old one.
+        temperature the same tick ended with, so the next tick's row comes off
+        the value this one produced.
 
-        x is accumulated rather than derived from `(ticks - x0) * period`,
-        because the period is a control: changing it halfway would otherwise
-        rewrite the whole run's elapsed time, including the part already drawn.
+        t is accumulated rather than derived from `ticks * period`, because the
+        period is a control: changing it halfway would otherwise rewrite the
+        whole run's elapsed time, including the part already drawn.
         """
         if not self.armed:
             return None
-        self.x += sim.period
+        self.t += sim.period
         row = self.row(sim)
-        factor = press_factor(sim.Pressure)
-        rate = BASE_RATE[row] * self.multiplier() * factor
-        wobble = noise(self.x)
-        temperature = self.t0 + (rate + wobble) * self.x
+        amp = press_multiplier(sim.Pressure)
+        base = fluctuation(row, self.power)
+        # "off" is ours, not the spec's.  The fit covers levels 1..5 (a = 25..125)
+        # and there is no level 0 in it, so rather than extrapolate the line down
+        # -- which would have a dark laser bank still adding its row's intercept,
+        # +46/s at row 1 -- zero CBL adds nothing at all.
+        actual = 0.0 if self.power <= 0.0 else base * amp
+        tremor = noise(self.t, self.power)
+        temperature = sim.Temperature + actual + tremor
         self.last_row = row
-        self.last_factor = factor
-        self.last_rate = rate
-        self.last_noise = wobble
+        self.last_base = base
+        self.last_amp = amp
+        self.last_actual = actual
+        self.last_noise = tremor
+        self.last_start = sim.Temperature
         self.last_temperature = temperature
         return temperature
 
@@ -483,7 +543,7 @@ class Console:
         rows = ttk.Frame(core)
         rows.pack(fill="x", pady=(2, 0))
         ttk.Label(rows, text="row").pack(side="left")
-        for value in sorted(BASE_RATE):
+        for value in sorted(ACTIVE):
             button = ttk.Radiobutton(rows, text=str(value), value=value,
                                      variable=self.core_var,
                                      command=self.on_core_state)
@@ -571,27 +631,29 @@ class Console:
                              pady=(8, 4))
         row += 1
         ttk.Label(parent,
-                  text="the core model   T = T0 + (rate + noise(x)) x",
+                  text="the core model   T' = T + baseFluc * press + noise(t)",
                   font=self.BOLD).grid(row=row, column=0, columnspan=2,
                                        sticky="w", pady=(0, 4))
         row += 1
         # The same discipline as the pressure terms: whatever the model actually
-        # multiplied, not a second computation of it.  Each is cleared when the
-        # model is off, so nothing here can show a step that did not happen.
-        row = self.add_readout(parent, row, "T0",
-                               lambda: shown(self.core.t0))
-        row = self.add_readout(parent, row, "x   elapsed since armed (s)",
-                               lambda: luau_number(self.core.x))
-        row = self.add_readout(parent, row, "row  (baseRate index)",
+        # added, not a second computation of it.  Each is cleared when the model
+        # is off, so nothing here can show a step that did not happen.
+        row = self.add_readout(parent, row, "T   this step starts from",
+                               lambda: shown(self.sim.Temperature))
+        row = self.add_readout(parent, row, "t   elapsed since armed (s)",
+                               lambda: luau_number(self.core.t))
+        row = self.add_readout(parent, row, "row  (ACTIVE/PASSIVE index)",
                                lambda: "-" if self.core.last_row is None
                                else str(self.core.last_row))
-        row = self.add_readout(parent, row, "rate  per second",
-                               lambda: self._step_value("last_rate"))
-        row = self.add_readout(parent, row, "noise(x)",
+        row = self.add_readout(parent, row, "baseFluc  active + passive",
+                               lambda: self._step_value("last_base"))
+        row = self.add_readout(parent, row, "press x   pMultiplier",
+                               lambda: self._step_value("last_amp"))
+        row = self.add_readout(parent, row, "actualFluc  base x press",
+                               lambda: self._step_value("last_actual"))
+        row = self.add_readout(parent, row, "noise(t)",
                                lambda: self._step_value("last_noise"))
-        row = self.add_readout(parent, row, "noise(x) x  the slope term",
-                               lambda: self._step_value("last_noise_x"))
-        row = self.add_readout(parent, row, "T(x)",
+        row = self.add_readout(parent, row, "T'  next tick's temperature",
                                lambda: self._step_value("last_temperature"))
 
     def _step_value(self, name):
@@ -606,8 +668,6 @@ class Console:
         """
         if self.core.last_row is None:
             return "-"
-        if name == "last_noise_x":
-            return shown(self.core.last_noise * self.core.x)
         return shown(getattr(self.core, name))
 
     def _build_log(self):
@@ -648,8 +708,8 @@ class Console:
         self.core.armed = bool(self.arm_var.get())
         if self.core.armed:
             self.core.rearm(self.sim)
-            self.log("# core model ARMED: T0 = %s, x = 0 (the slider is off)"
-                     % shown(self.core.t0))
+            self.log("# core model ARMED: T = %s, t = 0 (the slider is off)"
+                     % shown(self.sim.Temperature))
         else:
             # Hand the value back to the slider before it comes alive again: the
             # model has been writing a float the thumb never saw, so the next
@@ -664,8 +724,9 @@ class Console:
     def on_power(self):
         self.core.power = float(self.cbl_var.get())
         self._line_changed()
-        self.on_input("CBL power = %g  (x%s of the level-2 point)"
-                      % (self.core.power, luau_number(self.core.multiplier())))
+        self.on_input("CBL power = %g  (his a; level %s)"
+                      % (self.core.power,
+                         luau_number(self.core.power / CBL_UNIT)))
 
     def on_core_state(self):
         self.core.state = int(self.core_var.get())
@@ -681,9 +742,9 @@ class Console:
                          else "held at %d" % self.core.state))
 
     def _line_changed(self):
-        """A coefficient moved, so the last step's numbers describe a line that
-        no longer exists -- his formula is a line through T0 with the CURRENT
-        rate, so changing the rate changes the whole past, not just the future.
+        """A coefficient moved, so the last step's numbers belong to a tick that
+        would no longer come out the same -- baseFluc is read off the row and the
+        CBL, so changing either changes what this tick adds.
         Clearing (rather than recomputing) is deliberate: recomputing would put a
         new temperature on screen for a tick that has already been logged and
         already moved the pressure."""
@@ -699,11 +760,12 @@ class Console:
         core = self.core
         if not core.armed:
             row = core.row(self.sim)
-            rate = (BASE_RATE[row] * core.multiplier()
-                    * press_factor(self.sim.Pressure))
+            base = fluctuation(row, core.power)
+            actual = (0.0 if core.power <= 0.0
+                      else base * press_multiplier(self.sim.Pressure))
             return ("off - the slider owns Temperature\n"
-                    "row %d at %s would give %s/s"
-                    % (row, shown(self.sim.Temperature), shown(rate)))
+                    "row %d at T = %s would add %s/tick"
+                    % (row, shown(self.sim.Temperature), shown(actual)))
         row = core.last_row if core.last_row is not None else core.row(self.sim)
         # Before the first step there are no terms to report, and a zero would
         # read as one.  Same dash convention as the readouts above.
@@ -712,18 +774,18 @@ class Console:
         def num(value):
             return "-" if fresh else shown(value)
 
-        return ("x      %s s      T0 %s\n"
-                "row    %s%s   rate %s/s\n"
-                "CBL    %g x%s    press x%s\n"
-                "noise  %s      noise.x %s\n"
-                "T(x)   %s"
-                % (luau_number(core.x), shown(core.t0),
+        return ("t      %s s      T %s\n"
+                "row    %s%s   baseFluc %s\n"
+                "CBL    %g (lv %s)   press x%s\n"
+                "actual %s      noise %s\n"
+                "T'     %s"
+                % (luau_number(core.t), shown(self.sim.Temperature),
                    row, " (auto)" if core.auto else " (held)",
-                   num(core.last_rate),
-                   core.power, luau_number(core.multiplier()),
-                   luau_number(core.last_factor),
+                   num(core.last_base),
+                   core.power, luau_number(core.power / CBL_UNIT),
+                   luau_number(core.last_amp),
+                   num(core.last_actual),
                    num(core.last_noise),
-                   num(core.last_noise * core.x),
                    num(core.last_temperature)))
 
     def on_temp(self, _value=None):
@@ -833,12 +895,14 @@ class Console:
                 self.temp_var.set(self.sim.Temperature)
             self.temp_box.set(shown(self.sim.Temperature))
             if self.core.last_row != was_row:
-                # A row change moves the WHOLE line, so the reading jumps by more
-                # than a tick's worth.  Saying so in the log is the difference
-                # between a model and a glitch.
-                self.log("# core row %s -> %d at x = %s s: T = %s"
+                # Nothing jumps: a step changes its increment, it does not move a
+                # line.  Still worth a log line, because this is the moment the
+                # reading starts climbing at a different rate -- and because it
+                # is where the old closed form used to jump by tens of thousands,
+                # so a reader looking for that jump needs to be told it is gone.
+                self.log("# core row %s -> %d at t = %s s: T = %s"
                          % (was_row, self.core.last_row,
-                            luau_number(self.core.x), shown(temperature)))
+                            luau_number(self.core.t), shown(temperature)))
         self.sim.tick()
         self.log("Pressure: " + shown(self.sim.Pressure))
         self._refresh()
@@ -856,8 +920,8 @@ class Console:
     def reset(self):
         self.sim.reset()
         # The model keeps its arm state across a reset -- a new run from the same
-        # starting temperature is what Reset means -- but T0 and x are taken from
-        # the fresh state, or the model would carry the old run's line into it.
+        # starting temperature is what Reset means -- but t goes back to 0 with
+        # the fresh state, or the noise would carry the old run's clock into it.
         self.core.rearm(self.sim)
         self.pea_var.set(self.sim.PEALevel)
         self.fan_var.set(self.sim.ActiveFan)
@@ -868,8 +932,8 @@ class Console:
                  % (shown(self.sim.Temperature), shown(self.sim.Pressure),
                     self.sim.ActiveFan, self.sim.PEALevel))
         if self.core.armed:
-            self.log("# core model still armed: T0 = %s, x back to 0"
-                     % shown(self.core.t0))
+            self.log("# core model still armed: t back to 0 (T = %s)"
+                     % shown(self.sim.Temperature))
         self._refresh()
         self._schedule()
 
