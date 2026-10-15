@@ -19,10 +19,11 @@
   素材全部来自**本仓库里已有的文件**，一个字节都没有新拷进来：
     ../intro/assets/*.png   —— 片头把原版素材复制过来时留下的那份（原 pack 被
                                .gitignore 排除，因为不是我们能发布的），
-                               所以这里引用的是"已经在仓库里的副本"，不新增暴露；
-    ../promo/shots/ig4_core.jpg —— 我们自己 place 的实拍（Phase 120 点火底板），
-                               **它本来就在仓库里**，所以直接引用、不复制一份
-                               —— 复制会造出第二份可以漂移的真相。
+                               所以这里引用的是"已经在仓库里的副本"，不新增暴露。
+  **六边里没有照片**（Phase 133）：操作员 2026-10-15 原话「好吧，不用实拍图片」。
+  原来那里塞的是我们自己 place 的实拍（promo/shots/ig4_core.jpg），现在换成**厂标**
+  —— intro/assets/sm-core.png，一张线稿，它本来就在上面那份清单里。
+  换掉之后这一页**一次都不再引用 promo/ 下面任何东西**（那里是实拍与片子）。
   颜色变量逐字抄自 intro/index.html，它的出处是 src/ReactorBackend/Config.luau
   的 Config.Visual（而那张表又是从 place 里量出来的）。**这里一个新颜色都不许发明。**
   ============================================================================
@@ -111,21 +112,40 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
      background:linear-gradient(90deg, rgba(82,218,226,0) 0%, rgba(82,218,226,.34) 22%,
                 rgba(82,218,226,.34) 78%, rgba(82,218,226,0) 100%);}
 
-/* ============================ 堆芯：六边框里的实拍 ============================
+/* ============================ 堆芯：六边框里的厂标 ============================
    六边是这个世界自己的形状（厂标、六边纹、舱体铺装）。方画面上一个内接六边
    天然把四角让出来给字，而主体还在正中。
-   **两个几何必须重合**：照片的 clip-path（CSS 百分比）和 SVG 那圈实线
+   **两个几何必须重合**：面板的 clip-path（CSS 百分比）和 SVG 那圈实线
    （JS 按 HEX_R 算出的像素点）描述的是同一个六边形。CSS 的百分比版本与尺寸
    无关，所以它错不了；SVG 那份错得了，所以 render() 里把它和盒子按同一个
-   HEX_R 一起算出来，然后由 cover_judge 逐顶点比一次（差 >0.5px 算红）。 */
-#hexPhoto{
+   HEX_R 一起算出来，然后由 cover_judge 逐顶点比一次（差 >0.5px 算红）。
+
+   #hexPanel 不只是"把名字从 hexPhoto 改过来"：它现在**自己就是那块画面** ——
+   一块凹进去的暗板 + 中心那团等离子青。颜色一个都没有新发明：底是 var(--void)，
+   光的两档 rgba 逐字就是 #coreGlow 已经在用的那两档，板面那层 5% 的 Ready
+   是中性提亮。 */
+#hexPanel{
   position:absolute;
   clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background:url("../promo/shots/ig4_core.jpg") center/cover no-repeat;
-  filter:saturate(.86) contrast(1.12) brightness(.90);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(82,218,226,.22) 0%, rgba(82,218,226,.07) 34%, rgba(0,0,0,0) 62%),
+    radial-gradient(circle at 50% 46%, rgba(235,235,235,.05) 0%, rgba(0,0,0,0) 60%),
+    var(--void);
 }
-/* 照片上再压一层青：把盘子的光推到封面自己的色上，同时把四周压暗，
-   让六边的边缘读得出来（实拍照片的边是亮墙，不压就"没有边框"）。 */
+/* 厂标：Synthesis Manufacturing 那一枚 —— 外圈圆环、两个同心六边（内实外虚）、
+   三根从内六边顶点伸出去的辐条，各以一枚矩形端子收尾。
+   尺寸**是量出来的，不是试出来的**：这张线稿 515x515，墨色逐像素
+   rgb(255,255,255)，alpha 只有 0 与 255 两档，墨占方框 26.4%，而**墨的包围盒
+   就是整个方框**（x 0..514、y 0..514）—— 也就是那圈外环内切于方框。所以
+   `contain` 之下圆环的直径**正好等于这个元素的边长**，下面给一个数就够了。 */
+#coreMark{
+  position:absolute;
+  background:url("../intro/assets/sm-core.png") center/contain no-repeat;
+  opacity:.88;
+  filter:drop-shadow(0 0 26px rgba(82,218,226,.30));
+}
+/* 面板上再压一层青，同时把四周压暗，让六边的边缘读得出来
+   （板面四周和背景的暗是同一档值，不压的话"没有边框"）。 */
 #hexTint{
   position:absolute;inset:0;
   clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
@@ -140,8 +160,9 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 #hexSvg .dash{fill:none;stroke:var(--plasma)}
 #hexSvg .tick{stroke:var(--plasma);stroke-width:2;opacity:.55}
 
-/* 压在照片上的两条 HUD 读数。**不是装饰**：9420 °F / 5000 PSI 是点火那一刻的
-   读数（promo 的 CORE IGNITION 那条说明条就是这么写的）。 */
+/* 压在面板上的两条 HUD 读数。**不是装饰**：9420 °F / 5000 PSI 是点火那一刻的
+   读数（promo 的 CORE IGNITION 那条说明条就是这么写的；这里引用的是那两个
+   **数**，不是那张图 —— 六边里现在一张照片都没有）。 */
 .hud{position:absolute;font-size:9px;letter-spacing:.22em;color:rgba(235,235,235,.55);
      white-space:nowrap;text-shadow:0 0 8px #000,0 0 3px #000}
 .hudv{position:absolute;font-size:14px;letter-spacing:.14em;color:var(--plasma);
@@ -239,7 +260,7 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 <div id="viewport">
 <div id="stage">
 
-  <!-- ============ 五个装饰层 ============
+  <!-- ============ 六个装饰层 ============
        每一层的 `data-art` 声明的是**它那张素材的极性**，而"要不要 invert"完全
        由极性决定（见每处的注释），cover_judge 的 A9 断言这两件事一致：
          white    —— 近白的线稿，**不许** invert（invert 成黑 = 振幅塌掉）
@@ -248,7 +269,11 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
        极性是量出来的，不是从"它是这个世界的素材"推的。复量：
          python -X utf8 _tools/cover_layer_probe.py
        （它会打一张表；这一轮的数是 stripes rgb(0,0,0) / nested-hex rgb(235,235,235)
-         / sm-logo rgb(228,228,228) / hex 与 px 都是 rgb(255,255,255)。）
+         / sm-logo rgb(228,228,228) / hex 与 px 都是 rgb(255,255,255)
+         / sm-core rgb(255,255,255)。）
+       #coreMark 是 Phase 133 新加的那一层（六边里的厂标，替掉原来那张实拍）。
+       它**只有 alpha、没有 invert**：素材是白的，所以"不许 invert"这一条它天然
+       满足；声明仍然要写 —— 不写的话 A9 判它"不知道极性"，直接红。
 
        四条曾经错的层，**振幅 = 按旧写法渲染 vs 把这一层整层关掉**（0 = 不在画上）：
          #titleBand  black + screen 无 invert   →  0 px, 最大 Δ0   ← 逐像素为 0
@@ -269,7 +294,8 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
   </div>
 
   <!-- ---------- 堆芯 ---------- -->
-  <div id="hexPhoto"></div>
+  <div id="hexPanel"></div>
+  <div id="coreMark" data-art="white"></div>
   <div id="hexTint"></div>
   <svg id="hexSvg" xmlns="http://www.w3.org/2000/svg"></svg>
 
@@ -325,11 +351,16 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 'use strict';
 
 /* 六边形的外接圆半径（设计空间像素）—— **唯一的那个数**：
-   照片盒子、SVG 那圈实线、外圈虚线全部由它推出来，所以它们不可能各自漂移。
+   面板盒子、SVG 那圈实线、外圈虚线全部由它推出来，所以它们不可能各自漂移。
    点顶六边形（顶点朝上）：高 = 2R，宽 = 2R*cos30°。 */
 const HEX_R = 288;
 const HEX_CX = 540, HEX_CY = 404;
 const COS30 = Math.cos(Math.PI / 6);
+
+/* 厂标的边长。**由六边的内切圆定，不是试出来的**：正六边的内切圆半径是
+   R*cos30 = 249.4，所以直径 498 以内的圆都在六边里面；取 420 是留了 39 px
+   的余量（六边那六条边中点处最紧），也让厂标外面那圈虚线和它之间读得出空气。 */
+const MARK_D = 420;
 
 /* 点顶六边形的六个顶点：从正上方开始，每 60° 一个。 */
 function hexPoints(cx, cy, r){
@@ -345,15 +376,24 @@ const poly = (cx, cy, r) => hexPoints(cx, cy, r).map(p => p[0].toFixed(2) + ',' 
 function buildHex(){
   const hw = HEX_R * COS30;                       // 半宽
   const boxW = 2 * hw, boxH = 2 * HEX_R;
-  // 照片和罩子是两个元素、同一个盒子：clip-path 会把子件一起裁掉，
-  // 所以罩子不能是照片的孩子。两个都摆一遍，摆的是同一组数。
-  for (const id of ['hexPhoto', 'hexTint']){
+  // 面板和罩子是两个元素、同一个盒子：clip-path 会把子件一起裁掉，
+  // 所以罩子不能是面板的孩子。两个都摆一遍，摆的是同一组数。
+  for (const id of ['hexPanel', 'hexTint']){
     const e = document.getElementById(id);
     e.style.width  = boxW.toFixed(2) + 'px';
     e.style.height = boxH.toFixed(2) + 'px';
     e.style.left   = (HEX_CX - hw).toFixed(2) + 'px';
     e.style.top    = (HEX_CY - HEX_R).toFixed(2) + 'px';
   }
+
+  // 厂标：一个正方形元素、**不参与裁切** —— 它整个落在六边的内切圆里
+  // （MARK_D/2 = 210 < 249.4），所以它离裁切线永远有 39 px，裁与不裁同形。
+  // 这句话是可以用几何验的：见 PROGRESS Phase 133 那个"到六条边的距离"读数。
+  const mark = document.getElementById('coreMark');
+  mark.style.width  = MARK_D + 'px';
+  mark.style.height = MARK_D + 'px';
+  mark.style.left   = (HEX_CX - MARK_D / 2).toFixed(2) + 'px';
+  mark.style.top    = (HEX_CY - MARK_D / 2).toFixed(2) + 'px';
 
   const S = 640, c = S / 2;                       // SVG 盒子比六边形大一圈，装得下外圈虚线
   const svg = document.getElementById('hexSvg');
@@ -439,9 +479,9 @@ function layoutReport(){
           fits: v.right <= cbox.right - 6 && v.left >= cbox.left + 6}});
   }
 
-  // 两个几何的比对：照片的盒子定出的六边形（CSS clip-path 的百分比就长在
+  // 两个几何的比对：面板的盒子定出的六边形（CSS clip-path 的百分比就长在
   // 这个盒子上）vs SVG 那圈实线（JS 按 HEX_R 算出来的）。逐顶点比。
-  const ph = document.getElementById('hexPhoto').getBoundingClientRect();
+  const ph = document.getElementById('hexPanel').getBoundingClientRect();
   const boxCx = ph.left - st.left + ph.width / 2, boxCy = ph.top - st.top + ph.height / 2;
   const fromBox = hexPoints(boxCx, boxCy, ph.height / 2);
   const ink = document.querySelector('#hexSvg .ink');
@@ -454,7 +494,7 @@ function layoutReport(){
     if (d > worst){ worst = d; worstAt = i; }
   }
 
-  // 装饰层：这一页有五个"靠 opacity / 混合模式活着"的层。它们没有文字、也不落在
+  // 装饰层：这一页有六个"靠 opacity / 混合模式活着"的层。它们没有文字、也不落在
   // 任何几何断言上，所以**原来一条规则都看不见它们** —— 而这一轮真实发生的缺陷
   // 就出在这五个里面（两条按旧写法渲染出来逐像素等于"整层关掉"，另外两条的
   // 振幅塌到 Δ3 / Δ35）。读图当时只说"没有条纹"，语气和"本来就没画"一模一样
@@ -464,7 +504,7 @@ function layoutReport(){
   // 因为极性是素材的属性，浏览器量不到（file:// 下 canvas 读背景图会被污染），
   // 而"要不要 invert"完全由它决定。声明旁边写着量出那个极性的命令，
   // 于是这条断言不是"信我"，是"这个数是量来的"。
-  const decor = ['grid','hexes','coreGlow','titleBand','hazard'].map(id => {
+  const decor = ['grid','hexes','coreGlow','coreMark','titleBand','hazard'].map(id => {
     const el = document.getElementById(id);
     const cs = getComputedStyle(el);
     return {id, opacity: +(+cs.opacity).toFixed(3), blend: cs.mixBlendMode,
@@ -472,8 +512,11 @@ function layoutReport(){
             art: el.dataset.art || null};
   });
 
-  // 照片盒子的高宽比必须正好是 2/(2cos30)，否则 CSS 的百分比六边形和 SVG 的
+  // 面板盒子的高宽比必须正好是 2/(2cos30)，否则 CSS 的百分比六边形和 SVG 的
   // 像素六边形不是同一个形状（一个按盒子比例算，一个按半径算）。
+  // 厂标的盒子也量出来交给判定：A10 要拿它跟六边的六条边线比距离（它不被裁切，
+  // 所以"长得太大"的唯一后果就是它跑到六边外面去，而那在画上不报错）。
+  const mk = document.getElementById('coreMark').getBoundingClientRect();
   return JSON.stringify({
     stage:{w: st.width, h: st.height}, innerW: innerWidth, innerH: innerHeight,
     dpr: devicePixelRatio,
@@ -484,7 +527,10 @@ function layoutReport(){
          // 六边形的外接矩形：底顶点和顶顶点
          top: +(boxCy - ph.height / 2).toFixed(2), bottom: +(boxCy + ph.height / 2).toFixed(2),
          left: +(boxCx - ph.width / 2).toFixed(2), right: +(boxCx + ph.width / 2).toFixed(2)},
-    band:{top: 704, height: 54}, frame:{inset: 22, w: 1036, h: 1036}
+    band:{top: 704, height: 54}, frame:{inset: 22, w: 1036, h: 1036},
+    mark:{cx: +(mk.left - st.left + mk.width / 2).toFixed(2),
+          cy: +(mk.top  - st.top  + mk.height / 2).toFixed(2),
+          w: +mk.width.toFixed(2), h: +mk.height.toFixed(2)}
   });
 }
 </script>

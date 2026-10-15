@@ -104,13 +104,13 @@ function judge(m){
       `hex x[${m.hex.left}..${m.hex.right}] y[${m.hex.top}..${m.hex.bottom}] ` +
       `(limits: top>${HR1_TOP + SAFE}, bottom<${BAND_TOP - SAFE})`);
 
-  /* A6 -- THE TWO HEXAGONS ARE THE SAME SHAPE.  The photo is clipped by a CSS
+  /* A6 -- THE TWO HEXAGONS ARE THE SAME SHAPE.  The hero panel is clipped by a CSS
      percentage polygon, so its vertices are whatever the box's proportions make
      them; the frame is an SVG polygon computed from HEX_R.  If the box is not
-     exactly 2*cos30 : 2, the drawn frame and the photo's edge are two different
+     exactly 2*cos30 : 2, the drawn frame and the panel's edge are two different
      hexagons -- and both of them LOOK like hexagons, so nothing about the
      picture would say so.  Ratio first, then the vertices themselves. */
-  add('A6 the photo box has the pointy-top hexagon proportion',
+  add('A6 the hero panel box has the pointy-top hexagon proportion',
       Math.abs(m.hex.ratio - m.hex.want) < 0.01,
       `height/width ${m.hex.ratio}, want ${m.hex.want} (2/(2cos30))`);
   add('A7 the CSS clip and the SVG frame are the same hexagon',
@@ -163,6 +163,35 @@ function judge(m){
              : `${m.decor.length} layers, declared kinds [${[...kinds].join(',')}] -- ` +
                `need both a black and a white one or this rule has no force`));
 
+  /* A10 -- 六边里那枚厂标不许捅出六边的边线（Phase 133）。
+     厂标是一个**独立的、不受 clip-path 裁切**的元素（被裁的是面板）。所以它一旦
+     长得比六边能装的大，就会**穿过那圈实线、跑到六边外面去** —— 而它跑出去那部分
+     照样画得出来，画出来只是"一条线穿过了另一条线"，读图不会说这是错的。
+     判据用**到六条边线的有符号距离**（内为正），不是"半径 ≤ 内切圆"：后者只在
+     厂标正好居中时成立，而"居中"本身没有断言。这条与 §0.31 那条同族 ——
+     要让它红，得先有一个真的越界的尺寸在场。 */
+  const hcx = (m.hex.left + m.hex.right) / 2, hcy = (m.hex.top + m.hex.bottom) / 2;
+  const R = (m.hex.bottom - m.hex.top) / 2;
+  const verts = [];
+  for (let i = 0; i < 6; i++){
+    const a = (-90 + 60 * i) * Math.PI / 180;
+    verts.push([hcx + R * Math.cos(a), hcy + R * Math.sin(a)]);
+  }
+  let minSlack = Infinity, worstEdge = null;
+  for (let i = 0; i < 6; i++){
+    const p = verts[i], q = verts[(i + 1) % 6];
+    const ex = q[0] - p[0], ey = q[1] - p[1], len = Math.hypot(ex, ey);
+    const cross = pt => ((pt[0] - p[0]) * ey - (pt[1] - p[1]) * ex) / len;
+    // 六边自己的中心一定在内部，所以它给出的符号就是"内"的方向。
+    const sign = cross([hcx, hcy]) >= 0 ? 1 : -1;
+    const slack = sign * cross([m.mark.cx, m.mark.cy]) - m.mark.w / 2;
+    if (slack < minSlack){ minSlack = slack; worstEdge = i; }
+  }
+  add('A10 the hero mark stays inside the hexagon it is drawn in',
+      minSlack >= 8,
+      `mark r=${(m.mark.w / 2).toFixed(1)} at (${m.mark.cx},${m.mark.cy}) in a hexagon of R=${R}: ` +
+      `tightest of the six edges (#${worstEdge}) leaves ${minSlack.toFixed(1)}px`);
+
   return out;
 }
 
@@ -185,8 +214,10 @@ const MUTANTS = [
   mutate('title collides with the subtitle rule', m => {
     const t = m.text.find(t => t.id === 'title'); t.bottom = 812; return m; }),
   mutate('hexagon pushed into the title band', m => { m.hex.bottom = 700; return m; }),
-  mutate('photo box is not a hexagon proportion', m => { m.hex.ratio = 1.0; return m; }),
+  mutate('hero panel box is not a hexagon proportion', m => { m.hex.ratio = 1.0; return m; }),
   mutate('SVG frame drawn at the wrong radius', m => { m.hex.worstVertexPx = 9.4; return m; }),
+  mutate('the hero mark grows out through the hexagon outline',
+         m => { m.mark.w = 560; m.mark.h = 560; return m; }),
   mutate('quota value overflows its cell', m => {
     const c = m.cells.find(x => x.id === 'c3'); c.v.fits = false; c.v.slack = -40; return m; }),
   mutate('only two things on the page', m => { m.text = m.text.slice(0, 2); return m; }),
@@ -234,7 +265,11 @@ if (argv.includes('--selftest')){
   for (const mu of MUTANTS){
     const m = JSON.parse(JSON.stringify(good));
     const {res} = run(mu.fn(m), true);
-    const red = res.filter(r => !r.ok).map(r => r.label.slice(0, 2));
+    // 规则号取整个词（"A10"），不是前两个字符 —— 后者会把 A10 打成 "A1"，
+    // 于是 `--selftest` 的读数分不开"打到 A1"和"打到 A10"（Phase 133 实测，
+    // 一个 1 red [A1] 看着像打错了规则，其实是它对的那一条）。同 §0.20 一族：
+    // 展示用的截断把两个不同的东西压成同一个字符串。
+    const red = res.filter(r => !r.ok).map(r => r.label.split(' ')[0]);
     const uniq = [...new Set(red)];
     // "lights exactly the rule it is aimed at" is the strong form; more than one
     // is still evidence the rule can fail, but it is a weaker statement and the

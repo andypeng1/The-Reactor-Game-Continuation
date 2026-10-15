@@ -152,6 +152,19 @@ _tools/_drive_route_mut_states.luau
 _tools/_attic/scratch/*.png
 _tools/_attic/scratch/cover_report.txt
 
+# --- Phase 133's additions to the same pile, and why they are three lines and
+#     not one blanket.  `renders133/` is ten comparison frames (9.7 MB) from the
+#     re-render sweep; the `*.png` rule above does NOT reach into it, because a
+#     glob without a slash matches only the files directly in the directory.
+#     The two .txt dumps are redirections from the same commands.
+#     NOT a blanket `*.txt`: the scratch pile holds fourteen TRACKED .txt files
+#     that were deliberately kept (probe dumps that are the only copy of a
+#     reading), so a blanket would silently hide the next one of those instead
+#     of the next dump.  Name the exporters; leave the keepers visible. ---
+_tools/_attic/scratch/renders*/
+_tools/_attic/scratch/cover_report_mut_mark.txt
+_tools/_attic/scratch/report_err.txt
+
 # --- the user's own auxiliary reference dumps (Data/auxcollection/).  Handed to
 #     me to read, not produced by the project: 180 MB in ONE file, which is over
 #     GitHub's 100 MB hard file limit, so an accidental `git add -A` would be

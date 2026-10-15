@@ -6,7 +6,8 @@
 # script asks the harder question the same defect demanded: render the cover once
 # per layer with that one layer switched off, and diff the pixels.  A layer whose
 # removal changes nothing was never on the picture.  Measured on the first build,
-# two of the five were exactly that:
+# two of the five were exactly that (coreMark is the sixth layer, added Phase 133
+# when the hexagon's photo was replaced by the manufacturer's mark):
 #
 #   black art under mix-blend-mode:screen, no invert -> screen(base, 0) == base
 #     titleBand 0 px / max delta 0,  hazard 0 px / max delta 2
@@ -43,7 +44,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NODE="${NODE:-D:/nodejs/node}"
 SCRATCH="$ROOT/_tools/_attic/scratch"
 SHOT="cover/THE_REACTOR_GAME_cover.png"
-LAYERS="grid hexes coreGlow titleBand hazard"
+LAYERS="grid hexes coreGlow coreMark titleBand hazard"
 
 cd "$ROOT"
 

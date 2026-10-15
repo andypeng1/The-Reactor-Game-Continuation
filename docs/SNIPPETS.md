@@ -2806,7 +2806,7 @@ def his_noise(x, level):        # his literals, not ours
 
 ---
 
-## 5.39 给一块 1:1 的方封面：同一条运输线 + 一份纯判定 + 一次"逐层关掉"（★ Phase 132）
+## 5.39 给一块 1:1 的方封面：同一条运输线 + 一份纯判定 + 一次"逐层关掉"（★ Phase 132；主体于 133 换掉）
 
 **适用**：要做一张要交付的图（封面 / tile / 缩略图 / 社交卡），而仓库里
 **已经有一台能驱动无头 Chrome 的渲染器**（`_tools/intro_render.js`）。
@@ -2873,7 +2873,7 @@ D:/nodejs/node _tools/cover_judge.js --selftest _tools/_attic/scratch/cover_repo
 而第一版里四层装饰是坏的、九条规则全绿：
 
 ```bash
-for L in grid hexes coreGlow titleBand hazard; do
+for L in grid hexes coreGlow coreMark titleBand hazard; do    # 六层（coreMark 是 Phase 133 加的）
   node _tools/intro_render.js --page cover/index.html --at 0 --w 1080 --h 1080 \
        --eval "document.getElementById('$L').style.opacity='0'; 'off $L'" \
        --shot "_tools/_attic/scratch/off_$L.png" > /dev/null
@@ -2904,6 +2904,7 @@ python -X utf8 _tools/cover_layer_probe.py cover/THE_REACTOR_GAME_cover.png \
 
 ```html
 <div id="hexes"     data-art="white"></div>     <!-- rgb(235,235,235)：不许 invert -->
+<div id="coreMark"  data-art="white"></div>     <!-- rgb(255,255,255)：不许 invert -->
 <div id="titleBand" data-art="black"></div>     <!-- rgb(0,0,0)：必须 invert -->
 <div id="coreGlow"  data-art="gradient"></div>  <!-- 纯 CSS：更不许 invert -->
 ```
@@ -2933,8 +2934,36 @@ python -X utf8 _tools/cover_layer_probe.py r1.png r2.png r3.png   # 每一对都
 **两个字节形态**：3 次 922894 B / `fa7d04cf…`、2 次 922895 B / `08430ec6…`，
 而两个形态**只差 1 个像素、1 个灰阶** —— (790,583) 的 G 通道，正好落在六边裁切边的
 抗锯齿列上（`hex.right = 789.41`）。**像素是一幅画，字节不是。**
+（Phase 133 换掉画面主体之后重量：连渲 12 次 → **10 次 792813 B / `6feba9bd…` +
+2 次 792812 B / `f9e17bcd…`**，**还是那一个像素** —— 所以那两个形态的**比例本身**
+也不稳定，只有"像素相同"这一句可复核。）
 
 拿 md5 当复核判据会**随机变红**，那比没有判据更坏（它把"今天运气不好"报成
 "这版不合规"）。判据要选在**被测对象真的会变**的那一层上。
 
 一份**渲不回来**的交付物是一份**没人能复核**的交付物（取舍 567，已按这条更正）。
+
+### ⑦ 新加的那一层："关了有变化"≠"画的是那张素材"
+
+`cover_layers.sh` 只回答"这一层在不在画上"。**一个平铺的白色方块也能让它全绿**，
+所以新图层（`#coreMark`）另配一个仪器的**两条**命令：
+
+```bash
+python -X utf8 _tools/cover_mark_check.py          # 默认 t=120；也可以给 t
+```
+
+它把素材自己的 alpha 缩进页面给它的那个 420×420 盒子，再给成品帧取阈值，**两个方向都数**
+（precision 有分母的毛病、recall 说"缺没缺"，两个数**失败的方式不同**）。三条纪律：
+
+- **先量"画在哪一个通道"。** 这份素材是 **LA**、**每个像素的 RGB 都是白的** ——
+  `convert("L")` 得到一张**纯白方块**，"墨"变成整个盒子（precision 1.0000 / recall 0.27）。
+  那个读数不是错的，**它是另一个问题的答案**。
+- **读数对参数敏感时，不要把它写成"一个数"。** 厂标的墨（1% 分位 95）和盒子里那两条
+  HUD 读数（237）**在亮度上重叠**，所以没有哪一刀干净 → 打**整张扫描表**，
+  能站住的只有两句：`t≤60 时 44663 个墨像素亮了 44661 个`（整份墨都在）、
+  `r 0.9–1.0 那档 80.7%`（是 `#hexTint` 把外环压暗，**不是缺了一块**）。
+  **参数没记下来的那一对数是"挑出来的数"，不是量出来的数**（取舍 570）。
+- **给不被裁切的元素配一条"会不会穿出去"的断言。** `#coreMark` 是这一层里**唯一不被
+  `clip-path` 裁**的东西，坏起来只是"一条线穿过另一条线"，画上看着还挺像故意的 →
+  A10（把六边的六个顶点算出来，用六边形自己的中心定里侧，给每条边取带符号距离）。
+  **换掉画面内容时，"结构断言会不会一起变空"要先问一遍**（取舍 568）。
