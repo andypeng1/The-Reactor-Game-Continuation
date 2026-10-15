@@ -122,6 +122,22 @@ PASSIVE = {0: -455.7, 1: -19.2, 2: 0.0, 3: 0.0}
 CBL_UNIT = 25.0            # one CBL level, his `a = level * 25`
 CBL_START = 50.0           # PW2: the level the console starts on
 
+# THE THREE LASERS.  The game has three combustion lasers and each one carries
+# its own PW1..PW5 (`CBL1-PW5` / `CBL2-PW1` / ... are click labels the shipped
+# telemetry log actually contains), so "the CBL level" is three controls, not
+# one.  What the fit consumes is their SUM, and that is the game's own
+# composition rather than a choice made here: Engine.luau:261-264 adds
+# `heat += level` once per active laser and then multiplies the total by
+# CBLHeat, and the shipped logger's own candidate model does the same thing as
+# `sumCBL * 65` off the three per-laser PowerLabels.
+#
+# What that costs, stated rather than hidden: his fit spans level 1..5, i.e.
+# a = 25..125, which is ONE laser's worth.  Three maxed banks reach a = 375,
+# three times past the fitted range.  `active[row]` is a LINE, so it extends
+# exactly -- but that the reactor stays linear out there is the fit's
+# assumption and not a measurement.  Filed in QUESTIONS.md.
+CBL_BANKS = 3
+
 # His pMultiplier, as a table: the first limit the pressure is at or below wins,
 # and past the last one the amplification is 4.  Replaces the old hand-set
 # pressFactor bands ((2500, 1.15), (4000, 1.08)), which came from the Desmos
@@ -156,6 +172,115 @@ CORE_ROW_3_AT = 29500      # <  is row 2; >= is row 3
 # as "add nothing" rather than by extrapolating the fit down to a = 0.
 CBL_LEVELS = ((0, "off"), (25, "PW1"), (50, "PW2"), (75, "PW3"),
               (100, "PW4"), (125, "PW5"))
+
+# ========== THE ATMOSPHERE VENT BUTTON AND THE STALLOUT ==========
+# The operator's 2026-10-16 spec fragment:
+#
+#     if pres <= 2200 then
+#         fluc = -586 -- 实测失速暴跌速率
+#     end
+#     return fluc
+#
+# and the same message asked for an AVB button.  They are one feature: the
+# AVB's cooling IS the stallout (the wiki's Atmosphere Vent Button page: "the
+# biggest use ... is to intentionally induce a Pressure Stallout"), so the
+# button has no temperature effect of its own and the rule is a property of
+# the chamber.  That is also why they arrived together.
+#
+# `fluc` is the per-tick TEMPERATURE increment, and that is settled rather
+# than guessed: Engine.luau:319 ends the same step with
+# `s.fluctuation = s.temperature - before`, so in this project's own spelling
+# of the game "fluctuation" is literally the temperature change of one tick.
+# The stall line in the game is Engine.luau:313,
+#
+#     if s.pressure < c.Sim.StallPressure then s.temperature -= c.Sim.StallCooling end
+#
+# -- the same rule, on the same side of the equation, with 750 where he
+# measured 586.  Two differences, recorded rather than smoothed:
+#   * the comparison: the game uses `<`, his fragment uses `<=`, and the wiki's
+#     prose says "less than 2200 PSI" -- so the tie is 2 to 1 against him.  One
+#     PSI, at exactly 2200, kept as his because his is the spec written for THIS
+#     console.  Measure zero on a float run -- the same kind of note as
+#     CORE_ROW_2_AT's one degree.
+#   * the rate: 750 is what THIS REMAKE's Config carries (`Sim.StallCooling`),
+#     and 586 is what he measured off the original.  The console drew from the
+#     original everywhere else, so 586 is what is modelled here and 750 is
+#     where our own game differs.  The shipped log's six ordinary spin-downs
+#     plunge -538 .. -801 a tick (the sample at the bottom of each dip; the
+#     collapse at the end of the recording is a different regime and is left
+#     out) -- a band that contains BOTH 586 and 750, so the log cannot break
+#     the tie and does not claim to.  What breaks it is that the console is a
+#     model of the original.  `_tools/avb_from_log.py` prints the band.
+STALL_FLUC = -586.0        # his measured plunge, per tick
+
+# The vent itself.  From the wiki's Atmosphere Vent Button page, and the drop
+# is ALSO measured -- six AVB clicks in the shipped telemetry log
+# (Data/DataCollection.Log), read as the one big pressure step near each click
+# (a click lands between samples, so it has to be found as a discontinuity
+# rather than off "the sample before and after"): 6702->3202, 4238->938,
+# 4308->1008, 4654->1354, 4384->1084, 5016->1852.  Four land on exactly -3300;
+# the other two are -3300 plus the chamber's own movement across the same
+# interval (+200 and -136), which is what a click landing mid-tick looks like.
+# `_tools/avb_from_log.py` prints those six, and the stall band below.
+#
+# WHICH number the console should carry was the one real question here: our
+# own remake's Config (ReactorBackend.Config.Vent) says AtmosphereDrop = 3000
+# and Cooldown = 26.  On the drop the wiki is not of one voice either -- it
+# says "instantly reduces reactor pressure by 3300 PSI" twice and "around
+# 3000" once -- but the 3300 is what the log measured four times out of six,
+# and it is what the wiki's own 5500 threshold is made of (2200 + 3300).
+# So the console models the original with 3300; our game was left alone
+# (CLAUDE.md 1.4 #1) and both numbers are in QUESTIONS.md.
+AVB_PSI_DROP = 3300.0      # one press, one-shot -- not per tick
+AVB_STALLOUT_PSI = 2200.0  # at or below this the chamber stalls
+
+# The cooldown, in TICKS -- and the unit is the whole story.  The wiki gives
+# it twice over: "a cooldown of about 25-26 seconds, or around 15 reactor
+# ticks".  Those are the same duration in two clocks, which puts a reactor
+# tick at 25.5/15 = 1.7 s -- and THIS console's tick is the operator's own
+# `calculation.luau` tick (`task.wait(1)`, the tick its `period` box is
+# labelled after).  Every other per-tick number in this model is the
+# original's PER-TICK value rather than a per-second one -- `FAN_DRAG = 60`
+# is the wiki's own "60 PSI of pressure per core tick" -- so the cooldown is
+# carried in that same currency: 15 reactor ticks.  Our Config's 26 is the
+# same ~26 seconds spelled in ITS clock (a 1-second step), not a
+# disagreement about the device; what that means for the ~1.7x faster wall
+# clock of either model is a question, not a fix (QUESTIONS.md).
+AVB_COOLDOWN_TICKS = 15
+# The shipped log agrees with the seconds side: the gaps between its six
+# presses are 26, 58, 27, 26, 36 s, so the button was unavailable for AT
+# LEAST 26 s -- the smallest gap is the closest that log gets to a cooldown,
+# and it lands on the wiki's 25-26 s.  `_tools/avb_from_log.py` prints them.
+#
+# KNOWN SIMPLIFICATION: the wiki says the cooldown is not a constant -- "Based
+# on the State, the button will take longer to refresh after use, but will
+# always reduce roughly the same amount of PSI".  A fixed 15 ticks is the
+# state-1 reading of a state-dependent number, and the wiki gives no per-state
+# values.  Written down rather than smoothed over (QUESTIONS.md).
+
+# The wiki's third number is not a fourth rule.  It says the button "cannot
+# cool the reactor if you press it at any PSI above 5500", and 5500 is exactly
+# AVB_STALLOUT_PSI + AVB_PSI_DROP -- the highest pressure a single press can
+# still take into stallout.  Derived here so the two can never drift apart,
+# and the checker exercises both sides of it (a vent from 5500 stalls, a vent
+# from 5501 does not).
+AVB_NO_COOL_ABOVE = AVB_STALLOUT_PSI + AVB_PSI_DROP          # 5500
+
+
+def stalled(pressure):
+    """His rule's gate, written once so the panel and the model cannot
+    disagree about it: `pres <= 2200`.
+
+    The boundary is his `<=`, not Engine.luau:313's `<`.  That is deliberate
+    and it is now a minority vote: our remake's engine uses `<`, and the
+    wiki's own prose says the stall is "making chamber pressure reach less
+    than 2200 PSI".  Two sources say `<`, his spec says `<=`, and the two
+    differ at exactly one PSI -- a measure-zero point on a float run.  His is
+    the one written for THIS console, so his is the one implemented, and the
+    1-PSI tie is recorded here rather than smoothed (the same kind of note as
+    CORE_ROW_2_AT's one degree).
+    """
+    return pressure <= AVB_STALLOUT_PSI
 
 
 def core_state(temperature):
@@ -210,6 +335,40 @@ def noise(x, power):
                for amplitude, period in NOISE_TERMS)
 
 
+def step_terms(row, power, pressure, t):
+    """What one tick adds, before it is added: (baseFluc, press, actual, noise,
+    stall).
+
+    ONE SPELLING OF THE RULE, called both by Core.step and by the panel's own
+    "would add X/tick" preview.  Two spellings would let the promise and the
+    behaviour drift apart, and the drift would be silent -- which is the exact
+    failure CLAUDE.md 0.31 (1) is about.
+
+    The order matters here and it is the operator's: the STALL OUT-RANKS
+    everything else.  His rule is about the chamber, not about the lasers: at
+    2200 PSI or below the reactor is stalled and the temperature falls at the
+    measured 586 a tick whatever the row, the level and the pressure multiplier
+    say.  It is also the one case where the "off is ours" rule must NOT win --
+    turning the lasers off does not un-stall a chamber, so a stalled tick stays
+    negative with every bank dark.
+    """
+    stall = stalled(pressure)
+    base = STALL_FLUC if stall else fluctuation(row, power)
+    amp = press_multiplier(pressure)
+    # "off" is ours, not the spec's.  The fit covers levels 1..5 (a = 25..125)
+    # and there is no level 0 in it, so rather than extrapolate the line down
+    # -- which would have a dark laser bank still adding its row's intercept,
+    # +46/s at row 1 -- zero CBL adds nothing at all.
+    actual = 0.0 if (power <= 0.0 and not stall) else base * amp
+    # The tremor is the operator's own term and the stall does NOT suppress it:
+    # his `fluc = -586` is the rate, and the noise rides on the reading (that
+    # was the whole point of the 2026-10-14 revision).  It vanishes by itself
+    # when every bank is dark, because its amplitude is scaled by the level --
+    # so a stalled, dark reactor falls at exactly 586 a tick, which is a number
+    # the checker can hold him to.
+    return base, amp, actual, noise(t, power), stall
+
+
 class Sim:
     """The five values the tick carries, plus what the display wants."""
 
@@ -225,6 +384,12 @@ class Sim:
         self.period = 1.0
         self.ticks = 0
         self.delta = 0.0
+        # The vent's own state.  Presses are one-shot events, not a term in
+        # `terms()`: the wiki's drop is 3300 on the press and nothing per tick,
+        # so a button that stayed down would be a different device.
+        self.vent_ticks = 0        # ticks of cooldown still to run
+        self.vent_count = 0        # how many presses have landed
+        self.last_vent_drop = 0.0  # what the last one actually took off
 
     @property
     def elapsed(self):
@@ -243,6 +408,36 @@ class Sim:
                 PEA_GAIN[self.PEALevel],
                 -FAN_DRAG * self.ActiveFan)
 
+    @property
+    def can_vent(self):
+        return self.vent_ticks <= 0
+
+    def vent(self):
+        """Press the Atmosphere Vent Button.  Returns the PSI actually removed,
+        or None when the button is still on cooldown.
+
+        The number applied is `AVB_NO_COOL_ABOVE`'s, not the wiki's -- that 5500
+        is a statement about what the button ACHIEVES, and the achievement is the
+        stall.  There is no separate "will not cool" branch to write, because the
+        only reason to press this button is the 2200 floor and the drop is what
+        takes you to it.  What the floor itself does to the temperature is
+        `STALL_FLUC`'s job, down in Core.step.
+
+        The clamp at 0 is the only place the two numbers can disagree with the
+        wiki's arithmetic: from 1000 PSI a "3300 drop" would go negative, and
+        pressure is floored at 0 in the game (Engine.luau's final
+        `math.max(0, ...)`).  What the caller gets back is what actually moved,
+        so a log line cannot claim a drop the chamber never felt.
+        """
+        if not self.can_vent:
+            return None
+        before = self.Pressure
+        self.Pressure = max(0.0, before - AVB_PSI_DROP)
+        self.vent_ticks = AVB_COOLDOWN_TICKS
+        self.vent_count += 1
+        self.last_vent_drop = before - self.Pressure
+        return self.last_vent_drop
+
     def tick(self):
         # Latched, not derived: the original's if/elseif chain has no `else`,
         # so a Temperature below 5600 leaves the previous State standing.
@@ -256,6 +451,13 @@ class Sim:
         self.delta = sum(self.terms())
         self.Pressure += self.delta
         self.ticks += 1
+        # The cooldown runs on ticks, not seconds -- the same unit the console
+        # already uses for the fans (FAN_DRAG is the wiki's "60 PSI per core
+        # tick").  The wiki gives both spellings of the same wait ("about 25-26
+        # seconds, or around 15 ticks"), so on the tick count the console can
+        # honour exactly, its cooldown is 15 and not 26.
+        if self.vent_ticks > 0:
+            self.vent_ticks -= 1
 
 
 class Core:
@@ -303,10 +505,26 @@ class Core:
     def __init__(self):
         self.armed = False
         self.auto = True
-        self.power = CBL_START
+        # Three banks, each 0..125 in steps of 25.  The console starts where it
+        # always did -- PW2 on the first bank -- and the other two dark, so the
+        # panel opens on exactly the reading it had before this change.
+        self.banks = [CBL_START] + [0.0] * (CBL_BANKS - 1)
         self.state = 0            # the row held by hand, when auto is off
         self.t = 0.0              # his t: seconds elapsed since armed
         self.reset_trace()
+
+    @property
+    def power(self):
+        """His `a`: the SUM of the three banks.
+
+        A property rather than a stored number, because a stored total is a
+        second copy of something the banks already say and the two could drift.
+        Every reader -- `fluctuation`, `noise`, the readouts -- asks for it.
+        """
+        return sum(self.banks)
+
+    def set_bank(self, index, value):
+        self.banks[index] = float(value)
 
     def reset_trace(self):
         """The last step's numbers, for the readout.  Cleared rather than zeroed,
@@ -318,6 +536,13 @@ class Core:
         self.last_noise = 0.0
         self.last_start = 0.0
         self.last_temperature = 0.0
+        # The stall, as the step found it.  `last_pressure` is kept so the
+        # readout can be re-checked against its own gate: the tile that says
+        # "stalled" and the number it was stalled at come from one tick, and
+        # `stalled(last_pressure) == last_stall` is an invariant the checker
+        # asserts rather than a coincidence it hopes for.
+        self.last_pressure = 0.0
+        self.last_stall = False
 
     def rearm(self, sim):
         """Put his t back to 0.
@@ -351,14 +576,15 @@ class Core:
             return None
         self.t += sim.period
         row = self.row(sim)
-        amp = press_multiplier(sim.Pressure)
-        base = fluctuation(row, self.power)
-        # "off" is ours, not the spec's.  The fit covers levels 1..5 (a = 25..125)
-        # and there is no level 0 in it, so rather than extrapolate the line down
-        # -- which would have a dark laser bank still adding its row's intercept,
-        # +46/s at row 1 -- zero CBL adds nothing at all.
-        actual = 0.0 if self.power <= 0.0 else base * amp
-        tremor = noise(self.t, self.power)
+        # `sim.Pressure` here is the tick's own STARTING pressure, because this
+        # runs before Sim.tick().  Engine.luau tests the stall against the
+        # pressure AFTER that tick's update -- one tick later in the same story.
+        # The console keeps the starting value, because that is the number on
+        # the screen at the moment the operator presses Step and the readout
+        # re-checks its own tile with it; mixing the two instants is how a
+        # screen stops adding up (CLAUDE.md 0.27, second face).
+        base, amp, actual, tremor, stall = step_terms(
+            row, self.power, sim.Pressure, self.t)
         temperature = sim.Temperature + actual + tremor
         self.last_row = row
         self.last_base = base
@@ -367,6 +593,8 @@ class Core:
         self.last_noise = tremor
         self.last_start = sim.Temperature
         self.last_temperature = temperature
+        self.last_pressure = sim.Pressure
+        self.last_stall = stall
         return temperature
 
 
@@ -402,10 +630,18 @@ class Console:
         # The core model's own controls.  Its state lives in Core, but every
         # widget needs a variable to read its position from.
         self.arm_var = tk.BooleanVar(value=self.core.armed)
-        self.cbl_var = tk.IntVar(value=int(self.core.power))
+        # One variable per laser bank, not one for "the CBL level": there are
+        # three devices down there and the panel has to be able to hold them at
+        # three different powers.
+        self.cbl_vars = [tk.IntVar(value=int(bank)) for bank in self.core.banks]
         self.core_var = tk.IntVar(value=self.core.state)
         self.auto_var = tk.BooleanVar(value=self.core.auto)
         self.core_text = tk.StringVar()
+
+        # The vent's own widgets, so its cooldown can be shown and the button
+        # taken out of service while it runs.
+        self.vent_button = None
+        self.vent_text = tk.StringVar()
 
         # The two temperature widgets are held so the model can take them out of
         # service while it is armed -- see _sync_core_widgets.
@@ -471,6 +707,24 @@ class Console:
                             variable=self.fan_var,
                             command=self.on_fan).pack(side="left", padx=2)
 
+        # The Atmosphere Vent Button, beside the fans because it is the other
+        # thing that moves pressure -- and it is NOT a term in the sum above:
+        # it is a one-shot event, so it could not be a row of radios even if it
+        # wanted to be.  The cooldown is shown as a number rather than as a
+        # disabled button alone, because "you cannot press this" and "this
+        # thing has no function" look the same on a greyed-out widget
+        # (CLAUDE.md 0.19's family).
+        avb = ttk.LabelFrame(parent, text="Atmosphere vent (AVB)", padding=6)
+        avb.pack(fill="x", pady=4)
+        self.vent_button = ttk.Button(avb, text="VENT  -%g PSI" % AVB_PSI_DROP,
+                                      command=self.on_vent)
+        self.vent_button.pack(side="left")
+        ttk.Label(avb, textvariable=self.vent_text, font=self.MONO,
+                  ).pack(side="left", padx=(8, 0))
+        ttk.Label(avb, text="stall at %g; no cooling above %g"
+                  % (AVB_STALLOUT_PSI, AVB_NO_COOL_ABOVE),
+                  font=self.MONO).pack(side="left", padx=(10, 0))
+
         temp = ttk.LabelFrame(parent, text="Temperature", padding=6)
         temp.pack(fill="x", pady=4)
         # A slider cannot step by 1: ttk::scale has no -resolution (that is the
@@ -533,12 +787,22 @@ class Console:
         # use one: one click, one value, and what is selected stays visible.  The
         # captions come from the table, so a button cannot name a power the model
         # does not use.
-        power = ttk.Frame(core)
+        #
+        # ONE ROW PER LASER.  The game has three and each carries its own
+        # PW1..PW5, so a single "CBL" row would be a control the reactor does not
+        # have.  The model still consumes their sum -- see CBL_BANKS -- but the
+        # sum is now something the panel computes rather than something it
+        # assumes.
+        power = ttk.LabelFrame(core, text="CBL banks (a = the sum)", padding=6)
         power.pack(fill="x", pady=(4, 0))
-        ttk.Label(power, text="CBL").pack(side="left")
-        for value, name in CBL_LEVELS:
-            ttk.Radiobutton(power, text=name, value=value, variable=self.cbl_var,
-                            command=self.on_power).pack(side="left", padx=2)
+        for index, var in enumerate(self.cbl_vars):
+            line = ttk.Frame(power)
+            line.pack(fill="x")
+            ttk.Label(line, text="CBL %d" % (index + 1), width=6,
+                      ).pack(side="left")
+            for value, name in CBL_LEVELS:
+                ttk.Radiobutton(line, text=name, value=value, variable=var,
+                                command=self.on_power).pack(side="left", padx=2)
 
         rows = ttk.Frame(core)
         rows.pack(fill="x", pady=(2, 0))
@@ -607,6 +871,18 @@ class Console:
                                lambda: shown(self.sim.elapsed))
         row = self.add_readout(parent, row, "Tick period",
                                lambda: luau_number(self.sim.period))
+        # The vent and the stall, read live: this is the pressure the NEXT step
+        # will gate on, so it is the number the operator is deciding with.
+        row = self.add_readout(parent, row, "stallout  pres <= %g" % AVB_STALLOUT_PSI,
+                               lambda: "STALLED" if stalled(self.sim.Pressure)
+                               else "no")
+        row = self.add_readout(parent, row, "vent  cooldown left (ticks)",
+                               lambda: str(self.sim.vent_ticks))
+        # Dashed until a press has landed, so a 0 cannot be read as "the vent
+        # did nothing" when in fact it has not been pressed.
+        row = self.add_readout(parent, row, "vent  last drop (PSI)",
+                               lambda: "-" if not self.sim.vent_count
+                               else shown(self.sim.last_vent_drop))
 
         ttk.Separator(parent, orient="horizontal",
                       ).grid(row=row, column=0, columnspan=2, sticky="ew",
@@ -640,6 +916,20 @@ class Console:
         # is off, so nothing here can show a step that did not happen.
         row = self.add_readout(parent, row, "T   this step starts from",
                                lambda: shown(self.sim.Temperature))
+        # The three banks, and the sum the fit actually consumes.  `a` is read
+        # live rather than off the trace because it is a control position, not a
+        # term of the step -- and because a control that has been moved clears
+        # the trace anyway (see _line_changed).
+        row = self.add_readout(parent, row, "a1 / a2 / a3  banks",
+                               lambda: " / ".join(shown(bank)
+                                                  for bank in self.core.banks))
+        row = self.add_readout(parent, row, "a   total = his a",
+                               lambda: shown(self.core.power))
+        row = self.add_readout(parent, row, "p   this step started from",
+                               lambda: self._step_value("last_pressure"))
+        row = self.add_readout(parent, row, "stall  this step",
+                               lambda: "-" if self.core.last_row is None
+                               else ("STALL" if self.core.last_stall else "no"))
         row = self.add_readout(parent, row, "t   elapsed since armed (s)",
                                lambda: luau_number(self.core.t))
         row = self.add_readout(parent, row, "row  (ACTIVE/PASSIVE index)",
@@ -722,11 +1012,47 @@ class Console:
         self.on_input("core model %s" % ("armed" if self.core.armed else "off"))
 
     def on_power(self):
-        self.core.power = float(self.cbl_var.get())
+        """One of the bank radios moved.
+
+        All three are read back, not just the one that fired: the command is
+        bound once per button and a single callback cannot tell which one called
+        it, and reading all three is what makes the sum the panel's own number
+        instead of a guess at it.
+        """
+        for index, var in enumerate(self.cbl_vars):
+            self.core.set_bank(index, var.get())
         self._line_changed()
-        self.on_input("CBL power = %g  (his a; level %s)"
-                      % (self.core.power,
+        self.on_input("CBL banks = %s  (a = %g; level %s)"
+                      % (" / ".join(shown(bank) for bank in self.core.banks),
+                         self.core.power,
                          luau_number(self.core.power / CBL_UNIT)))
+
+    def on_vent(self):
+        """Press the AVB.
+
+        The button is disabled while the cooldown runs, but the guard here is
+        not a copy of that: a disabled widget is a state of the WIDGET, and this
+        is the rule of the DEVICE.  A path to a reading with two ends is how a
+        screen starts lying (CLAUDE.md 0.26, first face).
+        """
+        before = self.sim.Pressure
+        drop = self.sim.vent()
+        if drop is None:
+            self.log("# AVB refused: %d ticks of cooldown left"
+                     % self.sim.vent_ticks)
+        else:
+            self.log("# AVB: %s -> %s PSI (-%s), cooldown %d ticks"
+                     % (shown(before), shown(self.sim.Pressure), shown(drop),
+                        AVB_COOLDOWN_TICKS))
+            if stalled(self.sim.Pressure):
+                # The whole point of the button, and the moment the operator's
+                # stall rule starts charging 586 a tick.  Said out loud because
+                # the temperature readout alone would look like a slow leak.
+                self.log("# AVB: chamber at or below %g -- STALLED.  T now "
+                         "falls %g per tick while it holds"
+                         % (AVB_STALLOUT_PSI, STALL_FLUC))
+        self._refresh()
+        self._schedule()
 
     def on_core_state(self):
         self.core.state = int(self.core_var.get())
@@ -758,14 +1084,20 @@ class Console:
         the same way the pressure readouts expose the four terms of one sum.
         """
         core = self.core
+        banks = " / ".join(shown(bank) for bank in core.banks)
         if not core.armed:
             row = core.row(self.sim)
-            base = fluctuation(row, core.power)
-            actual = (0.0 if core.power <= 0.0
-                      else base * press_multiplier(self.sim.Pressure))
+            # The preview calls the SAME function the step does, so "would add"
+            # cannot come out as a second opinion -- and that includes the stall
+            # branch, which the old preview would have had no way to know about.
+            base, amp, actual, tremor, stall = step_terms(
+                row, core.power, self.sim.Pressure, core.t + self.sim.period)
             return ("off - the slider owns Temperature\n"
-                    "row %d at T = %s would add %s/tick"
-                    % (row, shown(self.sim.Temperature), shown(actual)))
+                    "a %s = %g   row %d at T = %s\n"
+                    "would add %s/tick (x %s)%s"
+                    % (banks, core.power, row, shown(self.sim.Temperature),
+                       shown(actual), luau_number(amp),
+                       "  STALL" if stall else ""))
         row = core.last_row if core.last_row is not None else core.row(self.sim)
         # Before the first step there are no terms to report, and a zero would
         # read as one.  Same dash convention as the readouts above.
@@ -774,18 +1106,24 @@ class Console:
         def num(value):
             return "-" if fresh else shown(value)
 
+        stall = core.last_stall and not fresh
         return ("t      %s s      T %s\n"
-                "row    %s%s   baseFluc %s\n"
-                "CBL    %g (lv %s)   press x%s\n"
+                "row    %s%s   baseFluc %s%s\n"
+                "a      %s = %g (lv %s)   press x %s\n"
                 "actual %s      noise %s\n"
+                "p      %s      %s\n"
                 "T'     %s"
                 % (luau_number(core.t), shown(self.sim.Temperature),
                    row, " (auto)" if core.auto else " (held)",
                    num(core.last_base),
-                   core.power, luau_number(core.power / CBL_UNIT),
+                   "   STALL %g" % STALL_FLUC if stall else "",
+                   banks, core.power, luau_number(core.power / CBL_UNIT),
                    luau_number(core.last_amp),
                    num(core.last_actual),
                    num(core.last_noise),
+                   num(core.last_pressure),
+                   "STALL - pres <= %g" % AVB_STALLOUT_PSI if stall
+                   else "stall no",
                    num(core.last_temperature)))
 
     def on_temp(self, _value=None):
@@ -941,6 +1279,17 @@ class Console:
         for var, getter in self.readouts:
             var.set(getter())
         self.core_text.set(self._core_text())
+        if self.vent_button is not None:
+            # A greyed-out button with nothing beside it reads as "this thing is
+            # broken"; the word is what separates "out of service for N ticks"
+            # from "has no function" (CLAUDE.md 0.19's family -- invisible and
+            # absent are two failures, and they need two readings).
+            if self.sim.can_vent:
+                self.vent_button.configure(state="normal")
+                self.vent_text.set("ready")
+            else:
+                self.vent_button.configure(state="disabled")
+                self.vent_text.set("cooldown %d" % self.sim.vent_ticks)
         self.status.configure(
             text="tick %d    elapsed %s s    %s"
                  % (self.sim.ticks, shown(self.sim.elapsed),

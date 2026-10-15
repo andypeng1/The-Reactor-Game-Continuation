@@ -94,6 +94,24 @@ def log_text(console):
     return console.log_text.get("1.0", "end")
 
 
+def readout(values, prefix):
+    """The one reading whose label starts with `prefix`.
+
+    `screen()` is keyed by rendered LABEL TEXT, which is what makes it a real
+    reading of the screen rather than a lookup of the model -- but one label
+    embeds a number the model also carries (`stallout  pres <= 2200`), and
+    addressing it by its full text would make a change to that constant raise
+    KeyError inside the checker instead of failing the check about it.  A crash
+    and a red check are different readings (core_model_mutants.py is what found
+    this), so the number is left out of the address and the prefix is asserted
+    unique instead.
+    """
+    hits = [key for key in values if key.startswith(prefix)]
+    if len(hits) != 1:
+        raise KeyError("%r matched %d readings: %r" % (prefix, len(hits), hits))
+    return values[hits[0]]
+
+
 # ========== his equation, transcribed from the spec ==========
 # Literals as handed over, in his order.  This is a second spelling of the spec,
 # not a call back into gui.py.
@@ -151,7 +169,7 @@ def main():
     print("\n-- core model off (the console as it was) --")
     check("Arm starts unchecked", console.arm_var.get(), False)
     check("T' is blank before any step", values["T'  next tick's temperature"], "-")
-    check("the readout list is what the grid holds", len(values) >= 21, True)
+    check("the readout list is what the grid holds", len(values) >= 28, True)
 
     for _ in range(3):
         console.step_once()
@@ -206,7 +224,9 @@ def main():
           "disabled")
     check("row buttons off while auto", str(console.core_buttons[0].cget("state")),
           "disabled")
-    check("CBL starts at PW2", console.cbl_var.get(), 50)
+    check("CBL starts at PW2 on the first bank", console.cbl_vars[0].get(), 50)
+    check("...and the other two are dark",
+          [var.get() for var in console.cbl_vars[1:]], [0, 0])
     headers = [text_of(w) for w in right.winfo_children()
                if "core model" in text_of(w)]
     check("the panel prints his equation",
@@ -377,13 +397,18 @@ def main():
     console.on_auto()
     console.core_var.set(3)
     console.on_core_state()
-    console.cbl_var.set(125)
+    # ONE bank at PW5, the other two dark.  His fit's `a` runs 25..125, which is
+    # a single laser's worth, so "PW5 on the console" is a = 125 and not 375 --
+    # the three-maxed case is its own check below, marked as an extrapolation.
+    console.cbl_vars[0].set(125)
+    for var in console.cbl_vars[1:]:
+        var.set(0)
     console.on_power()
     check("his `a` is the power value", console.core.power, 125.0)
     console.step_once()
     values = screen(right)
     check("row 3 held", values["row  (ACTIVE/PASSIVE index)"], "3")
-    check("full power on screen, his literals",
+    check("PW5 on one bank is his a = 125, his literals",
           values["baseFluc  active + passive"],
           gui.shown(his_base_fluc(3, 5)))
 
@@ -393,7 +418,8 @@ def main():
     # intercept).  The tremor scales with the level, so it goes quiet too, and
     # the reading holds exactly still.
     print("\n-- off (level 0, not in the fit) --")
-    console.cbl_var.set(0)
+    for var in console.cbl_vars:
+        var.set(0)
     console.on_power()
     temp = console.sim.Temperature
     console.step_once()
@@ -427,6 +453,170 @@ def main():
     console.on_temp_box()
     values = screen(right)
     check("the slider works again", values["Temperature"], "9000")
+
+    # --- the three laser banks ----------------------------------------------
+    # The game has three combustion lasers and each carries its own PW1..PW5, so
+    # the panel has three rows of radios; what the fit eats is their SUM.  Held
+    # on row 3, where `a` has the largest coefficient (6.8), so a check made here
+    # fails loudly if the sum is ever read as only one bank -- on row 0 `a` does
+    # nothing at all and every version of this would pass (CLAUDE.md 0.31 (1)).
+    print("\n-- three banks, and their sum is his a --")
+    console.reset()
+    console.arm_var.set(True)
+    console.on_arm()
+    console.auto_var.set(False)
+    console.on_auto()
+    console.core_var.set(3)
+    console.on_core_state()
+    for index, power in enumerate((75, 25, 0)):
+        console.cbl_vars[index].set(power)
+    console.on_power()
+    check("the three banks hold three different powers", console.core.banks,
+          [75.0, 25.0, 0.0])
+    check("his `a` is their sum, not any one of them", console.core.power, 100.0)
+    console.step_once()
+    values = screen(right)
+    check("the three banks on screen", values["a1 / a2 / a3  banks"],
+          "75 / 25 / 0")
+    check("the sum on screen", values["a   total = his a"], "100")
+    check("row 3 at a = 100 is his level 4, his literals",
+          values["baseFluc  active + passive"], gui.shown(his_base_fluc(3, 4)))
+
+    # a = 375 is past the end of the fit.  Said out loud in the run, not only in
+    # the source comment: the line extends exactly, and that the reactor stays
+    # linear out there is the fit's assumption rather than a measurement.
+    for var in console.cbl_vars:
+        var.set(125)
+    console.on_power()
+    check("three maxed banks reach a = 375", console.core.power, 375.0)
+    check("...which is his own line, three times past the fitted range",
+          gui.fluctuation(3, 375.0), his_base_fluc(3, 15))
+    print("     (the fit covers a = 25..125, i.e. ONE bank; a = 375 is an "
+          "extrapolation -- QUESTIONS.md)")
+
+    # --- the stall, which is the operator's rule ----------------------------
+    # Driven rather than planted: the fans walk the pressure down at 194 a tick
+    # and the loop stops when the SCREEN says the chamber is stalled -- the
+    # readout is the gate, so the run cannot disagree with the panel about when
+    # it got there.
+    print("\n-- the stall: his `if pres <= 2200 then fluc = -586` --")
+    console.reset()
+    console.arm_var.set(True)
+    console.on_arm()
+    for var in console.cbl_vars:
+        var.set(0)
+    console.on_power()
+    console.fan_var.set(6)
+    console.on_fan()
+    steps = 0
+    while steps < 500:
+        console.step_once()
+        steps += 1
+        if readout(screen(right), "stallout") == "STALLED":
+            break
+    values = screen(right)
+    check("the fans walked the pressure into the stall", steps < 500, True)
+    check("...and the panel says so", readout(values, "stallout"), "STALLED")
+    check("...with the chamber still above the floor",
+          float(values["Pressure"]) > 0, True)
+
+    before = console.sim.Temperature
+    console.step_once()
+    values = screen(right)
+    check("the step gated on it", values["stall  this step"], "STALL")
+    check("his -586, exactly, with every bank dark",
+          values["actualFluc  base x press"], "-586")
+    check("...and the temperature moved by exactly that",
+          console.sim.Temperature - before, gui.STALL_FLUC)
+    check("...which the screen agrees with",
+          values["T'  next tick's temperature"],
+          gui.shown(console.sim.Temperature))
+    check("...and the tile re-checks its own gate",
+          gui.stalled(console.core.last_pressure), console.core.last_stall)
+    check("...and the pressure it gated on is on the screen",
+          values["p   this step started from"],
+          gui.shown(console.core.last_pressure))
+
+    # The boundary, which is the spec's `<=` and not Engine.luau:313's `<`.
+    # Both spellings are exercised so a future edit to either is a red check and
+    # not a rumour; the one PSI between them is measure zero on a float run.
+    print("\n-- the gate, at his boundary --")
+    check("stalled(2200) -- his `<=`", gui.stalled(2200.0), True)
+    check("stalled(2200.1) -- not quite", gui.stalled(2200.1), False)
+    check("stalled(0) is still stalled", gui.stalled(0.0), True)
+
+    # --- the Atmosphere Vent Button -----------------------------------------
+    # Pressure is PLANTED here, not driven, because the console has no pressure
+    # control -- the operator's own way down is the fans, and that path is
+    # exercised above.  What is under test below is the button's arithmetic and
+    # its clock, and both are about a single press.
+    print("\n-- AVB: -3300, once, then 15 ticks --")
+    console.reset()
+    console.arm_var.set(True)
+    console.on_arm()
+    for var in console.cbl_vars:
+        var.set(0)
+    console.on_power()
+    console.sim.Pressure = 5016.0
+    console.on_vent()
+    values = screen(right)
+    check("the press took the wiki's 3300",
+          values["vent  last drop (PSI)"], "3300")
+    check("...off the pressure that was on the screen", values["Pressure"], "1716")
+    check("the cooldown is the wiki's 15 ticks",
+          values["vent  cooldown left (ticks)"], "15")
+    check("the button is out of service", str(console.vent_button.cget("state")),
+          "disabled")
+    check("...and says WHY, not just grey", console.vent_text.get(), "cooldown 15")
+
+    # A press is an EVENT.  If the drop were a term in `terms()` the temperature
+    # would fall 3300 a tick for as long as the button was held, which is a
+    # different device -- and "nothing happened" is what that looks like from
+    # one reading, so the clock and the pressure are both read.
+    print("\n-- the vent is a one-shot, not a per-tick term --")
+    held = console.sim.Pressure
+    console.on_vent()
+    check("a second press is refused", "AVB refused" in log_text(console), True)
+    check("...and it moved nothing", console.sim.Pressure, held)
+    check("...and it did not restart the clock", console.sim.vent_ticks, 15)
+
+    print("\n-- the cooldown runs on the console's own tick --")
+    for n in range(1, 16):
+        console.step_once()
+        values = screen(right)
+        check("cooldown with %2d tick(s) to go" % (15 - n),
+              values["vent  cooldown left (ticks)"], str(15 - n))
+    check("...and the button is back", str(console.vent_button.cget("state")),
+          "normal")
+    check("...and says so", console.vent_text.get(), "ready")
+
+    # The wiki's third number is not a fourth rule: 5500 is exactly
+    # 2200 + 3300, the highest pressure one press can still stall from.  Both
+    # sides of it are pressed, so the derivation is a reading and not a claim.
+    print("\n-- the wiki's 5500 is the derivation 2200 + 3300 --")
+    console.reset()
+    console.sim.Pressure = gui.AVB_NO_COOL_ABOVE          # 5500
+    console.on_vent()
+    values = screen(right)
+    check("a press at 5500 lands exactly on the floor", values["Pressure"], "2200")
+    check("...and that IS a stall", readout(values, "stallout"), "STALLED")
+    console.reset()
+    console.sim.Pressure = gui.AVB_NO_COOL_ABOVE + 1.0    # 5501
+    console.on_vent()
+    values = screen(right)
+    check("a press one PSI higher does not", values["Pressure"], "2201")
+    check("...and is not a stall", readout(values, "stallout"), "no")
+
+    # From below the drop, the number the caller gets back is what actually
+    # moved -- otherwise the log would claim 3300 the chamber never felt.
+    print("\n-- the drop is clamped, and what is reported is what moved --")
+    console.reset()
+    console.sim.Pressure = 1000.0
+    console.on_vent()
+    values = screen(right)
+    check("from 1000 the drop reported is the 1000 there was",
+          values["vent  last drop (PSI)"], "1000")
+    check("...and the pressure is floored at 0", values["Pressure"], "0")
 
     root.destroy()
     print("\n%d checks, %d failed" % (CHECKS[0], len(FAILURES)))

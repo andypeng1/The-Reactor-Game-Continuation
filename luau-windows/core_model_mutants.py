@@ -1,0 +1,188 @@
+"""core_model_mutants.py -- do the checks in core_model_check.py have teeth?
+
+    python core_model_mutants.py
+
+A green checker proves nothing on its own.  CLAUDE.md 0.31 (1) is the reason
+this file exists: an assertion can pass because the thing it is about is not in
+the room, and the run looks exactly the same as a real pass.  The question to
+ask about every check is "to make THIS red, what has to be present?", and the
+only honest way to answer it is to break the thing on purpose and watch.
+
+So: each mutant below is one small edit to `gui.py`, applied to a COPY in a
+temporary directory.  The checker then runs against the copy.  A mutant that
+leaves the checker green is a HOLE -- some line the checks never actually read
+-- and this script exits 1.  Each mutant also names the check it must redden,
+because "something went red" is not the same reading as "the right thing went
+red" (the failure count alone cannot tell those apart).
+
+Three things this deliberately does NOT do:
+
+  * it does not mutate the working tree -- the edits happen in a temp dir, so a
+    crash mid-run cannot leave a half-edited gui.py behind (CLAUDE.md 0.4);
+  * it does not skip the baseline -- if the unmutated checker is already red,
+    every mutant "fails" for that reason and the whole run is noise, so the
+    baseline is run first and a red one aborts;
+  * it does not compare counts of failures -- one mutant reddening forty checks
+    is not a better mutant than one reddening exactly the one it should.
+
+ASCII only on stdout: this console is GBK.
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+CHECKER = "core_model_check.py"
+TARGET = "gui.py"
+
+# (name, the exact text to replace, what to put there, a check that MUST fail)
+#
+# Every `old` must appear EXACTLY ONCE in gui.py -- asserted below rather than
+# hoped for, because a substring anchor that matches in the wrong place is
+# CLAUDE.md 0.13, and it fails by silently editing something else.
+MUTANTS = (
+    ("the stall rate becomes our own game's",
+     "STALL_FLUC = -586.0",
+     "STALL_FLUC = -750.0",
+     "his -586, exactly, with every bank dark"),
+
+    ("the stall gate is written with a bare <",
+     "    return pressure <= AVB_STALLOUT_PSI",
+     "    return pressure < AVB_STALLOUT_PSI",
+     "stalled(2200) -- his `<=`"),
+
+    ("the stall floor moves off 2200",
+     "AVB_STALLOUT_PSI = 2200.0",
+     "AVB_STALLOUT_PSI = 2500.0",
+     "stalled(2200.1) -- not quite"),
+
+    ("the stall is not remembered for the readout",
+     "        self.last_stall = stall",
+     "        self.last_stall = False",
+     "the step gated on it"),
+
+    ("a stalled tick is allowed to be zeroed by the dark lasers",
+     "    actual = 0.0 if (power <= 0.0 and not stall) else base * amp",
+     "    actual = 0.0 if power <= 0.0 else base * amp",
+     "his -586, exactly, with every bank dark"),
+
+    ("the vent takes our own Config's 3000 instead of the measured 3300",
+     "AVB_PSI_DROP = 3300.0",
+     "AVB_PSI_DROP = 3000.0",
+     "the press took the wiki's 3300"),
+
+    ("the drop is allowed to go negative",
+     "        self.Pressure = max(0.0, before - AVB_PSI_DROP)",
+     "        self.Pressure = before - AVB_PSI_DROP",
+     "the pressure is floored at 0"),
+
+    ("our Config's 26 ticks carried into the original's tick length",
+     "AVB_COOLDOWN_TICKS = 15",
+     "AVB_COOLDOWN_TICKS = 26",
+     "the cooldown is the wiki's 15 ticks"),
+
+    ("the cooldown never runs",
+     "        if self.vent_ticks > 0:\n            self.vent_ticks -= 1",
+     "        if self.vent_ticks > 0:\n            pass",
+     "cooldown with 14 tick(s) to go"),
+
+    ("the press does not start the clock at all",
+     "        self.vent_ticks = AVB_COOLDOWN_TICKS",
+     "        self.vent_ticks = 0",
+     "the cooldown is the wiki's 15 ticks"),
+
+    ("his `a` reads one bank instead of the sum",
+     "        return sum(self.banks)",
+     "        return self.banks[0]",
+     "his `a` is their sum, not any one of them"),
+)
+
+
+def read(path):
+    with open(path, "rb") as handle:
+        return handle.read().decode("utf-8")
+
+
+def run_checker(where):
+    """Run the checker in `where`.
+
+    Returns (number of checks run, [failed check names]).  The first is None
+    when the checker never got to its own summary line, which is a crash and
+    not an empty run (CLAUDE.md 0.6: a crash and a pass can leave the same exit
+    code, so the TEXT is what says which happened).
+    """
+    proc = subprocess.run([sys.executable, "-X", "utf8", CHECKER],
+                          cwd=where, stdout=subprocess.PIPE,
+                          stderr=subprocess.STDOUT)
+    text = proc.stdout.decode("utf-8", "replace")
+    failed = [line.split("FAILED:", 1)[1].strip()
+              for line in text.splitlines() if line.startswith("  FAILED:")]
+    for line in text.splitlines():
+        if line.endswith("failed") and "checks," in line:
+            return int(line.split()[0]), failed
+    return None, text.strip().splitlines()[-6:]
+
+
+def main():
+    source = read(os.path.join(HERE, TARGET))
+    for name, old, _new, _want in MUTANTS:
+        hits = source.count(old)
+        # Anchors are asserted unique BEFORE anything is written -- the whole
+        # point of 0.13 is that a non-unique anchor edits the wrong block and
+        # says nothing.
+        if hits != 1:
+            print("BAD ANCHOR  %s: %d occurrence(s) in %s" % (name, hits, TARGET))
+            return 1
+
+    where = tempfile.mkdtemp(prefix="trg_mutants_")
+    try:
+        shutil.copyfile(os.path.join(HERE, CHECKER), os.path.join(where, CHECKER))
+        print("baseline: the unmutated checker, in %s" % where)
+        shutil.copyfile(os.path.join(HERE, TARGET), os.path.join(where, TARGET))
+        total, failed = run_checker(where)
+        if total is None or failed:
+            print("baseline is %s -- every mutant below would 'fail' for that "
+                  "reason and the run would be noise"
+                  % ("a crash: %s" % failed if total is None else "already red"))
+            return 1
+        print("baseline ok: %d checks, 0 failed\n" % total)
+
+        holes = []
+        for name, old, new, want in MUTANTS:
+            with open(os.path.join(where, TARGET), "wb") as handle:
+                handle.write(source.replace(old, new).encode("utf-8"))
+            total, failed = run_checker(where)
+            if total is None:
+                print("CRASH  %-56s %s" % (name, failed))
+                holes.append(name)
+                continue
+            # Substring, not equality: the `want` strings above are written the
+            # way a reader would say the check out loud, and the check's own
+            # name may carry a prefix ("...and the pressure is floored at 0").
+            hit = any(want in name for name in failed)
+            print("%5s  %-56s %2d red%s"
+                  % ("ok" if (failed and hit) else "HOLE", name, len(failed),
+                     "" if hit else "   -- but not: %s" % want))
+            if not failed or not hit:
+                holes.append(name)
+                if failed:
+                    print("         it reddened: %s" % "; ".join(failed[:4]))
+        print("\n%d mutants, %d survived or reddened the wrong check"
+              % (len(MUTANTS), len(holes)))
+        return 1 if holes else 0
+    finally:
+        shutil.rmtree(where, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except BaseException:               # noqa: BLE001 -- CLAUDE.md 0.6: an
+        import traceback                # uncaught exception here can leave
+        traceback.print_exc()           # rc = 0, and "the runner crashed"
+        sys.exit(1)                     # then reads as "no holes found".

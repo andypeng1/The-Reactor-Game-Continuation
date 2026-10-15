@@ -1794,6 +1794,74 @@ first three ticks cannot see that shape. See PROGRESS.md Phase 131, DECISIONS_2 
 docs/SYSTEMS.md 2.26, docs/SNIPPETS.md 5.38.
 
 
+### Phase 135 - three laser banks, an AVB button, and the stall he measured
+
+**No game code was changed this phase either.** Three changes went into the console, in the order
+he asked for them: the CBL is now **three independently selectable banks** instead of one
+five-position control, the AVB button exists, and his stall rule - a line of Lua he pasted, with
+its own gloss "实测失速暴跌速率" - is in the model.
+
+```
+CBL   three rows, each off / PW1..PW5 = 0/25/50/75/100/125
+      the model takes `a` = the SUM of the three banks
+AVB   3300 PSI off the chamber, floored at 0, then 15 ticks before it answers again
+STALL if pressure <= 2200 then the tick's fluctuation is -586, whatever the lasers are doing
+```
+
+**His spec was half a line.** What arrived was `if pres <= 2200 then fluc = -586` with the tail of
+the *previous* line (`破2200)`) still attached to the front, which reads as two rules until you
+notice the first fragment has no opener. It takes over two things at once - the tick's fluctuation
+*and* the earlier "off adds nothing, which also silences the noise" - and both are written into the
+comment, because a spec dropped into a model has to be asked what it overrides (DECISIONS_2 577).
+
+**All three constants were read off the shipped game's own recording**, `Data/DataCollection.Log`,
+through `_tools/avb_from_log.py`, so none of them is remembered:
+
+- **The six AVB presses** have to be read as a *discontinuity*, not as "the sample before and the
+  sample after". The recorder samples faster than the game ticks, so a press landing in the same
+  second as a tick can have the step already inside its first sample and read `drop 0` - which is
+  what three of the six did, before the log was deduplicated and the drop taken as the largest
+  one-tick step within ±6 s. **Four of the six then read 3300 exactly** (6702→3202, 3300 with the
+  chamber's own +0/+0/+200 drift printed beside it). DECISIONS_2 574.
+- **The stall band is -538 .. -801**, and it contains **both** his -586 and our own remake's
+  `Config.StallCooling = 750`. A band that holds both candidates chooses neither, so the console
+  takes his because it models the original, not because of a reading. DECISIONS_2 575.
+- **The cooldown is 15 ticks**, which is *not* a disagreement with our remake's `Cooldown = 26`.
+  The wiki's "about 25-26 seconds, or around 15 reactor ticks" is one duration in two clocks
+  (25.5/15 ≈ 1.7 s per core tick); every other per-tick constant here is the original's per-core-tick
+  value (`FAN_DRAG = 60` is the wiki's "60 PSI of pressure per core tick"), so 15 is the consistent
+  currency and 26 is the same ~26 s in our remake's own 1-second clock. The log's own six press gaps
+  (26, 58, 27, 26, 36 s) put a floor under it. DECISIONS_2 579.
+
+Two of the wiki's own sentences are recorded as **known simplifications** rather than smoothed: the
+cooldown is state-dependent in the original ("Based on the State, the button will take longer to
+refresh after use") with no per-state values given, so 15 is a state-1 reading of a state-dependent
+number (DECISIONS_2 580); and the wiki is not of one voice on the drop either - "3300 PSI" twice,
+"around 3000" once, with its own 5500 threshold (= 2200 + 3300) derived from the 3300.
+
+**The instruments.** `core_model_check.py` is the second spelling of the same spec and reads every
+number off the widgets: **154 checks, 0 failed**. It is not enough on its own - a green checker
+proves nothing - so `core_model_mutants.py` breaks `gui.py` on purpose, eleven times, each in a temp
+copy and each naming the check it must redden: **11 mutants, 0 survived**. Its first draft reported
+two holes that were not holes: one mutant *crashed* the checker (a crash and a failure leave the
+same failure count - CLAUDE.md 0.6), and one reddened a check whose name carries a prefix, which an
+equality match read as "survived". So it reports three things, not one: crashed / reddened the wrong
+check / reddened the right one. DECISIONS_2 578.
+
+`_tools/avb_from_log.py` itself had three defects, all of the "wrong ruler, no error" family: the
+undeduplicated press straddle, the collapse at the end of the recording averaged into the stall
+band (it is a different regime - pressure still falling across the whole run, temperature collapsing
+with it), and the pre-start rows (`GameActive = false`, 0 PSI) dragging a 0 into the band. The
+dashboard's claim that "750 is not in the band" was mine and was wrong.
+
+**Not verified:** nothing was pushed to Studio, Play was never entered, and no window appeared on his
+screen - this is the desktop side, and the console is verified by reading numbers off its widgets,
+not by looking at it. `a = 375` (three banks at PW5) is **three times** the fitted range (25..125)
+and is an extrapolation, labelled as one. Whether "三个激光" means three banks is asked in
+QUESTIONS.md R9, and the 3000-vs-3300 in our own `Config.Vent` in R10. See PROGRESS.md Phase 135,
+DECISIONS_2 574-580, docs/SYSTEMS.md 2.27, docs/SNIPPETS.md 5.40.
+
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real
