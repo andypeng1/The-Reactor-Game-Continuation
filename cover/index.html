@@ -6,38 +6,42 @@
 <!--
   ============================================================================
   TRG:AIREMAKE 的游戏封面 —— 1080x1080（1:1）
-  Phase 132，2026-10-15。操作员原话：「帮我做一个TRG:AIREMAKE的游戏封面1：1」。
 
-  这是**一张静止的画**，不是片子。但它遵守和 intro/ promo/ 完全相同的契约，
-  因为渲染它的就是同一台尺子（_tools/intro_render.js）：
-    - 一个固定的设计空间 #stage（这里是 1080x1080），整块按 k 等比缩放居中；
+  Phase 132（2026-10-15）建：操作员原话「帮我做一个TRG:AIREMAKE的游戏封面1：1」。
+  Phase 133：六边里的实拍换成厂标（原话「好吧，不用实拍图片」）。
+  Phase 134（同一天）：**砍到四样东西**。原话「要素太多了，不需要这么复杂」。
+
+    走掉的：顶栏三行小字 + 顶部细线、压在六边上的两条 HUD 读数、
+    标题下面的副题和 specs、四格读数条、标题上那条斜纹带、背景的透视网格与
+    六边纹、堆芯后面那团光晕、底边的警示斜纹、六边的两圈外虚线与六个顶点刻线、
+    CRT 三条里的噪点。
+    留下的：**外框 / 六边 + 厂标 / 标题 + AIREMAKE 徽章 / 页脚**。
+
+  **契约**没变，一个字都没变（见下面 render 那一段）：
+    - 一个固定的设计空间 #stage（1080x1080），整块按 k 等比缩放居中；
     - 页面上有一个全局函数 render(t)，渲染器靠调它来成帧。
-  封面没有时钟，所以本页的 render(t) **接受 t 并忽略它** —— 每一次调用都画出
-  同一幅画，这正是"封面"的意思。这不是给检查器开的口子：本页**没有任何
-  随时间变化的东西**，没有状态可以残留，也就没有帧需要倒。
+  封面没有时钟，所以本页的 render(t) **接受 t 并忽略它** —— 每一次调用都画出同一
+  幅画，这正是"封面"的意思。这不是给检查器开的口子：本页**没有任何随时间变化的
+  东西**，没有状态可以残留，也就没有帧需要倒。
+  渲染它的是和 intro/ promo/ 同一台尺子（_tools/intro_render.js）。
 
-  素材全部来自**本仓库里已有的文件**，一个字节都没有新拷进来：
-    ../intro/assets/*.png   —— 片头把原版素材复制过来时留下的那份（原 pack 被
-                               .gitignore 排除，因为不是我们能发布的），
-                               所以这里引用的是"已经在仓库里的副本"，不新增暴露。
-  **六边里没有照片**（Phase 133）：操作员 2026-10-15 原话「好吧，不用实拍图片」。
-  原来那里塞的是我们自己 place 的实拍（promo/shots/ig4_core.jpg），现在换成**厂标**
-  —— intro/assets/sm-core.png，一张线稿，它本来就在上面那份清单里。
-  换掉之后这一页**一次都不再引用 promo/ 下面任何东西**（那里是实拍与片子）。
-  颜色变量逐字抄自 intro/index.html，它的出处是 src/ReactorBackend/Config.luau
+  **素材**只引用**本仓库里已经有的**文件（intro/assets/*.png），一个字节都没有新拷
+  进来 —— 原 pack 被 .gitignore 排除（不是我们能发布的），所以引用的是"已经在仓库
+  里的副本"，不新增曝光面。现在只剩两处：六边里的厂标 sm-core.png、页脚那枚小厂标
+  sm-logo.png。**六边里没有照片，promo/ 下面一个文件都不引**（Phase 133）。
+
+  **颜色**逐字抄自 intro/index.html，它的出处是 src/ReactorBackend/Config.luau
   的 Config.Visual（而那张表又是从 place 里量出来的）。**这里一个新颜色都不许发明。**
   ============================================================================
 -->
 <style>
 :root{
-  --void:       #07080a;            /* 比 Off 更黑的底 */
-  --off:        rgb(45,45,45);      /* Config.Visual.Off       */
-  --ready:      rgb(235,235,235);   /* Config.Visual.Ready     */
-  --nominal:    rgb(137,255,147);   /* Config.Visual.Nominal   */
-  --amber:      rgb(255,128,1);     /* Config.Visual.Amber     */
-  --yellow:     rgb(240,220,60);    /* Config.Visual.Yellow    */
-  --fault:      rgb(255,70,40);     /* Config.Visual.Fault     */
-  --plasma:     #52dae2;            /* ART_DIRECTION §2: 官方素材采样的冷却/等离子青 */
+  /* 这一页只用得到四档：底、白、琥珀、等离子青。其余几档（Off / Nominal /
+     Yellow / Fault）在 intro/index.html 那张表里，这一页没有读者，就不搬过来了。 */
+  --void:   #07080a;            /* 比 Off 更黑的底 */
+  --ready:  rgb(235,235,235);   /* Config.Visual.Ready   */
+  --amber:  rgb(255,128,1);     /* Config.Visual.Amber   */
+  --plasma: #52dae2;            /* ART_DIRECTION §2: 官方素材采样的冷却/等离子青 */
   --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
   --cond: "Arial Narrow", "Haettenschweiler", Impact, "Franklin Gothic Medium", sans-serif;
 }
@@ -56,37 +60,10 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 }
 .layer{position:absolute;inset:0;pointer-events:none}
 
-/* ============================ 底：网格 + 六边纹 ============================
-   透视网格是片头那个语言（intro §2），收进方画面里。六边纹用原版的
-   nested-hexagons 素材，压得很淡：它是"氛围"，不是主体。 */
-#grid{
-  position:absolute;inset:-14%;
-  background-image:
-    linear-gradient(rgba(82,218,226,.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(82,218,226,.05) 1px, transparent 1px);
-  background-size:96px 96px;
-  transform:perspective(1100px) rotateX(64deg) translateZ(-150px) scale(1.7);
-  transform-origin:50% 58%;
-}
-#hexes{
-  position:absolute;left:50%;top:404px;width:1180px;height:1180px;margin:-590px 0 0 -590px;
-  background:url("../intro/assets/nested-hex.png") center/contain no-repeat;
-  opacity:.10;
-  /* **不许 invert。** 这张线稿**本来就是近白的**（量过：不透明像素 rgb(235,235,235)）。
-     带着 `filter:invert(1)`（片头里这几张素材就是那么写的，我照着抄了）它被转成
-     黑、压在近黑的底上 —— **层还在，振幅只剩 Δ3/255**（把这一层关掉 vs 开着它，
-     8480 px 差、最大 Δ3），修好之后是 256538 px、Δ24。
-     **"看不见"和"没写"在盘上长得一模一样**（CLAUDE.md 0.19 那一族），
-     所以这里留的是两个读数，不是一句"看不出来"。 */
-}
-/* 堆芯后面那团青。它是"发光"这件事本身，不是任何一件东西的颜色。 */
-#coreGlow{
-  position:absolute;left:50%;top:404px;width:1080px;height:1080px;margin:-540px 0 0 -540px;
-  background:radial-gradient(circle at 50% 50%, rgba(82,218,226,.20) 0%, rgba(82,218,226,.07) 38%, rgba(0,0,0,0) 62%);
-}
-
 /* ============================ 外框 ============================
-   22px 内缩的一道细线 + 四角括号，是控制台面板的语言（AREMAKE 的监视器边框）。 */
+   22px 内缩的一道细线 + 四角括号，是控制台面板的语言（AREMAKE 的监视器边框）。
+   **它留着**：另外三样东西都浮在半空里，这一道线把方画面收住，
+   "这是一台机器，不是一张海报"那句话有着落。它一句话也不说，所以不算要素。 */
 #frame{position:absolute;left:22px;top:22px;right:22px;bottom:22px;
        border:1px solid rgba(82,218,226,.26);}
 .brk{position:absolute;width:20px;height:20px;border:2px solid rgba(235,235,235,.55)}
@@ -95,163 +72,74 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 .brk.bl{left:-2px;bottom:-2px;border-right:0;border-top:0}
 .brk.br{right:-2px;bottom:-2px;border-left:0;border-top:0}
 
-/* ============================ 顶栏 ============================ */
-#kicker{position:absolute;left:44px;top:40px;font-size:13px;letter-spacing:.30em;
-        color:rgba(235,235,235,.80);white-space:nowrap}
-#kicker2{position:absolute;left:44px;top:62px;font-size:11px;letter-spacing:.24em;
-         color:rgba(235,235,235,.38);white-space:nowrap}
-#badge{
-  position:absolute;right:44px;top:38px;padding:5px 12px 4px;
-  border:1px solid var(--amber);color:var(--amber);
-  font-size:13px;letter-spacing:.34em;white-space:nowrap;
-  box-shadow:0 0 18px rgba(255,128,1,.16) inset;
-}
-#kickerR{position:absolute;right:44px;top:70px;font-size:11px;letter-spacing:.24em;
-         color:rgba(235,235,235,.38);white-space:nowrap}
-#hr1{position:absolute;left:44px;right:44px;top:92px;height:1px;
-     background:linear-gradient(90deg, rgba(82,218,226,0) 0%, rgba(82,218,226,.34) 22%,
-                rgba(82,218,226,.34) 78%, rgba(82,218,226,0) 100%);}
-
 /* ============================ 堆芯：六边框里的厂标 ============================
-   六边是这个世界自己的形状（厂标、六边纹、舱体铺装）。方画面上一个内接六边
-   天然把四角让出来给字，而主体还在正中。
-   **两个几何必须重合**：面板的 clip-path（CSS 百分比）和 SVG 那圈实线
-   （JS 按 HEX_R 算出的像素点）描述的是同一个六边形。CSS 的百分比版本与尺寸
-   无关，所以它错不了；SVG 那份错得了，所以 render() 里把它和盒子按同一个
-   HEX_R 一起算出来，然后由 cover_judge 逐顶点比一次（差 >0.5px 算红）。
-
-   #hexPanel 不只是"把名字从 hexPhoto 改过来"：它现在**自己就是那块画面** ——
-   一块凹进去的暗板 + 中心那团等离子青。颜色一个都没有新发明：底是 var(--void)，
-   光的两档 rgba 逐字就是 #coreGlow 已经在用的那两档，板面那层 5% 的 Ready
-   是中性提亮。 */
+   六边是这个世界自己的形状（厂标、舱体铺装）。方画面上一个内接六边天然把四角
+   让出来给字，而主体还在正中。
+   **两个几何必须重合**：面板的 clip-path（CSS 百分比）和 SVG 那圈实线（JS 按
+   HEX_R 算出的像素点）描述的是同一个六边形。CSS 的百分比版本与尺寸无关，所以它
+   错不了；SVG 那份错得了，所以 render() 里把它和盒子按同一个 HEX_R 一起算出来，
+   然后由 cover_judge 逐顶点比一次（差 >0.5px 算红，A6/A7）。 */
 #hexPanel{
   position:absolute;
   clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   background:
-    radial-gradient(circle at 50% 50%, rgba(82,218,226,.22) 0%, rgba(82,218,226,.07) 34%, rgba(0,0,0,0) 62%),
-    radial-gradient(circle at 50% 46%, rgba(235,235,235,.05) 0%, rgba(0,0,0,0) 60%),
+    radial-gradient(circle at 50% 50%, rgba(82,218,226,.22) 0%, rgba(82,218,226,.07) 36%, rgba(0,0,0,0) 64%),
     var(--void);
 }
 /* 厂标：Synthesis Manufacturing 那一枚 —— 外圈圆环、两个同心六边（内实外虚）、
    三根从内六边顶点伸出去的辐条，各以一枚矩形端子收尾。
-   尺寸**是量出来的，不是试出来的**：这张线稿 515x515，墨色逐像素
-   rgb(255,255,255)，alpha 只有 0 与 255 两档，墨占方框 26.4%，而**墨的包围盒
-   就是整个方框**（x 0..514、y 0..514）—— 也就是那圈外环内切于方框。所以
-   `contain` 之下圆环的直径**正好等于这个元素的边长**，下面给一个数就够了。 */
+   尺寸**是量出来的，不是试出来的**：这张线稿 515x515，墨色逐像素 rgb(255,255,255)，
+   画在 alpha 里（0..255 逐档），而**墨的包围盒就是整个方框**（x 0..514、y 0..514）
+   —— 也就是那圈外环内切于方框。所以 `contain` 之下圆环的直径**正好等于这个元素的
+   边长**，下面给一个数就够了。复量：python -X utf8 _tools/cover_mark_check.py */
 #coreMark{
   position:absolute;
   background:url("../intro/assets/sm-core.png") center/contain no-repeat;
-  opacity:.88;
-  filter:drop-shadow(0 0 26px rgba(82,218,226,.30));
-}
-/* 面板上再压一层青，同时把四周压暗，让六边的边缘读得出来
-   （板面四周和背景的暗是同一档值，不压的话"没有边框"）。 */
-#hexTint{
-  position:absolute;inset:0;
-  clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background:
-    radial-gradient(circle at 50% 46%, rgba(82,218,226,.30) 0%, rgba(82,218,226,.06) 34%, rgba(0,0,0,.55) 78%),
-    linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 62%, rgba(0,0,0,.55) 100%);
-  mix-blend-mode:normal;
+  opacity:.92;
+  filter:drop-shadow(0 0 26px rgba(82,218,226,.28));
 }
 #hexSvg{position:absolute;pointer-events:none}
 #hexSvg .ink{fill:none;stroke:var(--plasma);stroke-width:2;opacity:.62}
 #hexSvg .ink2{fill:none;stroke:rgba(235,235,235,.30);stroke-width:1}
-#hexSvg .dash{fill:none;stroke:var(--plasma)}
-#hexSvg .tick{stroke:var(--plasma);stroke-width:2;opacity:.55}
-
-/* 压在面板上的两条 HUD 读数。**不是装饰**：9420 °F / 5000 PSI 是点火那一刻的
-   读数（promo 的 CORE IGNITION 那条说明条就是这么写的；这里引用的是那两个
-   **数**，不是那张图 —— 六边里现在一张照片都没有）。 */
-.hud{position:absolute;font-size:9px;letter-spacing:.22em;color:rgba(235,235,235,.55);
-     white-space:nowrap;text-shadow:0 0 8px #000,0 0 3px #000}
-.hudv{position:absolute;font-size:14px;letter-spacing:.14em;color:var(--plasma);
-      white-space:nowrap;text-shadow:0 0 10px rgba(0,0,0,.95),0 0 4px rgba(0,0,0,.9)}
-.hud.tag{color:var(--amber);letter-spacing:.24em}
+/* 两圈外虚线 + 六个顶点刻线（Phase 132 有）在 Phase 134 走了：它们把同一个形状
+   说第二遍、第三遍，而形状本身已经有面板和实线各说了一遍。 */
 
 /* ============================ 标题 ============================
-   标题条 + 大字 + 细线 + 副题：片头 S7 那一套（intro §1 的 hero 几何），
-   字号按 1080/1920 折下来并复量过 —— 宽高都由 cover_judge 断言。 */
-#titleBand{
-  position:absolute;left:22px;top:704px;width:1036px;height:54px;
-  background:url("../intro/assets/stripes.png") repeat-x left center;background-size:auto 54px;
-  /* `invert(1)` 在这条上是**必需的**，理由和 #hexes 上那句相反：stripes.png 是
-     **黑**条纹（量过：不透明像素 rgb(0,0,0)、alpha 247）。`mix-blend-mode:screen`
-     对黑色是恒等（screen(底, 0) = 底），所以不 invert 的话这一层**逐像素的贡献是 0**。
-     实测过，而且是最硬的那一档：按旧写法渲染出来 vs 把这一层整层关掉 ——
-     **0 px 差、最大 Δ0**。也就是说"这一条原来根本不在画上"，而页面照样渲染成功、
-     版本检查全绿。**一条条纹带要不要 invert，只能量那张图。** */
-  filter:invert(1);
-  opacity:.30;mix-blend-mode:screen;
+   徽章在上、大字在下、细线收尾 —— 片头 S7 那一套（intro §1 的 hero 几何），
+   字号按 1080/1920 折下来。宽高都由 cover_judge 断言。 */
+#badge{
+  position:absolute;left:50%;top:726px;transform:translateX(-50%);
+  padding:5px 12px 4px;border:1px solid var(--amber);color:var(--amber);
+  font-size:13px;letter-spacing:.34em;white-space:nowrap;
+  box-shadow:0 0 18px rgba(255,128,1,.16) inset;
 }
 #title{
-  position:absolute;left:0;right:0;top:694px;text-align:center;
+  position:absolute;left:0;right:0;top:768px;text-align:center;
   font-family:var(--cond);font-size:96px;line-height:1.0;letter-spacing:.055em;
   color:#fff;text-transform:uppercase;
   text-shadow:0 0 34px rgba(82,218,226,.5), 2px 0 0 rgba(255,40,40,.24), -2px 0 0 rgba(40,120,255,.24);
 }
-#rule{position:absolute;left:50%;top:806px;height:1px;transform:translateX(-50%);
+#rule{position:absolute;left:50%;top:906px;width:560px;height:1px;
+      transform:translateX(-50%);
       background:rgba(235,235,235,.42);box-shadow:0 0 10px rgba(82,218,226,.35)}
-#subtitle{position:absolute;left:0;right:0;top:820px;text-align:center;
-          font-size:13px;letter-spacing:.30em;color:rgba(235,235,235,.74);white-space:nowrap}
-#specs{position:absolute;left:0;right:0;top:856px;text-align:center;
-       font-size:11px;letter-spacing:.18em;color:rgba(235,235,235,.46);white-space:nowrap}
-#specs em{color:var(--amber);font-style:normal}
-
-/* ============================ 读数条 ============================
-   游戏自己的底栏（intro §3.5 引的是原版文案）做成四格。**每一格的值都必须
-   在自己的格子里放得下** —— 这是 cover_judge 里唯一一条"会不会被吃掉"的断言
-   （§0.31：断言要落在那个量真在场的地方）。 */
-#bar{
-  position:absolute;left:22px;right:22px;top:886px;height:56px;
-  display:flex;align-items:center;
-  background:linear-gradient(180deg,#0d1013 0%, #0a0c0f 100%);
-  border:1px solid rgba(235,235,235,.22);
-  box-shadow:0 0 0 1px rgba(0,0,0,.9), 0 0 40px rgba(82,218,226,.05) inset;
-}
-.cell{flex:1;min-width:0;padding:0 14px}
-.cell + .cell{border-left:1px solid rgba(235,235,235,.16)}
-.cell .k{font-size:9px;letter-spacing:.22em;color:rgba(235,235,235,.42);white-space:nowrap}
-.cell .v{font-size:13px;letter-spacing:.06em;color:var(--ready);white-space:nowrap;margin-top:3px}
-.cell .v.amber{color:var(--amber)}
 
 /* ============================ 页脚 ============================ */
 #footL{position:absolute;left:44px;top:966px;height:32px;display:flex;align-items:center;gap:11px}
 #smMark{width:26px;height:32px;background:url("../intro/assets/sm-logo.png") center/contain no-repeat;
         opacity:.62}
-        /* 同上：SMLogo 也是近白的（rgb(228,228,228)）—— invert 之后是 rgb(27)，
-           压在近黑的页脚上仍**看得出东西**，但那是"一团暗块"而不是 logo：
-           量到的振幅 Δ35，去掉 invert 之后是 Δ54。极性错和没画，是两件事。 */
+        /* SMLogo 是**近白**的（rgb(228,228,228)）—— 不加 invert 时它改 54 个像素的
+           最大振幅；加上的话是 35（"一团暗块"而不是 logo）。极性错和没画，是两件事。 */
 #footL span{font-size:10px;letter-spacing:.26em;color:rgba(235,235,235,.62);white-space:nowrap}
 #footR{position:absolute;right:44px;top:974px;font-size:10px;letter-spacing:.26em;
        color:rgba(235,235,235,.56);white-space:nowrap}
-/* 两行页脚的 alpha 从 .46/.40 提到 .62/.56：缩略图尺寸下那一档会先消失，
-   而"按 1:1 交付的封面"被看得最多的时候就是缩略图。 */
-
-/* 底边的警示带。它是这个世界自己的语言（ART_DIRECTION §3.3 黄黑警示框），
-   也是"盒子上的封面"那句话 —— **条压在最外圈以内，不越框**。
-   **它不用 stripes.png**，两个理由，第二个更硬：
-   ①那张图里**没有黄**（不透明像素逐字 rgb(0,0,0)），拿它做这条带子的话
-     "黄黑"这两个字里有一半是我编的；
-   ②它原来就是用 stripes.png + `screen` 做的，而那一种写法**在这条上贡献 0**
-     （实测：旧写法 vs 整层关掉 —— 0 px >Δ2、最大 Δ2）。所以它不是"淡"，
-     它是**不在**。斜纹改成用调色板里的 Amber 自己排 —— 每一条都在 Config.Visual 里。 */
-#hazard{
-  position:absolute;left:22px;right:22px;top:1024px;height:28px;
-  background:repeating-linear-gradient(115deg,
-    rgba(255,128,1,.62) 0px,  rgba(255,128,1,.62) 13px,
-    rgba(0,0,0,0)       13px, rgba(0,0,0,0)       26px);
-  opacity:.55;
-}
 
 /* ============================ CRT 罩 ============================
-   扫线 / 噪点 / 暗角：片头的语言，压到极淡。噪点用 px.png 这个像素化白块。 */
+   扫线 + 暗角：片头的语言，压到极淡。**噪点那条走了** —— 它在 4.5% 上基本只是在
+   给 PNG 加高频，让"像素幂等但不是字节幂等"这件事更吵，而它一个信息也不带。 */
 #scan{position:absolute;inset:0;
   background:repeating-linear-gradient(to bottom,
     rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.34) 3px, rgba(0,0,0,.34) 4px);
   opacity:.55}
-#noise{position:absolute;inset:0;background:url("../intro/assets/px.png") repeat;
-  background-size:3px 3px;image-rendering:pixelated;opacity:.045;mix-blend-mode:screen}
 #vig{position:absolute;inset:0;
   background:radial-gradient(ellipse 76% 66% at 50% 47%, rgba(0,0,0,0) 38%, rgba(0,0,0,.78) 100%)}
 </style>
@@ -260,34 +148,17 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 <div id="viewport">
 <div id="stage">
 
-  <!-- ============ 六个装饰层 ============
-       每一层的 `data-art` 声明的是**它那张素材的极性**，而"要不要 invert"完全
-       由极性决定（见每处的注释），cover_judge 的 A9 断言这两件事一致：
+  <!-- ============ 装饰层 ============
+       每一层的 `data-art` 声明的是**它那张素材的极性**，而"要不要 invert"完全由
+       极性决定，cover_judge 的 A9 断言这两件事一致：
          white    —— 近白的线稿，**不许** invert（invert 成黑 = 振幅塌掉）
-         black    —— 黑线稿，**必须** invert（喂给 screen 的黑 = 恒等，贡献为 0）
          gradient —— 纯 CSS 画的，没有素材，**更不许** invert（反色 = 调色板外的颜色）
        极性是量出来的，不是从"它是这个世界的素材"推的。复量：
          python -X utf8 _tools/cover_layer_probe.py
-       （它会打一张表；这一轮的数是 stripes rgb(0,0,0) / nested-hex rgb(235,235,235)
-         / sm-logo rgb(228,228,228) / hex 与 px 都是 rgb(255,255,255)
-         / sm-core rgb(255,255,255)。）
-       #coreMark 是 Phase 133 新加的那一层（六边里的厂标，替掉原来那张实拍）。
-       它**只有 alpha、没有 invert**：素材是白的，所以"不许 invert"这一条它天然
-       满足；声明仍然要写 —— 不写的话 A9 判它"不知道极性"，直接红。
-
-       四条曾经错的层，**振幅 = 按旧写法渲染 vs 把这一层整层关掉**（0 = 不在画上）：
-         #titleBand  black + screen 无 invert   →  0 px, 最大 Δ0   ← 逐像素为 0
-         #hazard     同上（旧版用的就是它）      →  0 px, 最大 Δ2   ← 不在
-         #hexes      white + invert             →  8480 px, 最大 Δ3  （修好后 Δ24）
-         #smMark     white + invert             →  138 px, 最大 Δ35 （修好后 Δ54）
-       前两条是**整层不在**，后两条是**极性反了、振幅塌到 1%–14%**。
-       两种都不报错、都不影响版面检查，而读图只会说"没有条纹""没有六边纹"，
-       语气和"本来就没画"逐字同形（CLAUDE.md 0.18/0.19）。
-       复量这条跑道：bash _tools/cover_layers.sh -->
-  <div class="layer"><div id="grid"      data-art="gradient"></div></div>
-  <div class="layer"><div id="hexes"     data-art="white"></div></div>
-  <div              id="coreGlow"        data-art="gradient"></div>
-
+       Phase 132 那四个真实缺陷（黑素材喂给 screen = 逐像素为 0；近白素材喂给
+       invert = 振幅塌到 1%–14%）的来源层在 Phase 134 被砍掉了，所以这里没有
+       `black` 那一类了 —— A9 里"两种极性都要在场"那条自检跟着它的对象一起退场，
+       剩下"声明必须和 filter 一致"。像素那一半没变：bash _tools/cover_layers.sh -->
   <div id="frame">
     <span class="brk tl"></span><span class="brk tr"></span>
     <span class="brk bl"></span><span class="brk br"></span>
@@ -296,44 +167,19 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
   <!-- ---------- 堆芯 ---------- -->
   <div id="hexPanel"></div>
   <div id="coreMark" data-art="white"></div>
-  <div id="hexTint"></div>
   <svg id="hexSvg" xmlns="http://www.w3.org/2000/svg"></svg>
 
-  <div class="hud"      id="hudCoreK" style="left:316px;top:242px">CORE</div>
-  <div class="hudv"     id="hudCoreV" style="left:316px;top:256px">CRITICAL</div>
-  <div class="hudv"     id="hudT"     style="right:316px;top:256px;text-align:right">9420 &#176;F</div>
-  <div class="hud"      id="hudP"     style="right:316px;top:242px;text-align:right">CHAMBER&#160;5000&#160;PSI</div>
-  <div class="hud tag"  id="hudSeal"  style="left:0;right:0;top:556px;text-align:center">CHAMBER ATMOSPHERE &gt; SEALED</div>
-
-  <!-- ---------- 顶栏 ---------- -->
-  <div id="kicker">SUBSPACE REACTOR MANAGEMENT NODE</div>
-  <div id="kicker2">INSTALLATION OVERSEER TERMINAL &#183; REV 04</div>
-  <div id="badge">AIREMAKE</div>
-  <div id="kickerR">SHIFT 01 &#183; REPORT FOR DUTY</div>
-  <div id="hr1"></div>
-
   <!-- ---------- 标题 ---------- -->
-  <div id="titleBand" data-art="black"></div>
+  <div id="badge">AIREMAKE</div>
   <div id="title">THE REACTOR GAME</div>
   <div id="rule"></div>
-  <div id="subtitle">SUBSPACE REACTOR INSTALLATION &#183; OPERATOR SHIFT SIMULATION</div>
-  <div id="specs">NO <em>CONTROL RODS</em> &#183; THREE <em>INDIRECT</em> SYSTEMS &#183; ONE SHIFT TO GET IT <em>RIGHT</em></div>
 
-  <!-- ---------- 读数条 ---------- -->
-  <div id="bar">
-    <div class="cell" id="c1"><div class="k">NODE</div><div class="v">ICARUS-04</div></div>
-    <div class="cell" id="c2"><div class="k">CORE</div><div class="v amber">COLD</div></div>
-    <div class="cell" id="c3"><div class="k">QUOTA</div><div class="v">512 / 1024 / 3072</div></div>
-    <div class="cell" id="c4"><div class="k">CONTROL RODS</div><div class="v">NOT INSTALLED</div></div>
-  </div>
-
-  <div id="footL"><i id="smMark"></i><span>SYNTHESIS MANUFACTURING CORPORATION</span></div>
+  <!-- ---------- 页脚 ---------- -->
+  <div id="footL"><i id="smMark" data-art="white"></i><span>SYNTHESIS MANUFACTURING CORPORATION</span></div>
   <div id="footR">ICARUS INSTALLATION &#183; SECTOR 04</div>
-  <div id="hazard"  data-art="gradient"></div>
 
-  <div class="layer"><div id="scan"></div></div>
-  <div class="layer"><div id="noise"></div></div>
-  <div class="layer"><div id="vig"></div></div>
+  <div class="layer"><div id="scan" data-art="gradient"></div></div>
+  <div class="layer"><div id="vig"  data-art="gradient"></div></div>
 
 </div><!-- /stage -->
 </div><!-- /viewport -->
@@ -345,13 +191,12 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
    _tools/intro_render.js 靠调用页面上的 render(t) 来成帧，所以没有时钟的页面
    也必须有这个函数。封面是一瞬间，所以 t 收下就丢：每一次调用画出同一幅画。
 
-   t 被忽略**不是**敷衍：本页没有任何东西按时间变化（片头那版 render 每帧写
-   样式是为了让画面随时间走；这里没有那个函数），所以不存在"哪一帧"这个问题。
+   t 被忽略**不是**敷衍：本页没有任何东西按时间变化，所以不存在"哪一帧"这个问题。
    ========================================================================== */
 'use strict';
 
 /* 六边形的外接圆半径（设计空间像素）—— **唯一的那个数**：
-   面板盒子、SVG 那圈实线、外圈虚线全部由它推出来，所以它们不可能各自漂移。
+   面板盒子、SVG 那圈实线全部由它推出来，所以它们不可能各自漂移。
    点顶六边形（顶点朝上）：高 = 2R，宽 = 2R*cos30°。 */
 const HEX_R = 288;
 const HEX_CX = 540, HEX_CY = 404;
@@ -359,7 +204,7 @@ const COS30 = Math.cos(Math.PI / 6);
 
 /* 厂标的边长。**由六边的内切圆定，不是试出来的**：正六边的内切圆半径是
    R*cos30 = 249.4，所以直径 498 以内的圆都在六边里面；取 420 是留了 39 px
-   的余量（六边那六条边中点处最紧），也让厂标外面那圈虚线和它之间读得出空气。 */
+   的余量（六边那六条边中点处最紧）。A10 每次都会把这个余量读出来。 */
 const MARK_D = 420;
 
 /* 点顶六边形的六个顶点：从正上方开始，每 60° 一个。 */
@@ -375,27 +220,22 @@ const poly = (cx, cy, r) => hexPoints(cx, cy, r).map(p => p[0].toFixed(2) + ',' 
 
 function buildHex(){
   const hw = HEX_R * COS30;                       // 半宽
-  const boxW = 2 * hw, boxH = 2 * HEX_R;
-  // 面板和罩子是两个元素、同一个盒子：clip-path 会把子件一起裁掉，
-  // 所以罩子不能是面板的孩子。两个都摆一遍，摆的是同一组数。
-  for (const id of ['hexPanel', 'hexTint']){
-    const e = document.getElementById(id);
-    e.style.width  = boxW.toFixed(2) + 'px';
-    e.style.height = boxH.toFixed(2) + 'px';
-    e.style.left   = (HEX_CX - hw).toFixed(2) + 'px';
-    e.style.top    = (HEX_CY - HEX_R).toFixed(2) + 'px';
-  }
+  const e = document.getElementById('hexPanel');
+  e.style.width  = (2 * hw).toFixed(2) + 'px';
+  e.style.height = (2 * HEX_R).toFixed(2) + 'px';
+  e.style.left   = (HEX_CX - hw).toFixed(2) + 'px';
+  e.style.top    = (HEX_CY - HEX_R).toFixed(2) + 'px';
 
   // 厂标：一个正方形元素、**不参与裁切** —— 它整个落在六边的内切圆里
   // （MARK_D/2 = 210 < 249.4），所以它离裁切线永远有 39 px，裁与不裁同形。
-  // 这句话是可以用几何验的：见 PROGRESS Phase 133 那个"到六条边的距离"读数。
+  // 这句话是可以用几何验的：A10 拿它到六条边线的有符号距离说话。
   const mark = document.getElementById('coreMark');
   mark.style.width  = MARK_D + 'px';
   mark.style.height = MARK_D + 'px';
   mark.style.left   = (HEX_CX - MARK_D / 2).toFixed(2) + 'px';
   mark.style.top    = (HEX_CY - MARK_D / 2).toFixed(2) + 'px';
 
-  const S = 640, c = S / 2;                       // SVG 盒子比六边形大一圈，装得下外圈虚线
+  const S = 600, c = S / 2;                       // SVG 盒子比六边形大一圈
   const svg = document.getElementById('hexSvg');
   svg.setAttribute('viewBox', '0 0 ' + S + ' ' + S);
   svg.setAttribute('width',  S);
@@ -404,34 +244,18 @@ function buildHex(){
   svg.style.top  = (HEX_CY - c) + 'px';
 
   let out = '';
-  // 两圈外虚线：细的贴着实线，粗的再退一步 —— 六边纹的节奏。
-  out += '<polygon class="dash" points="' + poly(c, c, HEX_R + 13) + '" stroke-dasharray="7 13" opacity=".22"/>';
-  out += '<polygon class="dash" points="' + poly(c, c, HEX_R + 28) + '" stroke-dasharray="3 17" opacity=".11"/>';
   out += '<polygon class="ink"  points="' + poly(c, c, HEX_R) + '"/>';
   out += '<polygon class="ink2" points="' + poly(c, c, HEX_R - 10) + '"/>';
-  // 六个顶点各挑一道短刻线：把"这是六边形"这句话说清楚，也让边角有重量。
-  for (const [px, py] of hexPoints(c, c, HEX_R)){
-    const ux = (px - c) / HEX_R, uy = (py - c) / HEX_R;
-    out += '<line class="tick" x1="' + (px + ux * 4).toFixed(1) + '" y1="' + (py + uy * 4).toFixed(1) +
-           '" x2="' + (px + ux * 21).toFixed(1) + '" y2="' + (py + uy * 21).toFixed(1) + '"/>';
-  }
   svg.innerHTML = out;
 }
 
-/* 细线（副题上面那条）：宽度由 render 定，理由和片头一样 ——
-   它是版面的一部分，不是装饰的长度。 */
-function buildRule(){
-  document.getElementById('rule').style.width = '560px';
-}
-
 function render(t){
-  // t 是契约，不是输入（见上面那段）。每次调用都是完整的一次版面构建，
-  // 所以幂等 —— 调一百遍和调一遍结果相同。
-  // 量过（Phase 132）：连渲 5 次的**像素**是同一幅（最大差 Δ1、超 Δ2 的 0 个），
-  // 但**字节**分成两个形态 —— 是像素幂等，不是字节幂等。别拿 md5 当判据（docs/COVER.md §4/§6）。
+  // t 是契约，不是输入（见上面那段）。每次调用都是完整的一次版面构建，所以幂等
+  // —— 调一百遍和调一遍结果相同。Phase 132 量过：连渲多次的**像素**是同一幅
+  // （最大差 Δ1、超 Δ2 的 0 个），而**字节**分成两个形态 —— 是像素幂等，
+  // 不是字节幂等。别拿 md5 当判据（docs/COVER.md §4/§6）。
   void t;
   buildHex();
-  buildRule();
 }
 
 /* ==========================================================================
@@ -459,25 +283,10 @@ function layoutReport(){
     top: +(b.top - st.top).toFixed(2), bottom: +(b.bottom - st.top).toFixed(2),
     left: +(b.left - st.left).toFixed(2), right: +(b.right - st.left).toFixed(2)});
 
-  const TEXT = ['title','subtitle','specs','kicker','kicker2','badge','kickerR','footR',
-                'hudCoreK','hudCoreV','hudT','hudP','hudSeal'];
+  // 这一页只有四块字。A1 不数数，它按名字点这四样 —— 页面越空，"没有东西可撞"
+  // 就越容易通过，所以非真空那一条必须说得出是哪四样在场。
+  const TEXT = ['title', 'badge', 'footL', 'footR'];
   const text = TEXT.map(id => rel(glyphBox(document.getElementById(id))));
-
-  // 读数条：每一格的值和它的格子放在一起量 —— 值有没有被格子吃掉，
-  // 只有比"这一个值的盒子"和"这一个格子的盒子"才回答得了。
-  const cells = [];
-  for (const id of ['c1','c2','c3','c4']){
-    const cell = document.getElementById(id);
-    const cbox = cell.getBoundingClientRect();
-    const v = glyphBox(cell.querySelector('.v'));
-    const k = glyphBox(cell.querySelector('.k'));
-    cells.push({id, cellW: +cbox.width.toFixed(2),
-      k: {text: k.text, w: +(k.right - k.left).toFixed(2),
-          fits: k.right <= cbox.right - 6 && k.left >= cbox.left + 6},
-      v: {text: v.text, w: +(v.right - v.left).toFixed(2),
-          slack: +(cbox.right - 6 - v.right).toFixed(2),
-          fits: v.right <= cbox.right - 6 && v.left >= cbox.left + 6}});
-  }
 
   // 两个几何的比对：面板的盒子定出的六边形（CSS clip-path 的百分比就长在
   // 这个盒子上）vs SVG 那圈实线（JS 按 HEX_R 算出来的）。逐顶点比。
@@ -494,17 +303,12 @@ function layoutReport(){
     if (d > worst){ worst = d; worstAt = i; }
   }
 
-  // 装饰层：这一页有六个"靠 opacity / 混合模式活着"的层。它们没有文字、也不落在
-  // 任何几何断言上，所以**原来一条规则都看不见它们** —— 而这一轮真实发生的缺陷
-  // 就出在这五个里面（两条按旧写法渲染出来逐像素等于"整层关掉"，另外两条的
-  // 振幅塌到 Δ3 / Δ35）。读图当时只说"没有条纹"，语气和"本来就没画"一模一样
-  // （CLAUDE.md 0.18）。规则写在 cover_judge 的 A9 里，只抓它抓得住的那一半
-  // （声明 vs 计算样式）；"这层到底改了几个像素"由 _tools/cover_layers.sh 量。
-  // 每一层还要自己声明**它那张素材的极性**（`data-art="white|black"`）——
-  // 因为极性是素材的属性，浏览器量不到（file:// 下 canvas 读背景图会被污染），
-  // 而"要不要 invert"完全由它决定。声明旁边写着量出那个极性的命令，
-  // 于是这条断言不是"信我"，是"这个数是量来的"。
-  const decor = ['grid','hexes','coreGlow','coreMark','titleBand','hazard'].map(id => {
+  // 装饰层：每一层声明**它那张素材的极性**（`data-art="white|gradient"`）—— 因为
+  // 极性是素材的属性，浏览器量不到（file:// 下 canvas 读背景图会被污染），而
+  // "要不要 invert"完全由它决定。声明旁边写着量出那个极性的命令，于是这条断言
+  // 不是"信我"，是"这个数是量来的"。规则在 cover_judge A9（只抓样式那一半），
+  // "这层到底改了几个像素"由 _tools/cover_layers.sh 量。
+  const decor = ['coreMark', 'smMark', 'scan', 'vig'].map(id => {
     const el = document.getElementById(id);
     const cs = getComputedStyle(el);
     return {id, opacity: +(+cs.opacity).toFixed(3), blend: cs.mixBlendMode,
@@ -520,14 +324,13 @@ function layoutReport(){
   return JSON.stringify({
     stage:{w: st.width, h: st.height}, innerW: innerWidth, innerH: innerHeight,
     dpr: devicePixelRatio,
-    text, cells, decor,
+    text, decor,
     hex:{boxW: +ph.width.toFixed(2), boxH: +ph.height.toFixed(2),
          ratio: +(ph.height / ph.width).toFixed(6), want: +(2 / (2 * COS30)).toFixed(6),
          worstVertexPx: +worst.toFixed(3), worstAt,
-         // 六边形的外接矩形：底顶点和顶顶点
          top: +(boxCy - ph.height / 2).toFixed(2), bottom: +(boxCy + ph.height / 2).toFixed(2),
          left: +(boxCx - ph.width / 2).toFixed(2), right: +(boxCx + ph.width / 2).toFixed(2)},
-    band:{top: 704, height: 54}, frame:{inset: 22, w: 1036, h: 1036},
+    frame:{inset: 22, w: 1036, h: 1036},
     mark:{cx: +(mk.left - st.left + mk.width / 2).toFixed(2),
           cy: +(mk.top  - st.top  + mk.height / 2).toFixed(2),
           w: +mk.width.toFixed(2), h: +mk.height.toFixed(2)}

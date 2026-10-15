@@ -1377,11 +1377,20 @@ in `docs/PROMO.md`.
 ## The cover - `cover/`
 
 `cover/THE_REACTOR_GAME_cover.png` is a **1080x1080 (1:1) game cover** for TRG:AIREMAKE,
-drawn by `cover/index.html`. It re-renders to **the same picture**, not to the same bytes:
-twelve consecutive renders split 10/2 into two byte forms - 792,813 bytes / md5
-`6feba9bd8cea91be2917be605b8f1a36` and 792,812 bytes / `f9e17bcdaa07ae67ddb47c66f4e331d0` -
-that differ by **one pixel, one grey level** (the antialiased hexagon edge at (790, 583)),
-and the split's ratio is not stable either. Compare pixels, not hashes; `docs/COVER.md` section 6.
+drawn by `cover/index.html`. **Four things are on it**: the frame, the hexagon with the
+manufacturer's mark, the title with its `AIREMAKE` badge, and the footer. Phase 134 cut it down
+from about fifteen elements (`要素太多了，不需要这么复杂`); what went - the HUD readouts over the
+hexagon, the subtitle and specs lines, the four-cell readout strip, the diagonal title band, the
+background grid and hex pattern, the core glow, the hazard band, the dashed rings and vertex
+ticks, the CRT noise - lives in git history and is not rebuilt in the docs.
+
+It re-renders to **the same picture**, not to the same bytes: twelve consecutive renders in
+Phase 132/133 split 10/2 into two byte forms - 792,813 / md5 `6feba9bd8cea91be2917be605b8f1a36`
+and 792,812 / `f9e17bcdaa07ae67ddb47c66f4e331d0` - that differ by **one pixel, one grey level**
+(the antialiased hexagon edge at (790, 583)), and the split's ratio was not stable either.
+Phase 134's build came out **12/12 byte-identical** (496,559 bytes / `5bd615a72093da2b35cff97e156c56a9`),
+which is a positive result but **not proof the mechanism was fixed** - it was never proven, and
+the criterion stays **pixels, not hashes**; `docs/COVER.md` section 4.
 
 **Nothing under `promo/` is used any more.** The hexagon holds `intro/assets/sm-core.png`,
 the manufacturer's mark - a line drawing, not a photograph, and one already in the repo's
@@ -1400,33 +1409,49 @@ changed. `--w 1080 --h 1080` is not optional: without it `fit()` scales the squa
 why A0 measures that before anything else.
 
 **The measurement and the verdict are two files.** `cover/index.html` only reports
-(`layoutReport()`); `_tools/cover_judge.js` decides A0..A10 and exits 1 on any failure, so it is
-a pure function from JSON to exit code and runs with no browser at all - which is what makes
-`--selftest` possible: **13 mutants, each reddening exactly the rule it is aimed at** (the most
-realistic being "forgot `--w/--h`"). Current: **11 ok / 0 failed**. A10 is the rule the mark
-added: the mark is the one layer element `clip-path` does not cut, so growing it does not look
-wrong - it looks like one line crossing another - and the rule measures how much air is left
-between its circumcircle and the six edges (39.4 px).
+(`layoutReport()`); `_tools/cover_judge.js` decides **A0..A10 with A8 retired** and exits 1 on any
+failure, so it is a pure function from JSON to exit code and runs with no browser at all - which
+is what makes `--selftest` possible: **12 mutants, each reddening exactly the rule it is aimed
+at** (the most realistic being "forgot `--w/--h`"). Current: **10 ok / 0 failed**. A10 is the
+rule the mark added: the mark is the one layer element `clip-path` does not cut, so growing it
+does not look wrong - it looks like one line crossing another - and the rule measures how much
+air is left between its circumcircle and the six edges (39.4 px).
 
-**The defect worth reading about is in the decoration.** Six layers (`#grid`, `#hexes`,
-`#coreGlow`, `#coreMark`, `#titleBand`, `#hazard`) carry no text and sit on no geometric
-assertion, and in the first build **four of the five then present were wrong while nine of the
-ten rules were green** - two of them contributing exactly zero pixels. Two mechanisms, both
-silent: `mix-blend-mode:screen` fed a black asset (`screen(base, 0) == base`, so `stripes.png` -
-measured rgb(0,0,0) - erased the title band and the hazard band entirely), and
+**Two rules retired with the elements that were their object** (Phase 134), because a rule whose
+object is deleted can only go permanently red, and a permanently red check is noise: A8 ("every
+cell of the readout strip holds its own value" - the strip is gone), and A9's "both a black and a
+white asset must be present" (the only two black assets on the page were the title band and the
+hazard band). What stayed had to be **re-asked one at a time**, and the answer went both ways:
+A3 ("the closest pair is under 40 px") needed no change - the closest pair is now the two footer
+lines at 14.00 px - while A1, the non-vacuity rule, had to **get stronger**, because an emptier
+page makes "nothing collides" cheaper. A1 stopped counting (`>= 12 text blocks, 4 cells`) and
+started **naming the four things** that must be present and sized.
+
+**The defect worth reading about is in the decoration.** In the Phase-132 build six layers
+carried no text and sat on no geometric assertion, and **four of the five then present were wrong
+while nine of the ten rules were green** - two of them contributing exactly zero pixels. Two
+mechanisms, both silent: `mix-blend-mode:screen` fed a black asset (`screen(base, 0) == base`, so
+`stripes.png` - measured rgb(0,0,0) - erased the title band and the hazard band entirely), and
 `filter:invert(1)` on near-white art (which turns it black, dropping the amplitude from delta 24
-to delta 3). `_tools/cover_layers.sh` renders the cover once per layer with that one layer
-switched off and diffs the pixels; the layout judge's A9 covers the half pixels cannot see (each
-layer declares its asset's polarity in `data-art`, and the rule asserts that declaration and the
-computed `filter` agree). Nothing here errors in any of those cases. Full write-up:
-`docs/COVER.md`.
+to delta 3). Four layers are left (`#coreMark`, `#smMark`, `#scan`, `#vig`);
+`_tools/cover_layers.sh` renders the cover once per layer with that one layer switched off and
+diffs the pixels - all four change pixels, and each diff lands in that layer's own declared box
+(the mark's in its 420 px box plus its 38 px `drop-shadow`, the scanlines inside the 22 px frame
+inset, the vignette over everything). The layout judge's A9 covers the half pixels cannot see
+(each layer declares its asset's polarity in `data-art`, and the rule asserts that declaration
+and the computed `filter` agree, plus "at least one layer declares a real asset"). Nothing here
+errors in any of those cases. Full write-up: `docs/COVER.md`.
 
 **"The layer changes pixels" is not "the pixels are that asset"** - a flat white square would
 pass every other instrument here. `_tools/cover_mark_check.py` compares the render against the
 asset's own alpha, and its output is a **threshold sweep rather than a pair**, because on this
-page there is no clean cut: the mark's faintest ink (95) is dimmer than the HUD readouts sharing
-the same box (237). What survives is that the whole drawing is present (44661 of 44663 ink
-pixels bright at t<=60) and that the darkening is the outer ring, not a missing piece.
+page there is no clean cut: the mark's faintest ink (142) is dimmer than the brightest non-ink
+pixel in the same box (159 - the hexagon's own outline and the mark's drop-shadow). What survives
+is that the whole drawing is present (all 44663 ink pixels bright at t<=80) and that every radial
+band out to the outer ring reads 99.7%-100%. Phase 133's build read **80.7%** in that outermost
+band and the docs blamed the hexagon tint darkening it; the measured shape of that darkening says
+otherwise (it was the tint's own top-to-bottom gradient plus the black text-shadow on each HUD
+line), and how much each contributed was **not separated** - `docs/COVER.md` section 4.
 
 **The wording is a judgement call, not a measurement.** The title reads `THE REACTOR GAME`
 with an amber `AIREMAKE` badge - i.e. **not** `TRG: AIREMAKE` - because that name is the brand

@@ -23,6 +23,12 @@ Part 1 below reads the SOURCE assets and reports each one's polarity -- because
 thing never measured.  Part 2 reads the RENDER and compares a layer-off render
 against the full one.
 
+PHASE 134 CUT THE COVER TO FOUR ELEMENTS, so both halves shrank with it: the
+asset list is down to the two marks this page draws, and cover_layers.sh renders
+four layer-off frames instead of six.  The table above stays as it was written --
+it is what THAT build measured, and the two zero-contribution layers it names are
+gone from the page rather than fixed in place.
+
   python -X utf8 _tools/cover_layer_probe.py <full.png> <off_*.png> ...
 
 The layer-off renders are produced by _tools/intro_render.js with an --eval that
@@ -57,9 +63,12 @@ DELTA = 2
 def polarity():
     print("--- source assets: is the line art white or black? ---")
     rows = []
-    for rel in ("intro/assets/stripes.png", "intro/assets/nested-hex.png",
-                "intro/assets/sm-logo.png", "intro/assets/hex.png",
-                "intro/assets/px.png"):
+    # Phase 134: this list follows the LAYERS this page actually has.  stripes /
+    # nested-hex / hex / px / sm-core's siblings went with the layers that used
+    # them (see cover_layers.sh); what is left is the two marks.  Re-adding a
+    # layer means re-adding its asset here -- the point of the list is that the
+    # `data-art` declaration in cover/index.html has a command behind it.
+    for rel in ("intro/assets/sm-core.png", "intro/assets/sm-logo.png"):
         p = os.path.join(ROOT, rel.replace("/", os.sep))
         im = Image.open(p).convert("RGBA")
         px = [c for c in im.get_flattened_data() if c[3] > 8]

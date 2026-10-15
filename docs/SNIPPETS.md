@@ -2806,7 +2806,7 @@ def his_noise(x, level):        # his literals, not ours
 
 ---
 
-## 5.39 给一块 1:1 的方封面：同一条运输线 + 一份纯判定 + 一次"逐层关掉"（★ Phase 132；主体于 133 换掉）
+## 5.39 给一块 1:1 的方封面：同一条运输线 + 一份纯判定 + 一次"逐层关掉"（★ Phase 132；主体于 133 换掉；**要素于 134 砍到四样**）
 
 **适用**：要做一张要交付的图（封面 / tile / 缩略图 / 社交卡），而仓库里
 **已经有一台能驱动无头 Chrome 的渲染器**（`_tools/intro_render.js`）。
@@ -2873,7 +2873,7 @@ D:/nodejs/node _tools/cover_judge.js --selftest _tools/_attic/scratch/cover_repo
 而第一版里四层装饰是坏的、九条规则全绿：
 
 ```bash
-for L in grid hexes coreGlow coreMark titleBand hazard; do    # 六层（coreMark 是 Phase 133 加的）
+for L in coreMark smMark scan vig; do            # Phase 134 之后这一页只剩四层
   node _tools/intro_render.js --page cover/index.html --at 0 --w 1080 --h 1080 \
        --eval "document.getElementById('$L').style.opacity='0'; 'off $L'" \
        --shot "_tools/_attic/scratch/off_$L.png" > /dev/null
@@ -2884,8 +2884,20 @@ python -X utf8 _tools/cover_layer_probe.py cover/THE_REACTOR_GAME_cover.png \
 
 （现成的：`bash _tools/cover_layers.sh`。它先重拍一次成品帧，所以两边出自同一次构建。）
 
+**这个 `L` 清单是"页面现在有什么"，不是常数** —— 元素被删掉时它跟着缩
+（Phase 132 那版是六层，Phase 134 砍到四样之后只剩这四个；**`off_*.png` 里过期的那几个要删掉**，
+不然下一次 `off_*.png` 通配会把已经不存在的层算进来）。
+
 判读两个数：**改了几个像素**、**差值的外接矩形落在哪**。后者是第二个证据 ——
-警示带的差值必须落在 `y[1024..1051]`、标题条必须落在 `y[704..757]`，与 CSS 里写的逐字对上；
+差值必须落在**那个层自己声明的盒子里**，与 CSS 里写的逐字对上：
+
+| 层 | Phase 134 读数 |
+|---|---|
+| `#coreMark` | 188752 px Δ228，`x[292..787] y[153..650]` —— 厂标的 420 盒（330..750 / 194..614）**四边各撑出去 ~38 px**，正是那条 `drop-shadow(0 0 26px …)` |
+| `#smMark` | 542 px Δ57，`x[44..69] y[967..996]` —— 页脚那枚小厂标 |
+| `#scan` | 147910 px Δ48，`x[21..1058] y[22..1058]` —— **停在外框的 22 px 内缩线上** |
+| `#vig` | 663604 px Δ122，`x[0..1079] y[0..1079]` —— 压角那一层本来就该铺满 |
+
 差得大就成了"某个别的东西在动"。
 
 **两种会安静骗人的写法**（都不报错）：
@@ -2903,14 +2915,16 @@ python -X utf8 _tools/cover_layer_probe.py cover/THE_REACTOR_GAME_cover.png \
 极性浏览器量不到（`file://` 下 canvas 读背景图会被污染），所以在 HTML 上声明：
 
 ```html
-<div id="hexes"     data-art="white"></div>     <!-- rgb(235,235,235)：不许 invert -->
-<div id="coreMark"  data-art="white"></div>     <!-- rgb(255,255,255)：不许 invert -->
-<div id="titleBand" data-art="black"></div>     <!-- rgb(0,0,0)：必须 invert -->
-<div id="coreGlow"  data-art="gradient"></div>  <!-- 纯 CSS：更不许 invert -->
+<div id="coreMark" data-art="white"></div>     <!-- rgb(255,255,255)：不许 invert -->
+<div id="smMark"   data-art="white"></div>     <!-- rgb(228,228,228)：不许 invert -->
+<div id="scan"     data-art="gradient"></div>  <!-- 纯 CSS：更不许 invert -->
+<div id="vig"      data-art="gradient"></div>  <!-- 纯 CSS：更不许 invert -->
 ```
 
 判定断言**双条件**：`white ⟺ 不许 invert`、`black ⟺ 必须 invert`、
-`gradient ⟺ 不许 invert`（反色只会产出调色板外的颜色）。声明旁边写着量出它的命令 ——
+`gradient ⟺ 不许 invert`（反色只会产出调色板外的颜色），外加**"至少要有一层声明了
+真的素材极性"** —— 否则"声明与 filter 一致"在全是纯 CSS 层的页面上**一句话都没说**
+（又是 §0.20 的空集合）。声明旁边写着量出它的命令 ——
 这条断言检的是"声明自洽"，而**声明的出处可复查**（§0.31：要让它红，得先有什么在场）。
 
 ```python
@@ -2919,6 +2933,23 @@ im = Image.open(p).convert("RGBA")
 px = [c for c in im.get_flattened_data() if c[3] > 8]
 print(tuple(sum(c[i] for c in px)//len(px) for i in range(3)))   # 0,0,0 = black
 ```
+
+### ⑤b 删元素 = 有几条规则要跟着退休，而留下来要**逐条重问**
+
+Phase 134 把封面砍到四样，于是**几条判定的宾语被删了**（不是被改坏）：
+
+- **A8**（"读数格每一格的值都在自己那格里"）—— 那块四格读数条没了 → **退休**。
+- **A9 里"黑、白两种极性都要在场"那句自检** —— 页面上仅有的两处黑素材（标题斜纹带、
+  底边警示带）没了，`black` 那一半**没有对象** → **退休**（留着只能恒红，§0.13）。
+- **A1**（非真空那条）—— 原来是数数（`text.length >= 12 && cells.length === 4`），
+  在这个版面上**永远不成立** → **换成按名字点**这四样（取舍 **572**）。
+- **A3**（"最近的一对不到 40 px"）—— **一个字不用改**（最近的是页脚两行，14.00 px）。
+
+**三条纪律**：**① 退休要写理由**（"宾语没了"和"这条太难"在盘上长得一样）；
+**② 留下来的要逐条重问"它的宾语还在不在、还在的话它还量得动吗"**（取舍 **571**）——
+页面越空，"没有东西相撞"这类断言越容易**白给**，所以非真空那一半要**加重**不是放松；
+**③ 几何盒子能不动就不动** —— 这一轮 `HEX_R` / `MARK_D` / `#hexPanel` / `#coreMark`
+一个没改，因为 **A6/A7/A10 量的就是这几个数**，盒子一挪它们同时变真空（§0.31 ①）。
 
 ### ⑥ 可复核：连渲多次，**逐像素**比 —— 不是比 md5
 
@@ -2936,7 +2967,11 @@ python -X utf8 _tools/cover_layer_probe.py r1.png r2.png r3.png   # 每一对都
 抗锯齿列上（`hex.right = 789.41`）。**像素是一幅画，字节不是。**
 （Phase 133 换掉画面主体之后重量：连渲 12 次 → **10 次 792813 B / `6feba9bd…` +
 2 次 792812 B / `f9e17bcd…`**，**还是那一个像素** —— 所以那两个形态的**比例本身**
-也不稳定，只有"像素相同"这一句可复核。）
+也不稳定，只有"像素相同"这一句可复核。
+Phase 134 砍完要素之后**第三次**量：连渲 12 次 **12/12 逐字节相同**（496559 B /
+`5bd615a7…`）。**那个像素这一轮没有出现 —— 这不等于它被修掉了**：
+机制从来没有被证明过（Phase 132 归因于六边裁切边的抗锯齿相位，未证），
+所以判据一个字不改，**仍然是像素不是哈希**。）
 
 拿 md5 当复核判据会**随机变红**，那比没有判据更坏（它把"今天运气不好"报成
 "这版不合规"）。判据要选在**被测对象真的会变**的那一层上。

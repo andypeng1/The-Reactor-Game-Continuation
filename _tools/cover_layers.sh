@@ -6,13 +6,21 @@
 # script asks the harder question the same defect demanded: render the cover once
 # per layer with that one layer switched off, and diff the pixels.  A layer whose
 # removal changes nothing was never on the picture.  Measured on the first build,
-# two of the five were exactly that (coreMark is the sixth layer, added Phase 133
-# when the hexagon's photo was replaced by the manufacturer's mark):
+# two of the five were exactly that:
 #
 #   black art under mix-blend-mode:screen, no invert -> screen(base, 0) == base
 #     titleBand 0 px / max delta 0,  hazard 0 px / max delta 2
 #   near-white art under filter:invert(1) -> amplitude collapses to 1%-14%
 #     hexes 8480 px / delta 3 (now 24),  smMark 138 px / delta 35 (now 54)
+#
+# PHASE 134 CUT THE LIST, NOT THE QUESTION.  Four of the six layers Phase 132/133
+# watched (grid, hexes, coreGlow, titleBand, hazard -- and the noise layer) were
+# removed from the page when the cover went down to four elements, so LAYERS below
+# is what is actually left.  The two zero-contribution defects above are no longer
+# representable on this page: there is no black line art left to feed `screen`.
+# That is the *object* going away, not the instrument being satisfied (CLAUDE.md
+# 0.31) -- so A9 lost its "both polarities must be present" guard and this script
+# keeps running over the survivors.
 #
 #   bash _tools/cover_layers.sh
 #
@@ -44,7 +52,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NODE="${NODE:-D:/nodejs/node}"
 SCRATCH="$ROOT/_tools/_attic/scratch"
 SHOT="cover/THE_REACTOR_GAME_cover.png"
-LAYERS="grid hexes coreGlow coreMark titleBand hazard"
+LAYERS="coreMark smMark scan vig"
 
 cd "$ROOT"
 
