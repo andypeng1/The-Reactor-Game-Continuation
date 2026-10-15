@@ -138,6 +138,68 @@ CBL_START = 50.0           # PW2: the level the console starts on
 # assumption and not a measurement.  Filed in QUESTIONS.md.
 CBL_BANKS = 3
 
+# ========== THE COOLANT PUMPS (Isotope E) ==========
+# The third of the game's three control means, and the only one this console was
+# still missing: three pumps, each held at 0..3, that REMOVE heat rather than
+# adding it.
+#
+# The constant is not remembered, it is measured -- three ways, and the third
+# one is exact rather than close:
+#
+#   * `Data/TRGWeb.luau:178` (the original's own prototype, on disk):
+#         core_temp = core_temp + (CBL1 + CBL2 + CBL3)*65
+#                               - (coolant_pump1 + coolant_pump2 + coolant_pump3)*120
+#                               + core_temp_random;
+#     with `increasecoolantpumpNpower` clamping at 3 and `decrease` at 0, which
+#     is where the 0..3 range above comes from.
+#   * our own remake: `Config.Sim.PumpCooling = 120` (Engine.luau:280 applies it
+#     as `heat*CBLHeat - cooling*PumpCooling` over the enabled, intact pumps).
+#   * the shipped game's own telemetry, `Data/DataCollection.Log`: its
+#     `predictions.predDT` is the original's arithmetic recorded live, and
+#     `predDT * 5 == 65*sum(cbl.level) - 120*sum(coolant.levels)` holds on ALL
+#     477 records with a maximum error of exactly 0.  That is the strongest of
+#     the three -- two of the numbers in it (65 and 120) are read off a running
+#     game rather than a source file.  `_tools/coolant_from_log.py` prints it.
+#
+# WHERE IT SITS IN THE STEP, which is the one real choice here and is a
+# CLAUDE.md 0.31-style question ("what does this spec override?").  The console's
+# temperature is HIS fit -- `T' = T + baseFluc*pMultiplier + noise(t)` -- and the
+# cooling could be either (a) added to it as its own term, or (b) routed through
+# his line as so many CBL levels' worth of negative `a`.  It is (a), for three
+# reasons:
+#
+#   * (b) would silence the pumps exactly when they matter most.  His line is
+#     gated by the "off is ours" rule -- zero CBL adds nothing at all -- and a
+#     dark laser bank is not a reason for a pump to stop working.  The log has
+#     that case in it: 84 records at CBL sum 0 with the pumps at 1, 2 or 3.
+#   * (b) would make the cooling a per-ROW quantity, because `active[row]` is a
+#     line in `a` and only row 0's slope is 0.  Nothing in any of the three
+#     sources suggests the pumps cool a hot core differently from a cold one.
+#   * the sources have no pressure factor on it either, so it is added OUTSIDE
+#     `pMultiplier` -- multiplying it by the press band would be inventing a
+#     number no source has.
+#
+# The stall still out-ranks it, for the same reason it out-ranks the lasers: his
+# `fluc = -586` is a statement about a crumpled core, and it sets the rate
+# whatever the row, the level, the press and now the pumps say.  That also keeps
+# the invariant the checker already holds him to -- a stalled, dark reactor falls
+# at exactly 586 -- rather than quietly turning it into 586 plus a pump term.
+#
+# KNOWN DIVERGENCE (QUESTIONS.md): his fitted heat line is about 2.6x the
+# original's 65 per CBL level -- measured, `ACTIVE[row][0]` is 6.8..7.24 a unit
+# of `a` against the original's 65/25 = 2.6, so the ratio is 2.638 at row 1.
+# In this console's currency a pump level therefore buys less than the original's
+# own heat/cool ratio implies.  The original's nine pump levels (1080) outweigh
+# its own maximum laser heat (975); here the same nine take off 41.2% of three
+# maxed banks as row 1 writes them (39.2% at row 2, 35.0% at row 3) -- before the
+# press multiplier, which cuts it further.  The constant is the measured one and
+# the arithmetic is not rescaled to hide that.
+COOLANT_PER_LEVEL = 120.0  # degrees a tick, per pump level
+COOLANT_PUMPS = 3
+# The game's own range: 0 (off) to 3, which is what `increasecoolantpumpNpower`
+# clamps to and what Engine.luau:110 validates (`integer(value, 1, 3)`).
+COOLANT_LEVELS = ((0, "off"), (1, "1"), (2, "2"), (3, "3"))
+
 # His pMultiplier, as a table: the first limit the pressure is at or below wins,
 # and past the last one the amplification is 4.  Replaces the old hand-set
 # pressFactor bands ((2500, 1.15), (4000, 1.08)), which came from the Desmos
@@ -335,9 +397,9 @@ def noise(x, power):
                for amplitude, period in NOISE_TERMS)
 
 
-def step_terms(row, power, pressure, t):
+def step_terms(row, power, pressure, t, coolant=0.0):
     """What one tick adds, before it is added: (baseFluc, press, actual, noise,
-    stall).
+    stall, cooling).
 
     ONE SPELLING OF THE RULE, called both by Core.step and by the panel's own
     "would add X/tick" preview.  Two spellings would let the promise and the
@@ -351,6 +413,12 @@ def step_terms(row, power, pressure, t):
     say.  It is also the one case where the "off is ours" rule must NOT win --
     turning the lasers off does not un-stall a chamber, so a stalled tick stays
     negative with every bank dark.
+
+    `coolant` comes in already summed and multiplied (Core.cooling owns that
+    arithmetic) rather than as three levels, so this function stays a
+    function of the four numbers the step actually uses.  It is zeroed by a
+    stall, which is the same precedence the lasers get and the reason the
+    stalled-and-dark tick is still exactly 586.
     """
     stall = stalled(pressure)
     base = STALL_FLUC if stall else fluctuation(row, power)
@@ -358,7 +426,9 @@ def step_terms(row, power, pressure, t):
     # "off" is ours, not the spec's.  The fit covers levels 1..5 (a = 25..125)
     # and there is no level 0 in it, so rather than extrapolate the line down
     # -- which would have a dark laser bank still adding its row's intercept,
-    # +46/s at row 1 -- zero CBL adds nothing at all.
+    # +46/s at row 1 -- zero CBL adds nothing at all.  The pumps are NOT under
+    # that rule: a dark laser bank is no reason for a pump to stop pumping, and
+    # the shipped log has the case in it (CBL sum 0, pumps on).
     actual = 0.0 if (power <= 0.0 and not stall) else base * amp
     # The tremor is the operator's own term and the stall does NOT suppress it:
     # his `fluc = -586` is the rate, and the noise rides on the reading (that
@@ -366,7 +436,7 @@ def step_terms(row, power, pressure, t):
     # when every bank is dark, because its amplitude is scaled by the level --
     # so a stalled, dark reactor falls at exactly 586 a tick, which is a number
     # the checker can hold him to.
-    return base, amp, actual, noise(t, power), stall
+    return base, amp, actual, noise(t, power), stall, 0.0 if stall else coolant
 
 
 class Sim:
@@ -509,6 +579,10 @@ class Core:
         # always did -- PW2 on the first bank -- and the other two dark, so the
         # panel opens on exactly the reading it had before this change.
         self.banks = [CBL_START] + [0.0] * (CBL_BANKS - 1)
+        # Three coolant pumps, each 0..3, all off at start -- which is where the
+        # game starts them and where this console started before they existed,
+        # so opening the panel shows the same temperature as it always did.
+        self.pumps = [0] * COOLANT_PUMPS
         self.state = 0            # the row held by hand, when auto is off
         self.t = 0.0              # his t: seconds elapsed since armed
         self.reset_trace()
@@ -525,6 +599,21 @@ class Core:
 
     def set_bank(self, index, value):
         self.banks[index] = float(value)
+
+    @property
+    def cooling(self):
+        """What the pumps take off, per tick: `120 x (p1 + p2 + p3)`.
+
+        The same shape as `power` and for the same reason: a stored total is a
+        second copy of something the three widgets already say, and the copy is
+        the one that goes stale.  Positive here, because that is what it is --
+        the subtraction happens in one place, in `step_terms`, so the sign
+        cannot be applied twice.
+        """
+        return COOLANT_PER_LEVEL * sum(self.pumps)
+
+    def set_pump(self, index, value):
+        self.pumps[index] = int(value)
 
     def reset_trace(self):
         """The last step's numbers, for the readout.  Cleared rather than zeroed,
@@ -543,7 +632,7 @@ class Core:
         # asserts rather than a coincidence it hopes for.
         self.last_pressure = 0.0
         self.last_stall = False
-
+        self.last_cooling = 0.0
     def rearm(self, sim):
         """Put his t back to 0.
 
@@ -583,14 +672,15 @@ class Core:
         # the screen at the moment the operator presses Step and the readout
         # re-checks its own tile with it; mixing the two instants is how a
         # screen stops adding up (CLAUDE.md 0.27, second face).
-        base, amp, actual, tremor, stall = step_terms(
-            row, self.power, sim.Pressure, self.t)
-        temperature = sim.Temperature + actual + tremor
+        base, amp, actual, tremor, stall, cooling = step_terms(
+            row, self.power, sim.Pressure, self.t, self.cooling)
+        temperature = sim.Temperature + actual + tremor - cooling
         self.last_row = row
         self.last_base = base
         self.last_amp = amp
         self.last_actual = actual
         self.last_noise = tremor
+        self.last_cooling = cooling
         self.last_start = sim.Temperature
         self.last_temperature = temperature
         self.last_pressure = sim.Pressure
@@ -634,6 +724,9 @@ class Console:
         # three devices down there and the panel has to be able to hold them at
         # three different powers.
         self.cbl_vars = [tk.IntVar(value=int(bank)) for bank in self.core.banks]
+        # Same again for the coolant pumps: three devices, three variables, and
+        # the model consumes their sum.
+        self.pump_vars = [tk.IntVar(value=int(pump)) for pump in self.core.pumps]
         self.core_var = tk.IntVar(value=self.core.state)
         self.auto_var = tk.BooleanVar(value=self.core.auto)
         self.core_text = tk.StringVar()
@@ -804,6 +897,24 @@ class Console:
                 ttk.Radiobutton(line, text=name, value=value, variable=var,
                                 command=self.on_power).pack(side="left", padx=2)
 
+        # The third control means, beside the other two things that move the
+        # temperature.  Three pumps, each 0..3 -- the game's own range, and one
+        # row per pump for the same reason the lasers got one: "the coolant
+        # level" is three devices, not one knob.  The caption carries the
+        # constant so a reader can do the arithmetic off the panel itself.
+        pumps = ttk.LabelFrame(
+            core, text="Coolant pumps (Isotope E, each -%g/tick)"
+            % COOLANT_PER_LEVEL, padding=6)
+        pumps.pack(fill="x", pady=(4, 0))
+        for index, var in enumerate(self.pump_vars):
+            line = ttk.Frame(pumps)
+            line.pack(fill="x")
+            ttk.Label(line, text="C-PUMP %d" % (index + 1), width=9,
+                      ).pack(side="left")
+            for value, name in COOLANT_LEVELS:
+                ttk.Radiobutton(line, text=name, value=value, variable=var,
+                                command=self.on_coolant).pack(side="left", padx=2)
+
         rows = ttk.Frame(core)
         rows.pack(fill="x", pady=(2, 0))
         ttk.Label(rows, text="row").pack(side="left")
@@ -907,7 +1018,8 @@ class Console:
                              pady=(8, 4))
         row += 1
         ttk.Label(parent,
-                  text="the core model   T' = T + baseFluc * press + noise(t)",
+                  text="the core model   T' = T + baseFluc * press + noise(t)"
+                       " - cooling",
                   font=self.BOLD).grid(row=row, column=0, columnspan=2,
                                        sticky="w", pady=(0, 4))
         row += 1
@@ -925,6 +1037,14 @@ class Console:
                                                   for bank in self.core.banks))
         row = self.add_readout(parent, row, "a   total = his a",
                                lambda: shown(self.core.power))
+        # The pumps, read live like the banks: a control position, not a term of
+        # the step -- and the step's own cooling is below, where a stale value
+        # has somewhere to hide (it is cleared by _line_changed like the rest).
+        row = self.add_readout(parent, row, "p1 / p2 / p3  pumps",
+                               lambda: " / ".join(str(pump)
+                                                  for pump in self.core.pumps))
+        row = self.add_readout(parent, row, "cooling  -%g x K" % COOLANT_PER_LEVEL,
+                               lambda: self._step_value("last_cooling"))
         row = self.add_readout(parent, row, "p   this step started from",
                                lambda: self._step_value("last_pressure"))
         row = self.add_readout(parent, row, "stall  this step",
@@ -1027,6 +1147,21 @@ class Console:
                          self.core.power,
                          luau_number(self.core.power / CBL_UNIT)))
 
+    def on_coolant(self):
+        """One of the pump radios moved.
+
+        All three read back, exactly like on_power and for the same reason: the
+        command is bound once per button and one callback cannot tell which of
+        them fired.  Reading all three is what makes the sum the panel's own
+        number rather than a guess at it.
+        """
+        for index, var in enumerate(self.pump_vars):
+            self.core.set_pump(index, var.get())
+        self._line_changed()
+        self.on_input("Coolant pumps = %s  (K = %d; -%g/tick)"
+                      % (" / ".join(str(pump) for pump in self.core.pumps),
+                         sum(self.core.pumps), self.core.cooling))
+
     def on_vent(self):
         """Press the AVB.
 
@@ -1085,18 +1220,22 @@ class Console:
         """
         core = self.core
         banks = " / ".join(shown(bank) for bank in core.banks)
+        pumps = " / ".join(str(pump) for pump in core.pumps)
         if not core.armed:
             row = core.row(self.sim)
             # The preview calls the SAME function the step does, so "would add"
             # cannot come out as a second opinion -- and that includes the stall
             # branch, which the old preview would have had no way to know about.
-            base, amp, actual, tremor, stall = step_terms(
-                row, core.power, self.sim.Pressure, core.t + self.sim.period)
+            base, amp, actual, tremor, stall, cooling = step_terms(
+                row, core.power, self.sim.Pressure, core.t + self.sim.period,
+                core.cooling)
             return ("off - the slider owns Temperature\n"
                     "a %s = %g   row %d at T = %s\n"
+                    "pumps %s   cooling -%g\n"
                     "would add %s/tick (x %s)%s"
                     % (banks, core.power, row, shown(self.sim.Temperature),
-                       shown(actual), luau_number(amp),
+                       pumps, cooling, shown(actual + tremor - cooling),
+                       luau_number(amp),
                        "  STALL" if stall else ""))
         row = core.last_row if core.last_row is not None else core.row(self.sim)
         # Before the first step there are no terms to report, and a zero would
@@ -1110,7 +1249,7 @@ class Console:
         return ("t      %s s      T %s\n"
                 "row    %s%s   baseFluc %s%s\n"
                 "a      %s = %g (lv %s)   press x %s\n"
-                "actual %s      noise %s\n"
+                "actual %s      noise %s      cooling -%s\n"
                 "p      %s      %s\n"
                 "T'     %s"
                 % (luau_number(core.t), shown(self.sim.Temperature),
@@ -1121,6 +1260,7 @@ class Console:
                    luau_number(core.last_amp),
                    num(core.last_actual),
                    num(core.last_noise),
+                   num(core.last_cooling),
                    num(core.last_pressure),
                    "STALL - pres <= %g" % AVB_STALLOUT_PSI if stall
                    else "stall no",

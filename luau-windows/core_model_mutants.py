@@ -98,6 +98,43 @@ MUTANTS = (
      "        return sum(self.banks)",
      "        return self.banks[0]",
      "his `a` is their sum, not any one of them"),
+
+    # --- the coolant pumps ---------------------------------------------------
+    # Five ways the third control can be wrong while the panel still looks
+    # right.  The first four are the three placement choices made in
+    # COOLANT_PER_LEVEL plus the constant itself; the last is the sum going
+    # missing, which is the same failure the laser banks have a mutant for.
+
+    ("the cooling constant becomes a remembered number",
+     "COOLANT_PER_LEVEL = 120.0",
+     "COOLANT_PER_LEVEL = 100.0",
+     "the cooling is 120 a level, summed over three"),
+
+    ("the cooling is added instead of removed",
+     "        temperature = sim.Temperature + actual + tremor - cooling",
+     "        temperature = sim.Temperature + actual + tremor + cooling",
+     "a dark laser bank does not silence the pumps"),
+
+    ("the cooling is tucked under the lasers' off-rule",
+     "            row, self.power, sim.Pressure, self.t, self.cooling)",
+     "            row, self.power, sim.Pressure, self.t,\n"
+     "            self.cooling if self.power > 0.0 else 0.0)",
+     "a dark laser bank does not silence the pumps"),
+
+    ("the cooling is scaled by pMultiplier like the heat is",
+     "        temperature = sim.Temperature + actual + tremor - cooling",
+     "        temperature = sim.Temperature + actual + tremor - cooling * amp",
+     "the press multiplier does not scale the cooling"),
+
+    ("the stall stops out-ranking the pumps",
+     "0.0 if stall else coolant",
+     "coolant",
+     "the stall out-ranks the pumps too"),
+
+    ("the three pump levels are read as one pump",
+     "        return COOLANT_PER_LEVEL * sum(self.pumps)",
+     "        return COOLANT_PER_LEVEL * self.pumps[0]",
+     "the cooling is 120 a level, summed over three"),
 )
 
 

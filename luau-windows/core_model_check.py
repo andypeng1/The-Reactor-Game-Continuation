@@ -152,6 +152,21 @@ def his_temperature(temp, row, level, pressure, x):
     return temp + his_base_fluc(row, level) * his_press(pressure) + his_noise(x, level)
 
 
+def his_cooling(levels):
+    """What the pumps take off a tick: 120 a level, summed, added OUTSIDE his
+    line and outside `pMultiplier`.
+
+    Spelled from the three sources rather than from `gui.COOLANT_PER_LEVEL`:
+    the original's own line in `Data/TRGWeb.luau` (`- (coolant_pump1_power +
+    coolant_pump2_power + coolant_pump3_power)*120`), our remake's
+    `Config.Sim.PumpCooling`, and the shipped log's exact identity
+    `predDT*5 == 65*sum(cbl.level) - 120*sum(coolant.levels)` over all of its
+    477 records (`_tools/coolant_from_log.py` prints it).  Reading the constant
+    back off the module would make this a tautology.
+    """
+    return 120.0 * sum(levels)
+
+
 # ========== the run ==========
 
 def main():
@@ -231,7 +246,7 @@ def main():
                if "core model" in text_of(w)]
     check("the panel prints his equation",
           headers[0] if headers else "",
-          "the core model   T' = T + baseFluc * press + noise(t)")
+          "the core model   T' = T + baseFluc * press + noise(t) - cooling")
 
     # One tick at a time, against his equation with his literals.  The tick
     # period is 1.0 s, so at the Nth tick t = N and level = 50/25 = 2.
@@ -493,6 +508,145 @@ def main():
           gui.fluctuation(3, 375.0), his_base_fluc(3, 15))
     print("     (the fit covers a = 25..125, i.e. ONE bank; a = 375 is an "
           "extrapolation -- QUESTIONS.md)")
+
+    # --- the three coolant pumps --------------------------------------------
+    # The third of the game's three control means.  The CONSTANT is measured
+    # (see his_cooling); what is checked here is where it SITS, because that
+    # part is a choice and not a reading -- CLAUDE.md 0.31's question, asked of
+    # a spec that arrived after the model it lands in:
+    #   * it is its own term rather than so many CBL levels' worth of negative
+    #     `a`, so it works with the lasers dark (the shipped log has 84 records
+    #     at CBL sum 0 with the pumps running) and it is not a per-row quantity;
+    #   * it is outside `pMultiplier`, because no source puts a pressure factor
+    #     on it and multiplying would be inventing one;
+    #   * the stall still out-ranks it, so his -586 stays exactly -586.
+    # Every one of those three is driven and then broken on purpose in
+    # core_model_mutants.py -- a check that only ever sees the pumps at zero
+    # would pass with the whole feature missing.
+    print("\n-- coolant: three pumps, each 0..3, -%g a tick --"
+          % gui.COOLANT_PER_LEVEL)
+    console.reset()
+    console.arm_var.set(True)
+    console.on_arm()
+    console.auto_var.set(False)
+    console.on_auto()
+    console.core_var.set(3)
+    console.on_core_state()
+    for var in console.cbl_vars:
+        var.set(0)
+    console.on_power()
+    check("the pumps start dark, like the game's",
+          [var.get() for var in console.pump_vars], [0, 0, 0])
+    check("...so nothing is being cooled", console.core.cooling, 0.0)
+
+    for index, level in enumerate((3, 0, 1)):
+        console.pump_vars[index].set(level)
+    console.on_coolant()
+    check("three pumps hold three different levels", console.core.pumps, [3, 0, 1])
+    check("the cooling is 120 a level, summed over three",
+          console.core.cooling, his_cooling([3, 0, 1]))
+    # The lasers are dark for the tick below, so his line adds nothing and the
+    # tremor is scaled by a level of zero: what is left is the pumps alone.
+    # This is the check that says the "off is ours" rule stops at the lasers.
+    temp = console.sim.Temperature
+    console.step_once()
+    values = screen(right)
+    check("the pumps on screen", values["p1 / p2 / p3  pumps"], "3 / 0 / 1")
+    # Addressed by prefix, not by its full text: the label embeds the constant
+    # that is under test, so a mutant of that constant has to fail a CHECK and
+    # not raise a KeyError inside this file (readout() says the same thing
+    # about the stallout label, and that is where this was learned).
+    check("the cooling on screen", readout(values, "cooling"),
+          gui.shown(his_cooling([3, 0, 1])))
+    check("a dark laser bank does not silence the pumps",
+          float(values["T'  next tick's temperature"]) - temp,
+          -his_cooling([3, 0, 1]))
+
+    # The pumps and the lasers together, on a row where `a` has a real
+    # coefficient, against his equation plus the measured cooling.  This is the
+    # only check here that reads BOTH controls at once, so it is the one that
+    # would catch the cooling being routed through his line (which would make
+    # the total depend on the row and on `a` in a way no source describes).
+    console.pump_vars[0].set(2)
+    console.pump_vars[1].set(3)
+    console.pump_vars[2].set(0)
+    console.on_coolant()
+    console.cbl_vars[0].set(75)
+    console.cbl_vars[1].set(25)
+    console.cbl_vars[2].set(0)
+    console.on_power()
+    temp = console.sim.Temperature
+    pressure = console.sim.Pressure
+    console.step_once()
+    values = screen(right)
+    # `core.t` AFTER the step: the model accumulates it before it computes, so
+    # that is the x the tremor was taken at.  Read before the step it would be
+    # one period stale, which is the kind of off-by-a-tick that only shows up
+    # as a small disagreement in the last digit.  Compared as SCREENED values
+    # (`shown` on both sides), because the readout is a whole number and
+    # comparing a rounded reading against an unrounded sum tests the rounding.
+    want = (his_temperature(temp, 3, 4, pressure, console.core.t)
+            - his_cooling([2, 3, 0]))
+    check("heat and cooling in one tick, his literals",
+          values["T'  next tick's temperature"], gui.shown(want))
+
+    # `pMultiplier` is a property of the pressure, and the cooling is not: from
+    # 20000 PSI the multiplier is 2, and a check made at 1 could not tell the
+    # two apart.  This one can -- it is the only place the difference is
+    # visible, so it is the check a "cooling inside the multiplier" mutant has
+    # to redden.
+    console.sim.Pressure = 20000.0
+    for var in console.cbl_vars:
+        var.set(0)
+    console.on_power()
+    for var in console.pump_vars:
+        var.set(0)
+    console.pump_vars[2].set(1)
+    console.on_coolant()
+    check("the press is doubled up here", gui.press_multiplier(console.sim.Pressure),
+          2.0)
+    temp = console.sim.Temperature
+    console.step_once()
+    values = screen(right)
+    check("the press multiplier does not scale the cooling",
+          values["T'  next tick's temperature"],
+          gui.shown(temp - his_cooling([0, 0, 1])))
+
+    # The stall out-ranks the pumps, exactly as it out-ranks the lasers: his
+    # -586 is a rate for a crumpled core and it does not become -586 minus 1080
+    # because three pumps are running.  Driven at the gate's own boundary
+    # rather than below it, so the same tick also says the gate is still the
+    # one the stall section below reads.
+    console.sim.Pressure = gui.AVB_STALLOUT_PSI
+    for var in console.pump_vars:
+        var.set(3)
+    console.on_coolant()
+    check("three pumps at their maximum", console.core.cooling,
+          his_cooling([3, 3, 3]))
+    temp = console.sim.Temperature
+    console.step_once()
+    values = screen(right)
+    check("the stall out-ranks the pumps too",
+          values["T'  next tick's temperature"],
+          gui.shown(temp + gui.STALL_FLUC))
+    check("...and the cooling is what the step zeroed, not what the panel says",
+          readout(values, "cooling"), "0")
+    print("     (maximum coolant is -%g a tick: in THIS console's currency that "
+          "is about a third of three maxed banks, where the original's own "
+          "ratio would drown them -- his fitted heat line is ~2.6x the "
+          "original's 65 a level, and the constant is the measured one rather "
+          "than a rescaled one -- QUESTIONS.md)"
+          % his_cooling([3, 3, 3]))
+
+    # Put the pumps back before the next section.  Not tidiness: every check
+    # below is about the stall, the vent and the rows, and a section that walks
+    # off leaving 1080 a tick of cooling running would make them read a
+    # different console -- silently, since none of them asks about the pumps.
+    for var in console.pump_vars:
+        var.set(0)
+    console.on_coolant()
+    check("...and back off again, so the sections below run the console they "
+          "used to", console.core.cooling, 0.0)
 
     # --- the stall, which is the operator's rule ----------------------------
     # Driven rather than planted: the fans walk the pressure down at 194 a tick
