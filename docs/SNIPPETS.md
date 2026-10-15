@@ -2803,3 +2803,138 @@ def his_noise(x, level):        # his literals, not ours
 **本轮的数**：`python -X utf8 core_model_check.py` → **103 checks, 0 failed, exit 0**；
 突变点亮 **4 条**。版面是量**请求尺寸**定的（`root` 请求 `719x804`），
 **没有窗口出现在操作员屏幕上**（§4.1：不动他的鼠标 / 屏幕）。
+
+---
+
+## 5.39 给一块 1:1 的方封面：同一条运输线 + 一份纯判定 + 一次"逐层关掉"（★ Phase 132）
+
+**适用**：要做一张要交付的图（封面 / tile / 缩略图 / 社交卡），而仓库里
+**已经有一台能驱动无头 Chrome 的渲染器**（`_tools/intro_render.js`）。
+
+### ① 页面：第三条服从同一份契约的 HTML
+
+**不要**写第二台渲染器。契约只有三件：一个固定尺寸的 `#stage`、一个全局 `render(t)`、
+一个按视口缩放的 `fit()`。静止页面把 `render(t)` 写成**接受 t 并忽略它** ——
+页面里没有任何随时间变化的东西，所以没有状态可以残留，也就没有帧需要倒。
+
+```html
+<div id="viewport"><div id="stage"> ... </div></div>
+<script>
+function fit(){ const k = Math.min(innerWidth/1080, innerHeight/1080);
+  document.getElementById('stage').style.transform = 'scale(' + k + ')'; }
+function render(t){ void t; buildHex(); buildRule(); }   // t 是契约，不是输入
+render(0); fit(); addEventListener('resize', fit);
+</script>
+```
+
+渲染器为此只多了三个参数，而且**默认值就是两部片子一直在用的值**：
+`--w` / `--h`（设计空间，默认 1920×1080）和 `--shot`（要交付的那一帧放哪 ——
+默认落点是 gitignore 的 `_attic/_frames`，而交付物不该进垃圾堆）。
+
+### ② 视口必须钉成页面自己的舞台
+
+```bash
+D:/nodejs/node _tools/intro_render.js --page cover/index.html --at 0 \
+    --w 1080 --h 1080 --shot cover/THE_REACTOR_GAME_cover.png \
+    --eval 'layoutReport()' > _tools/_attic/scratch/cover_report.txt
+```
+
+漏掉 `--w/--h` 不会报错：`fit()` 把方舞台缩进 1920×1080 的视口里，
+**截图带黑边、而报告里每一个坐标都是错的空间里的坐标**。所以判定文件的第一条
+（A0）量的就是"舞台是不是 1080×1080 且填满视口" —— 它保证后面九条**在量对的东西**。
+这一条也被写成了最真实的那条突变（`m.innerW = 1920`）。
+
+### ③ 页面只负责量，判定写在另一个文件里
+
+```js
+function layoutReport(){          // 只吐 JSON，不判对错
+  render(0);
+  const text = TEXT.map(id => glyphBox(document.getElementById(id)));  // 字形盒，不是边框盒
+  return JSON.stringify({stage:{...}, innerW, innerH, text, cells, hex, decor});
+}
+```
+
+```bash
+D:/nodejs/node _tools/cover_judge.js _tools/_attic/scratch/cover_report.txt   # exit 1 = 红
+D:/nodejs/node _tools/cover_judge.js --selftest _tools/_attic/scratch/cover_report.txt
+```
+
+**字形盒**（`Range.selectNodeContents` → `getBoundingClientRect`）而不是边框盒：
+`#title` 是 `left:0;right:0`，它的边框盒是整个 1080 宽，用它比会让"两行字只要在同一行
+就算撞上"（片头 L5 踩过这个）。
+
+判定的**每一条都要能红**，而且**"没有东西相撞"这类断言必须同时报一个近失值**：
+`minGap < 40` 是那条断言的非真空条件 —— 最近的一对离了 500px 的话，
+"没有相撞"这句话什么都没证明（§0.20 空集合会说两次谎）。
+
+### ④ 装饰层：逐层关掉再渲染，比像素
+
+**这是这一轮最值钱的四行。** 版面规则看不见装饰层（它们没有文字、不在任何几何断言上），
+而第一版里四层装饰是坏的、九条规则全绿：
+
+```bash
+for L in grid hexes coreGlow titleBand hazard; do
+  node _tools/intro_render.js --page cover/index.html --at 0 --w 1080 --h 1080 \
+       --eval "document.getElementById('$L').style.opacity='0'; 'off $L'" \
+       --shot "_tools/_attic/scratch/off_$L.png" > /dev/null
+done
+python -X utf8 _tools/cover_layer_probe.py cover/THE_REACTOR_GAME_cover.png \
+       _tools/_attic/scratch/off_*.png          # 每一层都必须 >0 px
+```
+
+（现成的：`bash _tools/cover_layers.sh`。它先重拍一次成品帧，所以两边出自同一次构建。）
+
+判读两个数：**改了几个像素**、**差值的外接矩形落在哪**。后者是第二个证据 ——
+警示带的差值必须落在 `y[1024..1051]`、标题条必须落在 `y[704..757]`，与 CSS 里写的逐字对上；
+差得大就成了"某个别的东西在动"。
+
+**两种会安静骗人的写法**（都不报错）：
+
+- **黑素材 + `mix-blend-mode:screen`**：`screen(底, 0) = 底`，这一层**逐像素为 0**。
+  `stripes.png` 量出来是 rgb(0,0,0) —— 所以条纹带要在 `screen` 下**必须** `invert(1)`。
+- **近白素材 + `filter:invert(1)`**：转成黑压在近黑的底上，**层还在、振幅塌到 1%–14%**
+  （`nested-hex` rgb(235) → Δ3；`sm-logo` rgb(228) → Δ35）。
+
+**"层不在"和"层在但读不出来"是两个失败，要两个数**（取舍 565）。
+凡是"看得见/看不见"的判断都要带**振幅**：0 和 1% 不是同一个断言。
+
+### ⑤ 素材的极性：在用它的地方声明，并把量的命令写在旁边
+
+极性浏览器量不到（`file://` 下 canvas 读背景图会被污染），所以在 HTML 上声明：
+
+```html
+<div id="hexes"     data-art="white"></div>     <!-- rgb(235,235,235)：不许 invert -->
+<div id="titleBand" data-art="black"></div>     <!-- rgb(0,0,0)：必须 invert -->
+<div id="coreGlow"  data-art="gradient"></div>  <!-- 纯 CSS：更不许 invert -->
+```
+
+判定断言**双条件**：`white ⟺ 不许 invert`、`black ⟺ 必须 invert`、
+`gradient ⟺ 不许 invert`（反色只会产出调色板外的颜色）。声明旁边写着量出它的命令 ——
+这条断言检的是"声明自洽"，而**声明的出处可复查**（§0.31：要让它红，得先有什么在场）。
+
+```python
+# 复量极性：alpha > 8 的不透明像素求 rgb 平均
+im = Image.open(p).convert("RGBA")
+px = [c for c in im.get_flattened_data() if c[3] > 8]
+print(tuple(sum(c[i] for c in px)//len(px) for i in range(3)))   # 0,0,0 = black
+```
+
+### ⑥ 可复核：连渲多次，**逐像素**比 —— 不是比 md5
+
+```bash
+for i in 1 2 3; do
+  node _tools/intro_render.js --page cover/index.html --at 0 --w 1080 --h 1080 \
+       --shot "r$i.png" >/dev/null
+done
+python -X utf8 _tools/cover_layer_probe.py r1.png r2.png r3.png   # 每一对都必须 0 px
+```
+
+**先写的那一版是「连渲两次、比 md5」，量出来是错的。** 同一份源连渲 5 次会分成
+**两个字节形态**：3 次 922894 B / `fa7d04cf…`、2 次 922895 B / `08430ec6…`，
+而两个形态**只差 1 个像素、1 个灰阶** —— (790,583) 的 G 通道，正好落在六边裁切边的
+抗锯齿列上（`hex.right = 789.41`）。**像素是一幅画，字节不是。**
+
+拿 md5 当复核判据会**随机变红**，那比没有判据更坏（它把"今天运气不好"报成
+"这版不合规"）。判据要选在**被测对象真的会变**的那一层上。
+
+一份**渲不回来**的交付物是一份**没人能复核**的交付物（取舍 567，已按这条更正）。

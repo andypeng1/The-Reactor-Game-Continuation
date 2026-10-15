@@ -36,19 +36,31 @@ const FRAMES = path.join(__dirname, '_frames');
 const CHROME = process.env.TRG_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const FFMPEG = process.env.TRG_FFMPEG || 'D:\\Bot\\ffmpeg\\bin\\ffmpeg';
 
-const W = 1920, H = 1080, PORT = 9333;
-
 /* ---------- args ---------- */
 const argv = process.argv.slice(2);
 const arg = (name, dflt) => {
   const i = argv.indexOf('--' + name);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : dflt;
 };
+// The design space is an ARGUMENT because a film is not the only thing this
+// renderer drives: cover/index.html is 1080x1080 (Phase 132), and the viewport
+// has to be pinned to exactly the page's own stage or fit() scales it and the
+// screenshot comes back letterboxed. Both films get 1920x1080 by default, so
+// nothing about them changes -- and the defaults are what the two-film runs
+// have always passed implicitly.
+const W     = Number(arg('w', '1920'));
+const H     = Number(arg('h', '1080'));
+const PORT  = 9333;
 const FPS   = Number(arg('fps', '30'));
 const AT    = arg('at', null);                       // comma-separated seconds -> PNG probe
 const EVAL  = arg('eval', null);                     // expression to read back AT each probed t
 const CHECK = argv.includes('--check');              // layout assertions in the real browser
 const OUT   = path.resolve(ROOT, arg('out', path.join('intro', 'THE_REACTOR_GAME_intro.mp4')));
+// A single-instant page (a cover) has a deliverable FRAME, not a film, so the
+// probe needs somewhere to put it that is not the gitignored scratch pile.
+// Only honoured when exactly one --at is given: with several, the PNGs are
+// probes and the numbered scratch names are the right ones.
+const SHOT  = arg('shot', null);
 // The page path is overridable for the same reason intro_check.js's is: the
 // only way to know a check can go red is to point it at a broken copy.
 const PAGE  = path.resolve(ROOT, arg('page', path.join('intro', 'index.html')));
@@ -392,7 +404,10 @@ function judge(m){
         console.log(`  t=${t.toFixed(3)} eval -> ${typeof v === 'string' ? v : JSON.stringify(v)}`);
       }
       if (AT){
-        const f = path.join(FRAMES, 'probe_' + String(t).replace('.', '_') + '.png');
+        const one = (AT || '0').split(',').map(Number).length === 1;
+        const f = (SHOT && one) ? path.resolve(ROOT, SHOT)
+                                : path.join(FRAMES, 'probe_' + String(t).replace('.', '_') + '.png');
+        if (SHOT && one) fs.mkdirSync(path.dirname(f), {recursive:true});
         const n = await shot(t, f);
         console.log(`  t=${t.toFixed(3)} -> ${path.relative(ROOT, f)}  ${(n/1024).toFixed(0)} KiB`);
       }

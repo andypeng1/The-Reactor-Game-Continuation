@@ -1374,6 +1374,45 @@ carry the reference recording, so they are gitignored for the same reason the tr
 silent master and the plates are our own render and are tracked. Rebuild both with the commands
 in `docs/PROMO.md`.
 
+## The cover - `cover/`
+
+`cover/THE_REACTOR_GAME_cover.png` is a **1080x1080 (1:1) game cover** for TRG:AIREMAKE,
+drawn by `cover/index.html`. It re-renders to **the same picture**, not to the same bytes: five
+consecutive renders split into two byte forms - 922,894 bytes / md5 `fa7d04cf8ea0dd00ff25d5de4835aee0`
+and 922,895 bytes / `08430ec6abf6c84e6073ca08e47c9d06` - that differ by **one pixel, one grey level**
+(the antialiased hexagon edge at (790, 583)). Compare pixels, not hashes; `docs/COVER.md` section 6.
+
+**It is the third page that obeys one contract**, so it needs no renderer of its own: a fixed
+`#stage`, a global `render(t)`, a `fit()` that scales it to the window. A still page just makes
+`render(t)` accept `t` and ignore it - nothing on the page changes with time, so there is no
+state to leave behind and no frame to scrub back to. `_tools/intro_render.js` gained `--w`,
+`--h` and `--shot`, all defaulting to what the two films already passed, so neither film
+changed. `--w 1080 --h 1080` is not optional: without it `fit()` scales the square stage into a
+1920x1080 viewport and **every coordinate in the measurement is in the wrong space** - which is
+why A0 measures that before anything else.
+
+**The measurement and the verdict are two files.** `cover/index.html` only reports
+(`layoutReport()`); `_tools/cover_judge.js` decides A0..A9 and exits 1 on any failure, so it is
+a pure function from JSON to exit code and runs with no browser at all - which is what makes
+`--selftest` possible: **12 mutants, each reddening exactly the rule it is aimed at** (the most
+realistic being "forgot `--w/--h`"). Current: **10 ok / 0 failed**.
+
+**The defect worth reading about is in the decoration.** Five layers (`#grid`, `#hexes`,
+`#coreGlow`, `#titleBand`, `#hazard`) carry no text and sit on no geometric assertion, and in
+the first build **four of them were wrong while nine of the ten rules were green** - two of
+them contributing exactly zero pixels. Two mechanisms, both silent: `mix-blend-mode:screen`
+fed a black asset (`screen(base, 0) == base`, so `stripes.png` - measured rgb(0,0,0) - erased
+the title band and the hazard band entirely), and `filter:invert(1)` on near-white art (which
+turns it black, dropping the amplitude from delta 24 to delta 3). `_tools/cover_layers.sh`
+renders the cover once per layer with that one layer switched off and diffs the pixels; the
+layout judge's A9 covers the half pixels cannot see (each layer declares its asset's polarity
+in `data-art`, and the rule asserts that declaration and the computed `filter` agree).
+Nothing here errors in any of those cases. Full write-up: `docs/COVER.md`.
+
+**The wording is a judgement call, not a measurement.** The title reads `THE REACTOR GAME`
+with an amber `AIREMAKE` badge - i.e. **not** `TRG: AIREMAKE` - because that name is the brand
+line in both films. It is `QUESTIONS.md` **R7**, and it is one line to change.
+
 ## The music - `asstes/music/ReactorShift.{ogg,mp3}`
 
 An original track, **263.84 s**, 89.25 bpm, F major pentatonic, 97 bars. It is composed in

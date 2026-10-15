@@ -126,6 +126,32 @@ _tools/_drive_route_states.luau
 _tools/_drive_route_mutant.luau
 _tools/_drive_route_mut_states.luau
 
+# --- Phase 132's cover renders.  _tools/cover_layers.sh renders the cover once
+#     per decorative layer with that one layer switched off and diffs each frame
+#     against the full one; that pile is ~11 MB of PNG (five layer-off frames, a
+#     scratch copy of the deliverable, the four mutation renders that prove the
+#     judge can go red, the contact sheet the hero was picked from, and the five
+#     full-frame variants a stability question needed).  All of it is one command
+#     from being regenerated.  Same rule as _tools/_frames/ above: a render is
+#     evidence, not data.
+#     It is a BLANKET rule for PNGs under the scratch pile, not a list of names,
+#     and that is deliberate: the first version listed five names and the very
+#     next round of diagnostics leaked in under a sixth (vA..vE.png) -- a name
+#     list only excludes the renders I was thinking about.  It is safe as a
+#     blanket because the scratch pile has never held a tracked image of any
+#     kind: `git ls-files _tools/_attic/scratch | grep -Ei '\.(png|jpg)$'` is
+#     empty, and what lives there is text -- 45 .py, 14 .txt, 12 .md, 8 .luau.
+#     What the repo keeps is the two things that CANNOT be re-derived -- the
+#     deliverable itself (cover/THE_REACTOR_GAME_cover.png, tracked) and the
+#     READINGS this pile was read for (docs/COVER.md section 3/4).  The scripts
+#     that draw it (cover_layer_probe.py, cover_layers.sh, the two scratch
+#     builders) stay tracked, so the sweep is reversible.
+#     cover_report.txt is here for the same reason, and with a correction: the
+#     file table in docs/COVER.md already described it as gitignored.  That was
+#     true of the intent and not of this file until this line. ---
+_tools/_attic/scratch/*.png
+_tools/_attic/scratch/cover_report.txt
+
 # --- the user's own auxiliary reference dumps (Data/auxcollection/).  Handed to
 #     me to read, not produced by the project: 180 MB in ONE file, which is over
 #     GitHub's 100 MB hard file limit, so an accidental `git add -A` would be
