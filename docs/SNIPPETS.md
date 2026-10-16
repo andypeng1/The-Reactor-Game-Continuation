@@ -3377,3 +3377,62 @@ python -X utf8 luau-windows/core_model_mutants.py   # 23 mutants, 0 survived
 ```
 
 两个都 **exit 1** 时才叫红；突变器还报**三个**数（崩掉 / 红错了 / 红在对的那条，§5.40）。
+
+## 5.44 突变器报 `HOLE` 之前，先证明**它真的跑过**（陈旧 `.pyc`，Phase 139）
+
+**症状**：突变器**间歇性**报 `HOLE`。第一次 `the stall is not remembered for the readout`，
+第二次红错**换成另一条**。**两个读数互相矛盾，就已经说明问题不在被测对象**（§0.27 ②）。
+
+**机制（量出来的，不是推的）**：CPython 拿 **（源文件 mtime 按整秒，源文件字节数）**
+校验 `.pyc`。突变器里**大多数突变的字节数与它替换掉的文本完全相同**
+（`-586.0` → `-750.0`、`2200.0` → `2500.0`），而一次检查跑约 **0.85 s** ——
+于是"在上一版**同一秒**里写下的**等长**突变"两个校验量都相同，Python **重用上一趟的字节码**。
+
+**它为什么比别的 bug 坏**：它不报"工具坏了"，它报"**这些检查没有牙**" ——
+一个让人**去改检查**的结论，而那条路等于**给一个不存在的缺陷打补丁**（§0.15 同族）。
+
+**两行复现（比读文档快）**：
+
+```bash
+# 把 gui.py 里 STALL_FLUC 改掉，然后立刻 import，读回来的是上一版的值
+python -X utf8 -c "import gui; print(gui.STALL_FLUC)"   # 旧值，而不是你刚写的那个
+```
+
+**修法（两半缺一不可：一个请求，一个读数）**
+
+```python
+    # 请求：不落盘任何字节码，就没得陈旧
+    subprocess.run([sys.executable, "-B", "-X", "utf8", CHECKER], cwd=where, ...)
+
+    # 读数：请求不是读数（§0.2）—— 去看 __pycache__ 里到底有没有东西
+    def _stray_cache(where):
+        cached = os.path.join(where, "__pycache__")
+        return sorted(os.listdir(cached)) if os.path.isdir(cached) else []
+```
+
+基线跑完查一次、**每条突变跑完再查一次**，并且**每条突变额外断言它自己的新文本
+确实在检查器编译的那个文件里**：
+
+```python
+            if new not in read(os.path.join(where, TARGET)) or stray:
+                print("CRASH  %-56s the mutation did not reach the checker%s" % ...)
+```
+
+**反向试验**（这一步不能省：一个从不失败的守卫和没有守卫同形）：
+去掉 `-B` → `baseline left a bytecode cache behind: ['gui.cpython-314.pyc']`；
+连那个守卫也去掉 → **23 条全部** `CRASH`。改完**连跑三次**，三次都是同一行结果。
+
+**这条的外推**：`HOLE` 现在有**三个意思**（检查没牙 / 突变没牙 / **突变没跑**，
+§5.40 的"三个数"要加上这个），三者**在旧输出里逐字同形**。
+一般形态：**报告一次失败之前，先证明失败者真的在场。**
+§0.31 ① 问的是"**要让它红得先有什么在场**"，这一条问的是"**它真的来过吗**"。
+
+**顺带把库查了一遍的结论**（一条负面结论要找到机制才算结清，§0.28）：
+`_tools/selftest_boot.py` 的突变循环走 **Lua**（`lua harness path scenario`），
+不 import 被突变的 Python 模块；`_tools/check_fluc_steps.py` 的 `mkdtemp` 只用来放输出。
+**只有 `luau-windows/core_model_mutants.py` 一处有这条缺陷，也只有一处要修。**
+
+**同轮的另一半（规格侧，不是工具侧）**：一条一天里被拨了**四次**的常数，
+`§5.43` 那套（"够到哪几行"+"两个读数都要有牙"）继续用，再加一条：
+**这条行的注释要带全部四个阶段（哪天、谁说的、哪一版），不只是"现在是什么"** ——
+一条会被反复拨动的常数，唯一能防"下次谁把它拨回去"的东西是它自己记着的清单。

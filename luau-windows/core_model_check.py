@@ -16,7 +16,7 @@ The spec is the 2026-10-16 revision -- the message headed "Correction", a
 per-tick STEP:
 
     a_avg          = ((c_1 + c_2 + c_3) / 3) * 25
-    coolant_avg    = (p_1 + p_2 + p_3) / 3         <- taken back the same day
+    coolant_avg    = (p_1 + p_2 + p_3) / 3      <- moved 3 times; it is back
     coolant_effect = coolant_avg * 120                       (see below)
     s              = {T < 5600: 0, T < 17500: 1, T < 29500: 2, 3}
     base_heat      = [0, 6.86*a_avg + 65.5, 7.24*a_avg + 37, 6.8*a_avg + 534][s+1]
@@ -27,27 +27,42 @@ per-tick STEP:
     dT             = {P <= 2200: -586, base_heat*p_mult - coolant_effect + noise}
     T'             = T + dT
 
-with ONE WORD OF IT TAKEN BACK THE SAME DAY.  The message wrote
-`coolant_avg = (p_1 + p_2 + p_3) / 3` and multiplied that; the next message said
-not to average the cooling, so what is checked here is `coolant_effect =
-(p_1 + p_2 + p_3) * 120` -- the form the original's own prototype, our remake
-and the shipped log all write, and the form this console had before either
-message.  The BANKS stayed averaged: only the pumps lost their division.
+with ONE TERM OF IT MOVING THREE TIMES.  The message wrote `coolant_avg = (p_1 +
+p_2 + p_3) / 3` and multiplied that; the next message said not to average the
+cooling; the one after that said to average it after all.  So the line above is
+his first and his third word on the unit, and the middle one -- `sum * 120`, no
+division at all -- is kept as a mutant rather than as a live check, because a
+spec visited three times has to keep a tooth on the reading it was reversed OUT
+of as well as on the one it landed on (CLAUDE.md 0.34).  Before any of those,
+the sum was this console's own reading of the three sources rather than a word
+of his; that is what made it look like the safer default, and it is why the
+sources are still quoted at length under `his_cooling` below.  What did NOT move
+is the banks': they were averaged in the same message as the pumps and have
+stayed averaged through all of it, because
+their mean is pinned by his fitted band (`a = 25..125`) and the pumps have no
+such band.  That asymmetry is the whole reason the two halves of one message
+could land differently, and it is why the checker holds them to different
+things rather than to one rule about "the mean".
 
-His own worked example -- the numbers the first of those messages carries,
-c = 5/3/1, p = 2/2/2, T = 12000, P = 8000, t = 1 -- is driven through the panel
-in its own section below, so the spec is checked as an instance and not only
-term by term.  Three of that instance's own numbers rode on the average
-(`coolant_effect = 240`, `dT = 375.465...`, `T' = 12375`); the section drives it
-with the cooling read as the sum and says so where the difference shows.
+His own worked example -- the numbers the message carries, c = 5/3/1,
+p = 2/2/2, T = 12000, P = 8000, t = 1 -- is driven through the panel in its own
+section below, so the spec is checked as an instance and not only term by term.
+Its tail (`coolant_effect = 240`, `dT = 375.465...`, `T' = 12375`) belongs to
+the averaged reading, which is the one in force again, so the example is driven
+as he wrote it and nothing is annotated as a discrepancy.  The sum's own tail
+for those same pumps -- 720, -104.53, 11895 -- stays in the section as a print,
+so the reading that was in force for part of the day is recorded without being
+asserted as a live number (CLAUDE.md 0.31 (1): an identity that cannot go red is
+a print, not a check).
 
 That supersedes the 2026-10-14 revision (`T' = T + (active[row] +
 passive[row]) * pMultiplier + noise(t) + cooling`), which in turn replaced the
-2026-10-13 closed form `T0 + (rate + noise(x)) * x`.  Two things moved and each
-is checked by name here: the banks are AVERAGED and not summed, and the stall is
-now the whole of `dT` (no heat, no pump term, no tremor) where the earlier
-reading had it set the rate with the tremor still riding on the reading.  The
-pump side is the third, and it is the one that moved twice.
+2026-10-13 closed form `T0 + (rate + noise(x)) * x`.  Three things moved and
+each is checked by name here: the banks are AVERAGED and not summed, the stall
+is now the whole of `dT` (no heat, no pump term, no tremor) where the earlier
+reading had it set the rate with the tremor still riding on the reading, and the
+pumps are averaged too -- which is the one of the three whose direction changed
+after it first landed.
 
 Exit status is 1 if any check failed, 0 if all passed, so a broken run is not a
 silent one.  ASCII only on stdout -- this console is GBK.
@@ -238,23 +253,30 @@ def his_temperature(temp, row, a, pressure, x, cooling=0.0):
 
 
 def his_cooling(levels):
-    """What the pumps take off a tick: `120 x (p_1 + p_2 + p_3)`, added OUTSIDE
+    """What the pumps take off a tick: his `coolant_avg * 120`, added OUTSIDE
     his line and outside `pMultiplier`.
 
-    The SUM is his second word of 2026-10-16: the message that introduced the
-    pumps divided by three, and the next one -- the same day -- took that
-    division back off them ("don't use the mean for the cooling").  The 120 is
-    untouched either way, and it is spelled from the three sources rather than
-    from `gui.COOLANT_PER_LEVEL`, so this is not a tautology: the original's own
-    line in `Data/TRGWeb.luau` (`- (coolant_pump1_power + coolant_pump2_power +
-    coolant_pump3_power)*120`), our remake's `Config.Sim.PumpCooling`, and the
-    shipped log's exact identity `predDT*5 == 65*sum(cbl.level) -
-    120*sum(coolant.levels)` over all of its 477 records
-    (`_tools/coolant_from_log.py` prints it).  All three spell the sum, so the
-    constant AND the unit now agree with every source -- what is left to file
-    (QUESTIONS.md R11) is the heat side of the ratio, not this one.
+    The AVERAGE is his own spelling, and this is the term that has moved three
+    times in one day: the message that introduced the pumps wrote it with no
+    division, the "Correction" message averaged it, the next took the average
+    back off the pumps alone, and the one after that -- Phase 139 -- put it
+    back.  What is transcribed here is the FIRST and the LAST of those, which
+    are the same line; the two middle readings are the ones the mutants below
+    are aimed at.  gui.py's constants block is where the whole list lives.
+
+    The 120 is untouched through all four, and it is spelled from the three
+    sources rather than from `gui.COOLANT_PER_LEVEL`, so this is not a
+    tautology: the original's own line in `Data/TRGWeb.luau`
+    (`- (coolant_pump1_power + coolant_pump2_power + coolant_pump3_power)*120`),
+    our remake's `Config.Sim.PumpCooling`, and the shipped log's exact identity
+    `predDT*5 == 65*sum(cbl.level) - 120*sum(coolant.levels)` over all of its
+    477 records (`_tools/coolant_from_log.py` prints it).  All three spell the
+    SUM while this line spells the mean, and that is the divergence
+    QUESTIONS.md R11 files rather than folds away: same constant, different
+    unit, exactly a factor of three at every position.
     """
-    return sum(levels) * 120.0
+    coolant_avg = sum(levels) / 3.0
+    return coolant_avg * 120.0
 
 
 # ========== the run ==========
@@ -706,21 +728,22 @@ def main():
           his_base_fluc(1, his_a_avg(5, 3, 1)), 560.8)
     check("his example: p_mult = 1 at P = 8000",
           values["press x   pMultiplier"], "1")
-    # His instance says coolant_effect = 240 here, because the message that
-    # carried it divided the three pumps by three.  The next message took that
-    # division off the pumps, so the same 2/2/2 now takes off 720 -- not a
-    # disagreement with his numbers but his own later word landing on an example
-    # he wrote before it.  Both halves are kept in view: the number this
-    # equation gives, and the fact that his 240 is exactly what the other
-    # reading gives, so neither can be quietly lost.
-    check("his example: coolant_effect = 720 at p = 2/2/2",
-          readout(values, "cooling"), "720")
-    check("...and the model's own number is his (2+2+2) * 120",
-          console.core.cooling, 720.0)
-    print("     (his instance's own 240 is the AVERAGED reading of these same "
-          "pumps -- 720 / 3 -- and the division came off them by his next "
-          "message.  His tail, dT = 375.465 and T' = 12375, belongs to the "
-          "240.)")
+    # His instance says coolant_effect = 240 here, and it is the live reading
+    # again: the message that carried the example averaged the three pumps, the
+    # next took that division off, and the one after that put it back, so his
+    # own worked example and the console are on the same reading for the second
+    # time.  The other one is printed immediately below rather than dropped --
+    # and printed rather than CHECKED, because with the mean in force there is
+    # nothing left that can fail on it (CLAUDE.md 0.31 (1)).
+    check("his example: coolant_effect = 240 at p = 2/2/2",
+          readout(values, "cooling"), "240")
+    check("...and the model's own number is his (2+2+2)/3 * 120",
+          console.core.cooling, 240.0)
+    print("     (the other reading of these same pumps -- his second word, and "
+          "the one in force for part of the day -- takes off 720, and its tail "
+          "is dT = -104.53 and T' = 11895.  Both numbers are his own "
+          "arithmetic; which one the panel shows is his choice of unit and it "
+          "has flipped three times.)")
     check("his example: noise(1) = 54.665...", values["noise(t)"], "55")
     # Closed at the SCREEN layer, which is where the console makes its promise,
     # plus one bounded comparison underneath it: the two spellings of his three
@@ -734,10 +757,10 @@ def main():
                 his_noise(1.0, his_a_avg(5, 3, 1)), 1e-12)
     check("...and my transcription of those sines is the literal he wrote",
           his_noise(1.0, his_a_avg(5, 3, 1)), 54.665213986169604)
-    check("his example: dT = 561 - 720 + 54.665... = -104.53..., shown as -105",
-          gui.shown(console.sim.Temperature - 12000.0), "-105")
+    check("his example: dT = 561 - 240 + 54.665... = 375.465..., shown as 375",
+          gui.shown(console.sim.Temperature - 12000.0), "375")
     check("his example: T' = T + dT", values["T'  next tick's temperature"],
-          "11895")
+          "12375")
     check("...and his formula, assembled independently, says the same",
           values["T'  next tick's temperature"],
           gui.shown(his_temperature(12000.0, 1, his_a_avg(5, 3, 1), 8000.0, 1.0,
@@ -783,10 +806,10 @@ def main():
         console.pump_vars[index].set(level)
     console.on_coolant()
     check("three pumps hold three different levels", console.core.pumps, [3, 0, 1])
-    check("the cooling is 120 a level, summed over three",
+    check("the cooling is 120 a MEAN level, averaged over three",
           console.core.cooling, his_cooling([3, 0, 1]))
-    check("...and that is not the average of the three",
-          console.core.cooling == 120.0 * (sum([3, 0, 1]) / 3.0), False)
+    check("...and that is not the sum of the three",
+          console.core.cooling == 120.0 * sum([3, 0, 1]), False)
     # The lasers are dark for the tick below, so his line adds nothing and the
     # tremor is scaled by a level of zero: what is left is the pumps alone.
     # This is the check that says the "off is ours" rule stops at the lasers.
@@ -800,11 +823,13 @@ def main():
     # about the stallout label, and that is where this was learned).
     check("the cooling on screen", readout(values, "cooling"),
           gui.shown(his_cooling([3, 0, 1])))
-    # Both sides SCREENED, which is this file's rule for every T' check.  It
-    # mattered more while the pumps were averaged -- the division put a third of
-    # a level into the number then -- and it is kept now that the sum makes
-    # every coolant reading a whole number, because a rule that is only followed
-    # when it is visibly needed is a rule that has already been forgotten once.
+    # Both sides SCREENED: the average puts a division in the number here, so the
+    # reading may not be a whole one -- for p = 3/0/1 the mean is 4/3 of a level
+    # and the cooling is 160 exactly, but 2/2/1 gives 200 and 1/0/0 gives 40 with
+    # the same shape, and the choice of example is not what decides whether the
+    # division is there.  This is the same "compare at one layer" rule the T'
+    # checks below spell out; it was kept through the day the sum was in force
+    # precisely so that it could not be forgotten when the mean came back.
     check("a dark laser bank does not silence the pumps",
           values["T'  next tick's temperature"],
           gui.shown(temp - his_cooling([3, 0, 1])))
@@ -860,7 +885,7 @@ def main():
           gui.shown(temp - his_cooling([0, 0, 1])))
 
     # The stall out-ranks the pumps, exactly as it out-ranks the lasers: his
-    # -586 is a rate for a crumpled core and it does not become -586 minus 1080
+    # -586 is a rate for a crumpled core and it does not become -586 minus 360
     # because three pumps are running.  Driven at the gate's own boundary
     # rather than below it, so the same tick also says the gate is still the
     # one the stall section below reads.
@@ -882,20 +907,16 @@ def main():
     # the tremor would be zero whether the stall zeroed it or not -- a check that
     # cannot fail for the right reason (CLAUDE.md 0.31 (1)).  The lit-banks case
     # is driven down in the stall section, where the two spellings of R12 differ.
-    print("     (maximum coolant is -%g a tick -- the original's own nine pump "
-          "levels, since the constant AND the unit now agree with all three "
-          "sources.  What is left of QUESTIONS.md R11 is the heat side: three "
-          "maxed banks make %g at row 1, %g at row 2, %g at row 3, so the "
-          "pumps win at the top two rows by about the original's own margin "
-          "and lose at row 3, whose +534 does not scale with `a` at all.)"
-          % (his_cooling([3, 3, 3]),
-             his_base_fluc(1, his_a_avg(5, 5, 5)),
-             his_base_fluc(2, his_a_avg(5, 5, 5)),
-             his_base_fluc(3, his_a_avg(5, 5, 5))))
+    print("     (maximum coolant is -%g a tick: in THIS console's currency that "
+          "is about a third of three maxed banks, where the original's own "
+          "ratio would drown them -- his fitted heat line is ~2.6x the "
+          "original's 65 a level, and the constant is the measured one rather "
+          "than a rescaled one -- QUESTIONS.md R11)"
+          % his_cooling([3, 3, 3]))
 
     # Put the pumps back before the next section.  Not tidiness: every check
     # below is about the stall, the vent and the rows, and a section that walks
-    # off leaving 1080 a tick of cooling running would make them read a
+    # off leaving 360 a tick of cooling running would make them read a
     # different console -- silently, since none of them asks about the pumps.
     for var in console.pump_vars:
         var.set(0)

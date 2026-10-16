@@ -2113,6 +2113,73 @@ and in this console's arithmetic**, not on our remake. R11 is **half closed, hal
 PROGRESS.md Phase 138, DECISIONS_2 589-593, docs/SYSTEMS.md 2.30, docs/SNIPPETS.md 5.43.
 
 
+
+> **[Phase 139 correction, kept rather than edited away]** "Option B retires ... the sum hands it
+> back" **and** "R11 is half closed, half still open" both belong to the sum day. The operator put
+> the mean back the same day, so **B is open again** and the divergence is three times wide. See
+> the Phase 139 section below.
+
+### Phase 139 - the cooling takes the mean again, and twelve signs get their new words
+
+Two things this round, one in the game and one on the desktop.
+
+**In Studio.** 「把那个BottomPipe文件夹里面的surfacegui里面的text的内容改成REACTOR FUEL TRANSPORT RING」
+points at the **Folder** `BottomPipes` (plural) - not at the 27 **Models** named `BottomPipe`
+(singular), which are a different thing in this place, and not at two signs reading
+`FUEL TRANSPORTATION` that sit outside it. The folder holds **12 TextLabels**, all on pipe parts at
+y = 46.5; all **12** now read `REACTOR FUEL TRANSPORT RING`, with **0** other text left in it.
+Written in one `TryBeginRecording` block with **zero backslashes** (CLAUDE.md 0.10) and verified by
+**reading `Text` back off the instances**, not by looking at a screenshot - so what the signs
+*look like* (type size, wrapping, decal orientation) is not verified. **Three signs were
+deliberately left alone** because they are not in the folder he named, and that is a reading of the
+word "folder", not a measurement - say the word and they change in one pass.
+
+**On the desktop.** 「算了冷却计算还是平均吧」 - the **fourth** visit to one line of `gui.py` in a
+single day: Phase 136 a sum (this console's own reading of the three sources, not a word of his),
+Phase 137 his `Correction:` making it a mean, Phase 138 「冷却别用平均」 taking it off, and now the
+mean back - **written exactly as Phase 137 wrote it**. Only the pumps moved: `a_avg`, the banks'
+mean, was already a mean and did not move, and the stall branch did not move. `120` itself never
+changed; what it multiplies is what keeps changing.
+
+**The three sources all spell the sum** (the original's own prototype `TRGWeb.luau:178`, our
+remake's `Config.Sim.PumpCooling = 120`, and the shipped log's identity
+`predDT*5 == 65*sum(cbl.level) - 120*sum(coolant.levels)` over all 477 records, max error 0.0) -
+so this is the one line that does not listen to them, and it has now been turned over four times.
+What that costs is a comment: the constants block carries **all four phases** (which day, whose
+words, which version), because the only thing that stops the next round from turning it back is
+the line remembering its own history. The **three operator-facing strings** (the `LabelFrame`
+caption, the readout row, the `on_coolant` log line) moved back with it - and **no check can read
+them**: the checker fetches that readout **by prefix**, because the label embeds the constant, so a
+changed constant crashes the *fetch* instead of reddening a check. The defence is a grep after the
+edit, which is exactly what caught it.
+
+His worked example is back to Phase 137's reading (`coolant_effect` 240, `dT` 375.465..., `T'`
+12375), and **Phase 138's reading stays on the page as a `print`** - 720 / -104.53 / 11895 is the
+receipt of a retired reading, and "720 divided by 3 is 240" is not a line that can fail, so it is
+not an assertion.
+
+**The instrument itself had a real defect, and that is the round's actual find.** The mutant prover
+came back with an **intermittent** `HOLE`: one run holed `the stall is not remembered for the
+readout`, the next run reddened a *different* check. Two contradictory readings mean the problem is
+not in the thing being measured. Measured cause: CPython validates a `.pyc` against its source's
+mtime **in whole seconds** plus its size, most mutants here are the **same length** as the text they
+replace, and a checker run takes about 0.85 s - so a mutant written inside the same second as the
+version before it reuses the **previous** run's bytecode. The mutant never ran, and what it
+reported was "these checks have no teeth", the exact reverse of the truth - and a conclusion that
+sends you to **fix the checks**. Fixed with `-B` (write no bytecode) **plus reading that back**
+(`__pycache__` is checked after the baseline and after every mutant) **plus asserting each mutant's
+own new text is on disk in the file the checker compiles**; all three guards were negative-tested,
+and the whole repo was swept - `selftest_boot.py` drives its mutant loop through **Lua** and
+`check_fluc_steps.py` only writes output, so this file was the only place with the defect.
+
+**Not verified:** no Play, no upload, nothing pushed to `ReactorBackend`, **no window appeared on
+his screen**, and this console has still never been screenshotted. The UI controls did not change
+(same radios) - what changed is how the model reads them, so "does it look different?" answers
+"no". Not verified against our own game either: this console models the *original*. **R11 is back to
+two open options** (keep the measured 120 / rescale to 317 a level / go and question the heat line
+itself) - and the two reasons a pump is cheap here must be counted separately: his heat line is
+2.638x steeper per `a`, and this divide by three, and **only the second is this console's own doing**.
+See PROGRESS.md Phase 139, DECISIONS_2 594-599, docs/SYSTEMS.md 2.31, docs/SNIPPETS.md 5.44.
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real

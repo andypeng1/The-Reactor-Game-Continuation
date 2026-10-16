@@ -150,17 +150,41 @@ CBL_BANKS = 3
 # still missing: three pumps, each held at 0..3, that REMOVE heat rather than
 # adding it.
 #
-# NOT AVERAGED -- and that is worth a paragraph, because it was for part of one
-# day.  The 2026-10-16 correction averaged the three pump levels (`coolant_avg =
-# (p1 + p2 + p3) / 3`, then `x 120`) in the same message that averaged the laser
-# banks; a later message the same day took the average back off the PUMPS ONLY
-# ("don't use the mean for the cooling"), so what the constant multiplies is
-# again the SUM -- which is what all three sources below write and what this
-# console did before either message.  Two halves of one message therefore landed
-# differently, and the reason is on the other side of the step: the banks' mean
-# was about a fitted band that only covers one laser's worth of `a`, while the
-# pumps have no fitted band to stay inside.  `Core.cooling` is where the form is
-# spelled; QUESTIONS.md R11 is where the ratio this leaves behind is filed.
+# AVERAGED -- and this one line moved THREE times in a single day, so what
+# follows is the whole list and not the latest word.  That is CLAUDE.md 0.34's
+# rule read literally: for a spec that has been visited more than once the
+# question is WHICH LINES it reaches, and the answer here has been "this one,
+# every time".
+#
+#   * Phase 136, when the pumps arrived: no division at all.  The constant
+#     multiplies the SUM of the three levels, 0..1080 a tick -- and that was this
+#     console's own reading of the three sources rather than a word of his,
+#     which is what made the sum look like the safer default for a while.
+#   * Phase 137, the message headed "Correction": the SAME message averaged the
+#     laser banks and the pumps, so `coolant_avg = (p1 + p2 + p3) / 3`, `x 120`,
+#     0..360.
+#   * Phase 138, "don't use the mean for the cooling": the average came back off
+#     the PUMPS ONLY -- the banks kept theirs -- so the sum returned.
+#   * Phase 139, "never mind, use the mean for the cooling after all": the
+#     average is back.  Same line as Phase 137, and it is written the same way,
+#     `coolant_avg * 120`, so the two visits are ONE spelling rather than two
+#     that happen to agree -- `Core.cooling` is where it is spelled.
+#
+# The one division that never moved is the BANKS'.  It arrived in the same
+# message as the pumps' and has survived all four, because it has a reason of its
+# own: his fit spans `a = 25..125`, exactly one laser's worth, so the mean keeps
+# the reading inside the band the line was fitted over (QUESTIONS.md R9 (2) is
+# the extrapolation that closes with it).  The pumps have no fitted band to stay
+# inside, so their unit is the operator's call -- and he has now called it twice
+# one way and once the other.
+#
+# WHAT THAT LEAVES, since all three sources below write the SUM: the divergence
+# can no longer hide inside a claim that they agree.  The constant is still their
+# measured 120 and only the unit it multiplies moved, from three pumps to one
+# average pump -- so for the same three positions this console takes off exactly
+# a third of what their arithmetic says.  That is a real divergence, filed rather
+# than smoothed (QUESTIONS.md R11 has the table), and nothing is rescaled to make
+# the two agree.
 #
 # The constant is not remembered, it is measured -- three ways, and the third
 # one is exact rather than close:
@@ -205,28 +229,27 @@ CBL_BANKS = 3
 # on the reading, which is a different answer the moment the banks are lit; the
 # two readings are one line apart and QUESTIONS.md R12 has the other one.
 #
-# WHAT THAT LEAVES AT THE TOP (the residue of QUESTIONS.md R11).  With the sum
-# back, the constant AND the unit agree with all three sources, so there is
-# nothing to file on the cooling side.  What is left is the other side of the
-# step -- the heat line is his, and per unit of `a` it is far steeper than the
-# original's -- and it shows up only in the two maxima:
+# WHAT IT COSTS AT THE TOP (the residue of QUESTIONS.md R11).  Averaging the
+# pumps puts the cooling at a third of what the sources' arithmetic gives, so the
+# ratio it makes against this console's own heat is a third of the original's.
+# Measured at the two maxima rather than asserted:
 #
 #   * the original's own ratio: its nine pump levels (1080) outweigh its own
 #     maximum laser heat (15 levels x 65 = 975).  The pumps win at the top.
-#   * here: the same three pumps at their maximum are the same 1080, against
-#     three maxed banks as the rows write them -- 903.8 at row 1, 942 at row 2.
-#     The pumps win again, by a similar margin.  Row 3 is the exception at 1384,
-#     because its +534 is the part that does not scale with `a` at all.
-#   * his pressure multiplier takes it back, and that is his: from 11500 PSI the
-#     heat is doubled and from 27000 quadrupled, while the cooling is never
+#   * here: the same three pumps, averaged, are 360, against three maxed banks as
+#     the rows write them -- 903.8 at row 1, 942 at row 2.  The pumps LOSE, at
+#     39.8% and 38.2% of the heat, where the original's own margin was 110.8%.
+#     Row 3 is further out at 26.0% (1384), because its +534 is the part that
+#     does not scale with `a` at all.
+#   * his pressure multiplier widens it again, and that is his: from 11500 PSI
+#     the heat is doubled and from 27000 quadrupled, while the cooling is never
 #     scaled (core_model_check.py has the check that says so).
 #
-# So: the pumps are as strong as the original's, and the heat line is the
-# operator's.  1080 against 903.8 / 942 / 1384 is 119.5% / 114.7% / 78.0% of the
-# heat three maxed banks make -- where under the day's other reading it was 39.8%
-# / 38.2% / 26.0%.  The original's own margin at the top was the same shape and
-# about a third smaller (1080 against its 975, i.e. 110.8%).  The constant stays
-# the measured 120 either way; nothing here is rescaled to make a ratio come out.
+# Two separate things make a pump level cheaper here than in the original -- his
+# heat line is 2.638x steeper per unit of `a`, and the mean is a further factor
+# of three -- and they are worth keeping apart, because only the second one is
+# this console's own doing.  The constant stays the measured 120 either way, and
+# nothing is rescaled to make a ratio come out.
 COOLANT_PER_LEVEL = 120.0  # degrees a tick, per pump level
 COOLANT_PUMPS = 3
 # The game's own range: 0 (off) to 3, which is what `increasecoolantpumpNpower`
@@ -466,7 +489,7 @@ def step_terms(row, power, pressure, t, coolant=0.0):
     the reading, which differs the moment the banks are lit; the two spellings
     are one line apart and QUESTIONS.md R12 carries the other one.
 
-    `coolant` comes in already summed and multiplied (Core.cooling owns that
+    `coolant` comes in already averaged and multiplied (Core.cooling owns that
     arithmetic) rather than as three levels, so this function stays a function
     of the four numbers the step actually uses.
     """
@@ -597,10 +620,12 @@ class Core:
         T' = T + dT
 
     with `base_heat = active[row] + passive[row]`, `p_mult` his pressure bands,
-    `coolant_effect` 120 times the three pump levels added up, and `t` = seconds
-    since armed.  (His message wrote `coolant_avg = (p_1 + p_2 + p_3) / 3` for
-    that term and averaged it; a later message the same day took the average off
-    the pumps, so `coolant_effect` is the sum -- see the constants block above.)
+    `coolant_effect` 120 times the MEAN of the three pump levels, and `t` =
+    seconds since armed.  (That term's unit moved three times on 2026-10-16 --
+    divided, then not, then divided again -- and the order with its dates is in
+    the constants block above, which is the one place keeping the whole list.
+    The reading checked is the one his own message spells: `coolant_avg =
+    (p_1 + p_2 + p_3) / 3`, then `x 120`.)
     The helpers above are the named parts of it, so this class is only
     the order they are applied in.  (The 2026-10-14 spelling was
     `T' = T + baseFluc * pMultiplier + noise(t)`, which is the same line for
@@ -640,12 +665,15 @@ class Core:
         the top of the fit went with it: `a = 375` is unreachable by construction
         now, its ceiling is 125 = all three at PW5.  That dissolves the
         extrapolation R9 (2) was carrying rather than answering it.
-      * the pumps were averaged in the same message -- and then NOT: a later
-        message that day took the average back off them, so `120 x (p1 + p2 +
-        p3)` is where they ended, at 1080 for three maxed pumps.  The two halves
-        of one message landed differently, for a reason the constants block
-        above spells out: the banks' mean was about the fitted band, and the
-        pumps have no band to stay inside.
+      * the pumps were averaged in the same message -- then not, then averaged
+        again, so `120 x (p1 + p2 + p3) / 3` is where they ended: 360 for three
+        maxed pumps.  The three moves are in the constants block above with
+        their phases; what is worth repeating here is that ONLY the pumps' unit
+        ever moved.  The banks' mean has been in every version since the
+        correction, because it is about a fitted band covering one laser's worth
+        of `a`; the pumps have no band to stay inside, so their unit is the
+        operator's call, and he has now made it twice one way and once the
+        other.
       * the third is a READING and not arithmetic -- his `dT` is piecewise, so a
         stalled tick is his -586 with no heat, no pump term and no tremor, where
         Phase 135 read the -586 as the rate with the tremor still riding on the
@@ -710,24 +738,33 @@ class Core:
 
     @property
     def cooling(self):
-        """What the pumps take off, per tick: his `120 x (p_1 + p_2 + p_3)`.
+        """What the pumps take off, per tick: his `coolant_avg * 120`.
 
-        The same shape as `power` and for the same reason: a stored sum is a
+        The same shape as `power` and for the same reason: a stored mean is a
         second copy of something the three widgets already say, and the copy is
         the one that goes stale.  Positive here, because that is what it is --
         the subtraction happens in one place, in `step_terms`, so the sign
         cannot be applied twice.
 
-        The SUM, not the average.  The 2026-10-16 correction averaged these in
-        the same message that averaged the laser banks, and a later message that
-        day took the average back off the pumps only, which puts the console
-        back on the form all three sources up by the constants write -- the
-        original's own `- (p1 + p2 + p3)*120`, our remake's `cooling *
-        PumpCooling` over the enabled pumps, and the shipped log's exact
-        identity.  One notch on all three pumps is worth three notches, the way
-        the original counts it.
+        THIS IS THE LINE THAT MOVED THREE TIMES on 2026-10-16 -- his message
+        spelled it this way, the next took the division off the pumps alone, and
+        the one after that put it back.  The constants block above keeps the
+        whole list with its phases; CLAUDE.md 0.34 is the reason it is kept
+        there rather than summarised as "the latest word": a spec visited more
+        than once gets asked WHICH LINES it reaches, and the answer has been
+        this line every time.  It is spelled as his literal -- `sum / 3`, then
+        `x 120` -- rather than as an algebraically equal rearrangement, so a
+        fourth visit cannot land on a differently-rounded way of writing the
+        same thing.
+
+        The constant is untouched at the measured 120; what moved is the unit it
+        multiplies, from three pumps to one average pump.  One notch on each of
+        three pumps therefore takes off 120 here, where the sources' own
+        arithmetic says 360 for the same three positions -- that factor of
+        exactly three is the whole of the cooling side of QUESTIONS.md R11.
         """
-        return sum(self.pumps) * COOLANT_PER_LEVEL
+        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)
+        return coolant_avg * COOLANT_PER_LEVEL
 
     def set_pump(self, index, value):
         self.pumps[index] = int(value)
@@ -1017,12 +1054,12 @@ class Console:
         # temperature.  Three pumps, each 0..3 -- the game's own range, and one
         # row per pump for the same reason the lasers got one: "the coolant
         # level" is three devices, not one knob.  The caption carries the
-        # constant and says what it multiplies -- the SUM of the three, the way
-        # the original counts it.  (It said "mean" between the two messages of
-        # 2026-10-16; the caption is the one place the panel says the unit out
-        # loud, so it had to move with the model.)
+        # constant and says what it multiplies -- the MEAN of the three.  (It
+        # said "total" for one message of 2026-10-16, between the two spellings
+        # of the model; the caption is the one place the panel says the unit in
+        # words, so it has had to move with the model every time.)
         pumps = ttk.LabelFrame(
-            core, text="Coolant pumps (Isotope E, -%g x total level /tick)"
+            core, text="Coolant pumps (Isotope E, -%g x mean level /tick)"
             % COOLANT_PER_LEVEL, padding=6)
         pumps.pack(fill="x", pady=(4, 0))
         for index, var in enumerate(self.pump_vars):
@@ -1163,7 +1200,7 @@ class Console:
                                lambda: " / ".join(str(pump)
                                                   for pump in self.core.pumps))
         row = self.add_readout(parent, row,
-                               "cooling  -%g x (p1+p2+p3)" % COOLANT_PER_LEVEL,
+                               "cooling  -%g x mean(p1..p3)" % COOLANT_PER_LEVEL,
                                lambda: self._step_value("last_cooling"))
         row = self.add_readout(parent, row, "p   this step started from",
                                lambda: self._step_value("last_pressure"))
@@ -1272,15 +1309,16 @@ class Console:
 
         All three read back, exactly like on_power and for the same reason: the
         command is bound once per button and one callback cannot tell which of
-        them fired.  Reading all three is what makes the sum the panel's own
+        them fired.  Reading all three is what makes the mean the panel's own
         number rather than a guess at it.
         """
         for index, var in enumerate(self.pump_vars):
             self.core.set_pump(index, var.get())
         self._line_changed()
-        self.on_input("Coolant pumps = %s  (total %d; -%g/tick)"
+        self.on_input("Coolant pumps = %s  (mean %g; -%g/tick)"
                       % (" / ".join(str(pump) for pump in self.core.pumps),
-                         sum(self.core.pumps), self.core.cooling))
+                         sum(self.core.pumps) / float(COOLANT_PUMPS),
+                         self.core.cooling))
 
     def on_vent(self):
         """Press the AVB.

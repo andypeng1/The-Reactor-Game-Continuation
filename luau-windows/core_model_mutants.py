@@ -143,16 +143,22 @@ MUTANTS = (
     # --- the coolant pumps ---------------------------------------------------
     # Ways the third control can be wrong while the panel still looks right.
     # The first four are the placement choices made in COOLANT_PER_LEVEL plus
-    # the constant itself; the last three are the unit it multiplies.  That unit
-    # moved twice on 2026-10-16 -- the correction averaged the three pumps, and
-    # the next message the same day took the average back off them -- so two of
-    # the mutants below anchor on the same line, one for each wrong reading of
-    # it, and both are sent to the same check.
+    # the constant itself; the last two are the unit it multiplies.
+    #
+    # That unit is the line in gui.py that moved three times on 2026-10-16 --
+    # averaged, then not, then averaged again -- and the two mutants at the end
+    # of this block are the two readings it has actually been written with.  The
+    # one in force is the mean, so the SUM is the wrong reading now, and it is
+    # the one that has to have a tooth: a spec that has been reversed once can be
+    # reversed back, and the reading it was reversed out of must not become
+    # unfalsifiable in the meantime (CLAUDE.md 0.34).  Both anchor on the same
+    # line and both are sent to the same check, because there is one line and the
+    # question about it is which unit it multiplies.
 
     ("the cooling constant becomes a remembered number",
      "COOLANT_PER_LEVEL = 120.0",
      "COOLANT_PER_LEVEL = 100.0",
-     "the cooling is 120 a level, summed over three"),
+     "the cooling is 120 a MEAN level, averaged over three"),
 
     ("the cooling is added instead of removed",
      "        temperature = sim.Temperature + actual + tremor - cooling",
@@ -171,14 +177,14 @@ MUTANTS = (
      "the press multiplier does not scale the cooling"),
 
     ("the three pump levels are read as one pump",
-     "        return sum(self.pumps) * COOLANT_PER_LEVEL",
-     "        return self.pumps[0] * COOLANT_PER_LEVEL",
-     "the cooling is 120 a level, summed over three"),
+     "        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)",
+     "        coolant_avg = self.pumps[0]",
+     "the cooling is 120 a MEAN level, averaged over three"),
 
-    ("the pump sum is divided by three again, as one reading of the spec had it",
-     "        return sum(self.pumps) * COOLANT_PER_LEVEL",
-     "        return (sum(self.pumps) / float(COOLANT_PUMPS)) * COOLANT_PER_LEVEL",
-     "the cooling is 120 a level, summed over three"),
+    ("the pump mean goes back to being the sum",
+     "        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)",
+     "        coolant_avg = float(sum(self.pumps))",
+     "the cooling is 120 a MEAN level, averaged over three"),
 
     # The tremor's own scaling: `a_avg / 25`, which is why a dark laser bank is
     # silent.  Dropping the division makes every level read as if it were maxed.
@@ -195,14 +201,29 @@ def read(path):
 
 
 def run_checker(where):
-    """Run the checker in `where`.
+    """Run the checker in `where`, with the bytecode cache OFF (`-B`).
 
     Returns (number of checks run, [failed check names]).  The first is None
     when the checker never got to its own summary line, which is a crash and
     not an empty run (CLAUDE.md 0.6: a crash and a pass can leave the same exit
     code, so the TEXT is what says which happened).
+
+    `-B` IS NOT AN OPTIMISATION, IT IS THE FIX FOR A MEASURED LIE.  CPython
+    validates a cached .pyc against its source's mtime **in whole seconds** and
+    the source's size.  Most mutants below are the SAME LENGTH as the text they
+    replace (`-586.0` -> `-750.0`, `2200.0` -> `2500.0`), and the checker takes
+    about 0.85 s, so a mutant written inside the same second as the version
+    before it produced an identical (seconds, size) pair and Python reused the
+    PREVIOUS run's bytecode.  The mutant then never ran, and this script
+    reported it as a HOLE -- "the checks have no teeth" -- when in fact nothing
+    had been broken.  It was intermittent, which is how it survived: two
+    consecutive runs holed two different mutants, and each run's other 22 were
+    green.  Measured rather than reasoned: with the cache on, writing a mutated
+    `gui.py` and immediately importing it returned the PREVIOUS file's
+    `STALL_FLUC`.  No .pyc is written now, so there is nothing to go stale --
+    and `_stray_cache` reads that back instead of trusting the flag.
     """
-    proc = subprocess.run([sys.executable, "-X", "utf8", CHECKER],
+    proc = subprocess.run([sys.executable, "-B", "-X", "utf8", CHECKER],
                           cwd=where, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
     text = proc.stdout.decode("utf-8", "replace")
@@ -212,6 +233,20 @@ def run_checker(where):
         if line.endswith("failed") and "checks," in line:
             return int(line.split()[0]), failed
     return None, text.strip().splitlines()[-6:]
+
+
+def _stray_cache(where):
+    """What is in `where`'s __pycache__, if `-B` did not hold.
+
+    The flag above is a request; this is the reading.  A cache that reappears
+    puts the staleness back, so it is worth failing the run over rather than
+    discovering it as another intermittent HOLE (CLAUDE.md 0.2: read the world,
+    do not read the intention).
+    """
+    cached = os.path.join(where, "__pycache__")
+    if os.path.isdir(cached):
+        return sorted(os.listdir(cached))
+    return []
 
 
 def main():
@@ -237,14 +272,30 @@ def main():
                   % ("a crash: %s" % failed if total is None else "already red"))
             return 1
         print("baseline ok: %d checks, 0 failed\n" % total)
+        if _stray_cache(where):
+            print("baseline left a bytecode cache behind: %s -- `-B` did not "
+                  "hold, so every mutant below could be running the previous "
+                  "one's code" % _stray_cache(where))
+            return 1
 
         holes = []
         for name, old, new, want in MUTANTS:
+            body = source.replace(old, new)
             with open(os.path.join(where, TARGET), "wb") as handle:
-                handle.write(source.replace(old, new).encode("utf-8"))
+                handle.write(body.encode("utf-8"))
             total, failed = run_checker(where)
             if total is None:
                 print("CRASH  %-56s %s" % (name, failed))
+                holes.append(name)
+                continue
+            # Two readings that make "the mutant never ran" impossible to
+            # mistake for "the checks have no teeth" (see run_checker): the
+            # mutation is on disk in the file the checker compiles, and no
+            # bytecode cache is standing in front of it.
+            stray = _stray_cache(where)
+            if new not in read(os.path.join(where, TARGET)) or stray:
+                print("CRASH  %-56s the mutation did not reach the checker%s"
+                      % (name, " (cache: %s)" % stray if stray else ""))
                 holes.append(name)
                 continue
             # Substring, not equality: the `want` strings above are written the
