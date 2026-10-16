@@ -143,13 +143,16 @@ MUTANTS = (
     # --- the coolant pumps ---------------------------------------------------
     # Ways the third control can be wrong while the panel still looks right.
     # The first four are the placement choices made in COOLANT_PER_LEVEL plus
-    # the constant itself; the last three are the unit it multiplies, which is
-    # what the 2026-10-16 correction moved (three pumps -> one average pump).
+    # the constant itself; the last three are the unit it multiplies.  That unit
+    # moved twice on 2026-10-16 -- the correction averaged the three pumps, and
+    # the next message the same day took the average back off them -- so two of
+    # the mutants below anchor on the same line, one for each wrong reading of
+    # it, and both are sent to the same check.
 
     ("the cooling constant becomes a remembered number",
      "COOLANT_PER_LEVEL = 120.0",
      "COOLANT_PER_LEVEL = 100.0",
-     "the cooling is 120 a MEAN level, averaged over three"),
+     "the cooling is 120 a level, summed over three"),
 
     ("the cooling is added instead of removed",
      "        temperature = sim.Temperature + actual + tremor - cooling",
@@ -168,14 +171,14 @@ MUTANTS = (
      "the press multiplier does not scale the cooling"),
 
     ("the three pump levels are read as one pump",
-     "        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)",
-     "        coolant_avg = self.pumps[0]",
-     "the cooling is 120 a MEAN level, averaged over three"),
+     "        return sum(self.pumps) * COOLANT_PER_LEVEL",
+     "        return self.pumps[0] * COOLANT_PER_LEVEL",
+     "the cooling is 120 a level, summed over three"),
 
-    ("the pump average goes back to being the sum",
-     "        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)",
-     "        coolant_avg = float(sum(self.pumps))",
-     "the cooling is 120 a MEAN level, averaged over three"),
+    ("the pump sum is divided by three again, as one reading of the spec had it",
+     "        return sum(self.pumps) * COOLANT_PER_LEVEL",
+     "        return (sum(self.pumps) / float(COOLANT_PUMPS)) * COOLANT_PER_LEVEL",
+     "the cooling is 120 a level, summed over three"),
 
     # The tremor's own scaling: `a_avg / 25`, which is why a dark laser bank is
     # silent.  Dropping the division makes every level read as if it were maxed.

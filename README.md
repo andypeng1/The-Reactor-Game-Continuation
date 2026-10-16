@@ -2027,6 +2027,91 @@ against our own game (two separate lines - this console models the *original*). 
 it is now three times as large. See PROGRESS.md Phase 137, DECISIONS_2 584-588, docs/SYSTEMS.md 2.29,
 docs/SNIPPETS.md 5.42.
 
+> **[Phase 138 correction, kept rather than edited away]** "it is now three times as large" **and
+> its literal size of 360** held for part of one day. The next message the same day took the average
+> back off **the pumps only**, so cooling is `(p1+p2+p3) * 120` again (max **1080**) and the R11
+> divergence on that side is **zero**. The two table rows above (0.88x / 2.638x) are unaffected - they
+> are the heat side, and the heat side did not move. See the Phase 138 section below.
+
+
+### Phase 138 - taking the average back off the pumps: a sum again, and a receipt left standing
+
+He sent four words and a verb: **"冷却别用平均，重写写一下"** - *don't use the mean for the cooling,
+rewrite it.* No numbers in it. It is a **retraction**, not an addition: the mean was his own, landed
+by the Phase 137 `Correction:` above, so the question this round had to answer was not "what does it
+add" but **"which lines does it reach"**.
+
+**The two means had the identical shape and opposite fates.** Phase 137 divided two sums by three -
+the laser banks' and the pumps' - so the sentence could not be resolved from the shape. **One stays,
+one goes**, and the reason is asymmetric:
+
+| | Phase 137 | now | why |
+|---|---|---|---|
+| `a_avg = ((c1+c2+c3)/3)*25` | mean, max 125 | **unchanged** | the fit was done over `a = 25..125` - **one** laser's worth; three banks summed run three times outside it |
+| `coolant_avg = (p1+p2+p3)/3` | mean, max 360 | **retracted → `(p1+p2+p3)*120`, max 1080** | the pump's 120 was **read off a running copy of the original**, and it multiplies a sum there; **there is no fitted band to stay inside** |
+
+`120` was not edited either time; what it **multiplies** is what moved. The sum is what all three
+sources say - the original's own prototype (`Data/TRGWeb.luau:178`), our remake
+(`Config.Sim.PumpCooling`), and the strongest one, the shipped log's identity of 477 ticks with
+**maximum error exactly 0.0**. So this is the model **re-agreeing with its own evidence**, not a new
+number.
+
+**His worked example's tail is the receipt of the retracted reading.** The first five items (`a_avg`
+75, row 1, base heat 561, `p_mult` 1, `noise(1)` 55) are untouched; the last three move:
+
+| item | his (mean) | now (sum) |
+|---|---|---|
+| `coolant_effect` | 240 | **720** |
+| `dT` | 375.465… (shown 375) | **−104.53478601383044** (shown **−105**) |
+| `T'` | 12375 | **11895** |
+
+All three old numbers **stay in the checker** - they are the receipt that the earlier reading was
+really applied, not a misremembering (same rule as CLAUDE.md 0.14/0.29: the wrong ruler's conclusion
+is kept, uncut, with a marker). But **only 720 is asserted**; "his 240 is 720/3" is a `print`,
+because an identity that cannot fail is noise (CLAUDE.md 0.31 ① - *to make this red, what has to be
+present?*). So "his worked example reproduces" now has a precise shape: **the first five items
+verbatim; the last two belong to a different reading, and that reading was retracted.**
+
+**Three user-visible strings moved with the model, and no check reads any of them.** The pumps'
+`LabelFrame` caption, the readout row's label and the `on_coolant` log line all said "mean". The
+checker **cannot** see them **on purpose**: it addresses that readout **by prefix** because the label
+embeds the tested constant `120`, and a constant in the *address* makes the fetch blow up (`KeyError`)
+rather than the assertion go red (DECISIONS_2 583). The price is explicit: **"caption says mean,
+arithmetic does a sum" cannot go red here.** The only defence left is a grep after the edit, and the
+only surviving hits are the deliberate historical quotations.
+
+**201 checks, 0 failed; 23 mutants, 0 survived or reddened the wrong check** - unchanged counts, and
+no check was deleted or turned green: two pump mutants were **re-anchored** and one **renamed**,
+because a spec visited twice has **two** wrong readings and a mutant must redden on the one that was
+*pointed at*. The old mutant was "the mean goes back to being the sum"; it is now *"the pump sum is
+divided by three again, as one reading of the spec had it"* - **the middle reading is the one this
+message names.** One more, smaller: a comment's **reason** evaporated with the change (the row-1
+screening rule explained itself by "a mean puts a division in the number"), and reasons expire
+silently - the rule stays, the reason is replaced.
+
+**What R11 looks like now:** the cooling half is **zero** - same constant, same unit, all three
+sources agreeing. What remains is entirely the heat side, and it does not go away:
+
+| row (three maxed banks = `a_avg` 125) | three maxed banks' heat | 1080 as a share | the original's own |
+|---|---|---|---|
+| 1 | **903.8** | **119.5%** (**pumps win**) | 1080 against 975 → **110.8%** (pumps win) |
+| 2 | **942** | **114.6%** (**pumps win**) | same |
+| 3 | **1384** | **78.0%** (**heat wins**) | - (the `+534` term takes no `a` at all) |
+
+So **"the original's nine pump notches (1080) beat its own maximum laser heat (975)" is a property
+this console now has too** - the same number beating heat of the same magnitude. **Option B retires**:
+what it wanted to restore was exactly that ratio, and the sum hands it back **with no rescaling
+whatsoever** (317/level never entered `gui.py`). **C stays open** - those three heat values are the
+checker's own output from his literals, and row 3 is the row where heat still wins.
+
+**Not verified:** no Studio, no Play, not a byte pushed, **no window appeared on his screen**; the
+console has still never been screenshotted and nobody has been asked whether it is usable. The UI
+controls did not change (same radios) - what changed is how the model reads them, so "does it look
+different?" answers "no". Not verified against our own game either: this console models the
+*original*, and "the original's maxed pumps beat its maxed lasers" was measured **in the shipped log
+and in this console's arithmetic**, not on our remake. R11 is **half closed, half still open**. See
+PROGRESS.md Phase 138, DECISIONS_2 589-593, docs/SYSTEMS.md 2.30, docs/SNIPPETS.md 5.43.
+
 
 ### Phase 127 - the two new monitor panels, in a running game
 
