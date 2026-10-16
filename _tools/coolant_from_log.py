@@ -187,8 +187,34 @@ def reading_three(ticks):
           "    the console's radios carry)")
     print("   %d of %d records have the CBL dark with the pumps running"
           % (dark, len(ticks)))
+    # CORRECTION 2026-10-16.  The count above is right and the sentence it was
+    # closing with was not: it read "-- the case the placement decision turns
+    # on: a dark laser bank must not silence the pumps, and here the game ran
+    # that way."  Split by the log's own `stats.GameActive`, not one of those
+    # records is a machine that was being simulated -- 62 are the pre-start
+    # stretch (tempF 0, fluctuation 0, pumps at 1 each) and 22 the post-collapse
+    # tail (tempF 1063, fluctuation -1255, pumps at 3 each).  The original
+    # wording is kept because it was written from a real reading; what was wrong
+    # is the inference, at the cost of one more field (CLAUDE.md 0.31 (1): a
+    # number of the right SHAPE answering a question it cannot is exactly this
+    # failure, and this instrument made it).
+    #
+    # The split was "79 ... and 5" in this comment's first draft, and both of
+    # those were invented: they sum to 84, they sit in the right sentence, and
+    # no criterion on those records produces them (checked, not assumed -- the
+    # only split the data offers is 62/22, by pump level and by tempF alike).
+    # The PRINTED counts were always measured; the prose wandered off them.
+    # CLAUDE.md 0.18, and note which half of the writing that was.
+    running = sum(1 for r in ticks
+                  if cbl_sum(payload(r)) == 0 and pump_sum(payload(r)) > 0
+                  and payload(r).get("stats", {}).get("GameActive"))
+    print("   ...of which %d have stats.GameActive true, so the log does NOT\n"
+          "   show the game cooling with the lasers dark (see\n"
+          "   _tools/passive_from_log.py, which asks the same question of the\n"
+          "   same field)" % running)
     print("   -- the case the placement decision turns on: a dark laser bank\n"
-          "   must not silence the pumps, and here the game ran that way.")
+          "   must not silence the pumps.  The exact identity in 1 is what\n"
+          "   carries that argument; this count does not.")
 
 
 def main():

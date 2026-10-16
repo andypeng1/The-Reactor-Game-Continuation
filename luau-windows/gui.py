@@ -49,6 +49,30 @@ STATE_2_MAX = 29499        # inclusive, so 29499.5 already belongs to State 3
 TEMP_MIN = 0.0
 TEMP_MAX = 40000.0
 
+# ========== THE PRESSURE RECURRENCE ==========
+# The chamber pressure is NOT part of the operator's temperature spec: it is
+# `calculation.luau`'s authoritative line, which this console has run since its
+# first version.  The 2026-10-16 message restates it --
+#
+#     fan_pressure_drop = fans * 60
+#     p_base[s]      = {1: 110, 2: 350, 3: 800}
+#     p_temp_mult[s] = {1: 0.01, 2: 0.0075, 3: 0.005}
+#     dP = p_base[s] + (T * p_temp_mult[s]) - fan_pressure_drop
+#     P_next = P + dP
+#
+# -- and that restatement is written down here because a model that gets
+# restated is a model that can fork.  His `dP` IS these four lines with the PEA
+# term taken off; PEA is real in this simulation and in the original, it is
+# simply not in the line he sent.  `core_model_check.py` drives all three states
+# against his three literals rather than against these dictionaries, so the two
+# spellings are compared and not merely both present.
+#
+# `s` here is the LATCHED PRESSURE STATE (`Sim.State`, keyed 1..3 -- an
+# if/elseif chain with no `else`, so a temperature below STATE_MIN leaves the
+# previous State standing), and NOT the temperature ROW the heat tables above are
+# indexed by.  Both are called "state" in this project and the two tables are
+# keyed off different ones (CLAUDE.md 0.31 (5), DECISIONS_2 527); the checker
+# drives the case that separates them.
 FAN_DRAG = 60.0            # pressure removed per tick, by each active fan
 
 SLOPE = {1: 0.01, 2: 0.0075, 3: 0.005}
@@ -89,9 +113,9 @@ def luau_number(value):
 # ========== THE CORE MODEL ==========
 # The operator's own temperature model (2026-10-13, revised 2026-10-14).  Not
 # from calculation.py -- that file takes Temperature as an input and never
-# computes one.  `ACTIVE` is a linear fit he took from his own LEVEL 1-5 logs,
-# one line per core state, which is an empirical linearisation of what
-# Engine.luau does tick by tick.
+# computes one.  The active heat is his quadratic in `a` (`pure_cbl`, constants
+# below), which is an empirical fit he took from his own LEVEL 1-5 logs; until
+# the 2026-10-16 spec it was a linear fit, one line per core state.
 #
 # THE ROW INDEX HERE IS NOT `Sim.State`.  Two different quantities are both
 # called "state", and Engine.luau's own comment says so (lines 287-290 there):
@@ -111,13 +135,56 @@ def luau_number(value):
 # His two lists, in his own order -- index = row, so his `[s+1]` (his lists are
 # 1-based) is this `[row]` and the slot he never indexes by hand is row 0.
 #
-# `active` is held as (slope, intercept) rather than as evaluated numbers
-# because what he fitted is a LINE in `a`, one per row: `a = level * 25` in the
-# spec, which is the same number the CBL radios carry (PW1 = 25 ... PW5 = 125).
-# Evaluating it here would bake one point of that line into the table and lose
-# the fact that it is a line at all.
-ACTIVE = {0: (0.0, 0.0), 1: (6.86, 65.5), 2: (7.24, 37.0), 3: (6.8, 534.0)}
-PASSIVE = {0: -455.7, 1: -19.2, 2: 0.0, 3: 0.0}
+# THE HEAT IS ONE CURVE IN `a` FOR EVERY ROW as of the 2026-10-16 spec, and the
+# row supplies only the passive addend:
+#
+#     pure_cbl = {a_avg <= 0: 0, 0.0516 * a_avg^2 + 1.1 * a_avg + 426}
+#     passive  = [-455.7, -400, -422, -22]
+#
+# What that replaced was a LINE PER ROW, `active[row] = (slope, intercept)`,
+# fitted from his LEVEL 1-5 logs, with a much smaller passive table beside it:
+#
+#     active  = {0: (0.0, 0.0), 1: (6.86, 65.5), 2: (7.24, 37.0),
+#                3: (6.8, 534.0)}
+#     passive = {0: -455.7, 1: -19.2, 2: 0.0, 3: 0.0}      retired 2026-10-16
+#
+# The old tables stay here, in a comment, rather than in the diff only -- a
+# reading that was reversed out has to keep a tooth (CLAUDE.md 0.34 (4): a rule
+# only followed when someone remembers it has already been forgotten once), and
+# core_model_mutants.py carries a mutant that puts those four lines back.
+#
+# THREE THINGS ABOUT THE NEW SHAPE, each one a behaviour the panel has never had
+# and each one his rather than ours:
+#
+#   * `passive` SITS OUTSIDE THE LASERS' OFF RULE, so a console with every bank
+#     dark now COOLS at its row's rate.  It has never done that: until this spec
+#     the row's whole contribution WAS the fit and the fit was gated by "off is
+#     ours", so a dark console held still.  Row 1 falls 400 a tick where
+#     yesterday it added exactly 0.  This is the largest single change in the
+#     spec and it is a decision, not a derivation -- what the shipped log can say
+#     about it is a negative result, below.
+#   * `p_mult` MULTIPLIES ONLY `pure_cbl` -- his own note on the line is "only
+#     multiplies the active heating".  Before, the press band scaled the row's
+#     whole line, passive included, so a doubled band also doubled the cooling.
+#   * the zero gate is now INSIDE the curve.  That is the same rule this file has
+#     always had ("off is ours" is ours, not the spec's: his fit covers levels
+#     1..5 and he wrote the a<=0 branch himself), moved from beside the sum to
+#     inside one term of it.  What it is NOT is a gate on `passive`.
+#
+# WHAT THE SHIPPED LOG SAYS ABOUT THE PASSIVE TERM: NOTHING, and that is worth
+# recording as a reading rather than passing over.  `_tools/passive_from_log.py`
+# asks `Data/DataCollection.Log` for a live chamber with every control off --
+# the one case that would show a passive rate -- and finds none: of 39 records
+# with CBL sum 0 and pumps 0, every one is `GameActive = false`, and all 84
+# records with CBL sum 0 and pumps running are false there too.  So these four
+# numbers are his measurement and are implemented as written; the log neither
+# corroborates nor contradicts them.
+PASSIVE_ROW = (-455.7, -400.0, -422.0, -22.0)   # his `passive`, one per row
+# His quadratic, as (a^2, a, constant) rather than multiplied out, so the three
+# literals in the spec are the three literals in the file and a reader can check
+# them against it without doing arithmetic.  `a` is `a_avg` in his own units --
+# `(level / 3) * 25`, the mean of the three banks.
+CBL_CURVE = (0.0516, 1.1, 426.0)
 
 CBL_UNIT = 25.0            # one CBL level, his `a = level * 25`
 CBL_START = 50.0           # PW2: the level the console starts on
@@ -206,21 +273,43 @@ CBL_BANKS = 3
 #
 # WHERE IT SITS IN THE STEP, which is the one real choice here and is a
 # CLAUDE.md 0.31-style question ("what does this spec override?").  The console's
-# temperature is HIS fit -- since 2026-10-16, `dT = base_heat*p_mult -
-# coolant_effect + noise` (or exactly -586, stalled) -- and the cooling could be
-# either (a) added to it as its own term, or (b) routed through his line as so
-# many CBL levels' worth of negative `a`.  It is (a), for three reasons:
+# temperature is HIS fit -- since 2026-10-16, `dT = pure_cbl*p_mult + passive[s]
+# - coolant_effect + noise` (or exactly -586, stalled) -- and the cooling could
+# be either (a) added to it as its own term, or (b) routed through his heating as
+# so many CBL levels' worth of negative `a`.  It is (a), for three reasons:
 #
-#   * (b) would silence the pumps exactly when they matter most.  His line is
-#     gated by the "off is ours" rule -- zero CBL adds nothing at all -- and a
-#     dark laser bank is not a reason for a pump to stop working.  The log has
-#     that case in it: 84 records at CBL sum 0 with the pumps at 1, 2 or 3.
-#   * (b) would make the cooling a per-ROW quantity, because `active[row]` is a
-#     line in `a` and only row 0's slope is 0.  Nothing in any of the three
-#     sources suggests the pumps cool a hot core differently from a cold one.
+#   * (b) would silence the pumps exactly when they matter most.  His heating is
+#     gated by the "off is ours" rule -- `pure_cbl` is 0 with every bank dark,
+#     which is the spec's own first branch -- and a dark laser bank is not a
+#     reason for a pump to stop working.  Feeding the cooling in as negative `a`
+#     would put it under that gate and under the quadratic with it.
+#     CORRECTION (2026-10-16, the same day): this argument used to close with
+#     "the log has that case in it: 84 records at CBL sum 0 with the pumps at 1,
+#     2 or 3".  It does not: all 84 of those records carry
+#     `stats.GameActive = false` -- 62 are the pre-start stretch (tempF 0,
+#     pressure 0, pumps at 1 each) and 22 are the post-collapse tail (tempF
+#     1063, fluctuation -1255, pumps at 3 each) -- so the chamber was not being
+#     simulated in any of them.  (This split read "79 ... and 5" in the first
+#     version of this correction: two numbers that sum to 84, sit in the right
+#     sentence, and match no reading at all -- the data offers exactly one
+#     split, by pump level and by tempF alike.  The count above it was always
+#     measured; the prose was written around it and wandered.  CLAUDE.md 0.18,
+#     and note which half of the writing it was.)  The claim was a count of
+#     the right shape answering a question it cannot: "the file contains these
+#     records" is not "the machine ran that way" (CLAUDE.md 0.31 (1), and the
+#     original text is kept because it was written from a real reading).
+#     The argument does not need the log: it rests on the identity below, where
+#     the pump term is a term of the ORIGINAL's own per-tick arithmetic,
+#     independent of the CBL and present in `TRGWeb.luau:178` as its own
+#     subtrahend.
+#   * (b) would make the cooling a per-ROW quantity, because it would have to
+#     live in a term the row indexes.  Nothing in any of the three sources
+#     suggests the pumps cool a hot core differently from a cold one.
 #   * the sources have no pressure factor on it either, so it is added OUTSIDE
 #     `pMultiplier` -- multiplying it by the press band would be inventing a
-#     number no source has.
+#     number no source has.  (The 2026-10-16 spec moved `passive` out of that
+#     multiplication as well, so as of this phase the band scales exactly one
+#     term: the lasers' own heat.)
 #
 # The stall still out-ranks it -- and since the 2026-10-16 correction it
 # out-ranks EVERYTHING, because his `dT` is piecewise and the -586 sits where
@@ -236,20 +325,36 @@ CBL_BANKS = 3
 #
 #   * the original's own ratio: its nine pump levels (1080) outweigh its own
 #     maximum laser heat (15 levels x 65 = 975).  The pumps win at the top.
-#   * here: the same three pumps, averaged, are 360, against three maxed banks as
-#     the rows write them -- 903.8 at row 1, 942 at row 2.  The pumps LOSE, at
-#     39.8% and 38.2% of the heat, where the original's own margin was 110.8%.
-#     Row 3 is further out at 26.0% (1384), because its +534 is the part that
-#     does not scale with `a` at all.
+#   * here, since the 2026-10-16 spec: the same three pumps, averaged, are 360,
+#     against three maxed banks at `pure_cbl(125) = 1369.75`.  The pumps LOSE,
+#     and by row -- 39.4% / 37.1% / 38.0% / 26.7% -- where the original's own
+#     margin was 110.8%.  The spread across rows is now entirely `passive`'s:
+#     the active term is one curve for every row, so the row only decides how
+#     much is subtracted from it.  Row 3 is the odd one because its passive is
+#     the SMALLEST (-22), not because of any part of the heat.
+#     (The retired per-row lines gave 903.8 / 942 / 1384 and 39.8% / 38.2% /
+#     26.0% -- the same three-pump readings against different heat.)
 #   * his pressure multiplier widens it again, and that is his: from 11500 PSI
 #     the heat is doubled and from 27000 quadrupled, while the cooling is never
 #     scaled (core_model_check.py has the check that says so).
 #
 # Two separate things make a pump level cheaper here than in the original -- his
-# heat line is 2.638x steeper per unit of `a`, and the mean is a further factor
-# of three -- and they are worth keeping apart, because only the second one is
-# this console's own doing.  The constant stays the measured 120 either way, and
+# heat is steeper per unit of `a`, and the mean is a further factor of three --
+# and they are worth keeping apart, because only the second one is this
+# console's own doing.  The constant stays the measured 120 either way, and
 # nothing is rescaled to make a ratio come out.
+#
+# "STEEPER PER UNIT OF `a`" NO LONGER HAS ONE NUMBER, and that is a change the
+# quadratic made to the R11 table rather than a detail of it.  Against the
+# original's own 65 per CBL level (2.6 per unit of `a`), the retired line was a
+# flat 2.638x at every point -- that was row 1's slope, 6.86 / 2.6.  A quadratic
+# has a slope that changes with where you measure: 1.42x at a = 25, 2.41x at
+# 50, 5.38x at the top of the fit (14.0 / 2.6 -- an earlier draft of this comment
+# said 5.39, which is what the number looks like before it is computed; the
+# checker prints 5.38 for the same ratio).  So the divergence is now
+# a function of the laser level, smallest exactly where his fit starts and
+# largest where it ends, and any single multiplier quoted for it would be a
+# reading taken at one point and reported as if it held everywhere.
 COOLANT_PER_LEVEL = 120.0  # degrees a tick, per pump level
 COOLANT_PUMPS = 3
 # The game's own range: 0 (off) to 3, which is what `increasecoolantpumpNpower`
@@ -274,8 +379,9 @@ NOISE_TERMS = ((15.0, 1.5), (10.0, 0.7), (5.0, 0.3))
 # there -- 5600 -- is the one this file already had: `STATE_MIN` above, which is
 # `Config.Sim.State1` and Engine.luau:320's `T >= 5600 and 1 or 0`.  Before the
 # correction the rule began at 17500 and row 0 was this file's own invention,
-# kept because PASSIVE[0] is a measured number (-455.7 was the old BASE_RATE[0])
-# and because the row radios below are built from the tables, so a row no
+# kept because PASSIVE_ROW[0] is a measured number (-455.7 was the old
+# BASE_RATE[0] -- the one entry that has survived three spellings of the heat)
+# and because the row radios below are built from the table, so a row no
 # temperature could reach would be a button that does nothing.  Two spellings of
 # one threshold agreeing is a reading and not a coincidence, so it is checked
 # (core_model_check.py asserts it against STATE_MIN rather than restating 5600).
@@ -294,7 +400,10 @@ CORE_ROW_3_AT = 29500      # <  is row 2; >= is row 3
 # CBL power, at the levels Engine.luau:109 accepts (`integer(value, 1, 5)`).
 # "off" is ours: the original has no off, and the spec's fit covers levels 1..5
 # only.  Without a zero the model could never be told to stop, so off is defined
-# as "add nothing" rather than by extrapolating the fit down to a = 0.
+# as "add nothing" rather than by extrapolating the fit down to a = 0.  That
+# rule now lives inside `pure_cbl`, as the spec spells it (`a_avg <= 0: 0`),
+# which is also why a dark console can still lose heat at its row's rate: the
+# gate is on the lasers' term and not on the row's.
 CBL_LEVELS = ((0, "off"), (25, "PW1"), (50, "PW2"), (75, "PW3"),
               (100, "PW4"), (125, "PW5"))
 
@@ -425,17 +534,47 @@ def core_state(temperature):
     return 3
 
 
-def fluctuation(row, power):
-    """His `baseFluc` for one tick: `active[row] + passive[row]`.
+def pure_cbl(power):
+    """His `pure_cbl`: the lasers' own heating, `0.0516 a^2 + 1.1 a + 426`.
 
-    `power` is his `a_avg` -- the mean of the three banks, in the same units as
-    his `a`.  This is the temperature change per tick before pressure has its
-    say, and it is the term the old model did not have: there, the row picked a
-    rate the CBL could only scale, so level and state were one product.  Here
-    every row has its own line in `a`, which is what his LEVEL 1-5 logs bought.
+    A quadratic in `a_avg` -- the mean of the three banks, in his own units --
+    and THE ROW IS NOT IN IT.  Until the 2026-10-16 spec this term was one line
+    per row (`active[row]`), so "which row" changed the slope of the heating as
+    well as the offset; now it changes only the offset (`passive` below).
+
+    The zero gate is in here, under the spec's own first branch
+    (`a_avg <= 0: 0`).  It is this file's rule rather than a fit: his line is
+    fitted over levels 1..5 and off is a position the original does not have, so
+    rather than extrapolate down to a = 0 a dark console adds nothing at all.
+    Being inside the curve rather than beside it is visible on the panel -- the
+    tile reads 0, not 426 -- and it is the only reason the passive term can sit
+    outside it and still leave a dark console cooling rather than heating.
+
+    `power ** 2`, not `power * power`: the two differ in the last bit for about
+    0.2% of inputs (measured, and it is the same family as Python's `sum()` being
+    a compensated sum, CLAUDE.md 0.33 (1)).  His literal is `a_avg^2`, which is
+    `pow(a, 2)` in any language, so `**` is the spelling that matches it -- and
+    the checker spells his formula with the same operator for the same reason.
     """
-    slope, intercept = ACTIVE[row]
-    return slope * power + intercept + PASSIVE[row]
+    if power <= 0.0:
+        return 0.0
+    square, linear, constant = CBL_CURVE
+    return square * power ** 2 + linear * power + constant
+
+
+def passive(row):
+    """His `passive`: what a row loses with nothing running, per tick.
+
+    Outside the lasers' off rule and outside `p_mult` (see the constants block):
+    a dark console falls at this rate and a high press band does not double it.
+
+    Row 0 is the one entry with a history -- -455.7 was `BASE_RATE[0]` in the
+    closed-form model this console ran before Phase 126, so the number survives
+    its third spelling.  It matched the retired row-0 line exactly
+    (`active[0] = (0, 0)`), which is how it was identified as the same quantity
+    and not a new one.
+    """
+    return PASSIVE_ROW[row]
 
 
 def press_multiplier(pressure):
@@ -465,8 +604,8 @@ def noise(x, power):
 
 
 def step_terms(row, power, pressure, t, coolant=0.0):
-    """What one tick adds, before it is added: (baseFluc, press, actual, noise,
-    stall, cooling).
+    """What one tick adds, before it is added: (pure_cbl, passive, press, heat,
+    noise, stall, cooling).
 
     ONE SPELLING OF THE RULE, called both by Core.step and by the panel's own
     "would add X/tick" preview.  Two spellings would let the promise and the
@@ -482,12 +621,22 @@ def step_terms(row, power, pressure, t, coolant=0.0):
     negative with every bank dark.
 
     AND SINCE THE 2026-10-16 CORRECTION THE STALL IS THE WHOLE TICK.  His `dT`
-    is piecewise -- `dT = {P <= 2200: -586, (base_heat * p_mult) -
+    is piecewise -- `dT = {P <= 2200: -586, (pure_cbl * p_mult) + passive[s] -
     coolant_effect + noise}` -- so a stalled tick has no heat, no pump term and
     no tremor: it falls by exactly 586 and that is all.  The reading before the
     correction had the stall setting the RATE with the tremor still riding on
     the reading, which differs the moment the banks are lit; the two spellings
     are one line apart and QUESTIONS.md R12 carries the other one.
+
+    Note what the stall's precedence buys the passive term: -586 is the whole
+    tick, so a stalled chamber falls at the measured rate rather than at its
+    row's -22 or -455.7, and the row stops mattering at exactly the moment the
+    stall rule does.
+
+    The first two numbers returned are the two halves of his heat, kept apart so
+    the panel can show which one moved -- `pure_cbl` and `passive` are two
+    different kinds of number (a fit and a measurement) and a single summed
+    "baseFluc" tile would hide the one an operator is looking for.
 
     `coolant` comes in already averaged and multiplied (Core.cooling owns that
     arithmetic) rather than as three levels, so this function stays a function
@@ -496,27 +645,31 @@ def step_terms(row, power, pressure, t, coolant=0.0):
     stall = stalled(pressure)
     amp = press_multiplier(pressure)
     if stall:
-        # Three of the six numbers are the ones that make the panel add up: the
-        # tile that says "noise 0" and the tick that moved by exactly -586 have
-        # to be the same story (this file's own rule -- every readout is a term
-        # the step actually used, and a term from a step that did not happen is
-        # what `reset_trace` exists to prevent).
-        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0
-    base = fluctuation(row, power)
-    # "off" is ours, not the spec's.  The fit covers levels 1..5 (a = 25..125)
-    # and there is no level 0 in it, so rather than extrapolate the line down
-    # -- which would have a dark laser bank still adding its row's intercept,
-    # +46/s at row 1 -- zero CBL adds nothing at all.  The correction left this
-    # gate exactly where it was: `a_avg` is zero when and only when all three
+        # Every number here is one the panel has to be able to show: the tile
+        # that says "noise 0" and the tick that moved by exactly -586 have to be
+        # the same story (this file's own rule -- every readout is a term the
+        # step actually used, and a term from a step that did not happen is what
+        # `reset_trace` exists to prevent).  The two heat halves come back as 0
+        # rather than as what they would have been, for the same reason: on this
+        # tick there was no heat term, so the panel must not show one.
+        return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, 0.0
+    # The "off is ours" gate is inside `pure_cbl` now (it used to be the ternary
+    # that built `actual` here), and `a_avg` is zero when and only when all three
     # banks are, since every bank is a level and no level is negative.  The
-    # pumps are NOT under that rule: a dark laser bank is no reason for a pump
-    # to stop pumping, and the shipped log has the case in it (CBL sum 0, pumps
-    # on).
-    actual = 0.0 if power <= 0.0 else base * amp
+    # PUMPS are not under that gate, nor under the row's: a dark laser bank is no
+    # reason for a pump to stop pumping (the constants block above has the
+    # placement argument, and what the log can and cannot say about it).
+    heat = pure_cbl(power)
+    # `p_mult` multiplies the ACTIVE heating only.  His note on that line says
+    # so ("only multiplies the active heating"), and the placement is visible
+    # twice: a high press band does not amplify a row's passive loss, and a dark
+    # console -- whose `heat` is 0 -- has nothing for the band to multiply, so
+    # the -400 of row 1 is -400 at every pressure.
+    active = heat * amp
     # The tremor is the operator's own term and it rides on the READING (that
     # was the point of the 2026-10-14 revision).  It goes quiet by itself when
     # every bank is dark, because its amplitude is scaled by `a_avg / 25`.
-    return base, amp, actual, noise(t, power), False, coolant
+    return heat, passive(row), amp, active, noise(t, power), False, coolant
 
 
 class Sim:
@@ -613,24 +766,28 @@ class Sim:
 class Core:
     """The operator's temperature model, driving Sim.Temperature.
 
-    His equation, literally (2026-10-16):
+    His equation, literally (2026-10-16, second revision that day):
 
+        a_avg       = ((c1 + c2 + c3) / 3) * 25
+        pure_cbl    = {a_avg <= 0: 0, 0.0516*a_avg^2 + 1.1*a_avg + 426}
+        passive     = [-455.7, -400, -422, -22]         indexed by `s`
+        coolant     = ((p1 + p2 + p3) / 3) * 120
         dT = {P <= 2200: -586,
-              (base_heat * p_mult) - coolant_effect + noise}       otherwise
+              (pure_cbl * p_mult) + passive[s] - coolant + noise}    otherwise
         T' = T + dT
 
-    with `base_heat = active[row] + passive[row]`, `p_mult` his pressure bands,
-    `coolant_effect` 120 times the MEAN of the three pump levels, and `t` =
-    seconds since armed.  (That term's unit moved three times on 2026-10-16 --
-    divided, then not, then divided again -- and the order with its dates is in
-    the constants block above, which is the one place keeping the whole list.
-    The reading checked is the one his own message spells: `coolant_avg =
-    (p_1 + p_2 + p_3) / 3`, then `x 120`.)
+    with `p_mult` his pressure bands (multiplying the ACTIVE heating only) and
+    `t` = seconds since armed.  (The coolant term's unit moved three times on
+    2026-10-16 -- divided, then not, then divided again -- and the order with its
+    dates is in the constants block above, which is the one place keeping the
+    whole list.  The reading checked is the one his own message spells:
+    `coolant_avg = (p_1 + p_2 + p_3) / 3`, then `x 120`.)
     The helpers above are the named parts of it, so this class is only
     the order they are applied in.  (The 2026-10-14 spelling was
-    `T' = T + baseFluc * pMultiplier + noise(t)`, which is the same line for
-    every tick that is not stalled; what the correction added is the first
-    branch, spelled as the whole of `dT`.)
+    `T' = T + baseFluc * pMultiplier + noise(t)`; what the two corrections since
+    added is the first branch, spelled as the whole of `dT`, and the split of
+    `base_heat` into a curve that ignores the row and a row constant that does
+    not.)
 
     It is a STEP, and that is the whole of the revision.  What it replaced was a
     closed form, `T0 + (rate + noise)*x`: a line through T0, whose slope the row
@@ -644,8 +801,8 @@ class Core:
         hundreds of degrees apart.  The spec puts it outside, added to T.
       * the rate table was one level-averaged number per row, so the CBL could
         only scale it.  That is also why the old table had no `a` in it at all
-        while the CBL control moved a multiplier beside it.  The spec fits each
-        row against the LEVEL 1-5 logs, so every row has its own line in `a`.
+        while the CBL control moved a multiplier beside it.  The spec fits `pure_cbl`
+        against the LEVEL 1-5 logs, so the lasers' heat is a curve in `a`.
       * a row change moved the WHOLE line: the reading jumped by (new rate - old
         rate) * x, which crossing 2 -> 3 was about nineteen thousand degrees.
         That is a property of a line through T0, not of a reactor.  A step has no
@@ -654,11 +811,29 @@ class Core:
     The noise amplitudes went from flat 40/25/15 to 15/10/5 x level, and the
     hand-set pressFactor bands to his pMultiplier (1/2/4).  Same sines, same
     periods, same row thresholds, and the old row-0 number survives verbatim --
-    `PASSIVE[0]` is -455.7, which was `BASE_RATE[0]`.  This is his model refined,
-    not a different one.
+    `PASSIVE_ROW[0]` is -455.7, which was `BASE_RATE[0]`.  This is his model
+    refined, not a different one.
 
-    CORRECTED 2026-10-16, one message after Phase 135, and his message says so
-    in its first word.  Three things moved and only the first two are in this
+    REVISED AGAIN 2026-10-16 (Phase 140), and this is the deepest change the
+    model has had.  Two things in it, one arithmetic and one behavioural:
+
+      * the heat stopped being one line per row.  `active[row]` is gone; what is
+        left is a single quadratic, `pure_cbl`, which does not know what row it
+        is in, plus `passive[s]`, which does nothing else.  A row change used to
+        change the SLOPE of the heating; it now changes only the offset.  The
+        four retired lines and their passive table are kept in the constants
+        block, and a mutant puts them back -- a reading that was reversed out
+        must not become unfalsifiable (CLAUDE.md 0.34 (4)).
+      * `passive` moved OUT of the lasers' off rule and out of `p_mult`.  This is
+        the one that changes what the panel does rather than how it computes:
+        with every bank dark this console now COOLS at its row's rate (400 a tick
+        at row 1) where it has always held still, and the pressure band no longer
+        amplifies the row's loss.  Both are his spec's placement; what the
+        shipped log can say about the first is a negative result (constants block
+        above), so it is implemented as written.
+
+    THE EARLIER REVISION OF THE SAME DAY (Phase 137) is still in force except
+    where the one above overrides it, and two of its three moves are in this
     class:
 
       * `a` went from the SUM of the three banks to their MEAN (`a_avg`), and
@@ -729,7 +904,7 @@ class Core:
 
         A property rather than a stored number, because a stored mean is a
         second copy of something the banks already say and the two could drift.
-        Every reader -- `fluctuation`, `noise`, the readouts -- asks for it.
+        Every reader -- `pure_cbl`, `noise`, the readouts -- asks for it.
         """
         return (sum(bank / CBL_UNIT for bank in self.banks) / CBL_BANKS) * CBL_UNIT
 
@@ -773,7 +948,8 @@ class Core:
         """The last step's numbers, for the readout.  Cleared rather than zeroed,
         so a tile cannot show a term belonging to a step that never happened."""
         self.last_row = None
-        self.last_base = 0.0
+        self.last_heat = 0.0
+        self.last_passive = 0.0
         self.last_amp = 1.0
         self.last_actual = 0.0
         self.last_noise = 0.0
@@ -826,11 +1002,15 @@ class Core:
         # the screen at the moment the operator presses Step and the readout
         # re-checks its own tile with it; mixing the two instants is how a
         # screen stops adding up (CLAUDE.md 0.27, second face).
-        base, amp, actual, tremor, stall, cooling = step_terms(
+        heat, passiv, amp, actual, tremor, stall, cooling = step_terms(
             row, self.power, sim.Pressure, self.t, self.cooling)
-        temperature = sim.Temperature + actual + tremor - cooling
+        # Four terms by name rather than one sum: `passive` is a row constant and
+        # `actual` is the lasers' heat after the band, and a reader has to be
+        # able to see which of them moved (the panel shows all four).
+        temperature = sim.Temperature + actual + passiv + tremor - cooling
         self.last_row = row
-        self.last_base = base
+        self.last_heat = heat
+        self.last_passive = passiv
         self.last_amp = amp
         self.last_actual = actual
         self.last_noise = tremor
@@ -1074,7 +1254,7 @@ class Console:
         rows = ttk.Frame(core)
         rows.pack(fill="x", pady=(2, 0))
         ttk.Label(rows, text="row").pack(side="left")
-        for value in sorted(ACTIVE):
+        for value in range(len(PASSIVE_ROW)):
             button = ttk.Radiobutton(rows, text=str(value), value=value,
                                      variable=self.core_var,
                                      command=self.on_core_state)
@@ -1174,8 +1354,8 @@ class Console:
                              pady=(8, 4))
         row += 1
         ttk.Label(parent,
-                  text="the core model   dT = base_heat * p_mult"
-                       " - coolant_effect + noise   (or exactly -586, stalled)",
+                  text="the core model   dT = pure_cbl * p_mult + passive[s]"
+                       " - coolant + noise   (or exactly -586, stalled)",
                   font=self.BOLD).grid(row=row, column=0, columnspan=2,
                                        sticky="w", pady=(0, 4))
         row += 1
@@ -1209,14 +1389,21 @@ class Console:
                                else ("STALL" if self.core.last_stall else "no"))
         row = self.add_readout(parent, row, "t   elapsed since armed (s)",
                                lambda: luau_number(self.core.t))
-        row = self.add_readout(parent, row, "row  (ACTIVE/PASSIVE index)",
+        row = self.add_readout(parent, row, "row  (passive index)",
                                lambda: "-" if self.core.last_row is None
                                else str(self.core.last_row))
-        row = self.add_readout(parent, row, "baseFluc  active + passive",
-                               lambda: self._step_value("last_base"))
+        # The two halves of the heat, as separate tiles on purpose: `pure_cbl` is
+        # a curve in `a` that does not know the row, `passive` is a constant that
+        # does nothing else, and a single summed "baseFluc" row would have hidden
+        # exactly the distinction the 2026-10-16 spec is about -- a dark console
+        # shows 0 in the first and its row's number in the second.
+        row = self.add_readout(parent, row, "pure_cbl  0.0516 a^2 + 1.1 a + 426",
+                               lambda: self._step_value("last_heat"))
+        row = self.add_readout(parent, row, "passive  this row's constant",
+                               lambda: self._step_value("last_passive"))
         row = self.add_readout(parent, row, "press x   pMultiplier",
                                lambda: self._step_value("last_amp"))
-        row = self.add_readout(parent, row, "actualFluc  base x press",
+        row = self.add_readout(parent, row, "activeFluc  pure_cbl x press",
                                lambda: self._step_value("last_actual"))
         row = self.add_readout(parent, row, "noise(t)",
                                lambda: self._step_value("last_noise"))
@@ -1362,7 +1549,7 @@ class Console:
 
     def _line_changed(self):
         """A coefficient moved, so the last step's numbers belong to a tick that
-        would no longer come out the same -- baseFluc is read off the row and the
+        would no longer come out the same -- the heat is read off the row and the
         CBL, so changing either changes what this tick adds.
         Clearing (rather than recomputing) is deliberate: recomputing would put a
         new temperature on screen for a tick that has already been logged and
@@ -1384,16 +1571,16 @@ class Console:
             # The preview calls the SAME function the step does, so "would add"
             # cannot come out as a second opinion -- and that includes the stall
             # branch, which the old preview would have had no way to know about.
-            base, amp, actual, tremor, stall, cooling = step_terms(
+            heat, passiv, amp, actual, tremor, stall, cooling = step_terms(
                 row, core.power, self.sim.Pressure, core.t + self.sim.period,
                 core.cooling)
             return ("off - the slider owns Temperature\n"
                     "a_avg %s = %g   row %d at T = %s\n"
                     "pumps %s   cooling -%g\n"
-                    "would add %s/tick (x %s)%s"
+                    "would add %s/tick (pure_cbl %s x %s + passive %s)%s"
                     % (banks, core.power, row, shown(self.sim.Temperature),
-                       pumps, cooling, shown(actual + tremor - cooling),
-                       luau_number(amp),
+                       pumps, cooling, shown(actual + passiv + tremor - cooling),
+                       shown(heat), luau_number(amp), shown(passiv),
                        "  STALL" if stall else ""))
         row = core.last_row if core.last_row is not None else core.row(self.sim)
         # Before the first step there are no terms to report, and a zero would
@@ -1405,14 +1592,14 @@ class Console:
 
         stall = core.last_stall and not fresh
         return ("t      %s s      T %s\n"
-                "row    %s%s   baseFluc %s%s\n"
+                "row    %s%s   pure_cbl %s   passive %s%s\n"
                 "a_avg  %s = %g (mean lv %s)   press x %s\n"
-                "actual %s      noise %s      cooling -%s\n"
+                "active %s      noise %s      cooling -%s\n"
                 "p      %s      %s\n"
                 "T'     %s"
                 % (luau_number(core.t), shown(self.sim.Temperature),
                    row, " (auto)" if core.auto else " (held)",
-                   num(core.last_base),
+                   num(core.last_heat), num(core.last_passive),
                    "   STALL %g" % STALL_FLUC if stall else "",
                    banks, core.power, luau_number(core.power / CBL_UNIT),
                    luau_number(core.last_amp),

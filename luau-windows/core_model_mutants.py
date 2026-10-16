@@ -71,19 +71,19 @@ MUTANTS = (
     # top (the reading QUESTIONS.md R12 files).  Both anchor on the same line
     # on purpose: there is one stall branch, and it is the thing under test.
     ("a stalled tick is allowed to be zeroed by the dark lasers",
-     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0",
-     "        return STALL_FLUC, amp, (STALL_FLUC if power > 0.0 else 0.0), "
+     "        return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, 0.0",
+     "        return 0.0, 0.0, amp, (STALL_FLUC if power > 0.0 else 0.0), "
      "0.0, True, 0.0",
      "his -586, exactly, with every bank dark"),
 
     ("the tremor rides on a stalled tick, as it did before the correction",
-     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0",
-     "        return STALL_FLUC, amp, STALL_FLUC, noise(t, power), True, 0.0",
+     "        return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, 0.0",
+     "        return 0.0, 0.0, amp, STALL_FLUC, noise(t, power), True, 0.0",
      "a stalled tick with every bank LIT moves by exactly -586"),
 
     ("the stall stops swallowing the pump term",
-     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0",
-     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, coolant",
+     "        return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, 0.0",
+     "        return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, coolant",
      "the stall out-ranks the pumps too"),
 
     ("the vent takes our own Config's 3000 instead of the measured 3300",
@@ -140,6 +140,55 @@ MUTANTS = (
      "CORE_ROW_1_AT = 5000",
      "the spec's `T < 5600` is the STATE_MIN this file already had"),
 
+    # --- the split, which is what the 2026-10-16 spec actually did -----------
+    # Until that message the heat was one table per row: `active[row]`, a slope
+    # and an offset each, all of it under the lasers' off rule.  His spec splits
+    # it into ONE curve with no row in it plus four row constants, and moves the
+    # constants outside the off rule -- which is the one behaviour this spec
+    # changes (a console with every bank dark now falls at its row's rate where
+    # it used to hold still).
+    #
+    # Every way of quietly putting the two halves back together is a way to look
+    # right, because the panel draws the same tiles either way.  So each gets a
+    # tooth, and each is sent to the check that reads the number it moves.
+    ("the curve loses its own zero gate",
+     "    if power <= 0.0:",
+     "    if power <= 0.0 and False:",
+     "a dark console adds no curve"),
+
+    ("the row constant is dropped from the tick",
+     "        temperature = sim.Temperature + actual + passiv + tremor - cooling",
+     "        temperature = sim.Temperature + actual + tremor - cooling",
+     "a dark laser bank does not silence the pumps"),
+
+    ("the row constant is scaled by the press band like the heat is",
+     "        temperature = sim.Temperature + actual + passiv + tremor - cooling",
+     "        temperature = sim.Temperature + actual + passiv * amp + tremor "
+     "- cooling",
+     "the doubled band scales neither the cooling nor the row constant"),
+
+    # The reverse direction, and the one the whole correction was about: the
+    # reading this spec replaced.  A terminal that gated the row's constant on
+    # the lasers would hold still with every bank dark, which is what the panel
+    # did until 2026-10-16 and what the "off" section now asserts against.
+    # CLAUDE.md 0.34 (4): a reading reversed out of the file must not become
+    # unfalsifiable in the meantime, so it comes back as a mutant.
+    ("the row constant goes back under the lasers' off rule",
+     "    return heat, passive(row), amp, active, noise(t, power), False, coolant",
+     "    return heat, passive(row) if power > 0.0 else 0.0, amp, active, "
+     "noise(t, power), False, coolant",
+     "so a dark console falls -- the change this spec makes"),
+
+    # The two middle rows are the pair that can be swapped without any of the
+    # numbers looking wrong on their own -- -400 and -422 are both plausible
+    # losses for a row, and a reader who did not have the spec open could not
+    # say which row either belonged to.  The check that reads all four rows at
+    # once is what makes the swap loud.
+    ("rows 1 and 2 trade their constants",
+     "PASSIVE_ROW = (-455.7, -400.0, -422.0, -22.0)",
+     "PASSIVE_ROW = (-455.7, -422.0, -400.0, -22.0)",
+     "pure_cbl(50) + passive, the four rows"),
+
     # --- the coolant pumps ---------------------------------------------------
     # Ways the third control can be wrong while the panel still looks right.
     # The first four are the placement choices made in COOLANT_PER_LEVEL plus
@@ -161,8 +210,8 @@ MUTANTS = (
      "the cooling is 120 a MEAN level, averaged over three"),
 
     ("the cooling is added instead of removed",
-     "        temperature = sim.Temperature + actual + tremor - cooling",
-     "        temperature = sim.Temperature + actual + tremor + cooling",
+     "        temperature = sim.Temperature + actual + passiv + tremor - cooling",
+     "        temperature = sim.Temperature + actual + passiv + tremor + cooling",
      "a dark laser bank does not silence the pumps"),
 
     ("the cooling is tucked under the lasers' off-rule",
@@ -172,9 +221,10 @@ MUTANTS = (
      "a dark laser bank does not silence the pumps"),
 
     ("the cooling is scaled by pMultiplier like the heat is",
-     "        temperature = sim.Temperature + actual + tremor - cooling",
-     "        temperature = sim.Temperature + actual + tremor - cooling * amp",
-     "the press multiplier does not scale the cooling"),
+     "        temperature = sim.Temperature + actual + passiv + tremor - cooling",
+     "        temperature = sim.Temperature + actual + passiv + tremor "
+     "- cooling * amp",
+     "the doubled band scales neither the cooling nor the row constant"),
 
     ("the three pump levels are read as one pump",
      "        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)",
