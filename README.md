@@ -1925,6 +1925,13 @@ its maximum laser heat (975), where here the same nine take off **41.2%** of thr
 1 writes them (39.2% at row 2, 35.0% at row 3) - before the press multiplier, which cuts it further.
 The constant is the measured one and the arithmetic was not rescaled to hide that.
 
+> **[Phase 137 correction, kept rather than edited away]** Those three percentages were measured
+> under the *pre-correction* unit, where the banks and the pumps were **summed**; the paragraph above
+> is what was true then. After the correction both are means: three maxed pumps take off **360**
+> against the original's **1080** (exactly a third), which is **39.8%** of three maxed banks at row 1
+> (38.2% row 2, 26.0% row 3) - the shares nearly unmoved, the absolute number a third. The 2.638x
+> slope ratio is **per unit of `a`**; the same act (one notch on each of the three banks) is 0.88x.
+
 **The instruments**, with two traps found on the reading side rather than the model side:
 `core_model_check.py` is now **168 checks, 0 failed** (the second spelling is
 `his_cooling(levels) = 120.0 * sum(levels)`, his literals and not a call back into `gui.py`), and
@@ -1946,6 +1953,79 @@ window has never been screenshotted, and nobody has been asked whether it is usa
 appears only 11 times, so the three really were set separately) both support; that is still my
 reading, not his words. See PROGRESS.md Phase 136, DECISIONS_2 581-583, docs/SYSTEMS.md 2.28,
 docs/SNIPPETS.md 5.41.
+
+### Phase 137 - the correction: a mean, a mean, and a stall that swallows the whole tick
+
+He sent back a spec prefixed **`Correction:`**, and it changed three readings of the console's core
+model. Nothing in the game itself was touched, nothing was pushed to Studio, and Play was never
+entered. The three deltas:
+
+| # | was | now |
+|---|---|---|
+| 1 | `a = c1+c2+c3` (the three banks **summed**, max **375**) | `a_avg = ((c1+c2+c3)/3)*25` (their **mean**, max **125**) |
+| 2 | cooling `= 120*(p1+p2+p3)` (summed, max **1080**/tick) | `((p1+p2+p3)/3) * 120` (a **mean**, max **360**/tick) |
+| 3 | the stall wrote **`fluc`** (a *rate*) and the tremor still rode on the reading | `dT = {P <= 2200: -586, ...}` - the stall replaces the **whole** `dT` |
+
+Both means are "divide that same sum by three", so **both of the console's controls shrink to a
+third** at once. The *share* barely moves (three maxed pumps take 41.2% off three maxed banks at row
+1 before, **39.8%** after; 38.2% at row 2, 26.0% at row 3) because the heat side shrinks with it -
+**the absolute number is what changed**. The constant 120 was not edited; the thing it multiplies
+was.
+
+**His worked example reproduces item by item** (`c = 5/3/1`, `p = 2/2/2`, `T = 12000`, `P = 8000`,
+`t = 1`): `a_avg` 75, row 1, base heat **561**, `p_mult` 1, `coolant_effect` **240**, `noise(1)`
+**55** (54.665213986169604), `dT` **375**, `T'` **12375** - every one of them read off the widgets,
+against a second spelling written with his literals.
+
+**Two things the correction did to the books, in opposite directions.** It **retired** the `a = 375`
+extrapolation (QUESTIONS.md R9 (2)): the fit spans `a = 25..125`, and three maxed banks are now
+*exactly* 125, so the panel cannot reach outside the fitted band at all - not capped, just out of
+range. And it **enlarged** the R11 divergence to its literal size: three maxed pumps take off **360**
+here against the original's **1080** - exactly a third. R11's table is now split into two rows
+because one phrase ("per level") was carrying two candidate bases: the same act (one notch on each of
+the three banks) is **0.88x** the original's, while the slope **per unit of `a`** is **2.638x**. Both
+numbers are right; they measure different things.
+
+**The stall entry is filed as QUESTIONS.md R12** - a record, not a question, because his `dT` is
+later than that older `fluc` line and says something different. The two readings only separate when
+the lasers are lit (`noise` scales by `a_avg/25`, so with every bank dark its amplitude is zero and
+the two agree bit for bit). The checker therefore drives all three banks to PW5 *and* the press into
+stall, and prints the margin: **44.24123751141943 degrees** on that tick, where his literal says 0.
+
+**201 checks, 0 failed; 23 mutants, 0 survived or reddened the wrong check** (up from 168 and 17).
+The part worth keeping is the **four defects in the checker itself**, all green wrong rulers:
+
+- **a check written on his worked example could never bite.** The mean of an arithmetic triple *is*
+  its middle term, so at `c = 5/3/1` the mean is 75 - bank 2's own value - and "the mean" and "a
+  glance at bank 2" came out identical. The whole section moved to the asymmetric `125/50/0`
+  (`a_avg` 58.33, no bank's value) before `...nor any one bank` had teeth at all.
+- **the two spellings do not agree bit for bit, and the reason is not the model.** `gui.noise` and
+  the hand-written one differ by **7.10543e-15**: **CPython 3.12+ makes `sum()` a compensated
+  (Neumaier) sum**, so it lands closer to the true value than `a + b + c`. One named tolerance
+  (`1e-12`) with its reason printed on the line, **everywhere else still bit-exact** - and the gap is
+  twelve orders below the smallest thing that check has to catch (swapping two amplitudes = 2.4
+  degrees).
+- **an assertion's position is part of its meaning.** "The pumps start dark" was written after a
+  section that had already moved the pumps, and went red - because **`Console.reset()` starts a run,
+  it does not restore a control position** (it never touches the banks' or pumps' radios). It
+  reddened for a reason that has nothing to do with the console changing; it moved to the opening.
+- **one mutant had no teeth.** Its conditional landed in the `base` slot of the return tuple instead
+  of the `actual` slot the check reads, so `actualFluc` stayed -586 and nothing reddened. The runner
+  reported `HOLE` - which is what "the checks have no teeth" looks like too. The two holes need
+  opposite fixes.
+
+**A third thing this round needed** (DECISIONS_2 584): a correction is not only an addition, so the
+question to ask it is **"what does it override, and what does it retroactively confirm?"** One of the
+three deltas had a shape the other two did not - a *branch's precedence* rather than a unit - and the
+correction also **confirmed** a number the file already had (row 0's `T < 5600`, which is `STATE_MIN`
+/ `Engine.luau:320`), so the check now compares against that rather than restating the constant.
+
+**Not verified:** no screenshots, nobody asked whether it is usable, and the **UI is unchanged** (the
+same radios) - the model's reading of them is what moved, so "does it look different?" answers "no",
+and that is not a missed verification. Nothing was pushed to Studio; the correction was not verified
+against our own game (two separate lines - this console models the *original*). R11 is not resolved;
+it is now three times as large. See PROGRESS.md Phase 137, DECISIONS_2 584-588, docs/SYSTEMS.md 2.29,
+docs/SNIPPETS.md 5.42.
 
 
 ### Phase 127 - the two new monitor panels, in a running game

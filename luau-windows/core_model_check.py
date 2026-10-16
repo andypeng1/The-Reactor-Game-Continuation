@@ -12,15 +12,32 @@ Nothing here re-runs `gui.py`'s arithmetic to compare it against itself (that
 would pass even if both were wrong): the anchors are his equation transcribed
 straight from the spec as it was handed over, with his own literals.
 
-The spec is the 2026-10-14 revision -- the one headed "temperature calculation",
-a per-tick STEP:
+The spec is the 2026-10-16 revision -- the message headed "Correction", a
+per-tick STEP:
 
-    T' = T + (active[row] + passive[row]) * pMultiplier + noise(t)
+    a_avg          = ((c_1 + c_2 + c_3) / 3) * 25
+    coolant_avg    = (p_1 + p_2 + p_3) / 3
+    coolant_effect = coolant_avg * 120
+    s              = {T < 5600: 0, T < 17500: 1, T < 29500: 2, 3}
+    base_heat      = [0, 6.86*a_avg + 65.5, 7.24*a_avg + 37, 6.8*a_avg + 534][s+1]
+                     + [-455.7, -19.2, 0, 0][s+1]
+    p_mult         = {P <= 11500: 1, P <= 27000: 2, 4}
+    noise          = 15*(a_avg/25)*sin(t/1.5) + 10*(a_avg/25)*sin(t/0.7)
+                     + 5*(a_avg/25)*sin(t/0.3)
+    dT             = {P <= 2200: -586, base_heat*p_mult - coolant_effect + noise}
+    T'             = T + dT
 
-which replaced the 2026-10-13 closed form `T0 + (rate + noise(x)) * x`.  The
-differences are not cosmetic and two of them are checked here by name: the noise
-is added to the reading rather than multiplied into a rate, and a row change
-changes the increment instead of moving a whole line.
+His own worked example -- the numbers the message carries, c = 5/3/1,
+p = 2/2/2, T = 12000, P = 8000, t = 1 -- is driven through the panel in its own
+section below, so the spec is checked as an instance and not only term by term.
+
+That supersedes the 2026-10-14 revision (`T' = T + (active[row] +
+passive[row]) * pMultiplier + noise(t) + cooling`), which in turn replaced the
+2026-10-13 closed form `T0 + (rate + noise(x)) * x`.  Three things moved and each
+is checked by name here: the banks are AVERAGED and not summed, so does the pump
+side, and the stall is now the whole of `dT` (no heat, no pump term, no tremor)
+where the earlier reading had it set the rate with the tremor still riding on the
+reading.
 
 Exit status is 1 if any check failed, 0 if all passed, so a broken run is not a
 silent one.  ASCII only on stdout -- this console is GBK.
@@ -42,6 +59,30 @@ def check(name, got, want):
         print("ok   %-44s %r" % (name, got))
         return True
     print("FAIL %-44s got %r, wanted %r" % (name, got, want))
+    FAILURES.append(name)
+    return False
+
+
+def check_close(name, got, want, tol):
+    """The same, for a value two spellings of one formula need not agree on in
+    the last bits -- used ONCE in this file, and the reason is measured.
+
+    `gui.noise` sums its three sines with `sum()`, and CPython 3.12+ makes
+    `sum()` a COMPENSATED sum for floats: it lands a few ulps nearer the true
+    value than his own left-to-right `a + b + c` does.  The gap at a_avg = 75,
+    t = 1 is 7.105e-15, twelve orders below the smallest thing the check has to
+    catch (swapping two amplitudes moves that reading 2.4 degrees).  Everywhere
+    else the two spellings here are bit-identical and `check` is the right
+    instrument -- a tolerance is a hole, and it is only worth opening where the
+    gap is measurable, explainable and named.
+    """
+    CHECKS[0] += 1
+    gap = abs(got - want)
+    if gap <= tol:
+        print("ok   %-44s within %g (gap %g)" % (name, tol, gap))
+        return True
+    print("FAIL %-44s got %r, wanted %r (gap %g > %g)"
+          % (name, got, want, gap, tol))
     FAILURES.append(name)
     return False
 
@@ -119,10 +160,27 @@ def readout(values, prefix):
 # His `s` runs 1..3 and his lists are 1-based, so he writes `active[s+1]`; the
 # leading slot -- index 1 to him -- is what row 0 reads below.  Writing the lists
 # out 0-based in his own order makes the index the row, which is the whole of the
-# translation.
+# translation.  As of the 2026-10-16 correction his rule spells that first slot
+# out (`T < 5600: 0`), and 5600 is the number this file's sibling already carried
+# from `Config.Sim.State1` -- two spellings of one threshold are checked against
+# each other rather than one of them being restated here.
+#
+# `a` is his `a_avg` everywhere below, so `his_a_avg` is what a caller who has
+# three bank LEVELS reaches for, and what a caller who already has an `a` passes
+# straight through.
 
-def his_active(row, level):
-    a = level * 25.0
+def his_a_avg(c1, c2, c3):
+    """His `a_avg = ((c_1 + c_2 + c_3) / 3) * 25`.
+
+    The arguments are LEVELS (0..5), because that is what his message divides;
+    `x 25` is what turns the mean level into the `a` his fit was taken in.  The
+    division is spelled on the integers, as he wrote it, so this is his
+    arithmetic and not a rearrangement of it that happens to agree.
+    """
+    return ((c1 + c2 + c3) / 3) * 25
+
+
+def his_active(row, a):
     return [0, 6.86 * a + 65.5, 7.24 * a + 37, 6.8 * a + 534][row]
 
 
@@ -130,8 +188,8 @@ def his_passive(row):
     return [-455.7, -19.2, 0, 0][row]
 
 
-def his_base_fluc(row, level):
-    return his_active(row, level) + his_passive(row)
+def his_base_fluc(row, a):
+    return his_active(row, a) + his_passive(row)
 
 
 def his_press(pressure):
@@ -142,29 +200,51 @@ def his_press(pressure):
     return 4
 
 
-def his_noise(x, level):
-    return (15 * level * math.sin(x / 1.5)
-            + 10 * level * math.sin(x / 0.7)
-            + 5 * level * math.sin(x / 0.3))
+def his_noise(x, a):
+    """His `noise`, with the amplitude written as he wrote it: `a / 25` rather
+    than a level, so the scaling is checked as a division and not as a stored
+    multiplier."""
+    return (15 * (a / 25) * math.sin(x / 1.5)
+            + 10 * (a / 25) * math.sin(x / 0.7)
+            + 5 * (a / 25) * math.sin(x / 0.3))
 
 
-def his_temperature(temp, row, level, pressure, x):
-    return temp + his_base_fluc(row, level) * his_press(pressure) + his_noise(x, level)
+def his_dT(row, a, pressure, x, cooling):
+    """His `dT`, piecewise, spelled the way the correction spells it.
+
+    The stall branch REPLACES the whole expression -- no heat term, no pump
+    term, no tremor -- which is the reading that changed on 2026-10-16 and the
+    reason this is a function of the five arguments rather than a sum the caller
+    assembles.  QUESTIONS.md R12 has the other reading (the -586 as the rate,
+    with the noise still added on top).
+    """
+    if pressure <= 2200:
+        return -586
+    return his_base_fluc(row, a) * his_press(pressure) - cooling + his_noise(x, a)
+
+
+def his_temperature(temp, row, a, pressure, x, cooling=0.0):
+    return temp + his_dT(row, a, pressure, x, cooling)
 
 
 def his_cooling(levels):
-    """What the pumps take off a tick: 120 a level, summed, added OUTSIDE his
-    line and outside `pMultiplier`.
+    """What the pumps take off a tick: his `coolant_avg * 120`, added OUTSIDE
+    his line and outside `pMultiplier`.
 
-    Spelled from the three sources rather than from `gui.COOLANT_PER_LEVEL`:
-    the original's own line in `Data/TRGWeb.luau` (`- (coolant_pump1_power +
+    The AVERAGE is the 2026-10-16 correction (`coolant_avg = (p_1 + p_2 + p_3)
+    / 3`); the 120 is untouched and is spelled from the three sources rather
+    than from `gui.COOLANT_PER_LEVEL`, so this is not a tautology: the
+    original's own line in `Data/TRGWeb.luau` (`- (coolant_pump1_power +
     coolant_pump2_power + coolant_pump3_power)*120`), our remake's
     `Config.Sim.PumpCooling`, and the shipped log's exact identity
     `predDT*5 == 65*sum(cbl.level) - 120*sum(coolant.levels)` over all of its
-    477 records (`_tools/coolant_from_log.py` prints it).  Reading the constant
-    back off the module would make this a tautology.
+    477 records (`_tools/coolant_from_log.py` prints it).  The three sources
+    spell the SUM; the correction changes the unit and not the constant, which
+    is why the divergence is filed (QUESTIONS.md R11) instead of being folded
+    into the number.
     """
-    return 120.0 * sum(levels)
+    coolant_avg = sum(levels) / 3
+    return coolant_avg * 120.0
 
 
 # ========== the run ==========
@@ -210,14 +290,20 @@ def main():
     check("core_state(29499.9)", gui.core_state(29499.9), 2)
     check("core_state(29500)", gui.core_state(29500), 3)
     check("noise(0, 50) is 0", gui.noise(0.0, 50.0), 0.0)
+    # The correction spells row 0's threshold out, and 5600 is a number this
+    # project already had from two other directions (Config.Sim.State1 and
+    # Engine.luau:320's `T >= 5600 and 1 or 0`).  Checked as a reading rather
+    # than restated in gui.py, so a future edit to either spelling is red here.
+    check("the spec's `T < 5600` is the STATE_MIN this file already had",
+          gui.CORE_ROW_1_AT, gui.STATE_MIN)
 
     # --- his two lists, against the model's one table -----------------------
     print("\n-- active + passive, his literals --")
     for row in (0, 1, 2, 3):
         for level in (1, 3, 5):
-            name = "fluctuation(row %d, level %d)" % (row, level)
+            name = "fluctuation(row %d, a=%d)" % (row, level * 25)
             check(name, gui.fluctuation(row, level * 25.0),
-                  his_base_fluc(row, level))
+                  his_base_fluc(row, level * 25.0))
     print("-- pMultiplier, his literals --")
     check("press_multiplier(11500)", gui.press_multiplier(11500.0), 1.0)
     check("press_multiplier(11500.1)", gui.press_multiplier(11500.1), 2.0)
@@ -242,21 +328,47 @@ def main():
     check("CBL starts at PW2 on the first bank", console.cbl_vars[0].get(), 50)
     check("...and the other two are dark",
           [var.get() for var in console.cbl_vars[1:]], [0, 0])
+    # ...which is a_avg = 50/3 since the correction, NOT 50 and NOT 150.  The
+    # console's opening POSITION is unchanged; what the spec changed is what that
+    # position means, so this is checked here rather than papered over by moving
+    # the default (moving a control to defend a reading is the wrong direction).
+    check("one bank at PW2 is his a_avg = 50/3, not 50",
+          console.core.power, his_a_avg(2, 0, 0))
+    check("...and it is not the sum either", console.core.power == 50.0, False)
+    # The pumps' own opening position, checked HERE because here it is still the
+    # widget's default and nowhere later is: `Console.reset()` starts a run, it
+    # does not restore a control position, so it leaves the radios exactly where
+    # the previous section left them (the coolant section below sets them dark
+    # for itself rather than assuming this).
+    check("the pumps start dark, like the game's",
+          [var.get() for var in console.pump_vars], [0, 0, 0])
+    check("...so nothing is being cooled", console.core.cooling, 0.0)
     headers = [text_of(w) for w in right.winfo_children()
                if "core model" in text_of(w)]
-    check("the panel prints his equation",
-          headers[0] if headers else "",
-          "the core model   T' = T + baseFluc * press + noise(t) - cooling")
+    check("the panel prints his equation", headers[0] if headers else "",
+          "the core model   dT = base_heat * p_mult - coolant_effect + noise"
+          "   (or exactly -586, stalled)")
+
+    # All three banks on PW2 before the regression below.  ONE bank at PW2 is
+    # a_avg = 16.67 now, and the point of the three ticks below is his equation at
+    # a known `a` -- three at PW2 is a_avg = 50, which is the `a` this section was
+    # written at and the level his fit's own PW2 is.  The opening position is
+    # checked just above, where it belongs.
+    for var in console.cbl_vars:
+        var.set(50)
+    console.on_power()
+    check("three banks at PW2 are his a_avg = 50", console.core.power,
+          his_a_avg(2, 2, 2))
 
     # One tick at a time, against his equation with his literals.  The tick
-    # period is 1.0 s, so at the Nth tick t = N and level = 50/25 = 2.
+    # period is 1.0 s, so at the Nth tick t = N and a = 50 (PW2 on all three).
     deltas = []
     for n in (1, 2, 3):
         pressure = console.sim.Pressure
         temp = console.sim.Temperature
         console.step_once()
         values = screen(right)
-        want = his_temperature(temp, 1, 2, pressure, float(n))
+        want = his_temperature(temp, 1, 50.0, pressure, float(n))
         deltas.append(float(values["T'  next tick's temperature"]) - temp)
         check("t after tick %d" % n, values["t   elapsed since armed (s)"], str(n))
         check("row at tick %d" % n, values["row  (ACTIVE/PASSIVE index)"], "1")
@@ -264,16 +376,16 @@ def main():
         check("press x at tick %d" % n, values["press x   pMultiplier"], "1")
         check("actualFluc at tick %d" % n, values["actualFluc  base x press"], "389")
         check("noise(%d)" % n, values["noise(t)"],
-              gui.shown(his_noise(float(n), 2)))
+              gui.shown(his_noise(float(n), 50.0)))
         check("T' at tick %d against his equation" % n,
               values["T'  next tick's temperature"], gui.shown(want))
 
     # The revision, in one line: the noise is ADDED, so its amplitude is what it
-    # says it is (+-30 at level 2) and a tick moves by about baseFluc.  In the old
+    # says it is (+-30 at a = 50) and a tick moves by about baseFluc.  In the old
     # closed form the same three sines were inside the multiplication, so the
     # same t gave a wobble of 30 * t and the step was 389 + 30t.
     print("\n-- the noise is a tremor on the reading, not on the slope --")
-    check("noise(1) is tens, not tens x t", abs(his_noise(1.0, 2)) < 100, True)
+    check("noise(1) is tens, not tens x t", abs(his_noise(1.0, 50.0)) < 100, True)
     check("...so each of the three ticks moved by about baseFluc",
           all(abs(delta - 389) < 80 for delta in deltas), True)
 
@@ -300,7 +412,7 @@ def main():
     check("...and it is 1 -> 2", crossing[0:2], (1, 2))
     check("...and the reading moved by one tick, not by a line",
           abs(crossing[2]) < 3000, True)
-    # The tight one: row 1's base is 389.3 and row 2's is 399.0 at level 2, so
+    # The tight one: row 1's base is 389.3 and row 2's is 399.0 at a = 50, so
     # the tick that changes row moves like the tick before it (within 10 x amp).
     # Under the closed form this same comparison read ~19000 against ~500.
     check("...and the tick at the change moved like the one before it",
@@ -330,10 +442,10 @@ def main():
     # sines inside the multiplication the tremor overtook the rate by t = 30, so
     # a tick moved by base * press + noise(t) * t.  Added, a tick moves by
     # base * press plus the DIFFERENCE of two sines -- bounded by twice the
-    # amplitude, a hair over 100 at level 2, whatever t is.  t here is in the
+    # amplitude, a hair over 100 at a = 50, whatever t is.  t here is in the
     # thirties.
     check("a late tick still moves by base x press",
-          abs(tail[2] - his_base_fluc(tail[0], 2) * tail[1]) < 150, True)
+          abs(tail[2] - his_base_fluc(tail[0], 50.0) * tail[1]) < 150, True)
 
     # The runaway is the model's to have: TEMP_MAX is the slider's range, not a
     # physical limit, and a console that silently capped the temperature at the
@@ -393,9 +505,9 @@ def main():
     check("row 0 in use", values["row  (ACTIVE/PASSIVE index)"], "0")
     check("row 0 is the cooling term",
           values["baseFluc  active + passive"], "-456")
-    check("row 0 at level 2, his equation",
+    check("row 0 at a = 50, his equation",
           values["T'  next tick's temperature"],
-          gui.shown(his_temperature(temp, 0, 2, pressure, console.core.t)))
+          gui.shown(his_temperature(temp, 0, 50.0, pressure, console.core.t)))
     check("negative and moving down",
           float(values["T'  next tick's temperature"]) < temp, True)
 
@@ -405,27 +517,45 @@ def main():
     # effect at all (active[0] is 0), so a check made from the row the console
     # happens to be on would pass without ever looking at `a`.
     print("\n-- CBL power is his `a` --")
-    for level, power in ((1, 25), (2, 50), (5, 125)):
-        check("fluctuation(row 3, a=%d)" % power, gui.fluctuation(3, float(power)),
-              his_base_fluc(3, level))
+    for level in (1, 2, 5):
+        check("fluctuation(row 3, a=%d)" % (level * 25),
+              gui.fluctuation(3, level * 25.0), his_base_fluc(3, level * 25.0))
     console.auto_var.set(False)
     console.on_auto()
     console.core_var.set(3)
     console.on_core_state()
-    # ONE bank at PW5, the other two dark.  His fit's `a` runs 25..125, which is
-    # a single laser's worth, so "PW5 on the console" is a = 125 and not 375 --
-    # the three-maxed case is its own check below, marked as an extrapolation.
+    # ONE bank at PW5 and the other two dark: since the correction that is a
+    # THIRD of the bank's own value, so a single laser at its maximum is
+    # a_avg = 41.67 and the top of his fit needs all three.  That is the price
+    # the correction paid, said out loud on the panel rather than hidden.
     console.cbl_vars[0].set(125)
     for var in console.cbl_vars[1:]:
         var.set(0)
     console.on_power()
-    check("his `a` is the power value", console.core.power, 125.0)
+    check("one bank at PW5 is his a_avg, a third of it",
+          console.core.power, his_a_avg(5, 0, 0))
+    check("...and it is NOT the bank's own value, as it was before",
+          console.core.power == 125.0, False)
     console.step_once()
     values = screen(right)
     check("row 3 held", values["row  (ACTIVE/PASSIVE index)"], "3")
-    check("PW5 on one bank is his a = 125, his literals",
+    check("one bank at PW5, his literals",
           values["baseFluc  active + passive"],
-          gui.shown(his_base_fluc(3, 5)))
+          gui.shown(his_base_fluc(3, his_a_avg(5, 0, 0))))
+
+    # All three at PW5: the one control position that reaches the top of his
+    # fit, where before the correction one bank did.  The ceiling moved with the
+    # unit, and this is where the panel shows it.
+    for var in console.cbl_vars:
+        var.set(125)
+    console.on_power()
+    check("all three at PW5 reach the top of his fit, a = 125",
+          console.core.power, his_a_avg(5, 5, 5))
+    console.step_once()
+    values = screen(right)
+    check("...and row 3 there is his own line at a = 125",
+          values["baseFluc  active + passive"],
+          gui.shown(his_base_fluc(3, 125.0)))
 
     # "off" is ours, not the spec's: the fit covers levels 1..5 and there is no
     # level 0 in it, so zero CBL is defined as adding nothing rather than by
@@ -471,11 +601,21 @@ def main():
 
     # --- the three laser banks ----------------------------------------------
     # The game has three combustion lasers and each carries its own PW1..PW5, so
-    # the panel has three rows of radios; what the fit eats is their SUM.  Held
+    # the panel has three rows of radios; what the fit eats is their MEAN.  Held
     # on row 3, where `a` has the largest coefficient (6.8), so a check made here
-    # fails loudly if the sum is ever read as only one bank -- on row 0 `a` does
-    # nothing at all and every version of this would pass (CLAUDE.md 0.31 (1)).
-    print("\n-- three banks, and their sum is his a --")
+    # fails loudly if the mean is ever read as only one bank or as the sum -- on
+    # row 0 `a` does nothing at all and every version of this would pass
+    # (CLAUDE.md 0.31 (1)).
+    #
+    # PW5 / PW2 / dark on the three banks: a_avg = ((5 + 2 + 0) / 3) * 25 = 58.33.
+    # Deliberately NOT his worked example's c = 5/3/1, and for a measured reason:
+    # the mean of 5/3/1 is exactly 3, so a_avg = 75 IS the middle bank's own value
+    # and a check written there cannot tell "the mean of the three" from "bank 2"
+    # -- which is the one reading this section exists to rule out.  An asymmetric
+    # triple is the only kind that can: 58.33 is nobody's bank value, so a check
+    # that read one bank (or their sum, 175) goes red.  His own example is checked
+    # in full, at a_avg = 75, two sections down.
+    print("\n-- three banks, and their mean is his a_avg --")
     console.reset()
     console.arm_var.set(True)
     console.on_arm()
@@ -483,31 +623,104 @@ def main():
     console.on_auto()
     console.core_var.set(3)
     console.on_core_state()
-    for index, power in enumerate((75, 25, 0)):
+    for index, power in enumerate((125, 50, 0)):
         console.cbl_vars[index].set(power)
     console.on_power()
     check("the three banks hold three different powers", console.core.banks,
-          [75.0, 25.0, 0.0])
-    check("his `a` is their sum, not any one of them", console.core.power, 100.0)
+          [125.0, 50.0, 0.0])
+    check("his `a` is their mean, not their sum", console.core.power,
+          his_a_avg(5, 2, 0))
+    check("...and it is not the sum", console.core.power == 175.0, False)
+    check("...nor any one bank", console.core.power in (125.0, 50.0, 0.0),
+          False)
     console.step_once()
     values = screen(right)
     check("the three banks on screen", values["a1 / a2 / a3  banks"],
-          "75 / 25 / 0")
-    check("the sum on screen", values["a   total = his a"], "100")
-    check("row 3 at a = 100 is his level 4, his literals",
-          values["baseFluc  active + passive"], gui.shown(his_base_fluc(3, 4)))
+          "125 / 50 / 0")
+    check("the mean on screen", values["a_avg  his a, mean of the 3"], "58")
+    check("row 3 at a_avg = 58.33, his literals",
+          values["baseFluc  active + passive"],
+          gui.shown(his_base_fluc(3, his_a_avg(5, 2, 0))))
 
-    # a = 375 is past the end of the fit.  Said out loud in the run, not only in
-    # the source comment: the line extends exactly, and that the reactor stays
-    # linear out there is the fit's assumption rather than a measurement.
-    for var in console.cbl_vars:
-        var.set(125)
+    # The ceiling, checked rather than asserted in a comment.  Before the
+    # correction three maxed banks reached a = 375 -- three times past the end of
+    # his fit, where the reactor's behaviour was the line's assumption and not a
+    # measurement (QUESTIONS.md R9 (2)).  Under the mean the ceiling is 125, the
+    # top of the fitted band, and the extrapolation is gone by construction.
+    check("no control position can exceed the fitted band's top, a = 125",
+          gui.fluctuation(3, his_a_avg(5, 5, 5)), his_base_fluc(3, 125.0))
+    print("     (the fit covers a = 25..125; under the sum, three maxed banks "
+          "read 375 -- three times past the end of it.  The correction retires "
+          "that reading -- QUESTIONS.md R9 (2))")
+
+    # --- his own worked example ---------------------------------------------
+    # The message that carried the correction ends with a worked instance:
+    # c = 5/3/1, p = 2/2/2, T = 12000, P = 8000, t = 1.  Checked as an instance
+    # and not only term by term, because every term-by-term check above passes at
+    # any `a` -- this is the one that says the WHOLE expression, assembled in the
+    # panel's own order, lands where he says it lands.
+    #
+    # Pressure and temperature are PLANTED (the console has no pressure control
+    # and T is the slider's job while unarmed), which is exactly the licence the
+    # AVB section below takes: the run is one tick long, so nothing has to be
+    # reached by driving.
+    print("\n-- his own worked example: T = 12000, P = 8000, t = 1 --")
+    console.arm_var.set(False)
+    console.on_arm()
+    console.reset()
+    console.auto_var.set(True)
+    console.on_auto()
+    for index, power in enumerate((125, 75, 25)):
+        console.cbl_vars[index].set(power)
     console.on_power()
-    check("three maxed banks reach a = 375", console.core.power, 375.0)
-    check("...which is his own line, three times past the fitted range",
-          gui.fluctuation(3, 375.0), his_base_fluc(3, 15))
-    print("     (the fit covers a = 25..125, i.e. ONE bank; a = 375 is an "
-          "extrapolation -- QUESTIONS.md)")
+    for index, level in enumerate((2, 2, 2)):
+        console.pump_vars[index].set(level)
+    console.on_coolant()
+    console.arm_var.set(True)
+    console.on_arm()
+    console.sim.Temperature = 12000.0
+    console.sim.Pressure = 8000.0
+    console.step_once()
+    values = screen(right)
+    check("his example: t = 1 after one tick",
+          values["t   elapsed since armed (s)"], "1")
+    check("his example: row 1 at T = 12000",
+          values["row  (ACTIVE/PASSIVE index)"], "1")
+    check("his example: a_avg = ((5+3+1)/3)*25 = 75",
+          console.core.power, his_a_avg(5, 3, 1))
+    check("his example: base_heat on screen", values["baseFluc  active + passive"],
+          "561")
+    check("...and the model's own number is his 6.86*75 + 65.5 - 19.2",
+          gui.fluctuation(1, his_a_avg(5, 3, 1)), 560.8)
+    check("...and my transcription of that line agrees to the last bit",
+          his_base_fluc(1, his_a_avg(5, 3, 1)), 560.8)
+    check("his example: p_mult = 1 at P = 8000",
+          values["press x   pMultiplier"], "1")
+    check("his example: coolant_effect = 240 at p = 2/2/2",
+          readout(values, "cooling"), "240")
+    check("...and the model's own number is his (2+2+2)/3 * 120",
+          console.core.cooling, 240.0)
+    check("his example: noise(1) = 54.665...", values["noise(t)"], "55")
+    # Closed at the SCREEN layer, which is where the console makes its promise,
+    # plus one bounded comparison underneath it: the two spellings of his three
+    # sines are NOT bit-identical, and the reason is not the model.  See
+    # check_close -- CPython's `sum()` is compensated for floats, so the panel's
+    # own spelling lands 7.1e-15 away from his left-to-right `a + b + c`.
+    check("...and the model's own number is his three sines at a_avg = 75",
+          gui.shown(gui.noise(1.0, his_a_avg(5, 3, 1))), "55")
+    check_close("...and the two spellings agree to 1e-12, not to the last bit",
+                gui.noise(1.0, his_a_avg(5, 3, 1)),
+                his_noise(1.0, his_a_avg(5, 3, 1)), 1e-12)
+    check("...and my transcription of those sines is the literal he wrote",
+          his_noise(1.0, his_a_avg(5, 3, 1)), 54.665213986169604)
+    check("his example: dT = 561 - 240 + 54.665... = 375.465..., shown as 375",
+          gui.shown(console.sim.Temperature - 12000.0), "375")
+    check("his example: T' = T + dT", values["T'  next tick's temperature"],
+          "12375")
+    check("...and his formula, assembled independently, says the same",
+          values["T'  next tick's temperature"],
+          gui.shown(his_temperature(12000.0, 1, his_a_avg(5, 3, 1), 8000.0, 1.0,
+                                    his_cooling([2, 2, 2]))))
 
     # --- the three coolant pumps --------------------------------------------
     # The third of the game's three control means.  The CONSTANT is measured
@@ -535,16 +748,24 @@ def main():
     for var in console.cbl_vars:
         var.set(0)
     console.on_power()
-    check("the pumps start dark, like the game's",
-          [var.get() for var in console.pump_vars], [0, 0, 0])
-    check("...so nothing is being cooled", console.core.cooling, 0.0)
+    # The pumps are SET dark here, not assumed dark: `Console.reset()` starts a
+    # run, it does not restore a control position, and the worked-example section
+    # above left the radios at 2/2/2.  (The widget's own default is checked up in
+    # the opening section, where nothing has moved it yet -- this line used to
+    # live here, and it was passing for the wrong reason until 2026-10-16.)
+    for var in console.pump_vars:
+        var.set(0)
+    console.on_coolant()
+    check("the pumps dark, so nothing is being cooled", console.core.cooling, 0.0)
 
     for index, level in enumerate((3, 0, 1)):
         console.pump_vars[index].set(level)
     console.on_coolant()
     check("three pumps hold three different levels", console.core.pumps, [3, 0, 1])
-    check("the cooling is 120 a level, summed over three",
+    check("the cooling is 120 a MEAN level, averaged over three",
           console.core.cooling, his_cooling([3, 0, 1]))
+    check("...and that is not the sum of the three",
+          console.core.cooling == 120.0 * sum([3, 0, 1]), False)
     # The lasers are dark for the tick below, so his line adds nothing and the
     # tremor is scaled by a level of zero: what is left is the pumps alone.
     # This is the check that says the "off is ours" rule stops at the lasers.
@@ -558,9 +779,12 @@ def main():
     # about the stallout label, and that is where this was learned).
     check("the cooling on screen", readout(values, "cooling"),
           gui.shown(his_cooling([3, 0, 1])))
+    # Both sides SCREENED: the average puts a division in the number, so the
+    # reading is a whole number and the model's value may not be (this is the
+    # same "compare at one layer" rule the T' checks below spell out).
     check("a dark laser bank does not silence the pumps",
-          float(values["T'  next tick's temperature"]) - temp,
-          -his_cooling([3, 0, 1]))
+          values["T'  next tick's temperature"],
+          gui.shown(temp - his_cooling([3, 0, 1])))
 
     # The pumps and the lasers together, on a row where `a` has a real
     # coefficient, against his equation plus the measured cooling.  This is the
@@ -585,8 +809,8 @@ def main():
     # as a small disagreement in the last digit.  Compared as SCREENED values
     # (`shown` on both sides), because the readout is a whole number and
     # comparing a rounded reading against an unrounded sum tests the rounding.
-    want = (his_temperature(temp, 3, 4, pressure, console.core.t)
-            - his_cooling([2, 3, 0]))
+    want = his_temperature(temp, 3, his_a_avg(3, 1, 0), pressure, console.core.t,
+                           his_cooling([2, 3, 0]))
     check("heat and cooling in one tick, his literals",
           values["T'  next tick's temperature"], gui.shown(want))
 
@@ -613,7 +837,7 @@ def main():
           gui.shown(temp - his_cooling([0, 0, 1])))
 
     # The stall out-ranks the pumps, exactly as it out-ranks the lasers: his
-    # -586 is a rate for a crumpled core and it does not become -586 minus 1080
+    # -586 is a rate for a crumpled core and it does not become -586 minus 360
     # because three pumps are running.  Driven at the gate's own boundary
     # rather than below it, so the same tick also says the gate is still the
     # one the stall section below reads.
@@ -631,16 +855,20 @@ def main():
           gui.shown(temp + gui.STALL_FLUC))
     check("...and the cooling is what the step zeroed, not what the panel says",
           readout(values, "cooling"), "0")
+    # NOT a "the tremor is zero here" check: the banks are dark for this tick, so
+    # the tremor would be zero whether the stall zeroed it or not -- a check that
+    # cannot fail for the right reason (CLAUDE.md 0.31 (1)).  The lit-banks case
+    # is driven down in the stall section, where the two spellings of R12 differ.
     print("     (maximum coolant is -%g a tick: in THIS console's currency that "
           "is about a third of three maxed banks, where the original's own "
           "ratio would drown them -- his fitted heat line is ~2.6x the "
           "original's 65 a level, and the constant is the measured one rather "
-          "than a rescaled one -- QUESTIONS.md)"
+          "than a rescaled one -- QUESTIONS.md R11)"
           % his_cooling([3, 3, 3]))
 
     # Put the pumps back before the next section.  Not tidiness: every check
     # below is about the stall, the vent and the rows, and a section that walks
-    # off leaving 1080 a tick of cooling running would make them read a
+    # off leaving 360 a tick of cooling running would make them read a
     # different console -- silently, since none of them asks about the pumps.
     for var in console.pump_vars:
         var.set(0)
@@ -690,6 +918,42 @@ def main():
     check("...and the pressure it gated on is on the screen",
           values["p   this step started from"],
           gui.shown(console.core.last_pressure))
+
+    # The reading that CHANGED on 2026-10-16, driven where the two spellings
+    # actually differ.  With every bank dark the tremor is zero by its own
+    # scaling, so the tick above cannot tell his piecewise `dT` (the stall is the
+    # whole expression) from the earlier reading (the -586 as the RATE, with
+    # noise still added on top -- QUESTIONS.md R12).  With all three banks lit
+    # they part company: his says -586 and nothing else, the other says
+    # -586 + noise(t), tens of degrees away.
+    console.cbl_vars[0].set(125)
+    console.cbl_vars[1].set(125)
+    console.cbl_vars[2].set(125)
+    console.on_power()
+    check("...and for this tick a_avg is at the top of the fit",
+          console.core.power, his_a_avg(5, 5, 5))
+    tremor_now = his_noise(console.core.t, his_a_avg(5, 5, 5))
+    print("     (the tremor the OTHER reading would have added here: %r)"
+          % tremor_now)
+    before = console.sim.Temperature
+    console.step_once()
+    values = screen(right)
+    check("a stalled tick with every bank LIT moves by exactly -586",
+          console.sim.Temperature - before, gui.STALL_FLUC)
+    check("...so his -586 is the whole of dT, not the rate under a tremor",
+          values["T'  next tick's temperature"],
+          gui.shown(before + gui.STALL_FLUC))
+    check("...and the noise tile shows the zero the step used",
+          values["noise(t)"], "0")
+    check("...and the bar says STALL", values["stall  this step"], "STALL")
+    check("...with his own branch on it",
+          "STALL %g" % gui.STALL_FLUC in console.core_text.get(), True)
+    # The non-vacuity guard for the check two lines up: if the tremor happened to
+    # be ~0 at this t, the screen's "0" would pass with the old reading too, and
+    # the check would be alive but unable to fail (CLAUDE.md 0.31 (1)).  Print
+    # the number so the margin is a reading rather than a hope.
+    check("...and that zero is the stall's doing, not a coincidence of t",
+          abs(tremor_now) > 1.0, True)
 
     # The boundary, which is the spec's `<=` and not Engine.luau:313's `<`.
     # Both spellings are exercised so a future edit to either is a red check and

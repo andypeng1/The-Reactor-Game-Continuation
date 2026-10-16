@@ -125,23 +125,38 @@ CBL_START = 50.0           # PW2: the level the console starts on
 # THE THREE LASERS.  The game has three combustion lasers and each one carries
 # its own PW1..PW5 (`CBL1-PW5` / `CBL2-PW1` / ... are click labels the shipped
 # telemetry log actually contains), so "the CBL level" is three controls, not
-# one.  What the fit consumes is their SUM, and that is the game's own
-# composition rather than a choice made here: Engine.luau:261-264 adds
-# `heat += level` once per active laser and then multiplies the total by
-# CBLHeat, and the shipped logger's own candidate model does the same thing as
-# `sumCBL * 65` off the three per-laser PowerLabels.
+# one.
 #
-# What that costs, stated rather than hidden: his fit spans level 1..5, i.e.
-# a = 25..125, which is ONE laser's worth.  Three maxed banks reach a = 375,
-# three times past the fitted range.  `active[row]` is a LINE, so it extends
-# exactly -- but that the reactor stays linear out there is the fit's
-# assumption and not a measurement.  Filed in QUESTIONS.md.
+# What the fit consumes is their AVERAGE -- the operator's correction of
+# 2026-10-16, `a_avg = ((c1 + c2 + c3) / 3) * 25`.  Until that message it was
+# their SUM, which is what the original does (Engine.luau:261-264 adds
+# `heat += level` once per active laser before multiplying the total by
+# CBLHeat, and the shipped logger's own candidate model writes `sumCBL * 65` off
+# the three per-laser PowerLabels); the correction moves this console onto the
+# average instead, and `Core.power` is the one place that is spelled.
+#
+# What the correction bought, said out loud because it CLOSES an open question
+# rather than because it is tidy: `a_avg` spans 0..125 -- ONE laser's worth,
+# which is exactly the band his fit was taken over (levels 1..5, a = 25..125).
+# Under the sum, three maxed banks reached a = 375, three times past the end of
+# the line, and where the reactor sits out there was the fit's assumption and
+# not a measurement.  That reading is retired with the correction (QUESTIONS.md
+# R9 (2)).  The price is on the other side of the same coin: the top of the fit
+# now needs all THREE banks at PW5, and one bank alone reaches a_avg = 41.7.
 CBL_BANKS = 3
 
 # ========== THE COOLANT PUMPS (Isotope E) ==========
 # The third of the game's three control means, and the only one this console was
 # still missing: three pumps, each held at 0..3, that REMOVE heat rather than
 # adding it.
+#
+# CORRECTED 2026-10-16, the same message that averaged the laser banks: what the
+# constant multiplies is the AVERAGE of the three pump levels
+# (`coolant_avg = (p1 + p2 + p3) / 3`, then `x 120`), not their sum.  All three
+# sources below write the SUM, so this is his spec overriding them -- the
+# constant is the same either way and only the unit differs, which is why the
+# divergence is filed (R11) rather than folded into the number.  `Core.cooling`
+# is where the form is spelled.
 #
 # The constant is not remembered, it is measured -- three ways, and the third
 # one is exact rather than close:
@@ -163,10 +178,10 @@ CBL_BANKS = 3
 #
 # WHERE IT SITS IN THE STEP, which is the one real choice here and is a
 # CLAUDE.md 0.31-style question ("what does this spec override?").  The console's
-# temperature is HIS fit -- `T' = T + baseFluc*pMultiplier + noise(t)` -- and the
-# cooling could be either (a) added to it as its own term, or (b) routed through
-# his line as so many CBL levels' worth of negative `a`.  It is (a), for three
-# reasons:
+# temperature is HIS fit -- since 2026-10-16, `dT = base_heat*p_mult -
+# coolant_effect + noise` (or exactly -586, stalled) -- and the cooling could be
+# either (a) added to it as its own term, or (b) routed through his line as so
+# many CBL levels' worth of negative `a`.  It is (a), for three reasons:
 #
 #   * (b) would silence the pumps exactly when they matter most.  His line is
 #     gated by the "off is ours" rule -- zero CBL adds nothing at all -- and a
@@ -179,21 +194,34 @@ CBL_BANKS = 3
 #     `pMultiplier` -- multiplying it by the press band would be inventing a
 #     number no source has.
 #
-# The stall still out-ranks it, for the same reason it out-ranks the lasers: his
-# `fluc = -586` is a statement about a crumpled core, and it sets the rate
-# whatever the row, the level, the press and now the pumps say.  That also keeps
-# the invariant the checker already holds him to -- a stalled, dark reactor falls
-# at exactly 586 -- rather than quietly turning it into 586 plus a pump term.
+# The stall still out-ranks it -- and since the 2026-10-16 correction it
+# out-ranks EVERYTHING, because his `dT` is piecewise and the -586 sits where
+# the whole expression would be: no heat, no pump term and no tremor on a
+# stalled tick.  Before that it was read as a rate with the tremor still riding
+# on the reading, which is a different answer the moment the banks are lit; the
+# two readings are one line apart and QUESTIONS.md R12 has the other one.
 #
-# KNOWN DIVERGENCE (QUESTIONS.md): his fitted heat line is about 2.6x the
-# original's 65 per CBL level -- measured, `ACTIVE[row][0]` is 6.8..7.24 a unit
-# of `a` against the original's 65/25 = 2.6, so the ratio is 2.638 at row 1.
-# In this console's currency a pump level therefore buys less than the original's
-# own heat/cool ratio implies.  The original's nine pump levels (1080) outweigh
-# its own maximum laser heat (975); here the same nine take off 41.2% of three
-# maxed banks as row 1 writes them (39.2% at row 2, 35.0% at row 3) -- before the
-# press multiplier, which cuts it further.  The constant is the measured one and
-# the arithmetic is not rescaled to hide that.
+# KNOWN DIVERGENCE (QUESTIONS.md R11): the constant is the original's, applied
+# to a THIRD of the level the original applies it to.  Both halves of that are
+# measured and neither is rescaled to hide the other:
+#
+#   * the 120 itself is not in dispute -- the original multiplies a pump level by
+#     120 and so does this console, per unit of `coolant_avg`;
+#   * what differs is the unit.  The original sums the three pumps; his
+#     correction AVERAGES them, so one notch on each of the three pumps takes
+#     off 120 here and 360 there -- exactly a third;
+#   * on the heat side the very same division costs much less.  One notch on
+#     each of the three banks adds 6.86 x 25 = 171.5 a tick at row 1 against the
+#     original's 3 x 65 = 195, i.e. 0.88x -- so the pumps here end up weaker
+#     against his own heat line than the original's own heat/cool ratio, not
+#     stronger.  (His fitted heat line is still 2.638x the original's 65 per CBL
+#     level: `ACTIVE[row][0]` is 6.8..7.24 per unit of `a` against 65/25 = 2.6.)
+#
+# The original's nine pump levels (1080) outweigh its own maximum laser heat
+# (975); here three pumps at their maximum take off 360, which is 39.8% of three
+# maxed banks as row 1 writes them (38.2% at row 2, 26.0% at row 3 -- row 3's
+# constant +534 is the part that does not scale with `a` at all) and that is
+# before the press multiplier, which cuts the share further.
 COOLANT_PER_LEVEL = 120.0  # degrees a tick, per pump level
 COOLANT_PUMPS = 3
 # The game's own range: 0 (off) to 3, which is what `increasecoolantpumpNpower`
@@ -206,16 +234,23 @@ COOLANT_LEVELS = ((0, "off"), (1, "1"), (2, "2"), (3, "3"))
 # sliders rather than from the wall he describes.
 PRESS_AMP = ((11500.0, 1.0), (27000.0, 2.0))    # else 4.0
 
-# (amplitude per CBL level, period).  His amplitudes, scaled by `level`; the
-# 2026-10-13 version had these as flat 40/25/15 with no level term.
+# (amplitude per CBL level, period).  His amplitudes, scaled by `a_avg / 25` --
+# the MEAN of the three banks, since the 2026-10-16 correction, which is his own
+# `15 * (a_avg / 25) * sin(t / 1.5)` written out; the 2026-10-13 version had
+# these as flat 40/25/15 with no level term at all.
 NOISE_TERMS = ((15.0, 1.5), (10.0, 0.7), (5.0, 0.3))
 
 # The row thresholds, written the way the spec writes them:
-#   s = {T < 17500: 1, T < 29500: 2, 3}
-# Row 0 is not in that rule; it is the cold floor from Engine.luau:320 above,
+#   s = {T < 5600: 0, T < 17500: 1, T < 29500: 2, 3}
+# Row 0 IS in that rule as of the 2026-10-16 correction, and the number it puts
+# there -- 5600 -- is the one this file already had: `STATE_MIN` above, which is
+# `Config.Sim.State1` and Engine.luau:320's `T >= 5600 and 1 or 0`.  Before the
+# correction the rule began at 17500 and row 0 was this file's own invention,
 # kept because PASSIVE[0] is a measured number (-455.7 was the old BASE_RATE[0])
-# and because the row radios below are built from the tables, so a row that no
-# temperature could reach would be a button that does nothing.
+# and because the row radios below are built from the tables, so a row no
+# temperature could reach would be a button that does nothing.  Two spellings of
+# one threshold agreeing is a reading and not a coincidence, so it is checked
+# (core_model_check.py asserts it against STATE_MIN rather than restating 5600).
 #
 # NOTE the spelling differs from Engine.luau:320's by one degree at each of the
 # two upper boundaries, and that is the spec's spelling, not an accident: it says
@@ -224,7 +259,7 @@ NOISE_TERMS = ((15.0, 1.5), (10.0, 0.7), (5.0, 0.3))
 # are measure zero on a float run; recorded rather than smoothed over, because a
 # silent one-degree drift between two spellings of one threshold is the kind of
 # thing this file's own comments exist to prevent.
-CORE_ROW_1_AT = 5600       # below this, row 0 (the cold machine)
+CORE_ROW_1_AT = 5600       # below this, row 0 (the cold machine) -- his `T < 5600`
 CORE_ROW_2_AT = 17500      # <  is row 1; >= is row 2
 CORE_ROW_3_AT = 29500      # <  is row 2; >= is row 3
 
@@ -346,9 +381,11 @@ def stalled(pressure):
 
 
 def core_state(temperature):
-    """The spec's `s`, plus the row-0 floor -- a read of the temperature, so it
-    is recomputed every tick and can fall.
+    """The spec's `s`, and as of the 2026-10-16 correction that is all of it --
+    his rule spells row 0 out (`T < 5600: 0`), where before it started at 17500
+    and the row below was this file's own.
 
+    A read of the temperature, so it is recomputed every tick and can fall.
     Not Sim.State: that one is latched and has no row below 5600.
     """
     if temperature < CORE_ROW_1_AT:
@@ -363,11 +400,11 @@ def core_state(temperature):
 def fluctuation(row, power):
     """His `baseFluc` for one tick: `active[row] + passive[row]`.
 
-    `power` is his `a`.  This is the temperature change per tick before pressure
-    has its say, and it is the term the old model did not have: there, the row
-    picked a rate the CBL could only scale, so level and state were one product.
-    Here every row has its own line in `a`, which is what his LEVEL 1-5 logs
-    bought.
+    `power` is his `a_avg` -- the mean of the three banks, in the same units as
+    his `a`.  This is the temperature change per tick before pressure has its
+    say, and it is the term the old model did not have: there, the row picked a
+    rate the CBL could only scale, so level and state were one product.  Here
+    every row has its own line in `a`, which is what his LEVEL 1-5 logs bought.
     """
     slope, intercept = ACTIVE[row]
     return slope * power + intercept + PASSIVE[row]
@@ -385,12 +422,14 @@ def press_multiplier(pressure):
 
 def noise(x, power):
     """His `noise(t)`: three sines instead of a random number, amplitude scaled
-    by the CBL level.
+    by `a_avg / 25` -- the mean of the three banks, his own spelling
+    (`15 * (a_avg / 25) * sin(t / 1.5)`).
 
     Deliberately reproducible -- the same t has to give the same temperature, or
     there is nothing to compare a rerun against.  Unlike the 2026-10-13 version
     this is added to the READING, not multiplied into a rate, so its amplitude
-    is what it says it is: +-30 degrees at level 2, not +-30 degrees per second.
+    is what it says it is: +-15 degrees a term at level 2, not +-15 degrees per
+    second.
     """
     level = power / CBL_UNIT
     return sum(amplitude * level * math.sin(x / period)
@@ -409,34 +448,47 @@ def step_terms(row, power, pressure, t, coolant=0.0):
     The order matters here and it is the operator's: the STALL OUT-RANKS
     everything else.  His rule is about the chamber, not about the lasers: at
     2200 PSI or below the reactor is stalled and the temperature falls at the
-    measured 586 a tick whatever the row, the level and the pressure multiplier
+    measured 586 a tick whatever the row, the banks and the pressure multiplier
     say.  It is also the one case where the "off is ours" rule must NOT win --
     turning the lasers off does not un-stall a chamber, so a stalled tick stays
     negative with every bank dark.
 
-    `coolant` comes in already summed and multiplied (Core.cooling owns that
-    arithmetic) rather than as three levels, so this function stays a
-    function of the four numbers the step actually uses.  It is zeroed by a
-    stall, which is the same precedence the lasers get and the reason the
-    stalled-and-dark tick is still exactly 586.
+    AND SINCE THE 2026-10-16 CORRECTION THE STALL IS THE WHOLE TICK.  His `dT`
+    is piecewise -- `dT = {P <= 2200: -586, (base_heat * p_mult) -
+    coolant_effect + noise}` -- so a stalled tick has no heat, no pump term and
+    no tremor: it falls by exactly 586 and that is all.  The reading before the
+    correction had the stall setting the RATE with the tremor still riding on
+    the reading, which differs the moment the banks are lit; the two spellings
+    are one line apart and QUESTIONS.md R12 carries the other one.
+
+    `coolant` comes in already averaged and multiplied (Core.cooling owns that
+    arithmetic) rather than as three levels, so this function stays a function
+    of the four numbers the step actually uses.
     """
     stall = stalled(pressure)
-    base = STALL_FLUC if stall else fluctuation(row, power)
     amp = press_multiplier(pressure)
+    if stall:
+        # Three of the six numbers are the ones that make the panel add up: the
+        # tile that says "noise 0" and the tick that moved by exactly -586 have
+        # to be the same story (this file's own rule -- every readout is a term
+        # the step actually used, and a term from a step that did not happen is
+        # what `reset_trace` exists to prevent).
+        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0
+    base = fluctuation(row, power)
     # "off" is ours, not the spec's.  The fit covers levels 1..5 (a = 25..125)
     # and there is no level 0 in it, so rather than extrapolate the line down
     # -- which would have a dark laser bank still adding its row's intercept,
-    # +46/s at row 1 -- zero CBL adds nothing at all.  The pumps are NOT under
-    # that rule: a dark laser bank is no reason for a pump to stop pumping, and
-    # the shipped log has the case in it (CBL sum 0, pumps on).
-    actual = 0.0 if (power <= 0.0 and not stall) else base * amp
-    # The tremor is the operator's own term and the stall does NOT suppress it:
-    # his `fluc = -586` is the rate, and the noise rides on the reading (that
-    # was the whole point of the 2026-10-14 revision).  It vanishes by itself
-    # when every bank is dark, because its amplitude is scaled by the level --
-    # so a stalled, dark reactor falls at exactly 586 a tick, which is a number
-    # the checker can hold him to.
-    return base, amp, actual, noise(t, power), stall, 0.0 if stall else coolant
+    # +46/s at row 1 -- zero CBL adds nothing at all.  The correction left this
+    # gate exactly where it was: `a_avg` is zero when and only when all three
+    # banks are, since every bank is a level and no level is negative.  The
+    # pumps are NOT under that rule: a dark laser bank is no reason for a pump
+    # to stop pumping, and the shipped log has the case in it (CBL sum 0, pumps
+    # on).
+    actual = 0.0 if power <= 0.0 else base * amp
+    # The tremor is the operator's own term and it rides on the READING (that
+    # was the point of the 2026-10-14 revision).  It goes quiet by itself when
+    # every bank is dark, because its amplitude is scaled by `a_avg / 25`.
+    return base, amp, actual, noise(t, power), False, coolant
 
 
 class Sim:
@@ -533,13 +585,19 @@ class Sim:
 class Core:
     """The operator's temperature model, driving Sim.Temperature.
 
-    His equation, literally (2026-10-14):
+    His equation, literally (2026-10-16):
 
-        T' = T + baseFluc * pMultiplier + noise(t)
+        dT = {P <= 2200: -586,
+              (base_heat * p_mult) - coolant_effect + noise}       otherwise
+        T' = T + dT
 
-    with `baseFluc = active[row] + passive[row]` and `t` = seconds since armed.
-    The three helpers above are the three named parts of it, so this class is
-    only the order they are applied in.
+    with `base_heat = active[row] + passive[row]`, `p_mult` his pressure bands,
+    `coolant_effect` the mean pump level times 120, and `t` = seconds since
+    armed.  The helpers above are the named parts of it, so this class is only
+    the order they are applied in.  (The 2026-10-14 spelling was
+    `T' = T + baseFluc * pMultiplier + noise(t)`, which is the same line for
+    every tick that is not stalled; what the correction added is the first
+    branch, spelled as the whole of `dT`.)
 
     It is a STEP, and that is the whole of the revision.  What it replaced was a
     closed form, `T0 + (rate + noise)*x`: a line through T0, whose slope the row
@@ -566,6 +624,28 @@ class Core:
     `PASSIVE[0]` is -455.7, which was `BASE_RATE[0]`.  This is his model refined,
     not a different one.
 
+    CORRECTED 2026-10-16, one message after Phase 135, and his message says so
+    in its first word.  Three things moved and only the first two are in this
+    class:
+
+      * `a` went from the SUM of the three banks to their MEAN (`a_avg`), and
+        the top of the fit went with it: `a = 375` is unreachable by construction
+        now, its ceiling is 125 = all three at PW5.  That dissolves the
+        extrapolation R9 (2) was carrying rather than answering it.
+      * the pumps went from `120 x (p1 + p2 + p3)` to `120 x mean(p1..p3)`, so
+        three maxed pumps now take off 360 where they took off 1080.
+      * the third is a READING and not arithmetic -- his `dT` is piecewise, so a
+        stalled tick is his -586 with no heat, no pump term and no tremor, where
+        Phase 135 read the -586 as the rate with the tremor still riding on the
+        reading.  QUESTIONS.md R12 has both spellings and the one line between
+        them.
+
+    One thing the correction did NOT move, and it is worth saying because the
+    numbers around it all changed: `T < 5600: 0` is the first branch of his `s`
+    and this file already had 5600 at `CORE_ROW_1_AT`, from `Config.Sim.State1`
+    and Engine.luau:320's `T >= 5600 and 1 or 0`.  Three sources, one number, so
+    it is checked against `STATE_MIN` rather than restated.
+
     Arming is what makes it live.  The slider is this file's own way of setting a
     temperature and the model is a way of computing one; they cannot both be in
     charge of one number, so the model is armed rather than installed, and with
@@ -575,9 +655,14 @@ class Core:
     def __init__(self):
         self.armed = False
         self.auto = True
-        # Three banks, each 0..125 in steps of 25.  The console starts where it
-        # always did -- PW2 on the first bank -- and the other two dark, so the
-        # panel opens on exactly the reading it had before this change.
+        # Three banks, each 0..125 in steps of 25.  The control POSITION is where
+        # it always was -- PW2 on the first bank, the other two dark -- and since
+        # the 2026-10-16 correction that position is a_avg = 50/3, not 50: the
+        # mean of the level triple (2, 0, 0) is two thirds of a level.  So the
+        # panel's opening READING did move, and it moved because the spec did.
+        # The default is deliberately not moved to defend the old number --
+        # a control position chosen to make a readout come out right is the same
+        # mistake as a ruler chosen to make a measurement come out right.
         self.banks = [CBL_START] + [0.0] * (CBL_BANKS - 1)
         # Three coolant pumps, each 0..3, all off at start -- which is where the
         # game starts them and where this console started before they existed,
@@ -589,28 +674,47 @@ class Core:
 
     @property
     def power(self):
-        """His `a`: the SUM of the three banks.
+        """His `a_avg`: the MEAN of the three banks, in his currency.
 
-        A property rather than a stored number, because a stored total is a
+        Was the sum until 2026-10-16, when the same message that reworked the
+        pumps wrote `a_avg = ((c_1 + c_2 + c_3) / 3) * 25`.  The mean is taken
+        in LEVELS (`c_i` is a level 0..5, `x 25` is what makes it degrees), so
+        this divides the bank VALUES by `CBL_UNIT` first -- every level is a
+        whole number and 25 is exactly representable, so that is exact and the
+        result is bit-for-bit his arithmetic rather than merely close to it.
+        Adding the three values and dividing by 75 would reach the same number
+        for most inputs and differ in the last bit for some; a checker that
+        spells his formula out independently cannot afford to be the judge of
+        its own rounding (DECISIONS_2 528's neighbour).
+
+        A property rather than a stored number, because a stored mean is a
         second copy of something the banks already say and the two could drift.
         Every reader -- `fluctuation`, `noise`, the readouts -- asks for it.
         """
-        return sum(self.banks)
+        return (sum(bank / CBL_UNIT for bank in self.banks) / CBL_BANKS) * CBL_UNIT
 
     def set_bank(self, index, value):
         self.banks[index] = float(value)
 
     @property
     def cooling(self):
-        """What the pumps take off, per tick: `120 x (p1 + p2 + p3)`.
+        """What the pumps take off, per tick: his `coolant_avg * 120`.
 
-        The same shape as `power` and for the same reason: a stored total is a
+        The same shape as `power` and for the same reason: a stored mean is a
         second copy of something the three widgets already say, and the copy is
         the one that goes stale.  Positive here, because that is what it is --
         the subtraction happens in one place, in `step_terms`, so the sign
         cannot be applied twice.
+
+        Averaged since 2026-10-16 (`coolant_avg = (p_1 + p_2 + p_3) / 3`, then
+        `x 120`).  The constant is untouched -- all three sources agree on 120 --
+        and only the unit of the thing it multiplies moved, from three pumps to
+        one average pump.  What that costs is measured in the KNOWN DIVERGENCE
+        paragraph up by the constants: one notch on each of three pumps takes
+        off 120 here and 360 there, exactly a third.
         """
-        return COOLANT_PER_LEVEL * sum(self.pumps)
+        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)
+        return coolant_avg * COOLANT_PER_LEVEL
 
     def set_pump(self, index, value):
         self.pumps[index] = int(value)
@@ -725,7 +829,7 @@ class Console:
         # three different powers.
         self.cbl_vars = [tk.IntVar(value=int(bank)) for bank in self.core.banks]
         # Same again for the coolant pumps: three devices, three variables, and
-        # the model consumes their sum.
+        # the model consumes their mean.
         self.pump_vars = [tk.IntVar(value=int(pump)) for pump in self.core.pumps]
         self.core_var = tk.IntVar(value=self.core.state)
         self.auto_var = tk.BooleanVar(value=self.core.auto)
@@ -883,10 +987,9 @@ class Console:
         #
         # ONE ROW PER LASER.  The game has three and each carries its own
         # PW1..PW5, so a single "CBL" row would be a control the reactor does not
-        # have.  The model still consumes their sum -- see CBL_BANKS -- but the
-        # sum is now something the panel computes rather than something it
-        # assumes.
-        power = ttk.LabelFrame(core, text="CBL banks (a = the sum)", padding=6)
+        # have.  The model consumes their MEAN -- see CBL_BANKS -- but the mean
+        # is something the panel computes rather than something it assumes.
+        power = ttk.LabelFrame(core, text="CBL banks (a = the mean)", padding=6)
         power.pack(fill="x", pady=(4, 0))
         for index, var in enumerate(self.cbl_vars):
             line = ttk.Frame(power)
@@ -901,9 +1004,12 @@ class Console:
         # temperature.  Three pumps, each 0..3 -- the game's own range, and one
         # row per pump for the same reason the lasers got one: "the coolant
         # level" is three devices, not one knob.  The caption carries the
-        # constant so a reader can do the arithmetic off the panel itself.
+        # constant so a reader can do the arithmetic off the panel itself, and
+        # since the 2026-10-16 correction it says "mean" because that is what
+        # the constant multiplies -- one notch on all three is worth one notch,
+        # not three.
         pumps = ttk.LabelFrame(
-            core, text="Coolant pumps (Isotope E, each -%g/tick)"
+            core, text="Coolant pumps (Isotope E, -%g x mean level /tick)"
             % COOLANT_PER_LEVEL, padding=6)
         pumps.pack(fill="x", pady=(4, 0))
         for index, var in enumerate(self.pump_vars):
@@ -1018,8 +1124,8 @@ class Console:
                              pady=(8, 4))
         row += 1
         ttk.Label(parent,
-                  text="the core model   T' = T + baseFluc * press + noise(t)"
-                       " - cooling",
+                  text="the core model   dT = base_heat * p_mult"
+                       " - coolant_effect + noise   (or exactly -586, stalled)",
                   font=self.BOLD).grid(row=row, column=0, columnspan=2,
                                        sticky="w", pady=(0, 4))
         row += 1
@@ -1028,14 +1134,14 @@ class Console:
         # is off, so nothing here can show a step that did not happen.
         row = self.add_readout(parent, row, "T   this step starts from",
                                lambda: shown(self.sim.Temperature))
-        # The three banks, and the sum the fit actually consumes.  `a` is read
-        # live rather than off the trace because it is a control position, not a
-        # term of the step -- and because a control that has been moved clears
-        # the trace anyway (see _line_changed).
+        # The three banks, and the mean the fit actually consumes.  `a_avg` is
+        # read live rather than off the trace because it is a control position,
+        # not a term of the step -- and because a control that has been moved
+        # clears the trace anyway (see _line_changed).
         row = self.add_readout(parent, row, "a1 / a2 / a3  banks",
                                lambda: " / ".join(shown(bank)
                                                   for bank in self.core.banks))
-        row = self.add_readout(parent, row, "a   total = his a",
+        row = self.add_readout(parent, row, "a_avg  his a, mean of the 3",
                                lambda: shown(self.core.power))
         # The pumps, read live like the banks: a control position, not a term of
         # the step -- and the step's own cooling is below, where a stale value
@@ -1043,7 +1149,8 @@ class Console:
         row = self.add_readout(parent, row, "p1 / p2 / p3  pumps",
                                lambda: " / ".join(str(pump)
                                                   for pump in self.core.pumps))
-        row = self.add_readout(parent, row, "cooling  -%g x K" % COOLANT_PER_LEVEL,
+        row = self.add_readout(parent, row,
+                               "cooling  -%g x mean(p1..p3)" % COOLANT_PER_LEVEL,
                                lambda: self._step_value("last_cooling"))
         row = self.add_readout(parent, row, "p   this step started from",
                                lambda: self._step_value("last_pressure"))
@@ -1136,13 +1243,13 @@ class Console:
 
         All three are read back, not just the one that fired: the command is
         bound once per button and a single callback cannot tell which one called
-        it, and reading all three is what makes the sum the panel's own number
+        it, and reading all three is what makes the mean the panel's own number
         instead of a guess at it.
         """
         for index, var in enumerate(self.cbl_vars):
             self.core.set_bank(index, var.get())
         self._line_changed()
-        self.on_input("CBL banks = %s  (a = %g; level %s)"
+        self.on_input("CBL banks = %s  (a_avg = %g; mean level %s)"
                       % (" / ".join(shown(bank) for bank in self.core.banks),
                          self.core.power,
                          luau_number(self.core.power / CBL_UNIT)))
@@ -1152,15 +1259,16 @@ class Console:
 
         All three read back, exactly like on_power and for the same reason: the
         command is bound once per button and one callback cannot tell which of
-        them fired.  Reading all three is what makes the sum the panel's own
+        them fired.  Reading all three is what makes the mean the panel's own
         number rather than a guess at it.
         """
         for index, var in enumerate(self.pump_vars):
             self.core.set_pump(index, var.get())
         self._line_changed()
-        self.on_input("Coolant pumps = %s  (K = %d; -%g/tick)"
+        self.on_input("Coolant pumps = %s  (mean %g; -%g/tick)"
                       % (" / ".join(str(pump) for pump in self.core.pumps),
-                         sum(self.core.pumps), self.core.cooling))
+                         sum(self.core.pumps) / float(COOLANT_PUMPS),
+                         self.core.cooling))
 
     def on_vent(self):
         """Press the AVB.
@@ -1230,7 +1338,7 @@ class Console:
                 row, core.power, self.sim.Pressure, core.t + self.sim.period,
                 core.cooling)
             return ("off - the slider owns Temperature\n"
-                    "a %s = %g   row %d at T = %s\n"
+                    "a_avg %s = %g   row %d at T = %s\n"
                     "pumps %s   cooling -%g\n"
                     "would add %s/tick (x %s)%s"
                     % (banks, core.power, row, shown(self.sim.Temperature),
@@ -1248,7 +1356,7 @@ class Console:
         stall = core.last_stall and not fresh
         return ("t      %s s      T %s\n"
                 "row    %s%s   baseFluc %s%s\n"
-                "a      %s = %g (lv %s)   press x %s\n"
+                "a_avg  %s = %g (mean lv %s)   press x %s\n"
                 "actual %s      noise %s      cooling -%s\n"
                 "p      %s      %s\n"
                 "T'     %s"

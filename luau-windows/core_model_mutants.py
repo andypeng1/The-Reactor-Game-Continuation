@@ -64,10 +64,27 @@ MUTANTS = (
      "        self.last_stall = False",
      "the step gated on it"),
 
+    # The 2026-10-16 correction, in both directions.  His `dT` is piecewise, so
+    # the stall branch REPLACES the whole expression; the two mutants below are
+    # the two ways of un-replacing it -- let the dark lasers zero it (the old
+    # reading had the lasers' off-rule in charge), and let the tremor ride on
+    # top (the reading QUESTIONS.md R12 files).  Both anchor on the same line
+    # on purpose: there is one stall branch, and it is the thing under test.
     ("a stalled tick is allowed to be zeroed by the dark lasers",
-     "    actual = 0.0 if (power <= 0.0 and not stall) else base * amp",
-     "    actual = 0.0 if power <= 0.0 else base * amp",
+     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0",
+     "        return STALL_FLUC, amp, (STALL_FLUC if power > 0.0 else 0.0), "
+     "0.0, True, 0.0",
      "his -586, exactly, with every bank dark"),
+
+    ("the tremor rides on a stalled tick, as it did before the correction",
+     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0",
+     "        return STALL_FLUC, amp, STALL_FLUC, noise(t, power), True, 0.0",
+     "a stalled tick with every bank LIT moves by exactly -586"),
+
+    ("the stall stops swallowing the pump term",
+     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, 0.0",
+     "        return STALL_FLUC, amp, STALL_FLUC, 0.0, True, coolant",
+     "the stall out-ranks the pumps too"),
 
     ("the vent takes our own Config's 3000 instead of the measured 3300",
      "AVB_PSI_DROP = 3300.0",
@@ -94,21 +111,45 @@ MUTANTS = (
      "        self.vent_ticks = 0",
      "the cooldown is the wiki's 15 ticks"),
 
-    ("his `a` reads one bank instead of the sum",
-     "        return sum(self.banks)",
+    # --- the three laser banks ----------------------------------------------
+    # What the fit consumes changed on 2026-10-16 from the SUM of the three
+    # banks to their MEAN, and that is a change no panel layout can show: all
+    # three spellings light the same radios and the tile reads a number in every
+    # case.  Three mutants, one per wrong reading -- and note the check each one
+    # is sent to: the three-banks section is driven at 125/50/0 rather than his
+    # worked example's 125/75/25, because the mean of an arithmetic triple IS
+    # the middle bank and a check written there could not separate the mean from
+    # a glance at bank 2.
+    ("his `a_avg` goes back to being the sum of the banks",
+     "        return (sum(bank / CBL_UNIT for bank in self.banks) / CBL_BANKS) * CBL_UNIT",
+     "        return sum(bank / CBL_UNIT for bank in self.banks) * CBL_UNIT",
+     "his `a` is their mean, not their sum"),
+
+    ("his `a_avg` reads one bank instead of their mean",
+     "        return (sum(bank / CBL_UNIT for bank in self.banks) / CBL_BANKS) * CBL_UNIT",
      "        return self.banks[0]",
-     "his `a` is their sum, not any one of them"),
+     "...nor any one bank"),
+
+    ("the mean is divided by one bank instead of by three",
+     "/ CBL_BANKS) * CBL_UNIT",
+     "/ 1) * CBL_UNIT",
+     "his `a` is their mean, not their sum"),
+
+    ("the spec's `T < 5600` moves down to 5000",
+     "CORE_ROW_1_AT = 5600",
+     "CORE_ROW_1_AT = 5000",
+     "the spec's `T < 5600` is the STATE_MIN this file already had"),
 
     # --- the coolant pumps ---------------------------------------------------
-    # Five ways the third control can be wrong while the panel still looks
-    # right.  The first four are the three placement choices made in
-    # COOLANT_PER_LEVEL plus the constant itself; the last is the sum going
-    # missing, which is the same failure the laser banks have a mutant for.
+    # Ways the third control can be wrong while the panel still looks right.
+    # The first four are the placement choices made in COOLANT_PER_LEVEL plus
+    # the constant itself; the last three are the unit it multiplies, which is
+    # what the 2026-10-16 correction moved (three pumps -> one average pump).
 
     ("the cooling constant becomes a remembered number",
      "COOLANT_PER_LEVEL = 120.0",
      "COOLANT_PER_LEVEL = 100.0",
-     "the cooling is 120 a level, summed over three"),
+     "the cooling is 120 a MEAN level, averaged over three"),
 
     ("the cooling is added instead of removed",
      "        temperature = sim.Temperature + actual + tremor - cooling",
@@ -126,15 +167,22 @@ MUTANTS = (
      "        temperature = sim.Temperature + actual + tremor - cooling * amp",
      "the press multiplier does not scale the cooling"),
 
-    ("the stall stops out-ranking the pumps",
-     "0.0 if stall else coolant",
-     "coolant",
-     "the stall out-ranks the pumps too"),
-
     ("the three pump levels are read as one pump",
-     "        return COOLANT_PER_LEVEL * sum(self.pumps)",
-     "        return COOLANT_PER_LEVEL * self.pumps[0]",
-     "the cooling is 120 a level, summed over three"),
+     "        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)",
+     "        coolant_avg = self.pumps[0]",
+     "the cooling is 120 a MEAN level, averaged over three"),
+
+    ("the pump average goes back to being the sum",
+     "        coolant_avg = sum(self.pumps) / float(COOLANT_PUMPS)",
+     "        coolant_avg = float(sum(self.pumps))",
+     "the cooling is 120 a MEAN level, averaged over three"),
+
+    # The tremor's own scaling: `a_avg / 25`, which is why a dark laser bank is
+    # silent.  Dropping the division makes every level read as if it were maxed.
+    ("the tremor stops scaling by a_avg over 25",
+     "    level = power / CBL_UNIT",
+     "    level = power",
+     "noise(1)"),
 )
 
 
