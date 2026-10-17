@@ -49,6 +49,16 @@ def main(argv):
     src, outdir = argv[0], argv[1]
     tag = argv[2] if len(argv) > 2 else "preview"
 
+    # MEASURED 2026-10-17: under --background --factory-startup a RELATIVE output
+    # path does not resolve against the process cwd, even though os.getcwd()
+    # reports it -- it resolves against the drive root, so "renders/em_top.png"
+    # was written to C:\renders\em_top.png (Blender created the directories) and
+    # the "wrote" line below printed the relative path it was given. Three shots
+    # were reported written and none of them were where I looked. Absolute
+    # either way, at the one place that decides where bytes go.
+    src = os.path.abspath(src)
+    outdir = os.path.abspath(outdir)
+
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=src)
     objs = list(bpy.context.scene.objects)

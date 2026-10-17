@@ -2268,6 +2268,61 @@ console still models the *original*, not our remake - nothing in it would notice
 two of the five new mutants are "put the old shape back", because after a spec is changed once,
 **the mutant that most needs teeth is the one that reverses it**.
 See PROGRESS.md Phase 140, DECISIONS_2 600-605, docs/SYSTEMS.md 2.32, docs/SNIPPETS.md 5.45.
+
+### Phase 141 - the floor vent becomes electromagnetic, and "the size must not change" becomes a check
+
+The operator handed over `BottomChamberMAchine.gltf` from the Roblox export and said what it is
+and what it should become, with a hard constraint in the same breath: *"it's that kind of floor
+vent grate you get in the floor, but I want to change it into the electromagnetic kind, you know
+what I mean, do it for me, and the size must not change."*
+
+Measured first: it is a shallow grate, **8.8668 x 8.2505 x 0.6250 studs**, 15 mesh parts and 154
+triangles. The diamond-mesh face everyone reads as geometry is a **128x128 X decal on a degenerate
+quad, tiled 16.15 x 6.15 times** - two triangles. Take the decal away and what is left is a frame,
+a black base plate and two olive strips.
+
+So the rebuild deletes exactly one thing (that decal), changes exactly one property (the two
+`Neon` strips become `EM_Field`), and adds **4 objects / 23 pieces** inside the rim: 13 field
+blades, 2 side rails, 2 coil housings and 6 coil rings. Nothing was authored from a size - the
+parts were placed in the **black base plate's own frame**, and two inputs were read rather than
+assumed: which side is up (asked of the decal) and how high the ceiling is (the highest existing
+vertex on that side, +0.275 above the plate face). The tallest new part reaches 0.235.
+
+The constraint is enforced where it can actually fail: the script re-imports the shipped `.glb`
+**and** the `.fbx` and compares three sizes and three minima against the file that came out of
+Roblox. **14 checks, 0 failed**, largest deviation **3.81e-06 studs**. That check earned its keep
+immediately - the first build was **2.37 studs too tall** because it authored in glTF node space
+and guessed which axis was the thickness (the importer permutes: the node table says
+`[8.075, 0.35, 3.075]`, the imported object says `8.075 / 3.075 / 0.3500`). Every number in the
+build loop was right; only the axis was wrong, which is invisible from inside the loop.
+
+Two more defects the same check surfaced: the FBX came out **anisotropic (7.83 x 7.23 x 0.34)**
+because the parts hang off a `Model` empty and hand-scaling both parents and children scales some
+of them twice - `global_scale` is the tool, touch no transform; and nine FBX material references
+were being dropped because the glTF importer shares one mesh datablock between nodes that carry
+different material slots - `make_single_user(obdata=True, material=True)` before exporting, then
+read the materials back by re-importing rather than trusting the absence of warnings.
+
+Deliverables in `D:\BlenderRobloxTestProjects\FloorVentEM\`: `.glb`, `.fbx`, `.blend`, three
+previews. **Import the `.fbx` with 5.902 in the dialog.** The `.glb` is 1:1 in Blender units, but
+the glTF path into Studio lands **1.6943x** (`10 / 5.902`, measured in Phase 83) - that constant is
+written in a dozen places in this repo and the first draft of this delivery still said "the glb
+drops in at the original size". A known constant that is not applied in the one sentence that
+ships is not known; corrected in the script, PROGRESS, README and CLAUDE.md. **Not verified:** no Studio, no Play, no upload
+(the API key and creator id are still unset, so he drags these in himself); **emission has to be
+set to `Neon` in Studio** - glTF emissive does not necessarily land as Neon; and the shipped file
+was compared against the exported original, **not** against the instance in the place. The
+previews look unpolished because the renderer has no bloom, contact shadow or environment - that
+is the picture, not the asset.
+
+Also this round, and it will bite the next Blender script: under `--background
+--factory-startup` a **relative** output path resolves against the **drive root**, not the process
+cwd (`os.getcwd()` kept reporting `D:\rblxTRGproject`), so three renders printed `wrote ...` and
+landed in `C:\_tools\...`. Directories and all. A bare filename instead throws. `preview_gltf.py`
+now calls `os.path.abspath` where it decides where the bytes go.
+
+See PROGRESS.md Phase 141, DECISIONS_2 606-609, CLAUDE.md 0.37.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real

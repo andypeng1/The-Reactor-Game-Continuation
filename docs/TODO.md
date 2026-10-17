@@ -280,6 +280,18 @@
       `.blend` / **`.fbx`** / `.glb` / 三张渲染图。验证 **53 项 / 0 失败**（两种格式），
       六个变异**各红在自己的断言上**。细节 `PROGRESS.md` Phase 90，取舍 **297..302**，片段 §5.21。
       **没验的**：没进 Studio（无上传凭据）、Studio 侧材质没读。
+- [x] **地面通风格栅的电磁版 —— 已交付在 `D:\BlenderRobloxTestProjects\FloorVentEM\`（Phase 141，2026-10-17）。**
+      从 `From_RBLX\BottomChamberMAchine.gltf` 改的：原件 **8.8668 × 8.2505 × 0.6250 studs**、
+      15 个 mesh，顶面那层「菱形网格」是**一张 128×128 贴图平铺 16.15 × 6.15 次**（不是几何体）。
+      改法**只删那张贴图**、两根 `Neon` 换成青色 `EM_Field`，再往框里加 **4 个物体 23 件**
+      （13 根场刀片 / 2 条侧轨 / 2 个线圈壳 / 6 道线圈环），全部低于边框顶面（最高 0.235 vs 天花板 0.275）。
+      **「大小不能变」是判据**：重新导入 GLB 与 FBX 对原始文件，三个轴 + 三个最小值
+      **14 项 / 0 失败**，最大偏差 **3.81e-06 studs**。`.blend` / `.fbx` / `.glb` / 三张渲染图。
+      **要导的是 `.fbx`（对话框填 5.902）**；glTF 那条路进 Studio 是 1.6943 倍。
+- [ ] **`FloorVentEM` 的材质**只在 Blender 侧验过：**发光要你自己在 Studio 里设成 `Neon`**
+      （glTF/glTF 的 emissive 进 Studio 不一定落成 Neon），`EM_Housing` 的 metallic 0.85 同理。
+- [ ] **`FloorVentEM` 没和 Studio 里那个原件比过** —— 这一轮比的是**导出文件对导出文件**、
+      也**没上传、没进 Studio、没进 Play**。落地时**期望**包围盒与原件一致（同一份 `.fbx`，同样的 5.902）。
 - [x] **Studio 里那一版（Phase 88 的 66 个 Part）—— 已不在世界里，也不该再建。**
       世界现在**没有任何 `ChamberWall*` 件**，只剩 `ServerStorage` 两份存档
       （`ChamberWall24_mesh_20261004` = Phase 87 那版 MeshPart；
