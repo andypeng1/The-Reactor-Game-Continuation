@@ -3704,3 +3704,90 @@ A5 变成 W5（"六边右缘到最近一列字的那条空气"）。
 "标题跑出右边框"这**一个**缺陷有**两个**读数（块级 `title.right` 与逐行 `titleLines[i].right`）。
 打块级的那个突变**只点 W2、点不亮 W4** —— 因为 W4 读的是逐行的矩形。
 **一个缺陷两个读数，就要两个突变**（取舍 626）。17/17 是这么来的。
+
+## 5.49 拍一台 Tk 窗口而不动他的鼠标：声明 DPI、两条路径、按矩形校验、把焦点还回去（Phase 145）
+
+**什么时候用**：要**看**一台桌面 Tk 窗口（这里是 `luau-windows/gui.py`），而 §4.1 那条
+「你别老动我鼠标」仍然有效。整份实现是 `_tools/gui_shot.py`，跑法：
+
+```bash
+python -B _tools/gui_shot.py _tools/_attic/scratch/gui_unarmed.png
+python -B _tools/gui_shot.py _tools/_attic/scratch/gui_armed.png --armed
+```
+
+### ① 在**第一个 HWND 之前**做两件事
+
+```python
+awareness = dpi_aware()                    # SetProcessDpiAwareness(2) -> SetProcessDPIAware()
+fg_before_window = user32.GetForegroundWindow()
+import gui; root = tk.Tk(); console = gui.Console(root)      # 这一刻窗口就已经存在
+```
+
+两件都**只能在这个位置**：DPI 感知在 HWND 建好之后再声明是空操作；
+前台窗口要在 Tk 建顶层窗口之前记下，因为 **Tk 映射顶层窗口必然激活**（哪怕 `+20000+20000`）——
+「没出现在他屏幕上」不等于「没打扰他」。
+
+### ② 先推一步模型，再拍
+
+读数是 `StringVar`，由 `Console._tick` 在 Tk 时钟上填；`root.update()` 跑 20 次是毫秒级，
+**一张全是空串的图不是版面坏了**。用窗口自己的同步入口：
+
+```python
+if armed: console.arm_var.set(True); console.on_arm()
+for _ in range(3 if not armed else 6): console.step_once()
+```
+
+### ③ 两条路径，判据落在**客户区裁剪**上
+
+```python
+ok, raw = capture(frame_hwnd, w, h)          # PrintWindow(PW_RENDERFULLCONTENT)
+client = img.crop((cx, cy, cx + cw, cy + ch))
+if distinct(client) < 50:                    # 空白图 = 这条路径失败
+    user32.SetWindowPos(frame_hwnd, HWND_TOPMOST, 8, 8, 0, 0,
+                        SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+    root.update(); user32.UpdateWindow(frame_hwnd)
+    img = ImageGrab.grab(bbox=(8, 8, 8 + w, 8 + h), all_screens=True)
+    ...
+    user32.SetWindowPos(frame_hwnd, HWND_TOPMOST, 20000, 20000, 0, 0,
+                        SWP_NOSIZE | SWP_NOACTIVATE | SWP_HIDEWINDOW)
+```
+
+**为什么不是直接永远走第二条**：`PrintWindow` 便宜、静默、不闪；
+将来某个 Tk 真的实现了 `WM_PRINT`，第一条会**自己恢复**。**为什么不能只看第一条的回 1**：
+`PW_RENDERFULLCONTENT` 在 Tk 上回 1、客户区一片纯色（取舍 627）。
+
+### ④ 要证「Tk 不答 `WM_PRINT`」，用一条直接的 `SendMessage`
+
+```python
+WM_PRINT = 0x0317; PRF_CLIENT = 0x04; PRF_CHILDREN = 0x02
+user32.SendMessageW(hwnd, WM_PRINT, int(hdc_mem), PRF_CLIENT | PRF_CHILDREN)
+```
+
+（第三参必须 `int(...)`；直接传 `c_void_p` 会给
+`'c_void_p' object cannot be interpreted as an integer`。）
+实测**两种 flag 都回 1、位图逐字节未变** ⇒ 不是 flag 少给了，是被调方根本没画。
+
+### ⑤ 守卫读「它该出现的那个矩形」，不是整帧
+
+每条都要能红：PrintWindow 返回值、客户区 ≥ `minsize`（800×600）、
+客户区颜色 ≥50、亮度跨度 ≥32、**六条行带每条 ≥8 色**（`bands`：一条亮面板能把整图平均拉过去）。
+
+**旧守卫为什么绿**：它数整帧颜色，而 OS 那条标题栏自己就供了 710 种、亮度铺满 0..255
+—— 那是帧在说「这里有个窗口」，不是「控制台画在上面」（§0.31 ① 的反面：**它能因为别的原因成功**）。
+
+### ⑥ 把焦点还回去，并**读回来**
+
+```python
+if fg_before_window and user32.GetForegroundWindow() != fg_before_window:
+    user32.SetForegroundWindow(fg_before_window)
+restored = user32.GetForegroundWindow() == fg_before_window
+```
+
+恢复是一句关于**他桌面**的声明，所以它和别的声明一样要有读数，**失败要进 rc**。
+
+### ⑦ 唯一那条抓住 DPI 的读数：一个已知控件给出两个数
+
+Tk 说 `x=501`，图里 `x=623`，比值 **1.25** —— 那是这台机器的显示缩放。
+**没有这个已知值，那张图只是"右边少了一列"，看起来像版面问题**（取舍 628）。
+一条顺带的：`gui.py` 没有 `geometry`、只有 `minsize(820,600)`，所以**客户区会随最长那行变宽**
+（1276×1189 未 arm → 1379×1201 armed，**物理** px）—— 这是观察，不是缺陷。

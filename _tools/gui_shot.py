@@ -1,8 +1,8 @@
-"""Photograph the desktop reactor console without touching the operator's screen.
+"""Photograph the desktop reactor console without touching the operator's mouse.
 
     python -B _tools/gui_shot.py [out.png]
 
-WHY THIS EXISTS.  `luau-windows/gui.py` has been edited for eight phases and
+WHY THIS EXISTS.  `luau-windows/gui.py` has been edited for ten phases and
 nobody has ever looked at it.  Every claim about it so far is a claim about the
 model behind the widgets -- `core_model_check.py` reads the StringVars, which is
 the right instrument for the numbers and says nothing about whether the window
@@ -11,22 +11,39 @@ the wrong height, and the model stays perfect.  CLAUDE.md 0.14b: the shape of
 the picture exposes a wrong ruler earlier than the numbers do.
 
 THE RULE THIS FILE OBEYS.  The operator's mouse is off limits (memory:
-windows-desktop-control).  So this file never moves the cursor, never clicks,
-and never takes a screen grab.  It maps the window OFF the desktop (a geometry
-far outside the virtual screen), asks Windows to paint it into a bitmap via
-PrintWindow(PW_RENDERFULLCONTENT), and reads those pixels.  The window is real
-and Tk lays it out for real; it simply never appears on a monitor.
+windows-desktop-control).  This file never moves the cursor, never clicks, and
+never sends input.  It only asks the OS for pixels.
 
-WHAT IT PRINTS.  Size, a per-region brightness census, and the count of distinct
-colours -- enough to tell "laid out" from "all one colour", which is the failure
-mode a blank PrintWindow produces.  Exit status is 1 when the capture is
-suspiciously empty, because "the picture is black" and "the window is fine, I
-just could not see it" must not be the same output.
+PHASE 145: THE OFF-DESKTOP PATH DOES NOT WORK ON TK, AND IT SAID IT DID.
+The first version mapped the window at +20000+20000 and called
+PrintWindow(PW_RENDERFULLCONTENT).  That returned 1 and produced a picture whose
+client area was one flat colour -- the title bar was real (the OS paints it) and
+everything Tk draws was missing.  The window really had laid out: a widget-tree
+probe read 85 of 85 widgets mapped with sane rectangles, so the blank frame was
+the INSTRUMENT, not the console (CLAUDE.md 0.2).  Cause, measured twice: Tk's
+toplevel does not answer WM_PRINT (a direct SendMessage(WM_PRINT) with the
+client/children flags left the bitmap untouched), so PrintWindow has nothing to
+ask for.  The guard missed it because it counted distinct colours over the WHOLE
+frame -- the OS title bar alone supplies 710 colours and a full luminance range,
+which is the frame saying "a window is here", not "the console is on it".
 
-WHY NOT ImageGrab.  `ImageGrab.grab()` reads the SCREEN.  If the window is
-off-desktop it captures whatever else is there, and if it is on-desktop it
-photographs the operator's desktop.  PrintWindow asks the window to paint
-itself, which is what we actually want.
+WHAT IT DOES NOW, IN ORDER.
+  1. Off-desktop PrintWindow.  Cheap, silent, and if a future Tk implements
+     WM_PRINT this path starts working again by itself.
+  2. The client crop is judged on its own: flat colour -> path 1 failed.  Then,
+     and only then, the window is moved on-screen for the length of one grab
+     (~0.2 s), shown with SWP_NOACTIVATE so it does not take focus, raised
+     no-activate so it is not occluded, photographed with ImageGrab, and hidden
+     again before the model advances.  The operator sees a window blink; he
+     does not see his cursor move.
+  3. The saved PNG is cropped to the client area, so every claim below is about
+     the console and not about the frame the OS drew around it.
+
+WHAT IT PRINTS.  Which path produced the picture, the widget-tree census
+(mapped/total), the client size, and a per-band brightness census of the client
+area.  Exit status 1 when the capture is suspiciously empty -- "the picture is
+blank" and "the window is fine, I just could not see it" must not be the same
+output (CLAUDE.md 0.26 1).
 """
 
 import ctypes
@@ -40,12 +57,42 @@ user32 = ctypes.windll.user32
 gdi32 = ctypes.windll.gdi32
 
 PW_RENDERFULLCONTENT = 0x00000002
-SRCCOPY = 0x00CC0020
 DIB_RGB_COLORS = 0
-
-# A place Windows will never show: far right and far below the virtual screen.
-# Printing does not care where the window is, only that it is mapped.
 OFFSCREEN = "+20000+20000"
+
+
+def dpi_aware():
+    """Make this process DPI-aware BEFORE any HWND exists.
+
+    Phase 145's first on-screen capture came out at the wrong scale: Tk and
+    GetWindowRect both report the 125%-virtualised coordinates a DPI-unaware
+    process sees, while ImageGrab reads the composited screen in PHYSICAL pixels.
+    The two disagreed by exactly 1.25, so the grab covered the left 1044 physical
+    columns of a 1305-pixel-wide window and the right column -- every value in
+    the console -- fell outside the picture.  The reading that caught it was the
+    x of a known label: Tk said 501, the picture said 623 (501 * 1.25).
+
+    Declaring awareness removes the virtualisation, so every coordinate in this
+    file is physical, and the console is rendered the way the operator's 125%
+    display draws it.  Returns the level actually granted, which is printed.
+    """
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)      # per-monitor
+        return 'per-monitor'
+    except Exception:
+        pass
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()           # system
+        return 'system'
+    except Exception:
+        return 'unaware (coordinates may disagree with ImageGrab)'
+
+HWND_TOPMOST = wt.HWND(-1)
+SWP_NOSIZE = 0x0001
+SWP_NOMOVE = 0x0002
+SWP_NOACTIVATE = 0x0010
+SWP_SHOWWINDOW = 0x0040
+SWP_HIDEWINDOW = 0x0080
 
 
 class BITMAPINFOHEADER(ctypes.Structure):
@@ -87,73 +134,140 @@ def capture(hwnd, w, h):
     return ok, buf.raw
 
 
-def main():
-    import tkinter as tk
-    import gui
+def distinct(img):
+    """Colours in a PIL image, counted exactly (no 256-colour ceiling)."""
+    return len(img.getcolors(maxcolors=1 << 24) or [])
 
-    out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+
+def main():
+    awareness = dpi_aware()                 # before the first HWND, or it is a no-op
+    import tkinter as tk
+    # Tk maps its toplevel WITH ACTIVATION even at +20000+20000, so the act of
+    # building the console already takes the foreground away from whatever the
+    # operator had focused.  Remember it before the first HWND exists and give
+    # it back at the end -- otherwise "the window never appeared on a monitor"
+    # would be true while his keyboard focus had still been stolen.
+    fg_before_window = user32.GetForegroundWindow()
+    import gui
+    from PIL import Image, ImageGrab
+
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    out = args[0] if args else os.path.join(
         os.path.dirname(os.path.abspath(__file__)), '_attic', 'scratch', 'gui_shot.png')
+    # `--armed` ticks the model's own checkbox first: unarmed, the whole
+    # core-model half of the readout column is dashes ("-"), which is the
+    # console telling the truth, not the layout failing.
+    armed = '--armed' in sys.argv
 
     root = tk.Tk()
     console = gui.Console(root)
-    # Off the desktop before it is ever mapped: `geometry` is applied by Tk
-    # before the first Map event, so the window never flashes on a monitor.
     root.geometry(OFFSCREEN)
-    # Let Tk lay out and run a few ticks of the model so the readouts carry
-    # real numbers rather than their construction-time placeholders.
+    # The readouts are StringVars filled by Console._tick, which is scheduled on
+    # the Tk clock at sim.period (1.0 s default).  Twenty update() calls finish
+    # in milliseconds, so the first version photographed a window whose every
+    # value was still its empty construction-time string -- a picture of the
+    # widgets with the numbers missing, which is not a defect in the console.
+    # step_once() advances the model synchronously, so the picture is taken
+    # after the same work a tick does, without waiting on wall time.
+    if armed:
+        console.arm_var.set(True)
+        console.on_arm()
+    for _ in range(3 if not armed else 6):
+        console.step_once()
     for _ in range(20):
         root.update()
-        if console._after is not None:
-            pass
     root.update_idletasks()
 
     hwnd = int(root.winfo_id())
-    # Tk gives the client area; the title bar and borders belong to the parent.
-    # Asking for the frame means the picture is what a person would see.
-    frame_hwnd = user32.GetAncestor(hwnd, 2)  # GA_ROOT
-    if not frame_hwnd:
-        frame_hwnd = hwnd
-
+    frame_hwnd = user32.GetAncestor(hwnd, 2) or hwnd      # GA_ROOT
     rect = wt.RECT()
     user32.GetWindowRect(frame_hwnd, ctypes.byref(rect))
-    x, y = rect.left, rect.top
     w, h = rect.right - rect.left, rect.bottom - rect.top
-    print('window frame hwnd=%d at (%d,%d) size %dx%d' % (frame_hwnd, x, y, w, h))
 
-    ok, raw = capture(frame_hwnd, w, h)
-
-    # Tk's own geometry: if it disagrees with the frame by more than the border,
-    # the capture is of something other than the console.
+    # Where the client area sits INSIDE the frame: this is the crop that keeps
+    # the OS's title bar out of the reading (and out of the deliverable).
+    origin = wt.POINT(0, 0)
+    user32.ClientToScreen(hwnd, ctypes.byref(origin))
+    cx, cy = origin.x - rect.left, origin.y - rect.top
     cw, ch = root.winfo_width(), root.winfo_height()
-    print('tk client %dx%d (frame is %dx%d, border %dx%d)'
-          % (cw, ch, w, h, w - cw, h - ch))
+
+    # ---- path 1: off-desktop PrintWindow ----
+    ok, raw = capture(frame_hwnd, w, h)
+    img = Image.frombuffer('RGBA', (w, h), raw, 'raw', 'BGRA', 0, 1).convert('RGB')
+    client = img.crop((cx, cy, cx + cw, cy + ch))
+    path = 'PrintWindow (off-desktop)'
+    focus_before = user32.GetForegroundWindow()
+    focus_after = focus_before
+    if distinct(client) < 50:
+        # ---- path 2: one blink on screen, no activation ----
+        user32.SetWindowPos(frame_hwnd, HWND_TOPMOST, 8, 8, 0, 0,
+                            SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+        root.update()
+        user32.UpdateWindow(frame_hwnd)
+        img = ImageGrab.grab(bbox=(8, 8, 8 + w, 8 + h), all_screens=True)
+        client = img.crop((cx, cy, cx + cw, cy + ch))
+        path = 'ImageGrab (one on-screen blink, no activation)'
+        focus_after = user32.GetForegroundWindow()
+        user32.SetWindowPos(frame_hwnd, HWND_TOPMOST, 20000, 20000, 0, 0,
+                            SWP_NOSIZE | SWP_NOACTIVATE | SWP_HIDEWINDOW)
+        root.update()
+
+    # Keep only the client area: the title bar is the OS's, not the console's.
+    img = client
 
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    from PIL import Image
-    img = Image.frombuffer('RGBA', (w, h), raw, 'raw', 'BGRA', 0, 1)
-    img = img.convert('RGB')
     img.save(out)
-    print('wrote %s (%d bytes)' % (out, os.path.getsize(out)))
+    print('path          %s' % path)
+    print('dpi awareness  %s' % awareness)
+    print('focus          foreground before %d after %d (unchanged: %s)'
+          % (focus_before, focus_after, focus_before == focus_after))
+    print('frame hwnd=%d %dx%d, client %dx%d at +%d+%d inside it'
+          % (frame_hwnd, w, h, cw, ch, cx, cy))
+    print('wrote %s (%d bytes) client-only %dx%d'
+          % (out, os.path.getsize(out), img.width, img.height))
 
     # ---- the reading that decides whether the picture means anything ----
-    # A PrintWindow that failed returns an all-black (or all-one-colour) bitmap
-    # WITHOUT raising.  So the assertion is not "a file exists".
+    # A PrintWindow that did nothing returns a bitmap WITHOUT raising, so the
+    # assertion is not "a file exists" and not "the frame has many colours".
     colors = img.getcolors(maxcolors=1 << 24) or []
-    distinct = len(colors)
     extrema = img.convert('L').getextrema()
-    print('distinct colours %d, luminance %s' % (distinct, extrema))
+
+    # Row bands, so "which part of the console came out" is one reading rather
+    # than a whole-image average that a bright empty panel can carry.
+    bands = []
+    for i in range(6):
+        top = img.height * i // 6
+        bot = img.height * (i + 1) // 6
+        band = img.crop((0, top, img.width, bot))
+        bands.append((i + 1, distinct(band), band.convert('L').getextrema()))
+
+    print('client colours %d, luminance %s' % (len(colors), extrema))
+    for i, n, ex in bands:
+        print('  band %d  colours %5d  luminance %s' % (i, n, ex))
 
     root.destroy()
 
+    # Give the foreground back, then READ it back: the restore is a claim about
+    # the operator's desktop, so it gets the same treatment as every other claim.
+    if fg_before_window and user32.GetForegroundWindow() != fg_before_window:
+        user32.SetForegroundWindow(fg_before_window)
+    fg_restored = user32.GetForegroundWindow() == fg_before_window
+    print('focus          returned to hwnd %d: %s' % (fg_before_window, fg_restored))
+
     problems = []
-    if not ok:
+    if not fg_restored:
+        problems.append('foreground focus was not given back to hwnd %d' % fg_before_window)
+    if not ok and path.startswith('PrintWindow'):
         problems.append('PrintWindow returned 0')
-    if w < 800 or h < 600:
-        problems.append('frame smaller than minsize 820x600')
-    if distinct < 50:
-        problems.append('only %d distinct colours' % distinct)
+    if cw < 800 or ch < 600:
+        problems.append('client smaller than minsize 820x600')
+    if len(colors) < 50:
+        problems.append('only %d distinct colours in the client area' % len(colors))
     if extrema[1] - extrema[0] < 32:
-        problems.append('luminance range %d' % (extrema[1] - extrema[0]))
+        problems.append('client luminance range %d' % (extrema[1] - extrema[0]))
+    flat = [i for i, n, _ in bands if n < 8]
+    if flat:
+        problems.append('bands %s are flat (<8 colours)' % flat)
 
     for p in problems:
         print('FAIL %s' % p)
@@ -162,4 +276,11 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except BaseException:               # see CLAUDE.md 0.6: an uncaught exception
+        import traceback                # can leave rc = 0, and "the checker
+        traceback.print_exc()           # crashed" then looks like "all clear".
+        sys.exit(1)
