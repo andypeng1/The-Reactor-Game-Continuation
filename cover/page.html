@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>THE REACTOR GAME - game page image (16:9)</title>
+<!--
+  ============================================================================
+  TRG:AIREMAKE 的游戏页面宣传图 —— 1920x1080（16:9）
+
+  Phase 144（2026-10-18）建。操作员贴了 Roblox「Game details」页那张截图：
+  图标那一格写着「这个是游戏图标，我已经上传了（你做的）」，空的背景宣传图那格
+  写着「这个是游戏主界面的那种背景宣传图 / 还没有做，交给你了」。
+
+  **它和 1:1 封面是同一套语言，不是同一张图拉宽。** 两页共享的东西是逐字抄的：
+    - 同一个设计空间的做法（#stage 固定像素，整页按 1:1 渲染，不做自适应）；
+    - 同一个 render(t) 契约（接受 t 并忽略）；
+    - 同一个 layoutReport() 分工（浏览器只量，Node 判）；
+    - 同样**只有四样东西**：外框 / 六边 + 厂标 / 标题 + AIREMAKE 徽章 / 页脚；
+    - 同一张调色板（--void / --ready / --amber / --plasma），一个颜色都没新发明；
+    - 同一批素材（intro/assets/sm-core.png、sm-logo.png），一个字节都没新拷。
+
+  变的是**版面**：方画面里字只能在六边下面，宽画面里字可以站到它右边。
+  于是六边左置、字右置，两条轴线各自对齐，页脚仍然压底。
+
+  为什么不做成"把 1080x1080 居中放进 1920x1080"：那样左右各留 420 px 的黑边，
+  在 Roblox 的缩略图/横幅里就是一张**没做完的图**。16:9 的版面要重新排。
+
+  **判据**在 _tools/page_judge.js（和 cover_judge.js 同一个分工、同一个 --selftest）。
+  ============================================================================
+-->
+<style>
+:root{
+  --void:   #07080a;
+  --ready:  rgb(235,235,235);
+  --amber:  rgb(255,128,1);
+  --plasma: #52dae2;
+  --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+  --cond: "Arial Narrow", "Haettenschweiler", Impact, "Franklin Gothic Medium", sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
+     -webkit-font-smoothing:antialiased;}
+
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+#stage{
+  position:relative;width:1920px;height:1080px;flex:none;overflow:hidden;
+  background:radial-gradient(ellipse 120% 90% at 46% 50%, #0a0e12 0%, var(--void) 62%, #000 100%);
+  transform-origin:center center;
+}
+.layer{position:absolute;inset:0;pointer-events:none}
+
+/* ============================ 外框 ============================
+   和封面同一条线，只把内缩从 22 改成 26 —— 画面宽了，同样的视觉重量要略厚一点。 */
+#frame{position:absolute;left:26px;top:26px;right:26px;bottom:26px;
+       border:1px solid rgba(82,218,226,.26);}
+.brk{position:absolute;width:22px;height:22px;border:2px solid rgba(235,235,235,.55)}
+.brk.tl{left:-2px;top:-2px;border-right:0;border-bottom:0}
+.brk.tr{right:-2px;top:-2px;border-left:0;border-bottom:0}
+.brk.bl{left:-2px;bottom:-2px;border-right:0;border-top:0}
+.brk.br{right:-2px;bottom:-2px;border-left:0;border-top:0}
+
+/* ============================ 堆芯：六边框里的厂标 ============================
+   和封面同一个构造：面板的 clip-path（CSS 百分比）与 SVG 那圈实线（JS 按 HEX_R
+   算出的像素点）是同一条六边，判据逐顶点比。 */
+#hexPanel{
+  position:absolute;
+  clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(82,218,226,.22) 0%, rgba(82,218,226,.07) 36%, rgba(0,0,0,0) 64%),
+    var(--void);
+}
+#coreMark{
+  position:absolute;
+  background:url("../intro/assets/sm-core.png") center/contain no-repeat;
+  opacity:.92;
+  filter:drop-shadow(0 0 26px rgba(82,218,226,.28));
+}
+#hexSvg{position:absolute;pointer-events:none}
+#hexSvg .ink{fill:none;stroke:var(--plasma);stroke-width:2;opacity:.62}
+#hexSvg .ink2{fill:none;stroke:rgba(235,235,235,.30);stroke-width:1}
+
+/* ============================ 标题 ============================
+   左对齐的一列：徽章在上、大字在中、细线收尾。封面是居中，这里是左齐 ——
+   宽画面里视线从六边过去，需要一个硬边落点。 */
+#badge{
+  position:absolute;left:1032px;top:384px;
+  padding:7px 16px 6px;border:1px solid var(--amber);color:var(--amber);
+  font-size:18px;letter-spacing:.34em;white-space:nowrap;
+  box-shadow:0 0 18px rgba(255,128,1,.16) inset;
+}
+/* 两行。**不是把封面那行缩到 92px** —— 16:9 的版面右边有 864 px 宽，
+   一行 "THE REACTOR GAME" 要么小到 92px（在这张图里是一行细字），
+   要么分成两行、每一行都撑满。分行的代价是锁印和封面不同形；
+   收益是缩略图尺寸下也读得出来（判据 W4 量的是**大写字母高度**，不是字号）。 */
+#title{
+  position:absolute;left:1030px;top:440px;white-space:nowrap;
+  font-family:var(--cond);font-size:116px;line-height:.95;letter-spacing:.045em;
+  color:#fff;text-transform:uppercase;
+  text-shadow:0 0 40px rgba(82,218,226,.5), 2px 0 0 rgba(255,40,40,.24), -2px 0 0 rgba(40,120,255,.24);
+}
+#rule{position:absolute;left:1032px;top:704px;width:720px;height:1px;
+      background:rgba(235,235,235,.42);box-shadow:0 0 10px rgba(82,218,226,.35)}
+
+/* ============================ 页脚 ============================ */
+#footL{position:absolute;left:56px;top:982px;height:32px;display:flex;align-items:center;gap:11px}
+#smMark{width:26px;height:32px;background:url("../intro/assets/sm-logo.png") center/contain no-repeat;
+        opacity:.62}
+#footL span{font-size:11px;letter-spacing:.26em;color:rgba(235,235,235,.62);white-space:nowrap}
+#footR{position:absolute;right:56px;top:990px;font-size:11px;letter-spacing:.26em;
+       color:rgba(235,235,235,.56);white-space:nowrap}
+
+/* ============================ CRT 罩 ============================ */
+#scan{position:absolute;inset:0;
+  background:repeating-linear-gradient(to bottom,
+    rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.34) 3px, rgba(0,0,0,.34) 4px);
+  opacity:.55}
+#vig{position:absolute;inset:0;
+  background:radial-gradient(ellipse 76% 66% at 48% 50%, rgba(0,0,0,0) 38%, rgba(0,0,0,.78) 100%)}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <!-- 每一层的 data-art 声明的是它那张素材的极性；要不要 invert 完全由它决定。
+       四层的极性来源见 cover/index.html 同一段注释（Phase 132/133 量过）。 -->
+  <div id="frame">
+    <span class="brk tl"></span><span class="brk tr"></span>
+    <span class="brk bl"></span><span class="brk br"></span>
+  </div>
+
+  <div id="hexPanel"></div>
+  <div id="coreMark" data-art="white"></div>
+  <svg id="hexSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <div id="badge">AIREMAKE</div>
+  <div id="title"><span>THE REACTOR</span><br><span>GAME</span></div>
+  <div id="rule"></div>
+
+  <div id="footL"><i id="smMark" data-art="white"></i><span>SYNTHESIS MANUFACTURING CORPORATION</span></div>
+  <div id="footR">ICARUS INSTALLATION &#183; SECTOR 04</div>
+
+  <div class="layer"><div id="scan" data-art="gradient"></div></div>
+  <div class="layer"><div id="vig"  data-art="gradient"></div></div>
+
+</div><!-- /stage -->
+</div><!-- /viewport -->
+
+<script>
+/* ==========================================================================
+   render(t) —— 同一个契约，但不是时钟（封面同款）
+   ========================================================================== */
+'use strict';
+
+/* 六边形的外接圆半径。宽画面里六边站左边，中心 x 取 640 ——
+   不是 480（那会把整个左半让给留白），也不是 760（右边那一列会挤到框）。
+   判据里有一条量它到左右两界的余量，所以这两个数会被读到，不是被相信。 */
+const HEX_R = 320;
+const HEX_CX = 640, HEX_CY = 540;
+const COS30 = Math.cos(Math.PI / 6);
+
+/* 厂标边长：内切圆半径 320*cos30 = 277.1，直径 554 以内都装得下；
+   取 430 留 62 px。A10 那次进 A10 的那条（W9）每次把这个余量读出来。 */
+const MARK_D = 430;
+
+function hexPoints(cx, cy, r){
+  const pts = [];
+  for (let i = 0; i < 6; i++){
+    const a = (-90 + 60 * i) * Math.PI / 180;
+    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+  }
+  return pts;
+}
+const poly = (cx, cy, r) => hexPoints(cx, cy, r).map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' ');
+
+function buildHex(){
+  const hw = HEX_R * COS30;
+  const e = document.getElementById('hexPanel');
+  e.style.width  = (2 * hw).toFixed(2) + 'px';
+  e.style.height = (2 * HEX_R).toFixed(2) + 'px';
+  e.style.left   = (HEX_CX - hw).toFixed(2) + 'px';
+  e.style.top    = (HEX_CY - HEX_R).toFixed(2) + 'px';
+
+  const mark = document.getElementById('coreMark');
+  mark.style.width  = MARK_D + 'px';
+  mark.style.height = MARK_D + 'px';
+  mark.style.left   = (HEX_CX - MARK_D / 2).toFixed(2) + 'px';
+  mark.style.top    = (HEX_CY - MARK_D / 2).toFixed(2) + 'px';
+
+  const S = 680, c = S / 2;
+  const svg = document.getElementById('hexSvg');
+  svg.setAttribute('viewBox', '0 0 ' + S + ' ' + S);
+  svg.setAttribute('width',  S);
+  svg.setAttribute('height', S);
+  svg.style.left = (HEX_CX - c) + 'px';
+  svg.style.top  = (HEX_CY - c) + 'px';
+
+  let out = '';
+  out += '<polygon class="ink"  points="' + poly(c, c, HEX_R) + '"/>';
+  out += '<polygon class="ink2" points="' + poly(c, c, HEX_R - 10) + '"/>';
+  svg.innerHTML = out;
+}
+
+function render(t){
+  void t;
+  buildHex();
+}
+
+/* ==========================================================================
+   layoutReport() —— 给 _tools/page_judge.js 读的那一份测量
+   ========================================================================== */
+function glyphBox(el){
+  const rg = document.createRange();
+  rg.selectNodeContents(el);
+  const b = rg.getBoundingClientRect();
+  return {id: el.id, top: +b.top.toFixed(2), bottom: +b.bottom.toFixed(2),
+          left: +b.left.toFixed(2), right: +b.right.toFixed(2),
+          text: (el.textContent || '').trim().slice(0, 40)};
+}
+function layoutReport(){
+  render(0);
+  const st = document.getElementById('stage').getBoundingClientRect();
+  const rel = b => ({id: b.id, text: b.text,
+    top: +(b.top - st.top).toFixed(2), bottom: +(b.bottom - st.top).toFixed(2),
+    left: +(b.left - st.left).toFixed(2), right: +(b.right - st.left).toFixed(2)});
+
+  const TEXT = ['title', 'badge', 'footL', 'footR'];
+  const text = TEXT.map(id => rel(glyphBox(document.getElementById(id))));
+
+  /* 标题是**两行**，而 Range 的包围盒只给出一个 union 盒子 —— 它读不出
+     "第一行有没有捅出框"、也读不出"第二行是不是只剩一条缝"。行盒子单独量一遍。
+     getClientRects() 每行给一个矩形；零宽的（通常是 <br> 那一下）丢掉，
+     否则不存在的行会混进"最窄的一行"里。 */
+  const trg = document.createRange();
+  trg.selectNodeContents(document.getElementById('title'));
+  const seenRect = [];
+  const titleLines = Array.from(trg.getClientRects())
+    .filter(b => b.width > 1 && b.height > 1)
+    // 同一个行盒子会出现两次（Range 跨了元素和它的子节点），按几何去重 ——
+    // 不去重的话"最窄的一行"会被同一行投两次票，读数看起来仍然完全正常。
+    .filter(b => {
+      const k = [b.left, b.top, b.right, b.bottom].map(v => v.toFixed(2)).join(',');
+      if (seenRect.includes(k)) return false;
+      seenRect.push(k); return true;
+    })
+    .map(b => rel({id: 'titleLine', left: b.left, right: b.right, top: b.top,
+                   bottom: b.bottom, text: ''}));
+
+  const ph = document.getElementById('hexPanel').getBoundingClientRect();
+  const boxCx = ph.left - st.left + ph.width / 2, boxCy = ph.top - st.top + ph.height / 2;
+  const fromBox = hexPoints(boxCx, boxCy, ph.height / 2);
+  const ink = document.querySelector('#hexSvg .ink');
+  const fromSvg = ink.getAttribute('points').split(' ').map(s => s.split(',').map(Number))
+    .map(([x, y]) => { const s = document.getElementById('hexSvg').getBoundingClientRect();
+                       return [x + s.left - st.left, y + s.top - st.top]; });
+  let worst = 0, worstAt = null;
+  for (let i = 0; i < 6; i++){
+    const d = Math.hypot(fromBox[i][0] - fromSvg[i][0], fromBox[i][1] - fromSvg[i][1]);
+    if (d > worst){ worst = d; worstAt = i; }
+  }
+
+  const decor = ['coreMark', 'smMark', 'scan', 'vig'].map(id => {
+    const el = document.getElementById(id);
+    const cs = getComputedStyle(el);
+    return {id, opacity: +(+cs.opacity).toFixed(3), blend: cs.mixBlendMode,
+            filter: cs.filter === 'none' ? '' : cs.filter,
+            art: el.dataset.art || null};
+  });
+
+  const rl = document.getElementById('rule').getBoundingClientRect();
+  const mk = document.getElementById('coreMark').getBoundingClientRect();
+  return JSON.stringify({
+    stage:{w: st.width, h: st.height}, innerW: innerWidth, innerH: innerHeight,
+    dpr: devicePixelRatio,
+    text, titleLines, decor,
+    hex:{boxW: +ph.width.toFixed(2), boxH: +ph.height.toFixed(2),
+         ratio: +(ph.height / ph.width).toFixed(6), want: +(2 / (2 * COS30)).toFixed(6),
+         worstVertexPx: +worst.toFixed(3), worstAt,
+         top: +(boxCy - ph.height / 2).toFixed(2), bottom: +(boxCy + ph.height / 2).toFixed(2),
+         left: +(boxCx - ph.width / 2).toFixed(2), right: +(boxCx + ph.width / 2).toFixed(2)},
+    frame:{inset: 26, w: 1868, h: 1028},
+    rule:{left: +(rl.left - st.left).toFixed(2), right: +(rl.right - st.left).toFixed(2),
+          top: +(rl.top - st.top).toFixed(2)},
+    mark:{cx: +(mk.left - st.left + mk.width / 2).toFixed(2),
+          cy: +(mk.top  - st.top  + mk.height / 2).toFixed(2),
+          w: +mk.width.toFixed(2), h: +mk.height.toFixed(2)}
+  });
+}
+</script>
+</body>
+</html>

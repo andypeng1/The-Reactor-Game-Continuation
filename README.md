@@ -1457,6 +1457,42 @@ line), and how much each contributed was **not separated** - `docs/COVER.md` sec
 with an amber `AIREMAKE` badge - i.e. **not** `TRG: AIREMAKE` - because that name is the brand
 line in both films. It is `QUESTIONS.md` **R7**, and it is one line to change.
 
+## The 16:9 game-page image - `cover/page.html`
+
+`cover/THE_REACTOR_GAME_page.png` is the **1920x1080 promotional image** Roblox's Game details
+page asks for, and it exists because the operator handed over the empty slot in Phase 144
+(`这个是游戏主界面的那种背景宣传图 / 还没有做，交给你了`). The icon above that slot is the
+Phase-132/133 cover, already uploaded.
+
+**It is not the square cover letterboxed.** Centring 1080x1080 inside 1920x1080 would leave
+420 px of black on each side, which reads as an unfinished image in a thumbnail carousel, so the
+page is **re-laid out**: the hexagon stands on the left, the type column on the right, the four
+elements unchanged (frame / hexagon + mark / title + `AIREMAKE` badge / footer), the same four
+palette entries, the same two assets, the same `render(t)` contract. The one visible departure is
+the title: **two lines at 116 px** instead of one line at 96 px, because the right column is
+864 px wide and one 116 px line measures 1088 px here (Arial Narrow is absent, so the fallback is
+wider). The judge therefore measures the **line advance** (110.19 px, i.e. 22.04 px at Roblox's
+1/5 card size) rather than the CSS font size - the advance is what a reader at that size gets.
+
+**The instruments were parameterised, not copied.** `_tools/cover_layers.sh` and
+`_tools/cover_mark_check.py` grew environment overrides (`PAGE/W/H/TAG/SHOT`, `SHOT/BOX/BOX_X/BOX_Y`)
+whose defaults are the cover's, so every command already written in these docs still means what it
+meant; the cover was re-rendered afterwards and came out **byte-identical** (`5bd615a7…`,
+496,559 B, all four layer counts unchanged). The layout judge could not be shared: its rules were
+written against a vertical lockup in a square, and the 16:9 page bounds the hexagon sideways. A
+copy with renamed rules would have looked the same and measured something else, so
+**`_tools/page_judge.js` is a second judge with W0..W10** - 11 ok / 0 failed and **17/17 mutants**,
+including one that moves only the title's line boxes (so W4's own "every line fits" claim is proven
+separately from W2's "the text block fits").
+
+**Verified:** two renders byte-identical; four decorative layers each change pixels (195354 / 543 /
+203788 / 1112794, all with max delta >= 48); the mark is that asset and not a blob (all 46656 ink
+pixels bright at t<=80, every radial band 99.7%-100% at t=120); read at full size and at 384x216,
+where **both title lines stay legible** and the small `AIREMAKE` badge does not (the reader model
+promptly invented the word `PRESENTS` there, which is its known failure mode at small sizes).
+**Not verified:** anything about Roblox's own cropping or compression, and the upload - no
+`asset:write` key is configured, so the file goes in by hand. Full write-up: `docs/COVER.md` §7.
+
 ## The music - `asstes/music/ReactorShift.{ogg,mp3}`
 
 An original track, **263.84 s**, 89.25 bpm, F major pentatonic, 97 bars. It is composed in

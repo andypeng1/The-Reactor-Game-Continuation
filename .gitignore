@@ -165,6 +165,17 @@ _tools/_attic/scratch/renders*/
 _tools/_attic/scratch/cover_report_mut_mark.txt
 _tools/_attic/scratch/report_err.txt
 
+# --- Phase 144: cover_layers.sh now writes each layer-off frame into a
+#     per-page subdirectory (layers_cover/, layers_page/) so two pages' temp
+#     frames cannot be diffed against each other.  Same reasoning as renders*/:
+#     the `*.png` rule above does not reach into a subdirectory, and these are
+#     4.1 MB of frames that regenerate from the two tracked pages.  The glob
+#     keeps `layers_*` open to the next page instead of naming today's two.
+#     page_report.txt is the layout measurement the judge reads -- a redirection
+#     from a command written in _tools/page_judge.js's own header. ---
+_tools/_attic/scratch/layers_*/
+_tools/_attic/scratch/page_report.txt
+
 # --- the user's own auxiliary reference dumps (Data/auxcollection/).  Handed to
 #     me to read, not produced by the project: 180 MB in ONE file, which is over
 #     GitHub's 100 MB hard file limit, so an accidental `git add -A` would be

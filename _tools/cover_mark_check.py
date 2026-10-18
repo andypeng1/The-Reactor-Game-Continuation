@@ -52,12 +52,21 @@ import numpy as np
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SHOT = os.path.join(ROOT, "cover", "THE_REACTOR_GAME_cover.png")
 ART = os.path.join(ROOT, "intro", "assets", "sm-core.png")
 
-BOX = 420                      # MARK_D in cover/index.html
-BOX_X = 330                    # HEX_CX(540) - BOX/2
-BOX_Y = 194                    # HEX_CY(404) - BOX/2
+# PHASE 144: the 16:9 page draws the same asset in a different box, so the four
+# numbers that locate it became overridable.  Defaults are the cover's, so the
+# commands the docs already cite keep their meaning.
+#
+#   SHOT=cover/THE_REACTOR_GAME_page.png BOX=430 BOX_X=425 BOX_Y=325 \
+#   python -X utf8 _tools/cover_mark_check.py
+SHOT = os.environ.get("SHOT") or os.path.join(ROOT, "cover", "THE_REACTOR_GAME_cover.png")
+if not os.path.isabs(SHOT):
+    SHOT = os.path.join(ROOT, SHOT)
+
+BOX   = int(os.environ.get("BOX")   or 420)    # MARK_D in cover/index.html
+BOX_X = int(os.environ.get("BOX_X") or 330)    # HEX_CX(540) - BOX/2
+BOX_Y = int(os.environ.get("BOX_Y") or 194)    # HEX_CY(404) - BOX/2
 ALPHA = 128                    # "this pixel is ink" in the asset
 SWEEP = (60, 80, 100, 120, 150, 180, 200, 220, 240)
 DEFAULT_T = 120
