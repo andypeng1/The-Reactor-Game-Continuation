@@ -3496,3 +3496,54 @@ python -X utf8 luau-windows/core_model_mutants.py   # 28 mutants, 0 survived (�
 
 **新加的 5 条突变**里有两条是"把旧形状放回去"型的（`passive` 回到关闸后面、
 行 1 与行 2 的常数对调）—— **一条规格改过一次之后，最该有牙的突变是"改回上一版"那个。**
+
+## 5.46 两份拼写怎么对照：驱动 → 覆盖 → 容差 → 第三拼写 → 空突变（Phase 142）
+
+**什么时候用**：同一个算式在仓库里有两份**手抄**的拼法（这里是 `gui.py` 的 `Sim.tick`
+与 `calculation.py` 的 `tick`），而它们靠人眼保持一致。配方就是 `luau-windows/pressure_parity.py`。
+
+**① 先把两边都变成"可调用的一次"** —— 参考文件如果是脚本（带 `while True`），
+先拆出一个 `tick(state)` 并把循环放进 `if __name__ == "__main__":`。
+**拆完的证明是 `cmp` 出来的**，不是看出来的：
+
+```bash
+git show HEAD:luau-windows/calculation.py > /tmp/old_calc.py
+timeout 7 python /tmp/old_calc.py > old.txt ; timeout 7 python luau-windows/calculation.py > new.txt
+cmp old.txt new.txt && echo IDENTICAL
+```
+
+两个文件各跑 7 秒给出的都是同样 7 行、`cmp` rc=0（`timeout` 的退出码 124 是预期的）。
+
+**② 同一份输入序列，两个 driver。** driver 只写输入（`Temperature` / `ActiveFan` / `PEALevel`）
+再调 tick，**不读对方的任何东西**。trace 里存 `(Pressure, State)` —— **全精度浮点**。
+
+**③ 覆盖率先断言。** 两边的表键（State 1..3、PEA 1..4、fan 0..6）和它们的
+**全交叉 84 个**都必须真的走过；温度真的跨过边界、压力真的积累了。否则"没走到"
+与"走到了且一致"在输出里同形（§0.31 ①）。
+
+**④ 容差要能推导，并且每次打印。**
+
+```python
+allowance(tick, P) = 4 * tick * sys.float_info.epsilon * max(1.0, |P|)
+```
+
+`4` 是裸链四个项绕结果舍入次数的上界；随拍数与读数增长。
+每次运行打印**量到的差**、**占额度百分比**、**ulp 数**（`math.ulp(P)`）。
+并且写一条断言把"这条检查必须抓到的最小东西"（`SLOPE` 相邻档 `0.0025 × 5600 = 14 PSI`）
+和额度末端（约 `1e-4 PSI`）**放在同一行**——比值本身也会红。
+
+**⑤ 结构性的规则用第三份拼写。** 状态边界与锁存那几条，写一个
+`stated_state(temp, previous)`，**不回头调任何一个 driver**。
+
+**⑥ 突变要正反两面。** 六个正突变各报"第几拍第一次红"；
+再放一个**空突变**（改一个 tick 不读的名字，比如 `gui.BANDS`），**必须仍然绿** ——
+否则量的是模块不是模型（§0.33 ②）。
+
+判定：
+
+```bash
+python -B luau-windows/pressure_parity.py    # 24 checks, 0 failed; worst delta 1 ulp
+```
+
+`-B` 是一条一字节码都不落盘的规矩（§0.35）；这个文件在内存里打补丁，本来没有陈旧 `.pyc` 的口子，
+但照库里其它检查器跑。

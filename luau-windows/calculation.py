@@ -32,23 +32,42 @@ PressureBenefitState = {1: 110, 2: 350, 3: 800}
 # i.e. state gain + (pre-temp slope * Temperature) + PEA gain - 60 per fan.
 
 
-def main_loop():
+def tick(state):
+    """Advance `state` by one tick.  Returns nothing; Pressure is the carrier.
+
+    EXTRACTED, NOT REWRITTEN (2026-10-18).  This body was `main_loop`'s until
+    `_tools/pressure_parity.py` needed to drive it faster than 1 Hz and without
+    a print per tick -- the console in `gui.py` carries a hand copy of this
+    recurrence, and nothing was comparing the two (docs/TODO.md 3.8 item 3, the
+    one that file calls worth doing).  A harness that has to scrape stdout once
+    a second cannot run a boundary sweep; the same arithmetic behind a call can.
+
+    The three lines `main_loop` keeps below are the whole of what moved out, and
+    they still run in this order when the file is executed: state, then
+    Pressure, then print.  Nothing about the numbers changed -- that is not a
+    claim, it is what `_tools/pressure_parity.py` measures on every run, against
+    the second spelling in `gui.py`.
+    """
     # State is latched, not derived: the original's if/elseif chain has no
     # `else`, so a Temperature below 5600 (cold, or not yet started) leaves the
     # previous State standing rather than resetting it.
-    if 5600 <= current["Temperature"] < 17500:
-        current["State"] = 1
-    elif 17500 <= current["Temperature"] <= 29499:
-        current["State"] = 2
-    elif current["Temperature"] > 29499:
-        current["State"] = 3
+    if 5600 <= state["Temperature"] < 17500:
+        state["State"] = 1
+    elif 17500 <= state["Temperature"] <= 29499:
+        state["State"] = 2
+    elif state["Temperature"] > 29499:
+        state["State"] = 3
 
-    current["Pressure"] += (
-        PressureBenefitState[current["State"]]
-        + PressureBenefitPreTemp[current["State"]] * current["Temperature"]
-        + PressureBenefitPEA[current["PEALevel"]]
-        - 60 * current["ActiveFan"]
+    state["Pressure"] += (
+        PressureBenefitState[state["State"]]
+        + PressureBenefitPreTemp[state["State"]] * state["Temperature"]
+        + PressureBenefitPEA[state["PEALevel"]]
+        - 60 * state["ActiveFan"]
     )
+
+
+def main_loop():
+    tick(current)
 
     # Luau formats a number with "%.14g", so an integral double prints as
     # "6166" and not Python's repr "6166.0".  Match it, or the two logs cannot
@@ -56,6 +75,10 @@ def main_loop():
     print("Pressure: " + ("%.14g" % current["Pressure"]), flush=True)
 
 
-while True:
-    main_loop()
-    time.sleep(1)
+# The guard is what makes the module importable: without it, the harness above
+# would hang on the import.  Running `python calculation.py` still lands here
+# and still prints one line a second, which is the behaviour this file had.
+if __name__ == "__main__":
+    while True:
+        main_loop()
+        time.sleep(1)

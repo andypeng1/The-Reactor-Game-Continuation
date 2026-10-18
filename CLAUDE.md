@@ -1352,6 +1352,15 @@ wiki 自己也是"3300"两次、"around 3000"一次（它的 5500 = 2200 + 3300 
 > **权威全文在 `PROGRESS.md` / `DECISIONS.md` / `DECISIONS_2.md`。** 移出理由：那 1155 行占了本文件 67%，
 > 而本文件每轮都进上下文 —— 违反 §0.0 那条「只留需要每轮看到的东西」。
 
+**两份压力模型终于有了对照器**（Phase 142，2026-10-18，操作员原话「有没有啥工作能让你做一晚上」）：
+`luau-windows/pressure_parity.py` 同时驱动 `calculation.tick` 与 `gui.Sim.tick`，
+20000 拍逐拍比 `Pressure` 的**全精度**值 —— `docs/TODO.md` §3.8 自己点名「唯一值得做」的那条。
+**24 checks / 0 failed**，两个拼法量到的最大差是读数的**一个 ulp**（`sum()` 是补偿和，§0.33 同族），
+容差有推导、每次打印、并报 ulp 数与占额度百分比；覆盖先断言 **84 个 (State, fan, PEA) 组合都走到**；
+结构性的四条用**第三份拼写**断言（对照器看不见"两边一起错"）；六个突变 + **一个空突变**验证尺子。
+`calculation.py` 为此拆出 `tick()`，**行为不变是 `cmp` 出来的**（新旧各跑 7 秒，逐字节相同）。
+**没进 Studio、没进 Play、没碰 `calculation.luau`**。取舍 `DECISIONS_2` 611..614，全文 `PROGRESS.md` Phase 142。
+
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒 Ctrl+S。
 **自动 `add`+`commit` 也已开**（2026-10-01 原话 `AUTO COMMIT+ADD PERMANENTLY ON`）：
