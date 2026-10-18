@@ -17103,3 +17103,54 @@ place `83752844701736`，**24 万 0888 个后代**逐个按名字找：
 - **窗口被手动拉伸之后的样子没测**。
 - **LOG 的滚动回看没测**（只看了最新的 7 行）。
 - **布局"好不好看"是一句判断**；这一轮能说的是：不裁切、不重叠、读数都在。
+
+# Phase 146 — 游戏页面的两个格子：图标已经生效，宣传图那一格还是空的（2026-10-19）
+
+## 一、这一轮做的是什么
+
+操作员贴来一张 Roblox「Game details」页的截图（两个格子用红/蓝框标出来），并说 Studio 接入了。
+这一轮只做了**三件只读的事**：核对 Studio 连的是哪一份 place、从 Roblox 的公开 API
+把**线上**的图标与缩略图拉下来量、量截图里那两个框的比例。
+**游戏本体 0 行改动；没进 Play；没上传任何东西；没有移动鼠标。**
+
+## 二、三件事，每件都有读数
+
+1. **Studio 连的是对的那一份。** `game.PlaceId = 83752844701736`、
+   `game.GameId = 10767895455`、`PlaceVersion = 182`、`Workspace` **625** 个根；
+   `ServerScriptService.ReactorBackend` **14** 个模块（`Config` / `Engine` / `StateBridge` /
+   `ControlBinder` / `Runtime` / `VisualFeedback` / `RoomShell` / `LogPanel` / `BootPanel` /
+   `FacilityCascade` / `EndShiftBridge` / `AlertsPanel` / `ForecastPanel` / `ReadoutPanel`）、
+   `ServerStorage.ParkedFacility_20261006` 在 —— 就是 Phase 122..130 一直在改的那一份。
+   **`CLAUDE.md` §1.1 原来记的 placeId `114398686378058` 是另一份 place**
+   （`apis.roblox.com/universes/v1/places/114398686378058/universe` → `10755072697`），
+   `docs/REWRITE_STATUS.md` 第 12 行 2026-09-25 就写过这件事。**已按原文保留 + 更正**。
+
+2. **图标已经在线上，而且就是我们那张。** 拉
+   `thumbnails.roblox.com/v1/places/gameicons?placeIds=83752844701736&size=512x512`：
+   第一次回 `state: "Pending"`，再查回 `Completed` —— **上传后有一段处理时间**，
+   他截图那一刻卡片上还是灰占位符，不是没传上。把线上 512×512 与我们
+   `cover/THE_REACTOR_GAME_cover.png` 缩到 512 后逐像素比：**平均绝对差 1.07 / 255**
+   （LANCZOS 缩放自身的量级）。作为对照，另一份 place 的图标同法比是 **33.28**。
+
+3. **宣传图那一格是空的。** `thumbnails.roblox.com/v1/games/multiget/thumbnails?
+   universeIds=10767895455` 只回 **1** 条；下载下来 **364 种颜色、亮度区间 26..56**，
+   放大三倍看是 Roblox 的灰菱形占位符 ⇒ 线上**没有自定义缩略图**。
+
+## 三、截图里那个 2:1 的框不是素材比例
+
+红框 247×216（1.14）、蓝框 **451×225（2.0044）**。先排除截图被非均匀拉伸：
+两支铅笔按钮都是 **22×22（比例 1.0）**。再看卡片：右卡 525×263 = **1.996**。
+所以 2:1 是**网页版位**的尺寸，不是上传规格 —— 官方文档写明缩略图**上传后按 16:9 拉伸**
+（而不是居中裁切）。
+
+## 四、交付物与阻塞
+
+`cover/THE_REACTOR_GAME_page.png`：**1920×1080 / 640006 B / md5 `baec1380caa12f989e85b07e8b6f4dde`**
+（Phase 144，`page_judge.js` 11 ok / 0 failed + 17/17 突变），16:9、PNG、<3 MB，**规格上直接可用**。
+**我传不了**：这台机器没有 `ROBLOX_OPEN_CLOUD_API_KEY`、也没有 `asset:write`，
+而且这一步是 Creator Hub 网页动作（Configure → Thumbnails → Experience Detail Page）。
+
+## 五、没验的那一半
+
+- **上传之后 Roblox 到底怎么拉伸 / 怎么压**：没量，因为我传不上去。**卡片里显示成什么样，这一轮没有读数。**
+- 没进 Studio 改任何东西、没进 Play；这一轮对游戏的影响是零。
