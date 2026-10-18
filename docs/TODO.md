@@ -302,12 +302,22 @@
       所以是**均匀**的，不是哪个轴填错），中心偏 **0.873**，
       内面离环最外围还差 **3 stud**，**根本没接上**。
       已搬成 `ServerStorage.Wall24_import_20261004`（**没删**）。
-- [ ] **`LaserPort` / `TransitionPillar` / `RadiationScrubberUnit` 要按设计**重量一遍尺寸。
-      理由：退役那份导入墙的 1.0769 倍是**均匀**的，指向**导出链**而不是某一次操作。
-      同一套链出来的 `LaserPort`（Phase 83，走 glTF，那边已知是 **1.6943 倍**）和
-      `TransitionPillar`（Phase 84）**可能一样中招**。
-      **做法**：拿 `_tools/blender/*_check.py` 里那份**设计数字**（那些脚本已经把导出物重新导入量过）
-      对 Studio 里已导入的实例读 `MeshSize`，比一遍。**在量之前不要假定它们是对的。**
+- [x] **`LaserPort` / `TransitionPillar` / `RadiationScrubberUnit` —— 量不了：它们不在这个世界里。**
+      （2026-10-18，Phase 143，place `83752844701736`）**这一条的前提是错的**，所以它不是「还没做」，
+      是**没有可做的对象**。三组测量，都指向同一件事：
+      1. **全 DataModel 24 万个后代按名字找**：`LaserPort` **0**、`Scrubber` **0**。
+         `Pillar` 有 120 个，但**没有一个是 `TransitionPillar`** —— 逐个读回来是
+         `BasePillar x54` / `PillarThing x36` / `Pillar x18` / `RadPillar x6` /
+         `PillarVents x3` / `PillarNeon x3`，全是场景装饰，与 Phase 84 那件无关。
+         （**`find("Pillar")` 有 120 个而 `find("TransitionPillar")` 有 0 个** —— 子串搜索
+         必须先问「它找到的是不是那个东西」。）
+      2. **按位置找**：Phase 83 给 `LaserPort` 记的轴线 `(-56.1973, 2.7075, 16.3750)` 周围
+         **12 studs 内 0 个 Part**。
+      3. **名字含 `Port` 的只有 `LowerPortion` x6**，与激光端口无关。
+      ⇒ 「导出链把它们放大了 1.6943 倍」这个担心**在这份 place 里既证实不了也否证不了**，
+      因为要量的件**一个都没有**。**如果它们确实被导入过，那也是进了别的 place**；
+      这件事不在这份工程的盘上，也不该由一个空结果推成「尺寸没问题」。
+      **没验的**：别的 place / 存档里有没有它们 —— 这一轮只读了当前这一个 DataModel。
       （1.0769 这个系数本身**没查来源** —— 那份已退役，不值得为它开一轮。）
 - [ ] **这三件的材质**同样只在 Blender 侧验过。`LaserPort` 的落地脚本已写
       （`_tools/apply_laser_port_materials.luau`），`TransitionPillar` / `RadiationScrubberUnit` 还没有。
@@ -1024,6 +1034,51 @@ Thermal 三条储液条与六台风扇 + Quota 时钟/目标/进度条/Equinox �
 **顺带一条反向的**：`ReadingsFrame.StressLabel` **接了，虽然原版从没驱动过它**
 （全库一条 `StressLabel.Text` 写入都没有）—— 它是真引擎字段（`state.peaStress`），
 而另一种做法是让一个标签读着作者的 `'0 %'` 过一辈子。
+
+---
+
+**2026-10-18 更新（Phase 143）：上表最后一行「告警浮层」查清了 —— 结论是「不接」，而且理由是量出来的。**
+
+趁 Studio 在线，把七台屏的 GUI 逐件读了一遍，再回头把五份录像里**每一个 `Visible` / `Text` / `Color`
+变化**过了一遍。三件事：
+
+**① `MalfunctionFrame` 不是一块，是四块，各写各的子系统。**（全 DataModel 只有 4 个）
+
+| 位置 | 两行文案 | 什么时候亮 |
+|---|---|---|
+| `Thermal.MainMonitorFrame.MalfunctionFrame` | `SYSTEM ERROR` / `CANNOT IDENTIFY ROOT CAUSE` | 录像里 4 次，**每次都与 C-PUMP 变红同拍** |
+| `Thermal.MainMonitorFrame.FanFrame.MalfunctionFrame` | `UNKNOWN ERROR` / `PRESSURE CONTROL SYSTEMS NONFUNCTIONAL` | 录像里**一次都没亮** |
+| `Main.MainMonitorFrame.MalfunctionFrame` | `EMERGENCY PEA SHUTDOWN` / `EXCESS STRESS - SAMOS` | 录像里**一次都没亮** |
+| `ServerStorage.Folder.MainframeMonitor`（**模板**）| `EXTERNAL MALFUNCTION` / `…QPU M.A.Ps HAVE BEEN SUSPENDED INDEFINITELY. FULL SYSTEM REBOOT REQUIRED.` | —— |
+
+模板那份是通用的，**世界里那几份被作者逐个改写成自己的子系统** —— 所以「接上 MalfunctionFrame」
+落地时**接的是哪一句**是个选择，而每句话都绑在**我们的引擎没有的那个事件**上。
+
+**② 录像证明了 Trigger：红色 ⟺ Thermal 那块亮，4/4 逐拍同刻。**
+`239.29 / 239.29`、`247.15 / 247.15`（261001）、`394.79 / 394.79`、`422.60 / 422.60`（261002）。
+但**红色是临时的**：两次都是**三台泵同时**红、然后 8 s / 28 s 后同时回白。
+本引擎的泵故障是 `integrity == 0` 的**永久**失败（`Engine.luau:258` 之后 `enabled=false` 不再恢复），
+**没有「跳一下又回来」这种状态**。把 `integrity <= 25` 接到这块浮层上，会得到**一块永不熄灭的横幅** ——
+那不是复刻，那是另一件东西。⇒ **不接，除非先把那个瞬时机制做出来（那是改玩法，§1.4 禁止）。**
+
+**③ 顺带两条负结果，各自有机制，不是「没看见」：**
+- `ShutdownFrame.ShutdownText` 的 **`REACTOR ENERGY QUOTA NOT MET`** 分支**在本引擎里不可达**：
+  `Engine.luau:143` 的 `shutdown` 动作自己就以 `energy >= quota` 为前提，所以走到 `Stopping`/`Report`
+  时配额**必然已达成** —— 写它等于写一个常数（§0.31 ①「真空通过」的镜像）。
+  这块屏 `RoomShell` 已经在 `Stopping`/`Report` 显示，**文案不动是对的**。
+- ~~`ErrorFrame` 在**控制室这七台上从来没有 `Visible` 变化**（五份录像里 0 次）——
+  它由 `RoomShell` 在 `Failed` 时显示，剧本之外没人碰它。~~
+  **【2026-10-18 更正，Phase 143】上面这条是错的。** `261001-125207` 在 `t=129.98`（点火同刻）
+  把 **29 块屏**（控制室 7 + 设施 22）的 `ErrorFrame.Visible` 一起 `false→true`，
+  `t=140.68` 一起回 `false` —— **亮了恰好 10.70 s**，同 tick 里 `CautionFrame.ImageLabel.Position`
+  走了 6 步（`Y.Scale` `1 → 5`）。**控制室那七块五局里只亮过一局**
+  （`261011-074207` 只改文案、七块的 `Visible` 一次没翻），所以**触发条件未知**：
+  这一条现在是"有证据，但只有一次"，不是"没有证据"。
+  **设施那 22 块另一套**：两局都亮过，`261011-074207` 里是**逐块**崩溃-修复
+  （每块 107.9–112.0 s，起点比点火早 87 s）—— 共用同一块浮层，**触发条件不能互相挪用**。
+  **接不接的答案没变（不接 —— 一次样本 + 触发条件未知），但理由换了。** 全文 `PROGRESS.md` Phase 143 §六。
+
+**④ 唯一新发现的「原版会改写自己的静态文案」这件事，见下方「补记」。**
 
 ### 3.17 温度模型的欠账（Phase 126 开的，Phase 131 里两条当场结清）
 

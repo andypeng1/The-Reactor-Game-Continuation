@@ -16718,3 +16718,214 @@ ok   gui.BANDS untouched (null)        still green, as it must be
   **这一轮没有重新测量**。这是下一个可以补的口子。
 - **AVB / 风扇 / PEA 之外的输入**（比如 `Sim.vent()`）不在对照范围：原版文件不建模那个装置，
   把它算进来会造出一个假失败。这一点写在文件头的 `WHAT THIS CANNOT SEE` 一段里。
+
+---
+
+# Phase 143 — 监视器的考古做完了：四块 `MalfunctionFrame`、一条逐拍对上的规则、和一个"存档里那段字不是玩家看到的字"
+
+（2026-10-18，Studio 在线的那一轮。**游戏本体改了零行**，只读、只记。）
+
+## 一、这一轮做的两件事
+
+1. **`docs/TODO.md` §3.5 那条欠账——查出来它是个空条目。**
+   要量的三件设备（`LaserPort` / `TransitionPillar` / `RadiationScrubberUnit`）**不在这个 DataModel 里**。
+2. **§3.16 最后一行「告警浮层」——查清了，结论是"不接"，而且理由全是量出来的。**
+
+## 二、§3.5：三组测量都指向"没有这个对象"
+
+place `83752844701736`，**24 万 0888 个后代**逐个按名字找：
+
+| 找什么 | 命中 |
+|---|---|
+| `LaserPort` | **0** |
+| `Scrubber` | **0** |
+| `TransitionPillar` | **0** |
+| `Pillar` | 120 —— **全是场景装饰**：`BasePillar x54` / `PillarThing x36` / `Pillar x18` / `RadPillar x6` / `PillarVents x3` / `PillarNeon x3` |
+| 名字含 `Port` | 只有 `LowerPortion x6` |
+
+外加**按位置**那一组：Phase 83 给 `LaserPort` 记的轴线 `(-56.1973, 2.7075, 16.3750)` 周围
+**12 studs 内 0 个 Part**。
+
+**这两组的差别值得单独记一句**：`find("Pillar")` 给你 120，`find("TransitionPillar")` 给你 0。
+如果只看前一个数，"这东西在场"就是一个**看起来有证据**的结论 —— 而它找的是**别的东西**。
+（§0.20 同族：按边数给面分类，回答的是文件格式。）
+
+⇒ **「导出链把它们放大了 1.6943 倍」这个担心在这份 place 里既证实不了也否证不了**，
+因为要量的件**一个都没有**。这不能推成"尺寸没问题"——**空的量不是过，是不适用**（§0.31 ③）。
+
+## 三、七台屏的 GUI 清点（这是"我们手里到底有什么"）
+
+每台 `Screen.MonitorUI` 的直接子件不一样，**是两族美术**：
+
+| 屏 | UI 子件 |
+|---|---|
+| Alerts / Log / Quota / Forecast | `BootIcon, CompanyLogo, EFEFrame, ErrorFrame, GlitchEffect, MainMonitorFrame, PreStartupFrame, ShutdownFrame, SmallLogo, TransferIcon` |
+| Thermal / Main / Power | `BootFrame, DetonationFrame, DiagnosticFrame, EFEFrame, ErrorFrame, GlitchEffect, Logo, MainMonitorFrame, PreStartupFrame, ProtocolFrame, ShutdownFrame` |
+
+`MainMonitorFrame` 的内容：
+
+| 屏 | 内容 |
+|---|---|
+| Thermal | `C1Frame C2Frame C3Frame FanFrame MalfunctionFrame SAMFrame TitleText` |
+| Main | `CoreDiagramFrame MalfunctionFrame ReactorDiagramFrame ReadingsFrame SAMFrame TitleText` |
+| Power | `CBL1Frame CBL2Frame CBL3Frame GraphDetailThingy SAMFrame TitleText` |
+| Quota | `EquinoxFrame QuotaFrame TextLabel×2 TimeFrame TitleText` |
+| Log | `LogsFrame TemplateLogFrame1..3 TitleFrame TitleText` |
+| Forecast | `AnnouncementFrame BorderFrame BoundryFrame ScrollingFrame SubTitleText×2 ThresholdTexture TimeSliceTemplate TitleText` |
+| Alerts | `AlertsFrame TitleText` |
+
+**`ShutdownFrame` 七台都有**，七台现在都停在 `ENERGY QUOTA MET` / 绿 `0,1,0` / `Visible=false`。
+`PreStartupFrame` 七台都有；`EFEFrame` 七台都有（Alerts 那块是 Phase 125 补的，
+原版录像里 `EFEFrame` 只在**六台**上亮 —— 见 `DECISIONS_2` 522..526 当时那条）。
+
+## 四、`MalfunctionFrame` 不是一块，是四块，各写各的子系统
+
+全 DataModel 只有 **4** 个：
+
+| 位置 | 两行文案 | 录像里亮过吗 |
+|---|---|---|
+| `Thermal…MainMonitorFrame.MalfunctionFrame` | `SYSTEM ERROR` / `CANNOT IDENTIFY ROOT CAUSE` | **4 次**（两次录像各 2 次） |
+| `Thermal…MainMonitorFrame.FanFrame.MalfunctionFrame` | `UNKNOWN ERROR` / `PRESSURE CONTROL SYSTEMS NONFUNCTIONAL` | **0 次** |
+| `Main…MainMonitorFrame.MalfunctionFrame` | `EMERGENCY PEA SHUTDOWN` / `EXCESS STRESS - SAMOS` | **0 次** |
+| `ServerStorage.Folder.MainframeMonitor`（**模板**） | `EXTERNAL MALFUNCTION` / `UNKNOWN ERROR DETECTED - TO PREVENT FURTHER DAMAGE OR INJURY, QPU M.A.Ps HAVE BEEN SUSPENDED INDEFINITELY. FULL SYSTEM REBOOT REQUIRED.` | —— |
+
+**模板是通用的，世界里那几份被作者逐个改写成自己的子系统。** 所以"把 MalfunctionFrame 接上"
+这件事**落地时接的是哪一句**是个选择 —— 而三句话各绑一个我们的引擎**没有**的事件：
+风扇失效、PEA 紧急停堆、以及下面那个瞬时跳闸。
+
+## 五、红色 ⟺ 横幅：4/4 逐拍同刻，但**红色是临时的**
+
+```
+261001  239.29  C1/C2/C3  白 → 红      MalfunctionFrame false → true
+        247.15  C1/C2/C3  红 → 白      MalfunctionFrame true  → false      (7.86 s)
+261002  394.79  C1/C2/C3  橙 → 红      MalfunctionFrame false → true
+        422.60  C1/C2/C3  红 → 白      MalfunctionFrame true  → false      (27.81 s)
+```
+
+**四次切换，两对时间戳逐字相同。** 这条规则是硬的。
+但**三台泵同时红、然后在 8 s / 28 s 后同时回白** —— 本引擎的泵故障是
+`integrity == 0` 的**永久**失败（`Engine.luau:258` 之后 `enabled=false`，只有 `repair_pump` 能回来）。
+把 `integrity <= 25` 接到这块浮层上，得到的是**一块永不熄灭的横幅** ——
+那不是复刻，那是**另一件东西**（§0.31 ①：要让它红得先有什么在场？这里"跳一下又回来"那个机制不在场）。
+
+⇒ **不接。** 要接先得把瞬时跳闸做出来，而那是**改玩法**（§1.4 第 1 条）。
+
+**顺带记下颜色阶梯**（`C1Frame.CPumpImageLabel.ImageColor3`，五份录像全量）：
+
+| 颜色 | 值 |
+|---|---|
+| 灰 | `0.313726, 0.313726, 0.313726` |
+| 浅绿 | `0.788235, 1, 0.847059` |
+| 白 | `1, 1, 1` |
+| 橙 | `1, 0.686275, 0` |
+| 红 | `1, 0.294118, 0.294118`（`MonitorsFacility` 那份是 `0.305882`，两份拷贝不同值）|
+
+**驱动量仍然没有**：261002 是绿→白→橙→红 一条单调的梯子，261001 是
+白→红→白→灰→白→橙，**同一组颜色在两局里走的顺序不同** —— 所以这不是一个按状态取色的表。
+两台的时序差 1.0–1.5 s（`Thermal` 先、`MonitorsFacility` 后），说明是**同一个事件驱动两份拷贝**。
+
+## 六、两个"看起来该写、其实写不了"的
+
+- **`ShutdownFrame.ShutdownText` 的 `REACTOR ENERGY QUOTA NOT MET` 分支在本引擎里不可达。**
+  `Engine.luau:143` 的 `shutdown` 动作自己就以 `energy >= quota` 为前提，
+  所以走到 `Stopping`/`Report` 时配额**必然已达成**。写它 = 写一个常数。
+  （`RoomShell` 已经在 `Stopping`/`Report` 显示这块屏，**文案不动是对的**。）
+- **`ErrorFrame` 会亮 —— 一局里亮了 10.70 s，横跨全设施 29 块屏。**
+  这一条原来写的是"控制室这七台上从来没有 `Visible` 变化（五份录像 0 次）"，**是错的**。
+  `261001-125207` 在 `t=129.98`（= 点火同刻）把 **29 块**屏的 `ErrorFrame.Visible`
+  一起 `false→true`（控制室 7 块 + 设施 22 块：`ReactorMonitoring` 9 / `CoolantMonitoring` 4 /
+  `CBLMonitoring` 3 / `RadMonitoring` 2 / `VitaMonitor1..4`），在 `t=140.68` 一起回 `false` ——
+  **恰好 10.70 s**。而且**文案改写与 `Visible` 在同一个 tick、改写在前**
+  （日志顺序：`Frame.DescLabel/InfoLabel.Text` 先，`…ErrorFrame.Visible` 后），
+  所以玩家从第一帧看到的就是 `MAINFRAME CONNECTION LOST`，不是存档里那句 `FATAL SYSTEM ERROR`。
+  同一个 tick 里 `CautionFrame.ImageLabel.Position` 开始走 **6 步**
+  `{0,0},{1,0}` → `1.03387904` → `1.90011835` → `2.77997684` → `3.70673847` → `4.48627853` → `{0,0},{5,0}`
+  （`tostring(UDim2)` 的 `{XScale, XOffset}, {YScale, YOffset}` 读法 ⇒ 动的是 **`Y.Scale`**，
+  7 块控制室屏逐拍同步；**不是 `Offset`**，所以 §0.30 的整数截断在这里不适用）。
+  **五局里控制室那七块只亮过一局**（`261011-074207` 只改了文案、七块的 `Visible` 一次没翻），
+  所以**触发条件仍然未知** —— 这一条从"没有证据"改成了"**有证据，但只有一次**"。
+  那 77 行 `ErrorFrame`（控制室）的构成：`CautionFrame.ImageLabel.Position` 49 / **`Visible` 14** /
+  `DescLabel.Text` 8 / `InfoLabel.Text` 6 —— **也不是"全是 `Text`"**。
+
+  **设施那 22 块是另一件事，而且两局都亮过。** 它们在 `261001` 跟着上面同一次事件亮
+  （`129.98 → 140.68`，10.70 s）；而在 `261011-074207` 里是**另一串**：
+  从 `t=2201.98` 起**逐块**亮（到 `2209.27` 亮满 10 块），`t=2314.00` 起**逐块**灭（到 `2317.21`）——
+  **每块亮 107.9–112.0 s**，起点比点火（`2288.86`）早 87 s。
+  一句 `POSSIBLE CRASH DETECTED, SYSTEM REPAIR IN PROGRESS` 摆在那里 110 秒，
+  **形状是一块屏自己崩了再修好**，不是全场一起闪。所以：
+  **控制室那七块 = 点火时的一次闪现（1 局）；设施那 22 块 = 屏自己的崩溃-修复（2 局，形态不同）。**
+  两件事共用同一块浮层，**别把一个的触发条件挪给另一个**。
+
+## 七、§0.38 那一族：**原版会改写自己存下的文案**
+
+这一轮最值钱的一条。`changes.log` 每行是 `路径 | 旧 | 新`，而**我们 place 里存的是"旧"**：
+
+| 时刻 | 路径 | 旧 | 新 |
+|---|---|---|---|
+| t=129.98（点火那拍）| `ErrorFrame.Frame.DescLabel.Text` ×4 | `FATAL SYSTEM ERROR` | `MAINFRAME CONNECTION LOST` |
+| 同上 | `ErrorFrame.Frame.InfoLabel.Text` ×3 | `…CHIEF INSTALLATION TECHNICIAN PERSONNEL. [ABSOLUTE SERVICE DENIAL - 02]` | `…SYSTEMS MAINTENANCE PERSONNEL. [ABSOLUTE SERVICE DENIAL - 03]` |
+| t=151.33 | `MalfunctionFrame.TextLabel.Text` | `SYSTEM ERROR` | `PLEASE WAIT` |
+| 同上 | `……TextLabel.TextLabel.Text` | `CANNOT IDENTIFY ROOT CAUSE` | `AUTO RECALIBRATION IN PROGRESS` |
+| 同上 | 两条 `TextColor3` | 红 `1,0,0` | 琥珀 `1,0.698039,0.180392` |
+
+我当场回 Studio 把这几件的 `Text` 读回来，**逐字是"旧"那一列** ——
+所以这不是我记错，是**存档和运行时分叉了**。
+
+**它在五份录像里的两份出现过，而且两次都落在点火窗口里**：
+
+判据两边都用**世界里的那一件**：点火 = `Core.CORE.Transparency 1→0`，
+改写 = `ControlRoomMonitor…ErrorFrame…` 的行（`grep 'ControlRoomMonitor' | grep -c 'ErrorFrame'`）。
+
+| 录像 | 点火（`Core.CORE.Transparency 1→0`）| 控制室 `ErrorFrame` 改写 | 差 | 改写持续 |
+|---|---|---|---|---|
+| `261001-125207` | t=**129.98** | **63 行**，首行 t=**129.98** | 0.00 s | 129.98 … 140.68（**10.7 s**，6 个时刻）|
+| `261011-074207` | t=**2288.86** | **14 行**，首行 t=**2290.82** | **+1.96 s**（改写在后）| 2290.82 … 2291.26（**0.44 s**，5 个时刻）|
+| `260930-200834` | t=**92.50** | **0 行** | — | — |
+| `261002-140021` | t=**97.72** | **0 行** | — | — |
+| `261011-041406` | 没点过火 | **0 行** | — | — |
+
+（`261011` 那一局是**点了启动杆之后等了 38 分钟**才点的火 —— 所以这条改写落在**点火**附近，
+不落在"开局"附近。）
+
+**但"点火"不是它的充分条件**：`260930` 与 `261002` 各点过一次火，**一行都没有**。
+所以**触发条件未知** —— 能说的是"两次观测都落在点火窗口（−0 s / +2 s）内、
+另两次点火（第 93 秒 / 第 98 秒）没有它，两场的改写各自是一串、不是一拍"。
+**方向是固定的**（永远 `-02 → -03`、`旧 → 新`，没有反向），
+所以"跑过一次就什么都不做"这个形状是自洽的；但**不能因此推"每局都跑"或"只跑过一次"** ——
+这两句话在盘上长得一样，只有把五份都数一遍才分得开（取舍 **621** 的同族）。
+
+> **【当日更正，第二轮】** 这一段第一版写的是"`261011-074207` 的 `Core` 在 t=2290.92 点亮、
+> 改写早 −0.10 s"。**2290.92 不是点火时间** —— 它是我在同一秒里读到的**第二行 `ErrorFrame` 改写**；
+> 世界里的 `Core` 在 **2288.86** 就已经 `Transparency 1→0` 了。同理 `261002` 的 `98.19` 是
+> **主屏上那张 `ReactorDiagramFrame.Core`** 亮的时刻，世界里的核心在 **97.72** ——
+> 两个不同的 Core。**同一条断言的两侧必须量同一类对象**（§0.21 的分母、§0.18 的第五张脸）。
+
+**规矩**（写进 `docs/ORIGINAL_UI_TEXT.md` §0.2）：从 place 里读出来的字符串是
+**作者存下的兜底值**，不是**玩家看到的字**。要引用"屏幕上写着什么"，引日志行**右边那一半**。
+反过来也成立：`Visible=false` 的 frame **照样会被写** —— 属性变化不看可见性。
+
+## 八、判定
+
+- **游戏本体：0 行改动。没进 Play、没上传。**
+- Studio 侧：只读。**没有移动、没有改名、没有删任何实例。**
+- `docs/TODO.md` §3.5 由 `[ ]` 改成 **`[x]` + 否证**（它不是一个"还没做"的条目）；
+  §3.16 补一段 Phase 143 的结论。
+- `docs/ORIGINAL_UI_TEXT.md` 新增 **§0.2**（存档文案 ≠ 屏幕文案）。
+
+## 九、没验的那一半
+
+- **`LaserPort` / `Scrubber` 有没有进过别的 place**：这一轮只读了当前这一个 DataModel。
+  "不在这个世界里"**不等于**"从来没导入过"。
+- **橙色 / 浅绿 / 灰 三个颜色由什么驱动**：五份录像里没有记到能反推出输入的量。
+  这一条仍然是 `docs/TODO.md` §3.16 那张"没接的"表里的一行，**没有变好也没有变坏**。
+- **`FanFrame.MalfunctionFrame` 和 `Main.MalfunctionFrame` 的触发条件**：一次都没亮过，
+  所以它们连"同拍同刻"这种弱证据都没有。
+- **`ErrorFrame` 那两条文案改写的触发条件**：两次观测都在点火窗口内
+  （`261001`：改写首行 = 点火同刻 `129.98`；`261011-074207`：改写首行 `2290.82` = 点火 `2288.86` 之后 1.96 s），
+  但另两次点火（`260930` `92.50`、`261002` `97.72`）**没有**它 ⇒ **不是点火驱动的**，
+  也说不清是什么驱动的。**这一条更正了两遍** ——
+  第一遍把"只有一份录像有"写成了结论（把 `261011-074207` 那 14 行当成只属于 `MonitorsFacility` 的，
+  而它里面有 7 行是控制室那七台的）；第二遍把 `2290.92`（第二行改写）当成了点火时刻。
+  **两次错的方向相同：先认了一个数，再给它配一个解释。**
+- **那 4 台 `MonitorsFacility` 的屏**（`DisplayMonitor` / `VitaMonitor1..4`）只在这一轮顺手读到，
+  **没有做清点**；它们不是控制室那七台，`RoomShell` 也不管它们。

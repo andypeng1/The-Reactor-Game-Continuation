@@ -918,6 +918,53 @@ FBX 用 `global_scale`（按层级整体缩放），**一个变换都别碰**；
 **重新导入 GLB + FBX、对原始文件的三个轴和三个最小值**，它当场红了两次。
 取舍 **606..609**。
 
+### 0.38 【坑】**存档里的文案不是玩家看到的文案**；而「同拍同刻」证的是显示，不是原因
+
+三条，Phase 143（2026-10-18，只读 Studio + 五份录像，**游戏本体零改动**），
+都属于「读到的那个数，不是你以为的那个量」。
+
+**① 原版会**在运行时改写**自己存下的文案，而我们 place 里存的是改写前那一版。**
+`changes.log` 每行是 `路径 | 旧 | 新`。实测三处，**逐字对过**：
+
+| 路径 | 旧（= 我们 place 里现在这份） | 新（= 玩家看到的） |
+|---|---|---|
+| `ErrorFrame.Frame.DescLabel.Text` ×4 | `FATAL SYSTEM ERROR` | `MAINFRAME CONNECTION LOST` |
+| `ErrorFrame.Frame.InfoLabel.Text` ×3 | `…CHIEF INSTALLATION TECHNICIAN PERSONNEL. [ABSOLUTE SERVICE DENIAL - 02]` | `…SYSTEMS MAINTENANCE PERSONNEL. [ABSOLUTE SERVICE DENIAL - 03]` |
+| `Thermal…MalfunctionFrame` 两行 + 颜色 | `SYSTEM ERROR` / `CANNOT IDENTIFY ROOT CAUSE`（红） | `PLEASE WAIT` / `AUTO RECALIBRATION IN PROGRESS`（琥珀 `1,0.698039,0.180392`）|
+
+**推论两条，第二条更容易踩**：要引用"玩家看到的字"，引日志行**右边那一半**；
+而 **`Visible=false` 的 frame 照样会被写** ——「这块从没亮过」**推不出**「它的文案没被改过」。
+**而这块浮层真的亮过**：`261001` 点火同刻把 **29 块屏**的 `ErrorFrame.Visible` 一起点亮、
+**10.70 s** 后一起熄灭，**改写在前、`Visible` 在后** ⇒ 玩家那 10.7 秒里看到的确实是
+`MAINFRAME CONNECTION LOST`。**控制室那七块五局里只亮过一局**（触发条件未知）；
+设施那 22 块在 `261011-074207` 里走的是另一套（逐块崩溃-修复，每块 108–112 s）——
+**共用一块浮层不等于共用触发**（取舍 **622**）。
+**它在五份录像的两份里出现，两次都紧贴点火**（`261001` 改写 `129.98` = 点火同刻、
+`261011-074207` 改写 `2290.82` = 点火 `2288.86` 之后 1.96 s），
+而**另两次点火（`260930` `92.50`、`261002` `97.72`）一行都没有** ——
+所以「每局都写」和「只发生过一次」**两句话都不成立**，触发条件**未决**。
+（这一条我第一次写成"只有一份有"，是数错了对象：把 `MonitorsFacility.*` 那 74 行当成了全部，
+漏了 `261011-074207` 里控制室那七台自己的 14 行。）
+细节 `docs/ORIGINAL_UI_TEXT.md` **§0.2**，取舍 **615**。
+
+**② 一条挂了很久的欠账，可能从头到尾没有一个宾语。**
+`docs/TODO.md` §3.5 挂着「量 `LaserPort` / `TransitionPillar` / `RadiationScrubberUnit` 的尺寸」——
+这一轮去量，三件**一件都不在**这个 DataModel 里（24 万后代按名字找 + 按记下来的轴线周围 12 studs 找）。
+**这不是"还没做"，是没有可做的对象。** 连带那个数：`find("Pillar")` 命中 **120**、
+`find("TransitionPillar")` 命中 **0**，而那 120 个是 `BasePillar` / `PillarThing` / `RadPillar`
+这些**场景装饰** —— **子串搜索返回的是一个数，不是一次识别**。
+**空的量不是过，是不适用**：0 不能读成"尺寸没问题"。取舍 **616/617**。
+
+**③ 把永久故障接到瞬时横幅上，得到的是另一件东西。**
+泵图标变红 ⟺ Thermal 的 `MalfunctionFrame` 亮，**4/4 逐拍同刻**
+（`239.29/239.29`、`247.15/247.15`、`394.79/394.79`、`422.60/422.60`）—— 这是硬规则，可以照着做**显示**层。
+但**什么让它变红未知**（五份录像里没有能反推输入的量），而**红是临时的**
+（三台同时红、8 s / 28 s 后同时回白），本引擎的泵故障却是 `integrity == 0` 的**永久**失败
+⇒ 接到 `integrity <= 25` 上会得到**一块永不熄灭的横幅**。**"接上了"和"复刻了"不是同一件事。**
+同族一条：`ShutdownFrame` 的 `REACTOR ENERGY QUOTA NOT MET` 分支**构造上不可达**
+（`Engine.luau:143` 的 `shutdown` 自己就以 `energy >= quota` 为前提）⇒ 写它 = 写常数。
+取舍 **618/619/620**。
+
 ## 1. 项目概述
 
 ### 1.1 基本信息
@@ -1360,6 +1407,26 @@ wiki 自己也是"3300"两次、"around 3000"一次（它的 5500 = 2200 + 3300 
 结构性的四条用**第三份拼写**断言（对照器看不见"两边一起错"）；六个突变 + **一个空突变**验证尺子。
 `calculation.py` 为此拆出 `tick()`，**行为不变是 `cmp` 出来的**（新旧各跑 7 秒，逐字节相同）。
 **没进 Studio、没进 Play、没碰 `calculation.luau`**。取舍 `DECISIONS_2` 611..614，全文 `PROGRESS.md` Phase 142。
+
+**监视器的考古做完了，结论是"剩下的不接"**（Phase 143，2026-10-18，Studio 只读、**游戏本体改了零行**）：
+`docs/TODO.md` **§3.5 那条欠账是个空条目** —— `LaserPort` / `TransitionPillar` / `RadiationScrubberUnit`
+**一件都不在这个 DataModel 里**（24 万后代按名字找 + 按 Phase 83 的轴线周围 12 studs 找，
+`Pillar` 那 120 个命中全是场景装饰），所以它不是"还没做"，是**没有可做的对象**。
+`§3.16` 最后那一行「告警浮层」查清了：**`MalfunctionFrame` 全库只有 4 块、各写各的子系统**
+（Thermal 通用 / Thermal 风扇 `PRESSURE CONTROL SYSTEMS NONFUNCTIONAL` / Main `EMERGENCY PEA SHUTDOWN` /
+`ServerStorage` 模板 `EXTERNAL MALFUNCTION`），而录像里亮过的只有 Thermal 那块，
+**红色 ⟺ 它亮 4/4 逐拍同刻**，但**红是临时的**（8 s / 28 s 后自己回白）——
+本引擎的泵故障是永久的，接上去会得到一块**永不熄灭的横幅** ⇒ **不接**（§0.38 ③）。
+顺带一条构造上不可达的分支（`ShutdownText` 的 NOT MET）。
+**`ErrorFrame` 那条是反的** —— 我第一版把它也写成"不可达"，重数之后发现
+**`261001` 在点火同刻把 29 块屏的 `ErrorFrame.Visible` 一起点亮、10.70 s 后一起熄灭**
+（控制室 7 块 + 设施 22 块），同 tick 里文案先改、`Visible` 后翻，
+所以玩家看到的是 `MAINFRAME CONNECTION LOST`；而设施那批在 `261011-074207` 里
+是**逐块**崩溃-修复（每块 107.9–112.0 s）。**控制室那七块五局里只亮过一局 ⇒ 触发条件未知。**
+最值钱的一条进了 **§0.38**：**原版会改写自己存下的文案**，而我们 place 里存的是**改写前**那版
+（`ABSOLUTE SERVICE DENIAL - 02 → -03`、`FATAL SYSTEM ERROR → MAINFRAME CONNECTION LOST`、
+`CANNOT IDENTIFY ROOT CAUSE → AUTO RECALIBRATION IN PROGRESS` 且红 → 琥珀），
+判据见 `docs/ORIGINAL_UI_TEXT.md` **§0.2**。取舍 `DECISIONS_2` 615..622，全文 `PROGRESS.md` Phase 143。
 
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒 Ctrl+S。

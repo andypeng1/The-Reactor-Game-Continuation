@@ -3547,3 +3547,111 @@ python -B luau-windows/pressure_parity.py    # 24 checks, 0 failed; worst delta 
 
 `-B` 是一条一字节码都不落盘的规矩（§0.35）；这个文件在内存里打补丁，本来没有陈旧 `.pyc` 的口子，
 但照库里其它检查器跑。
+
+---
+
+## 5.47 从录像考古一块 UI：先数 `Visible`，再读 `旧 | 新`，最后回 Studio 对一遍（Phase 143）
+
+**什么时候用**：有一块监视器/装饰 UI 不知道"谁在写、写什么"，想决定接不接。
+
+### ① 先把「动过没有」变成一张计数表
+
+```bash
+# 每份录像里，MonitorUI 底下第一个子件被碰过多少次
+grep -rh "Monitors\." Data/originalwatch/*/changes.log \
+  | sed -E 's/^.*Screen\.MonitorUI\.//' | cut -d. -f1 | sort | uniq -c | sort -rn
+```
+
+Phase 143 的输出：`MainMonitorFrame 1484 / BootFrame 174 / ErrorFrame 77 / ShutdownFrame 63 /
+PreStartupFrame 28 / EFEFrame 12`。**`MalfunctionFrame` 不在表头一级** —— 它挂在
+`MainMonitorFrame` 底下，所以要按**名字**再查一次，不能只看这张表。
+
+**这一行必须先写**：
+
+```bash
+head -3 Data/originalwatch/261002-140021/changes.log
+# t=0000021.63 | WINDOW | OPEN | recording begins: the start-up lever was clicked at …
+```
+
+**它是唯一能告诉你"记录器是在事件之前就在场"的那一行** —— 没有它，"日志里没有这一条"
+既可能是"没发生"，也可能是"还没开始录"。
+
+### ② `Visible` 单独数一遍 —— 它和 `Text` 是两件事
+
+```bash
+# 先数"一共多少种"，再决定截到多少 —— head 的截断会把"有"变成"没有"
+grep -rh "\.Visible |" Data/originalwatch/*/changes.log \
+  | sed -E 's/^.*\| Monitors *\| Monitors\.//' | sort -u | wc -l
+grep -rh "\.Visible |" Data/originalwatch/*/changes.log \
+  | sed -E 's/^.*\| Monitors *\| Monitors\.//' | sort | uniq -c | sort -rn
+```
+
+Phase 143 的读数：`ErrorFrame` 有 **77** 行变化 ——
+`CautionFrame.ImageLabel.Position` **49** / **`Visible` 14** / `DescLabel.Text` **8** / `InfoLabel.Text` **6**。
+**那 14 行 `Visible` 是 7 块屏各 `false→true` 一次、再各 `true→false` 一次**
+（`261001-125207`，`t=129.98` 亮 → `t=140.68` 灭，**10.70 s**）。
+
+> **【2026-10-18 更正】** 这一节原来写的是"其中 `Visible` 是 0 行 —— 全是 `Text`，
+> 所以 `ErrorFrame` 会弹出来这句话一条证据都没有"。**那是我把 `Visible` 数漏了**（14 行在）。
+> **机制查出来了，而且就在上面那条 recipe 里**：`… | sort -rn | head -30` ——
+> `ErrorFrame.Visible` 七份屏各一行、`false→true` 与 `true→false` 分成两条，**每条计数 7**，
+> 排序落在 **第 30 名以外**。**数没错，是清单被截断了，而截断的清单和完整的清单在屏幕上同形。**
+> **别用 `head -N` 读"有没有"**：要么去掉它，要么把"截掉了多少行"一起打印。
+
+**但也要读第二层**：`Visible` 有变化 ≠ 它每局都亮，而且**两个屏幕家族不是同一件事**。
+`grep -c 'ErrorFrame.*\.Visible'` 逐文件跑一遍：
+
+| 录像 | 控制室 7 块（`Monitors.*ControlRoomMonitor…MonitorUI.ErrorFrame`）| 设施 22 块（`MonitorsFacility.*`）|
+|---|---|---|
+| `261001-125207` | **14 行**（7×on + 7×off，`129.98 → 140.68` = 10.70 s）| 44 行，同一次事件、同一段 10.70 s |
+| `261011-074207` | **0 行** | **20 行**，逐块 on/off，每块 107.9–112.0 s |
+| 其余三份 | 0 | 0 |
+
+所以能说的是"**控制室那七块亮过一次、10.70 s**"和"**设施那批两局都亮过、形态不同**"
+——**不能说"点火必亮"，也不能把设施那批的触发条件挪给控制室**（同 §0.31 ①）。
+
+### ③ 每一行都是 `路径 | 旧 | 新` —— 方向搞反会把结论写反
+
+```bash
+grep -rh "MalfunctionFrame" Data/originalwatch/*/changes.log
+```
+
+`…TextLabel.Text | SYSTEM ERROR | PLEASE WAIT` 读作"**从** `SYSTEM ERROR` **改成** `PLEASE WAIT`"。
+**左边是 place 存档里那份**（Phase 143 回 Studio 逐字核过），**右边才是玩家看到的**。
+取证时引右边，比对时拿左边去和存档对。
+
+### ④ 回 Studio 把同一件读回来 —— 两边都要有数
+
+用官方 `rblx_execute_luau`（`datamodel_type:"Edit"`），**必须显式 `return`**，
+否则只拿到 `nil`（§0.2）：
+
+```lua
+local out = {}
+for _, m in ipairs(workspace.Monitors:GetChildren()) do
+  if m.Name:find("ControlRoomMonitor", 1, true) then
+    local ui = m.Screen.MonitorUI
+    local mm = ui:FindFirstChild("MainMonitorFrame")
+    local mf = mm and mm:FindFirstChild("MalfunctionFrame")
+    out[#out+1] = m.Name .. " Visible=" .. tostring(mf and mf.Visible)
+      .. " t1=[" .. tostring(mf and mf.TextLabel.Text) .. "]"
+  end
+end
+return table.concat(out, "\n")
+```
+
+**两个读数都要**：录像说"它该是 `PLEASE WAIT`"，Studio 说"它是 `SYSTEM ERROR`" ——
+**这个差本身就是发现**（原版在运行时改写了自己的文案，取舍 615）。
+只读一边，你会得到两个都自洽但互不相容的故事。
+
+### ⑤ 判「接不接」的三问（这一轮三问都答了"不接"）
+
+1. **驱动量在场吗？** 录像里有没有一个能反推出输入的量？
+   （泵颜色：五种颜色量到了，**按什么选**一条都没有。）
+2. **状态的时间形状一样吗？** 原版那个是**瞬时**（8 s / 28 s 自己回来），
+   本引擎那个是**永久**（`integrity == 0` 不再恢复）——
+   **形状不同就不能对接**，接出来的是一件新东西（取舍 619）。
+3. **那个分支走得到吗？** `ShutdownText` 的 `NOT MET` 要求"停机时配额没达成"，
+   而 `Engine.luau:143` 的停机动作自己就要求配额达成 ⇒ **构造上不可达**，写它就是写常数（取舍 620）。
+
+**"接上了"的判据是"有东西动了"；"复刻了"的判据是"同一个输入下一起动、一起停"。**
+这一轮只做到了前者的反面：**它连"一起动"都做不到**，因为输入不在。
