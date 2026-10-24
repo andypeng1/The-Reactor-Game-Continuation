@@ -12,21 +12,40 @@ Nothing here re-runs `gui.py`'s arithmetic to compare it against itself (that
 would pass even if both were wrong): the anchors are his equation transcribed
 straight from the spec as it was handed over, with his own literals.
 
-The spec is the 2026-10-16 revision, second one that day -- the message that
-handed over the whole model as code, a per-tick STEP:
+The spec is the 2026-10-16 revision as amended by the wiki's Temperature page
+(Phase 148, 2026-10-24), a per-tick STEP:
 
-    a_avg          = ((c_1 + c_2 + c_3) / 3) * 25
+    a_eff          = 0.756*c_1 + 0.522*c_2 + 0.196*c_3   <- was the mean
     coolant_avg    = (p_1 + p_2 + p_3) / 3      <- moved 3 times; it is back
     coolant_effect = coolant_avg * 120                       (see below)
     s              = {T < 5600: 0, T < 17500: 1, T < 29500: 2, 3}
-    pure_cbl       = {a_avg <= 0: 0, 0.0516*a_avg^2 + 1.1*a_avg + 426}
+    pure_cbl       = {a_eff <= 0: 0, 0.0516*a_eff^2 + 1.1*a_eff + 426}
     passive        = [-455.7, -400, -422, -22][s]     (his `[s+1]`, 1-based)
     p_mult         = {P <= 11500: 1, P <= 27000: 2, 4}
-    noise          = 15*(a_avg/25)*sin(t/1.5) + 10*(a_avg/25)*sin(t/0.7)
-                     + 5*(a_avg/25)*sin(t/0.3)
+    noise          = 15*(a_eff/25)*sin(t/1.5) + 10*(a_eff/25)*sin(t/0.7)
+                     + 5*(a_eff/25)*sin(t/0.3)
     dT             = {P <= 2200: -586,
                       pure_cbl*p_mult + passive - coolant_effect + noise}
     T'             = T + dT
+
+THE BANKS ARE NO LONGER AVERAGED -- they are weighted, 0.756 / 0.522 / 0.196
+by position.  The wiki says so twice (prose and formula), and the reason the
+mean cannot be the reading is that the wiki carries TWO worked examples whose
+DIFFERENCE is the evidence: (100,25,25) heats ~580 F/s and (25,25,100) ~220,
+while the mean is 50 levels for both and gives one number for both.  The pair
+is checked below, not either example alone -- the mean reproduces the SECOND
+example to within ~10 F, so a single-example check would pass on the wrong
+formula (CLAUDE.md 0.31 (1), the vacuous pass, in its arithmetic form).
+
+Two tensions in the same page are carried rather than smoothed:
+
+  * its PROSE percentages (51.3 / 35.4 / 13.3) sum to 1.0, its COEFFICIENTS
+    (0.756 / 0.522 / 0.196) sum to 1.474.  Normalising the coefficients to
+    percentages and using them gives 303.7 F on the first example, not 580 --
+    so the coefficients are the formula and the percentages are prose about
+    their ORDER.  A falsification check pins that.
+  * a_eff at all three PW5 is 184.25, past the 25..125 band the old fit was
+    taken in.  Carried, not clamped, and printed as such.
 
 THE HEAT IS NOT ONE LINE PER ROW ANY MORE.  It was `base_heat = active[row] +
 passive[row]` -- four lines in `a`, `[0, 6.86a + 65.5, 7.24a + 37, 6.8a + 534]`
@@ -56,12 +75,13 @@ many times has to keep a tooth on the reading it was reversed OUT of as well as
 on the one it landed on (CLAUDE.md 0.34).  Before any of those, the sum was this
 console's own reading of the three sources rather than a word of his; that is
 what made it look like the safer default, and it is why the sources are still
-quoted at length under `his_cooling` below.  What did NOT move is the banks':
-they were averaged in the same message as the pumps and have stayed averaged
-through all of it, because their mean is pinned by his fitted band
-(`a = 25..125`) and the pumps have no such band.  That asymmetry is the whole
-reason the two halves of one message could land differently, and it is why the
-checker holds them to different things rather than to one rule about "the mean".
+quoted at length under `his_cooling` below.  The banks moved once, on
+2026-10-24, and they did NOT move to a different aggregate -- they stopped
+aggregating: the wiki's weights make the reading positional, so the old
+mean/sum question is now a question about a formula that no longer takes
+either.  The mean is kept as a MUTANT (it still reproduces one of the wiki's
+examples), which is where a superseded reading belongs when it can still
+produce a plausible number.
 
 His own worked example -- the numbers the message before this one carried,
 c = 5/3/1, p = 2/2/2, T = 12000, P = 8000, t = 1 -- is driven through the panel
@@ -77,9 +97,8 @@ This spec supersedes the 2026-10-14 revision (`T' = T + (active[row] +
 passive[row]) * pMultiplier + noise(t) + cooling`), which replaced the
 2026-10-13 closed form `T0 + (rate + noise(x)) * x`.  Everything the EARLIER
 2026-10-16 message moved is still in force and is checked by name below: the
-banks are AVERAGED and not summed, the stall is the whole of `dT` (no heat, no
-pump term, no tremor), and the pumps are averaged too -- the one of the three
-whose direction changed after it first landed.
+stall is the whole of `dT` (no heat, no pump term, no tremor), and the pumps
+are averaged -- the one of the three whose direction changed after it landed.
 
 Exit status is 1 if any check failed, 0 if all passed, so a broken run is not a
 silent one.  ASCII only on stdout -- this console is GBK.
@@ -111,9 +130,10 @@ def check_close(name, got, want, tol):
 
     `gui.noise` sums its three sines with `sum()`, and CPython 3.12+ makes
     `sum()` a COMPENSATED sum for floats: it lands a few ulps nearer the true
-    value than his own left-to-right `a + b + c` does.  The gap at a_avg = 75,
-    t = 1 is 7.105e-15, twelve orders below the smallest thing the check has to
-    catch (swapping two amplitudes moves that reading 2.4 degrees).  Everywhere
+    value than his own left-to-right `a + b + c` does.  The gap at the wiki's
+    first example's `a_eff` (93.55), t = 1 is ~7e-15, twelve orders below the
+    smallest thing the check has to catch (swapping two amplitudes moves that
+    reading 2.4 degrees).  Everywhere
     else the two spellings here are bit-identical and `check` is the right
     instrument -- a tolerance is a hole, and it is only worth opening where the
     gap is measurable, explainable and named.
@@ -207,23 +227,53 @@ def readout(values, prefix):
 # from `Config.Sim.State1` -- two spellings of one threshold are checked against
 # each other rather than one of them being restated here.
 #
-# `a` is his `a_avg` everywhere below, so `his_a_avg` is what a caller who has
-# three bank LEVELS reaches for, and what a caller who already has an `a` passes
+# `a` is `a_eff` everywhere below, so `his_a_eff` is what a caller who has three
+# bank LEVELS reaches for, and what a caller that already holds an `a` passes
 # straight through.
 
-def his_a_avg(c1, c2, c3):
-    """His `a_avg = ((c_1 + c_2 + c_3) / 3) * 25`.
+def his_a_eff(c1, c2, c3):
+    """The wiki's `a_eff = 0.756 * L1 + 0.522 * L2 + 0.196 * L3`.
 
-    The arguments are LEVELS (0..5), because that is what his message divides;
-    `x 25` is what turns the mean level into the `a` his fit was taken in.  The
-    division is spelled on the integers, as he wrote it, so this is his
-    arithmetic and not a rearrangement of it that happens to agree.
+    The arguments are LEVELS (0..5), which is what every call site in this file
+    and the panel's radio buttons carry; `* 25` inside each term turns a level
+    into the `L` the formula takes.  Multiplying the level by 25 first is
+    exact in binary (25 is a power-of-two times an integer below 2^53), so this
+    is bit-identical to gui.py's `w1 * bank_value`, and the terms are written
+    left to right -- not `sum()`, which is compensated (CLAUDE.md 0.33 (1)).
+
+    Not a weighted MEAN: dividing by 1.474 would rescale every reading by two
+    thirds, and the wiki's own examples are in the unnormalised units.
+    """
+    return 0.756 * (c1 * 25) + 0.522 * (c2 * 25) + 0.196 * (c3 * 25)
+
+
+def his_a_mean(c1, c2, c3):
+    """The superseded reading, kept because it can still produce a plausible
+    number: the plain mean of the three bank values.
+
+    It is kept as a live spelling and not only as a mutant, because the point
+    of the wiki's two examples is precisely that this formula REPRODUCES ONE OF
+    THEM -- (25,25,100) comes out 210 against the wiki's ~220 -- and does not
+    reproduce the other.  A check that only asserted the first example would go
+    green on this function, which is what the pair below exists to prevent.
     """
     return ((c1 + c2 + c3) / 3) * 25
 
 
+def his_a_percent(c1, c2, c3):
+    """The wiki's PROSE percentages applied as shares: 51.3% / 35.4% / 13.3%.
+
+    These sum to 1.0 and the coefficients sum to 1.474, so this is the other
+    reading the same page supports -- and it is falsified by the page's own
+    first example (63.475 -> ~304 F, not ~580).  A second spelling that a
+    reader could arrive at honestly, held here so the falsification is a
+    measurement rather than a remark.
+    """
+    return 0.513 * (c1 * 25) + 0.354 * (c2 * 25) + 0.133 * (c3 * 25)
+
+
 def his_pure_cbl(a):
-    """His `pure_cbl = {a_avg <= 0: 0, 0.0516 * a_avg^2 + 1.1 * a_avg + 426}`.
+    """His `pure_cbl = {a_eff <= 0: 0, 0.0516 * a_eff^2 + 1.1 * a_eff + 426}`.
 
     The row is not an argument, and that is the point of the function's shape
     rather than a convenience: as of the 2026-10-16 spec the lasers' heat is ONE
@@ -455,6 +505,31 @@ def main():
     check("press_multiplier(27000.1)", gui.press_multiplier(27000.1), 4.0)
     check("press_multiplier(0)", gui.press_multiplier(0.0), 1.0)
 
+    # The wiki's three bands, and the colour the console gives them.  The bands
+    # are DERIVED from PRESS_AMP -- one source, so a mutant of a threshold moves
+    # the multiplier and the label together -- and the colour is a legibility
+    # choice on a light theme, not the wiki's "white / yellow / red" (that
+    # describes the game's dark screen).  What is checked is that the three names
+    # get three distinct foregrounds and that the boundaries fall where the wiki
+    # puts them, including the one place the wiki's own table overlaps (27000,
+    # which its `<= 27000 -> 2` settles as HIGH).
+    print("-- the wiki's three pressure bands --")
+    check("11500 is still normal", gui.press_band(11500.0), "normal")
+    check("11500.1 is high", gui.press_band(11500.1), "high")
+    check("27000 is still high", gui.press_band(27000.0), "high")
+    check("27000.1 is extreme", gui.press_band(27000.1), "extreme")
+    check("...which is the multiplier's own boundary, not a second table",
+          [gui.press_multiplier(p) for p in (11500.0, 11500.1, 27000.0,
+                                             27000.1)],
+          [1.0, 2.0, 2.0, 4.0])
+    check("three distinct colours", len(set(gui.PRESS_COLOURS.values())), 3)
+    check("...keyed by the band names", sorted(gui.PRESS_COLOURS),
+          ["extreme", "high", "normal"])
+    check("the label carries the threshold it used", gui.press_band_text(8000.0),
+          "normal  (<= 11500)")
+    check("...and the top band names the floor it passed",
+          gui.press_band_text(30000.0), "extreme  (> 27000)")
+
     # --- armed --------------------------------------------------------------
     print("\n-- armed: the model owns Temperature --")
     console.arm_var.set(True)
@@ -472,13 +547,17 @@ def main():
     check("CBL starts at PW2 on the first bank", console.cbl_vars[0].get(), 50)
     check("...and the other two are dark",
           [var.get() for var in console.cbl_vars[1:]], [0, 0])
-    # ...which is a_avg = 50/3 since the correction, NOT 50 and NOT 150.  The
-    # console's opening POSITION is unchanged; what the spec changed is what that
-    # position means, so this is checked here rather than papered over by moving
-    # the default (moving a control to defend a reading is the wrong direction).
-    check("one bank at PW2 is his a_avg = 50/3, not 50",
-          console.core.power, his_a_avg(2, 0, 0))
-    check("...and it is not the sum either", console.core.power == 50.0, False)
+    # ...which is a_eff = 0.756 * 50 = 37.8 since Phase 148, NOT 50 and NOT 150.
+    # The console's opening POSITION is unchanged; what the spec changed is what
+    # that position means, so this is checked here rather than papered over by
+    # moving the default (moving a control to defend a reading is the wrong
+    # direction).  37.8 is also a helpful number to have in hand: it is neither
+    # of the two old aggregates, so an untouched Phase-147 model goes red here
+    # before it can produce a plausible tick.
+    check("one bank at PW2 is a_eff = 37.8, not 50",
+          console.core.a_eff, his_a_eff(2, 0, 0))
+    check("...and it is not the sum either", console.core.a_eff == 50.0, False)
+    check("...nor the mean of the three", console.core.a_eff == 50 / 3, False)
     # The pumps' own opening position, checked HERE because here it is still the
     # widget's default and nowhere later is: `Console.reset()` starts a run, it
     # does not restore a control position, so it leaves the radios exactly where
@@ -494,49 +573,53 @@ def main():
           " + noise   (or exactly -586, stalled)")
 
     # All three banks on PW2 before the regression below.  ONE bank at PW2 is
-    # a_avg = 16.67 now, and the point of the three ticks below is his equation at
-    # a known `a` -- three at PW2 is a_avg = 50, which is the `a` this section was
-    # written at and the level his fit's own PW2 is.  The opening position is
-    # checked just above, where it belongs.
+    # a_eff = 37.8 now, and the point of the three ticks below is his equation at
+    # a known `a` -- three at PW2 is a_eff = 1.474 * 50 = 73.7, which is the `a`
+    # this section is driven at.  The opening position is checked just above,
+    # where it belongs.
     for var in console.cbl_vars:
         var.set(50)
     console.on_power()
-    check("three banks at PW2 are his a_avg = 50", console.core.power,
-          his_a_avg(2, 2, 2))
+    check("three banks at PW2 are a_eff = 73.7", console.core.a_eff,
+          his_a_eff(2, 2, 2))
 
-    # One tick at a time, against his equation with his literals.  The tick
-    # period is 1.0 s, so at the Nth tick t = N and a = 50 (PW2 on all three).
+    # One tick at a time, against the wiki's equation with its literals.  The
+    # tick period is 1.0 s, so at the Nth tick t = N and a_eff = 73.7 (all three
+    # banks at PW2).  A_PW2 is spelled from the wiki's weights rather than
+    # written as the literal 73.7, so the tick section moves with the weights and
+    # is not a second copy of a number that could drift away from them.
+    A_PW2 = his_a_eff(2, 2, 2)
     deltas = []
     for n in (1, 2, 3):
         pressure = console.sim.Pressure
         temp = console.sim.Temperature
         console.step_once()
         values = screen(right)
-        want = his_temperature(temp, 1, 50.0, pressure, float(n))
+        want = his_temperature(temp, 1, A_PW2, pressure, float(n))
         deltas.append(float(values["T'  next tick's temperature"]) - temp)
         check("t after tick %d" % n, values["t   elapsed since armed (s)"], str(n))
         check("row at tick %d" % n, values["row  (passive index)"], "1")
         check("pure_cbl at tick %d" % n,
-              values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "610")
+              values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "787")
         check("passive at tick %d" % n,
               values["passive  this row's constant"], "-400")
         check("press x at tick %d" % n, values["press x   pMultiplier"], "1")
         check("activeFluc at tick %d" % n,
-              values["activeFluc  pure_cbl x press"], "610")
+              values["activeFluc  pure_cbl x press"], "787")
         check("noise(%d)" % n, values["noise(t)"],
-              gui.shown(his_noise(float(n), 50.0)))
+              gui.shown(his_noise(float(n), A_PW2)))
         check("T' at tick %d against his equation" % n,
               values["T'  next tick's temperature"], gui.shown(want))
 
     # The revision, in one line: the noise is ADDED, so its amplitude is what it
-    # says it is (+-30 at a = 50) and a tick moves by about `pure_cbl` minus the
-    # row's passive.  In the old closed form the same three sines were inside the
-    # multiplication, so the same t gave a wobble of 30 * t and the step was
-    # 389 + 30t.  Under this spec the same tick moves by 610 - 400 = 210.
+    # says it is (+-88 at a_eff = 73.7) and a tick moves by about `pure_cbl` minus
+    # the row's passive.  In the old closed form the same three sines were inside
+    # the multiplication, so the same t gave a wobble of 88 * t and the step was
+    # 787 + 88t.  Under this spec the same tick moves by 787 - 400 = 387.
     print("\n-- the noise is a tremor on the reading, not on the slope --")
-    check("noise(1) is tens, not tens x t", abs(his_noise(1.0, 50.0)) < 100, True)
+    check("noise(1) is tens, not tens x t", abs(his_noise(1.0, A_PW2)) < 300, True)
     check("...so each of the three ticks moved by about pure_cbl - passive",
-          all(abs(delta - 210) < 80 for delta in deltas), True)
+          all(abs(delta - 387) < 120 for delta in deltas), True)
 
     # --- the row changes, and NOTHING jumps ---------------------------------
     # In the closed form the row moved the whole line: crossing 2 -> 3 added
@@ -600,22 +683,34 @@ def main():
     # forties, and `tail[0]` is the row that tick was actually taken in (2: the
     # row is recomputed, so the tick that CROSSES into 3 is still row 2's).
     check("a late tick still moves by his line",
-          abs(tail[2] - his_line(tail[0], 50.0, tail[1])) < 150, True)
+          abs(tail[2] - his_line(tail[0], A_PW2, tail[1])) < 220, True)
 
-    # The runaway is the model's to have: TEMP_MAX is the slider's range, not a
-    # physical limit, and a console that silently capped the temperature at the
-    # top of its own widget would hide the failure it is there to show.
-    print("\n-- the runaway is not clipped to the slider --")
-    for _ in range(20):
+    # The runaway is the model's to have -- and since Phase 148 it has an END.
+    # This section used to say "the reading goes past the top of the slider",
+    # which was the way of saying the widget did not clip it.  It can no longer
+    # say that, and the reason is not a clip: the wiki's meltdown wall (39,000 F)
+    # sits BELOW the slider's own top (40,000), so the model latches and stops
+    # before the widget's range could ever hide it.  The honest replacement is a
+    # statement about WHICH limit stopped it: it reached the game's wall, it is
+    # still below the widget's top, and the panel says so.
+    print("\n-- the runaway ends at the meltdown wall, not at the slider --")
+    steps = 0
+    while steps < 400 and not console.core.melted:
         console.step_once()
+        steps += 1
     values = screen(right)
-    check("temperature past the slider top",
-          float(values["T'  next tick's temperature"]) > gui.TEMP_MAX, True)
+    check("the core ran to the meltdown wall", console.core.melted, True)
+    check("...at or past the wiki's 39,000 F",
+          console.sim.Temperature >= gui.CORE_MELTDOWN_AT, True)
+    check("...and BELOW the slider's top, so the widget is not what stopped it",
+          console.sim.Temperature < gui.TEMP_MAX, True)
     check("the reading on screen is the model's own value",
           values["T'  next tick's temperature"],
           gui.shown(console.sim.Temperature))
-    check("the box carries the number past the slider top",
-          int(console.temp_box.get()) > int(gui.TEMP_MAX), True)
+    check("the row readout says MELTDOWN where the row would be",
+          values["row  (passive index)"], "4 MELTDOWN")
+    check("...and the flag beside it", values["meltdown  core reached the wall"],
+          "YES")
     check("press x is showing the amplification on screen",
           values["press x   pMultiplier"] in ("2", "4"), True)
     # The pair that makes the new shape visible on the panel: the CURVE tile is
@@ -624,7 +719,7 @@ def main():
     # was here -- could not show that distinction, and read 874 at this point
     # under the retired per-row tables.
     check("pure_cbl on screen is the row-independent curve",
-          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "610")
+          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "787")
     check("...and the row 3 constant is the tile next to it",
           values["passive  this row's constant"], "-22")
 
@@ -639,9 +734,9 @@ def main():
           console.temp_box.get(), gui.shown(console.sim.Temperature))
 
     # --- a row held by hand -------------------------------------------------
-    # Reset first: the runaway above ran t out to 180-odd seconds and the
-    # temperature past the slider's ceiling, and the check below is about the
-    # row, not about where the run got to.
+    # Reset first: the runaway above ran t out to 180-odd seconds and latched the
+    # meltdown wall, and the check below is about the row, not about where the
+    # run got to.
     print("\n-- row held by hand --")
     console.reset()
     values = screen(right)
@@ -669,17 +764,18 @@ def main():
     check("row 0's passive is his -455.7",
           values["passive  this row's constant"], "-456")
     check("...and the curve beside it does not know the row",
-          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "610")
-    check("row 0 at a = 50, his equation",
+          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "787")
+    check("row 0 at a_eff = 73.7, his equation",
           values["T'  next tick's temperature"],
-          gui.shown(his_temperature(temp, 0, 50.0, pressure, console.core.t)))
+          gui.shown(his_temperature(temp, 0, A_PW2, pressure, console.core.t)))
     # Row 0 used to be the row where the lasers did NOTHING (its `active` line
     # was exactly 0) and the only reading it could give was its -455.7.  Under
-    # his quadratic the level works on every row, and row 0 at a = 50 HEATS:
-    # 610 - 455.7 is +154.3.  So the reading that used to be here ("negative and
-    # moving down") is now the opposite, and the only console that falls is one
-    # with every bank dark -- the "off" section below is where that lives.
-    check("...so row 0 at a = 50 heats, where it used to hold still",
+    # the quadratic the level works on every row, and row 0 at a_eff = 73.7
+    # HEATS: 787.3 - 455.7 is +331.6.  So the reading that used to be here
+    # ("negative and moving down") is now the opposite, and the only console
+    # that falls is one with every bank dark -- the "off" section below is where
+    # that lives.
+    check("...so row 0 at this a_eff heats, where it used to hold still",
           float(values["T'  next tick's temperature"]) > temp, True)
 
     # --- CBL power ----------------------------------------------------------
@@ -699,41 +795,47 @@ def main():
     console.on_auto()
     console.core_var.set(3)
     console.on_core_state()
-    # ONE bank at PW5 and the other two dark: since the correction that is a
-    # THIRD of the bank's own value, so a single laser at its maximum is
-    # a_avg = 41.67 and the top of his fit needs all three.  That is the price
-    # the correction paid, said out loud on the panel rather than hidden.
+    # ONE bank at PW5 and the other two dark.  Under the mean this was a third of
+    # the bank's own value (41.67); under the weights it is 0.756 * 125 = 94.5,
+    # so POSITION now buys more than the bank is worth and still less than the
+    # bank is worth: the first laser carries three quarters of its own power,
+    # the third carries a fifth of it.
     console.cbl_vars[0].set(125)
     for var in console.cbl_vars[1:]:
         var.set(0)
     console.on_power()
-    check("one bank at PW5 is his a_avg, a third of it",
-          console.core.power, his_a_avg(5, 0, 0))
+    check("one bank at PW5 is 0.756 * 125 = 94.5",
+          console.core.a_eff, his_a_eff(5, 0, 0))
     check("...and it is NOT the bank's own value, as it was before",
-          console.core.power == 125.0, False)
+          console.core.a_eff == 125.0, False)
     console.step_once()
     values = screen(right)
     check("row 3 held", values["row  (passive index)"], "3")
-    check("one bank at PW5: his curve at a = 125/3",
-          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"],
-          gui.shown(his_pure_cbl(his_a_avg(5, 0, 0))))
+    check("one bank at PW5: his curve at a = 94.5",
+          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "991")
     check("...and row 3's constant on the tile beside it",
           values["passive  this row's constant"],
           gui.shown(his_passive(3)))
 
-    # All three at PW5: the one control position that reaches the top of his
-    # fit, where before the correction one bank did.  The ceiling moved with the
-    # unit, and this is where the panel shows it.
+    # All three at PW5.  This is the ceiling, and it is PAST the 25..125 band the
+    # old fit was taken in -- carried, not clamped (CLAUDE.md 0.34 rules that a
+    # superseded reading is retired loudly rather than silently rescaled).  The
+    # two checks here hold both halves: the arithmetic, and the fact that the
+    # arithmetic is now extrapolating.
     for var in console.cbl_vars:
         var.set(125)
     console.on_power()
-    check("all three at PW5 reach the top of his fit, a = 125",
-          console.core.power, his_a_avg(5, 5, 5))
+    check("all three at PW5: a_eff = 1.474 * 125 = 184.25",
+          console.core.a_eff, his_a_eff(5, 5, 5))
+    check("...which is PAST the 25..125 band the fit was taken in",
+          console.core.a_eff > 125.0, True)
+    print("     (a_eff ceiling 184.25 vs fit top 125.0: %+.2f%% -- "
+          "extrapolated, carried, not clamped)"
+          % ((his_a_eff(5, 5, 5) / 125.0 - 1.0) * 100.0))
     console.step_once()
     values = screen(right)
-    check("...and row 3's curve at a = 125 is his own",
-          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"],
-          gui.shown(his_pure_cbl(125.0)))
+    check("...and row 3's curve at a = 184.25 is his own",
+          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "2380")
     check("...with row 3's constant unchanged beside it",
           values["passive  this row's constant"], "-22")
 
@@ -802,22 +904,18 @@ def main():
 
     # --- the three laser banks ----------------------------------------------
     # The game has three combustion lasers and each carries its own PW1..PW5, so
-    # the panel has three rows of radios; what the fit eats is their MEAN.  Held
-    # on row 3, whose passive is the smallest, so a check made here moves furthest
-    # if the mean is ever read as only one bank or as the sum.  (The old reason
-    # for this row -- "on row 0 `a` does nothing at all", the retired tables'
-    # active[0] being exactly 0 -- no longer describes the model: the curve is
-    # the same on every row now, which is the point of the 2026-10-16 shape.)
+    # the panel has three rows of radios; what the fit eats is their WEIGHTED sum
+    # `a_eff = 0.756 L1 + 0.522 L2 + 0.196 L3`.  Held on row 3, whose passive is
+    # the smallest, so a check made here moves furthest if the weighting is ever
+    # read as a mean, a sum, or the wrong bank.
     #
-    # PW5 / PW2 / dark on the three banks: a_avg = ((5 + 2 + 0) / 3) * 25 = 58.33.
-    # Deliberately NOT his worked example's c = 5/3/1, and for a measured reason:
-    # the mean of 5/3/1 is exactly 3, so a_avg = 75 IS the middle bank's own value
-    # and a check written there cannot tell "the mean of the three" from "bank 2"
-    # -- which is the one reading this section exists to rule out.  An asymmetric
-    # triple is the only kind that can: 58.33 is nobody's bank value, so a check
-    # that read one bank (or their sum, 175) goes red.  His own example is checked
-    # in full, at a_avg = 75, two sections down.
-    print("\n-- three banks, and their mean is his a_avg --")
+    # PW5 / PW2 / dark on the three banks: a_eff = 94.5 + 26.1 + 0 = 120.6.
+    # Deliberately an ASYMMETRIC triple, which under the old mean was needed for
+    # a different reason (the mean of 5/3/1 is exactly the middle bank, so no
+    # check there could tell "the mean" from "bank 2").  Under the weights the
+    # asymmetry is what makes three DIFFERENT readings separable: the mean gives
+    # 58.33, the sum 175, bank 1 alone 125, and the weights 120.6.
+    print("\n-- three banks, each weighted by its position --")
     console.reset()
     console.arm_var.set(True)
     console.on_arm()
@@ -830,32 +928,70 @@ def main():
     console.on_power()
     check("the three banks hold three different powers", console.core.banks,
           [125.0, 50.0, 0.0])
-    check("his `a` is their mean, not their sum", console.core.power,
-          his_a_avg(5, 2, 0))
-    check("...and it is not the sum", console.core.power == 175.0, False)
-    check("...nor any one bank", console.core.power in (125.0, 50.0, 0.0),
+    check("a_eff is the weighted sum, not the mean", console.core.a_eff,
+          his_a_eff(5, 2, 0))
+    check("...and it is not the sum", console.core.a_eff == 175.0, False)
+    check("...nor the mean", console.core.a_eff == his_a_mean(5, 2, 0), False)
+    check("...nor any one bank", console.core.a_eff in (125.0, 50.0, 0.0),
           False)
     console.step_once()
     values = screen(right)
     check("the three banks on screen", values["a1 / a2 / a3  banks"],
           "125 / 50 / 0")
-    check("the mean on screen", values["a_avg  his a, mean of the 3"], "58")
-    check("row 3 at a_avg = 58.33, his curve",
-          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"],
-          gui.shown(his_pure_cbl(his_a_avg(5, 2, 0))))
+    check("the weighted sum on screen",
+          values["a_eff  weighted sum of the 3"], "121")
+    check("row 3 at a_eff = 120.6, the wiki's curve",
+          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "1309")
     check("...and the row's constant, which is what makes it row 3's",
           values["passive  this row's constant"], "-22")
 
-    # The ceiling, checked rather than asserted in a comment.  Before the
-    # correction three maxed banks reached a = 375 -- three times past the end of
-    # his fit, where the reactor's behaviour was the line's assumption and not a
-    # measurement (QUESTIONS.md R9 (2)).  Under the mean the ceiling is 125, the
-    # top of the fitted band, and the extrapolation is gone by construction.
-    check("no control position can exceed the fitted band's top, a = 125",
-          gui.pure_cbl(his_a_avg(5, 5, 5)), his_pure_cbl(125.0))
-    print("     (the fit covers a = 25..125; under the sum, three maxed banks "
-          "read 375 -- three times past the end of it.  The correction retires "
-          "that reading -- QUESTIONS.md R9 (2))")
+    # --- the wiki's TWO examples, because one of them is not decisive ---------
+    # The wiki states the pair as the demonstration that position matters:
+    # `(100, 25, 25)` heats ~580 F/s in State 1 and `(25, 25, 100)` ~220 F/s.
+    # The whole evidence is in their DIFFERENCE, and the mean cannot produce one:
+    # it reads 50 levels for both.  But the mean DOES reproduce the second
+    # example to within ~10 F (210 vs 220) -- so a check that pinned only one of
+    # the pair would go green on the superseded formula.  Both are checked, and
+    # the difference is checked as a quantity, which is the thing that has no
+    # value at all under the mean (0.0).
+    #
+    # "~580 F/s in State 1" is `pure_cbl(a_eff) * p_mult + passive[1]` with
+    # p_mult = 1: the wiki's rate is the whole of dT at that instant, minus noise
+    # (which it does not quote), so the check is against the noise-free line.
+    print("\n-- the wiki's pair, and why one example is not evidence --")
+    first = his_a_eff(4, 1, 1)      # (100, 25, 25), State 1
+    second = his_a_eff(1, 1, 4)     # (25, 25, 100), State 1
+    line1 = his_line(1, first, his_press(8000.0))
+    line2 = his_line(1, second, his_press(8000.0))
+    check("a_eff for (100,25,25) is 93.55", first, 93.55)
+    check("a_eff for (25,25,100) is 51.55", second, 51.55)
+    check("...so the two readings are 360.66 apart",
+          round(line1 - line2, 2), 360.66)
+    print("     (first %g vs wiki '~580'; second %g vs wiki '~220')"
+          % (line1, line2))
+    check("the first example reproduces '~580 F/s'",
+          abs(line1 - 580.0) < 5.0, True)
+    # The mean, on the SAME two positions, gives one number for both: this is the
+    # falsification, and it is a measurement rather than a note.
+    mean1 = his_line(1, his_a_mean(4, 1, 1), his_press(8000.0))
+    mean2 = his_line(1, his_a_mean(1, 1, 4), his_press(8000.0))
+    check("the mean cannot separate the pair", mean1 - mean2, 0.0)
+    # It reproduces the SECOND one to within 10 F, which is exactly why a
+    # single-example checker would have passed the wrong formula.
+    check("...and it lands within 10 F of the second example",
+          abs(mean2 - line2) < 10.0, True)
+    print("     (mean reading on both positions: %g -- vs the wiki's pair "
+          "of ~580 and ~220)" % mean1)
+    # The wiki's PROSE percentages applied as shares are the other honest
+    # reading of the same page, and its own first example falsifies them.
+    pct_first = his_line(1, his_a_percent(4, 1, 1), his_press(8000.0))
+    check("the prose percentages (51.3/35.4/13.3) miss the first example",
+          abs(pct_first - 580.0) < 5.0, False)
+    print("     (51.3/35.4/13.3 -> 63.475 -> %g F/s, and they sum to 1.0 "
+          "while the coefficients sum to 1.474: the prose describes the ORDER, "
+          "the coefficients are the formula)" % pct_first)
+    check("the coefficients sum to 1.474, the percentages to 1.0",
+          (0.756 + 0.522 + 0.196, 0.513 + 0.354 + 0.133), (1.474, 1.0))
 
     # --- his own worked example ---------------------------------------------
     # The message that carried the correction ends with a worked instance:
@@ -890,18 +1026,23 @@ def main():
           values["t   elapsed since armed (s)"], "1")
     check("his example: row 1 at T = 12000",
           values["row  (passive index)"], "1")
-    check("his example: a_avg = ((5+3+1)/3)*25 = 75",
-          console.core.power, his_a_avg(5, 3, 1))
+    # Under the wiki's weights the same three positions read a_eff = 138.55,
+    # not the mean's 75 -- (5,3,1) is exactly the triple where position and
+    # magnitude disagree most in this file.
+    check("his example: a_eff = 0.756*125 + 0.522*75 + 0.196*25 = 138.55",
+          console.core.a_eff, his_a_eff(5, 3, 1))
+    check("...which is not the mean of the three positions",
+          console.core.a_eff == his_a_mean(5, 3, 1), False)
     # The heat is now TWO numbers on the panel where it used to be one: his
-    # curve at a = 75 (798.75) and row 1's own constant (-400).  Both are his
-    # literals, and the 561 this section used to read was the retired tables'
-    # 6.86*75 + 65.5 - 19.2 -- kept in the print below as a receipt.
+    # curve at a_eff = 138.55 (1568.92) and row 1's own constant (-400).  Both
+    # are his literals, and the 561 this section used to read was the retired
+    # tables' 6.86*75 + 65.5 - 19.2 -- kept in the print below as a receipt.
     check("his example: his curve on screen",
-          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "799")
+          values["pure_cbl  0.0516 a^2 + 1.1 a + 426"], "1569")
     check("...and row 1's constant beside it",
           values["passive  this row's constant"], "-400")
-    check("...and the model's own curve is his 0.0516*75^2 + 1.1*75 + 426",
-          gui.pure_cbl(his_a_avg(5, 3, 1)), 798.75)
+    check("...and the model's own curve is his 0.0516*a^2 + 1.1*a + 426",
+          gui.pure_cbl(his_a_eff(5, 3, 1)), his_pure_cbl(his_a_eff(5, 3, 1)))
     check("...and row 1's own constant is his -400",
           gui.passive(1), his_passive(1))
     check("his example: p_mult = 1 at P = 8000",
@@ -918,46 +1059,46 @@ def main():
     check("...and the model's own number is his (2+2+2)/3 * 120",
           console.core.cooling, 240.0)
     print("     (the other reading of these same pumps -- his second word, and "
-          "the one in force for part of the day -- takes off 720, and with THIS "
-          "spec's heat its tail is dT = -266.585 and T' = 11733.  Both numbers "
+          "the one in force for part of the day -- takes off 720.  Both numbers "
           "are his own arithmetic; which one the panel shows is his choice of "
           "unit and it has flipped three times.)")
-    check("his example: noise(1) = 54.665...", values["noise(t)"], "55")
+    check("his example: noise(1) = 100.985...", values["noise(t)"], "101")
     # Closed at the SCREEN layer, which is where the console makes its promise,
     # plus one bounded comparison underneath it: the two spellings of his three
     # sines are NOT bit-identical, and the reason is not the model.  See
     # check_close -- CPython's `sum()` is compensated for floats, so the panel's
     # own spelling lands 7.1e-15 away from his left-to-right `a + b + c`.
-    check("...and the model's own number is his three sines at a_avg = 75",
-          gui.shown(gui.noise(1.0, his_a_avg(5, 3, 1))), "55")
+    check("...and the model's own number is his three sines at a_eff = 138.55",
+          gui.shown(gui.noise(1.0, his_a_eff(5, 3, 1))), "101")
     check_close("...and the two spellings agree to 1e-12, not to the last bit",
-                gui.noise(1.0, his_a_avg(5, 3, 1)),
-                his_noise(1.0, his_a_avg(5, 3, 1)), 1e-12)
+                gui.noise(1.0, his_a_eff(5, 3, 1)),
+                his_noise(1.0, his_a_eff(5, 3, 1)), 1e-12)
     check("...and my transcription of those sines is the literal he wrote",
-          his_noise(1.0, his_a_avg(5, 3, 1)), 54.665213986169604)
+          his_noise(1.0, his_a_eff(5, 3, 1)), 100.98487197045065)
     # The tail, and the receipt for the old one.  Under this spec the tick is
-    # 798.75 - 400 - 240 + 54.665 = 213.415..., so T' = 12213; the retired
+    # 1568.924 - 400 - 240 + 100.985 = 1029.909..., so T' = 13030; the retired
     # tables' own line (560.8 - 240 + 54.665 = 375.465, T' = 12375) is printed
     # rather than checked, because it is not the model any more and a check on it
     # could only ever be green for the wrong reason (CLAUDE.md 0.31 (1)).
     print("     (the retired per-row line at this same instance read base_heat "
-          "561, dT 375.465, T' 12375 -- 6.86*75 + 65.5 - 19.2, against this "
-          "spec's 798.75 - 400.  The new tail is checked immediately below.)")
-    check("his example: dT = 798.75 - 400 - 240 + 54.665... = 213.415..., "
-          "shown as 213",
-          gui.shown(console.sim.Temperature - 12000.0), "213")
+          "561, dT 375.465, T' 12375 -- 6.86*75 + 65.5 - 19.2.  The mean-based "
+          "Phase-147 reading of the same instance was 798.75 - 400 - 240 + "
+          "54.665, i.e. T' 12213; both are receipts.)")
+    check("his example: dT = 1568.924 - 400 - 240 + 100.985 = 1029.909..., "
+          "shown as 1030",
+          gui.shown(console.sim.Temperature - 12000.0), "1030")
     check("his example: T' = T + dT", values["T'  next tick's temperature"],
-          "12213")
+          "13030")
     check("...and his formula, assembled independently, says the same",
           values["T'  next tick's temperature"],
-          gui.shown(his_temperature(12000.0, 1, his_a_avg(5, 3, 1), 8000.0, 1.0,
+          gui.shown(his_temperature(12000.0, 1, his_a_eff(5, 3, 1), 8000.0, 1.0,
                                     his_cooling([2, 2, 2]))))
     check("...which is his line, his two heat terms and all",
-          gui.shown(his_line(1, his_a_avg(5, 3, 1), his_press(8000.0))), "399")
+          gui.shown(his_line(1, his_a_eff(5, 3, 1), his_press(8000.0))), "1169")
     check("...and the model's own line agrees with the transcription",
-          gui.shown(gui.pure_cbl(console.core.power) * gui.press_multiplier(8000.0)
+          gui.shown(gui.pure_cbl(console.core.a_eff) * gui.press_multiplier(8000.0)
                     + gui.passive(1)),
-          gui.shown(his_line(1, console.core.power, his_press(8000.0))))
+          gui.shown(his_line(1, console.core.a_eff, his_press(8000.0))))
 
     # --- the three coolant pumps --------------------------------------------
     # The third of the game's three control means.  The CONSTANT is measured
@@ -1068,7 +1209,7 @@ def main():
     # as a small disagreement in the last digit.  Compared as SCREENED values
     # (`shown` on both sides), because the readout is a whole number and
     # comparing a rounded reading against an unrounded sum tests the rounding.
-    want = his_temperature(temp, 3, his_a_avg(3, 1, 0), pressure, console.core.t,
+    want = his_temperature(temp, 3, his_a_eff(3, 1, 0), pressure, console.core.t,
                            his_cooling([2, 3, 0]))
     check("heat and cooling in one tick, his literals",
           values["T'  next tick's temperature"], gui.shown(want))
@@ -1218,9 +1359,9 @@ def main():
     console.cbl_vars[1].set(125)
     console.cbl_vars[2].set(125)
     console.on_power()
-    check("...and for this tick a_avg is at the top of the fit",
-          console.core.power, his_a_avg(5, 5, 5))
-    tremor_now = his_noise(console.core.t, his_a_avg(5, 5, 5))
+    check("...and for this tick a_eff is at its ceiling",
+          console.core.a_eff, his_a_eff(5, 5, 5))
+    tremor_now = his_noise(console.core.t, his_a_eff(5, 5, 5))
     print("     (the tremor the OTHER reading would have added here: %r)"
           % tremor_now)
     before = console.sim.Temperature
@@ -1324,7 +1465,102 @@ def main():
           values["vent  last drop (PSI)"], "1000")
     check("...and the pressure is floored at 0", values["Pressure"], "0")
 
-    # --- the pressure recurrence, which his spec restates and this console -----
+    # --- the Emergency Vents ------------------------------------------------
+    # The wiki's two pages agree on the shape and this section checks the shape:
+    # THREE of them, each its own switch, each ~7,000 F off the core, each
+    # usable ONCE per shift, refilled only by a new shift.  What it does NOT do
+    # is touch pressure -- unlike the AVB, which is the whole difference between
+    # the two emergency devices -- and that is checked too, because "cooled the
+    # core" and "cooled the core and moved the chamber" read the same on the
+    # temperature tile alone.
+    #
+    # The drop is an EVENT, like the AVB's: -7000 once, not -7000 a tick.
+    print("\n-- E-Vents: three, -7000 each, once per shift, room only --")
+    console.reset()
+
+    def left():
+        """How many vents this shift still has -- read from the count, the one
+        place the console keeps it, rather than from a second tally."""
+        return gui.E_VENT_COUNT - console.sim.e_vent_count
+
+    check("three of them", len(console.e_vent_buttons), gui.E_VENT_COUNT)
+    check("...all ready on a new shift", left(), 3)
+    check("...and the panel says so", console.e_vent_text.get(), "all 3 ready")
+    console.sim.Temperature = 20000.0
+    before_p = console.sim.Pressure
+    dropped = console.sim.e_vent(0)
+    # The literal 7000.0, NOT `gui.E_VENT_DROP`.  Comparing the drop against
+    # the constant that produced it is the vacuous shape CLAUDE.md 0.31 (1)
+    # warns about: the mutant run showed it staying green while the constant
+    # moved to 6500, and only the temperature check beside it caught that.
+    check("one press takes the wiki's ~7000", dropped, 7000.0)
+    check("...off the temperature", console.sim.Temperature, 13000.0)
+    check("...and the pressure is untouched", console.sim.Pressure, before_p)
+    check("...and that one is spent", left(), 2)
+    check("...so a second press of the SAME vent is refused",
+          console.sim.e_vent(0), None)
+    # The other two are separate switches, not a shared pool: the wiki is
+    # explicit ("each is controlled by its own switch"), so spending #1 must
+    # leave #2 and #3 live.
+    check("the other two still work", left(), 2)
+    console.on_e_vent(1)
+    check("...vent 2 fired", left(), 1)
+    check("...and its drop landed", console.sim.Temperature, 6000.0)
+    console.on_e_vent(2)
+    check("all three spent", left(), 0)
+    check("...and the panel says so", console.e_vent_text.get(),
+          "3 of 3 used -- refilled only by Reset (a new shift)")
+    check("...with every button out of service",
+          [str(button.cget("state")) for button in console.e_vent_buttons],
+          ["disabled"] * 3)
+    check("a spent vent cannot cool a dead core",
+          console.sim.e_vent(0), None)
+    # One press is one event, not a term: the model's own tick does not add
+    # another -7000 on top of whatever the lasers are doing.
+    temp_before = console.sim.Temperature
+    console.step_once()
+    check("a tick after the last vent does not take another 7000",
+          abs(console.sim.Temperature - temp_before) < 3000, True)
+    # Floored at the model's minimum, and the REPORTED drop is what moved --
+    # the same rule as the AVB's clamp, for the same reason (a log line that
+    # claims 7000 the core never lost is a false reading).
+    console.reset()
+    console.sim.Temperature = 3000.0
+    check("from 3000 only 3000 is reported", console.sim.e_vent(0), 3000.0)
+    check("...and the core sits at the floor", console.sim.Temperature,
+          gui.TEMP_MIN)
+    # Refilled by a new shift, which is what Reset is.
+    console.reset()
+    check("Reset is the refill", left(), 3)
+
+    # --- the meltdown wall --------------------------------------------------
+    # The wiki's "State 4 (Meltdown) | >= 39,000 | game over" is a WALL, not a
+    # fourth row: `core_state` still returns 0..3 (that is what the passive
+    # table indexes) and the wall is a separate latch.  Both sides of it are
+    # checked, plus the latch's own behaviour, because "the model stopped" and
+    # "the model is still running and happened not to move" are the same reading
+    # from the outside (CLAUDE.md 0.19's family).
+    print("\n-- the meltdown wall is a latch, not a row --")
+    check("38999.9 F is not melted", gui.melted(38999.9), False)
+    check("39000 F is", gui.melted(39000.0), True)
+    check("...and the state index still stops at 3", gui.core_state(40000.0), 3)
+    console.reset()
+    console.arm_var.set(True)
+    console.on_arm()
+    console.sim.Temperature = 38999.0
+    console.step_once()
+    check("a tick from 38,999 did not latch", console.core.melted, False)
+    console.sim.Temperature = 39500.0
+    console.step_once()
+    check("a tick from 39,500 DID latch", console.core.melted, True)
+    frozen_t = console.sim.Temperature
+    console.step_once()
+    check("...and the model now refuses to step", console.sim.Temperature,
+          frozen_t)
+    check("...so the latch is what stopped it, not the arithmetic",
+          console.core.melted, True)
+    console.reset()
+    check("Reset rearms it", console.core.melted, False)
     # --- has always run -------------------------------------------------------
     #     fan_pressure_drop = fans * 60
     #     dP = p_base[s] + (T * p_temp_mult[s]) - fan_pressure_drop

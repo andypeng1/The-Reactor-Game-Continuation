@@ -379,3 +379,9 @@ _tools/_attic/scratch/mk4_mutants/**/*.fbx
 _tools/_attic/scratch/mk4_mutants/**/*.glb
 _tools/_attic/scratch/mk4_det_*.fbx
 _tools/_attic/scratch/mk4_det_*.glb
+
+# Phase 148, 2026-10-24: verbatim snapshots of fandom wiki pages, kept local as
+# the source for a model change. The quotes that matter are in docs/ with the
+# page named; republishing whole pages in a public repo is a different thing.
+_tools/_attic/scratch/wiki_*.txt
+_tools/_attic/scratch/temperature_wiki.txt

@@ -138,7 +138,7 @@ def luau_number(value):
 # THE HEAT IS ONE CURVE IN `a` FOR EVERY ROW as of the 2026-10-16 spec, and the
 # row supplies only the passive addend:
 #
-#     pure_cbl = {a_avg <= 0: 0, 0.0516 * a_avg^2 + 1.1 * a_avg + 426}
+#     pure_cbl = {a_eff <= 0: 0, 0.0516 * a_eff^2 + 1.1 * a_eff + 426}
 #     passive  = [-455.7, -400, -422, -22]
 #
 # What that replaced was a LINE PER ROW, `active[row] = (slope, intercept)`,
@@ -182,11 +182,12 @@ def luau_number(value):
 PASSIVE_ROW = (-455.7, -400.0, -422.0, -22.0)   # his `passive`, one per row
 # His quadratic, as (a^2, a, constant) rather than multiplied out, so the three
 # literals in the spec are the three literals in the file and a reader can check
-# them against it without doing arithmetic.  `a` is `a_avg` in his own units --
-# `(level / 3) * 25`, the mean of the three banks.
+# them against it without doing arithmetic.  `a` is `a_eff` from the wiki's
+# Temperature page -- `0.756 L1 + 0.522 L2 + 0.196 L3`, NOT a mean (Phase 148;
+# the block below carries the two examples that identify it).
 CBL_CURVE = (0.0516, 1.1, 426.0)
 
-CBL_UNIT = 25.0            # one CBL level, his `a = level * 25`
+CBL_UNIT = 25.0            # one CBL level; only `noise` divides by it now
 CBL_START = 50.0           # PW2: the level the console starts on
 
 # THE THREE LASERS.  The game has three combustion lasers and each one carries
@@ -194,22 +195,40 @@ CBL_START = 50.0           # PW2: the level the console starts on
 # telemetry log actually contains), so "the CBL level" is three controls, not
 # one.
 #
-# What the fit consumes is their AVERAGE -- the operator's correction of
-# 2026-10-16, `a_avg = ((c1 + c2 + c3) / 3) * 25`.  Until that message it was
-# their SUM, which is what the original does (Engine.luau:261-264 adds
-# `heat += level` once per active laser before multiplying the total by
-# CBLHeat, and the shipped logger's own candidate model writes `sumCBL * 65` off
-# the three per-laser PowerLabels); the correction moves this console onto the
-# average instead, and `Core.power` is the one place that is spelled.
+# WHAT THEY COMBINE TO, FOURTH AND CURRENT READING (Phase 148, 2026-10-24).
+# The TRG wiki's Temperature page is explicit and the earlier readings were not:
 #
-# What the correction bought, said out loud because it CLOSES an open question
-# rather than because it is tidy: `a_avg` spans 0..125 -- ONE laser's worth,
-# which is exactly the band his fit was taken over (levels 1..5, a = 25..125).
-# Under the sum, three maxed banks reached a = 375, three times past the end of
-# the line, and where the reactor sits out there was the fit's assumption and
-# not a measurement.  That reading is retired with the correction (QUESTIONS.md
-# R9 (2)).  The price is on the other side of the same coin: the top of the fit
-# now needs all THREE banks at PW5, and one bank alone reaches a_avg = 41.7.
+#   "The engine does NOT use a simple average; instead, it applies a hidden
+#    positional weight to each laser."
+#   a_eff = 0.756 * L1 + 0.522 * L2 + 0.196 * L3
+#
+# so bank 1 dominates, bank 3 barely counts, and the three coefficients do NOT
+# sum to 1 (they sum to 1.474).  This is neither the sum Phase 136 wrote nor the
+# mean the operator asked for on 2026-10-16 and again on 2026-10-16; it is a
+# weighted combination and `Core.a_eff` is the one place it is spelled.
+#
+# The weights are not decoration: the same page works two examples, and the pair
+# is what identifies them.  (100, 25, 25) -> a_eff 93.55 -> ~580 F/s in State 1,
+# and (25, 25, 100) -> a_eff 51.55 -> ~220 F/s.  The MEAN gives 50 for both, so
+# the pair separates the two readings; each example alone would not (the mean
+# reproduces the second one to within 10 degrees for the wrong reason -- CLAUDE.md
+# 0.31 (1), a check that passes because the thing under test is absent).
+#
+# TWO RECORDED TENSIONS, neither smoothed over:
+#
+#   * the page's own PROSE percentages are 51.3 / 35.4 / 13.3 (they sum to 1.0)
+#     while its own COEFFICIENTS are 0.756 / 0.522 / 0.196 (they sum to 1.474).
+#     They are different quantities -- the percentages are shares of the total,
+#     the coefficients are the multipliers -- and the arithmetic in the two
+#     worked examples uses the coefficients.  A reading that normalised them to
+#     shares would give a_eff = 63.475 on (100,25,25), i.e. ~304 F/s, and does
+#     not reproduce 580.  core_model_check.py asserts that falsification.
+#   * a_eff now spans 0..184.25 (all three at PW5), past the 25..125 band the
+#     operator's fit was taken over.  This reopens, on the high side, the class
+#     of question QUESTIONS.md R9 (2) closed on the low side; it is written down
+#     and carried, not clamped, because clamping would invent a number the wiki
+#     does not contain.
+CBL_WEIGHTS = (0.756, 0.522, 0.196)     # a_eff = w1*L1 + w2*L2 + w3*L3
 CBL_BANKS = 3
 
 # ========== THE COOLANT PUMPS (Isotope E) ==========
@@ -367,9 +386,9 @@ COOLANT_LEVELS = ((0, "off"), (1, "1"), (2, "2"), (3, "3"))
 # sliders rather than from the wall he describes.
 PRESS_AMP = ((11500.0, 1.0), (27000.0, 2.0))    # else 4.0
 
-# (amplitude per CBL level, period).  His amplitudes, scaled by `a_avg / 25` --
+# (amplitude per CBL level, period).  His amplitudes, scaled by `a_eff / 25` --
 # the MEAN of the three banks, since the 2026-10-16 correction, which is his own
-# `15 * (a_avg / 25) * sin(t / 1.5)` written out; the 2026-10-13 version had
+# `15 * (a_eff / 25) * sin(t / 1.5)` written out; the 2026-10-13 version had
 # these as flat 40/25/15 with no level term at all.
 NOISE_TERMS = ((15.0, 1.5), (10.0, 0.7), (5.0, 0.3))
 
@@ -401,7 +420,7 @@ CORE_ROW_3_AT = 29500      # <  is row 2; >= is row 3
 # "off" is ours: the original has no off, and the spec's fit covers levels 1..5
 # only.  Without a zero the model could never be told to stop, so off is defined
 # as "add nothing" rather than by extrapolating the fit down to a = 0.  That
-# rule now lives inside `pure_cbl`, as the spec spells it (`a_avg <= 0: 0`),
+# rule now lives inside `pure_cbl`, as the spec spells it (`a_eff <= 0: 0`),
 # which is also why a dark console can still lose heat at its row's rate: the
 # gate is on the lasers' term and not on the row's.
 CBL_LEVELS = ((0, "off"), (25, "PW1"), (50, "PW2"), (75, "PW3"),
@@ -500,6 +519,47 @@ AVB_COOLDOWN_TICKS = 15
 # from 5501 does not).
 AVB_NO_COOL_ABOVE = AVB_STALLOUT_PSI + AVB_PSI_DROP          # 5500
 
+# ========== THE E-VENTS (Emergency Ventilators) ==========
+# NOT the AVB above, and the difference cost a check to settle: the AVB lowers
+# PRESSURE and cools only by inducing a stall; the E-Vents lower TEMPERATURE
+# directly and do not touch pressure.  The wiki has two pages on them and they
+# agree on every number this console needs:
+#
+#   "There are a total of 3 E-Vents."
+#   "Each is controlled by its own switch on the Main Reactor Console."
+#   "When one of the E-Vents is activated, $90.000 is subtracted from your
+#    A.E.R.N. Report"
+#   "E-Vents are only refilled after each shift."
+#   "cool down the core by approximately 7000 degrees"
+#
+# So: three buttons, each usable ONCE per shift, each ~7000 F, no cooldown
+# (the one-shot refill is the whole restriction -- no page mentions a timer,
+# and inventing one would be inventing a device).  `Reset` is this console's
+# new shift, so it refills them, exactly as a shift boundary does in the game.
+# The money is reported, not modelled: this console has no economy.
+E_VENT_COUNT = 3
+E_VENT_DROP = 7000.0       # one activation, one-shot -- not per tick
+
+# ========== MELTDOWN ==========
+# The wiki's Temperature page ends its state table at
+#   "State 4 (Meltdown) | >= 39,000 | - | Core meltdown, game over"
+# and its Core States page says the same number with a caveat worth keeping:
+#   "'State 4/METU Deployment' - 39,000F + (Not a state mentioned in the game,
+#    thus the quotes.)"
+# i.e. 39,000 is a threshold the COMMUNITY uses; the game itself does not print
+# "State 4".  The console keeps `core_state()` at rows 0..3 (the operator's own
+# `s` has exactly four entries and 39,000 is not one of its branches), and
+# carries the crossing as a separate LATCH instead of a fifth row: a row would
+# need a passive value nobody has written down, and the wiki says the
+# temperature stops mattering at that point ("Power generation, temperature,
+# and any other variable values are considered unimportant").
+CORE_MELTDOWN_AT = 39000.0
+
+
+def melted(temperature):
+    """The wiki's `>= 39,000`: the core has melted down."""
+    return temperature >= CORE_MELTDOWN_AT
+
 
 def stalled(pressure):
     """His rule's gate, written once so the panel and the model cannot
@@ -534,32 +594,32 @@ def core_state(temperature):
     return 3
 
 
-def pure_cbl(power):
+def pure_cbl(a_eff):
     """His `pure_cbl`: the lasers' own heating, `0.0516 a^2 + 1.1 a + 426`.
 
-    A quadratic in `a_avg` -- the mean of the three banks, in his own units --
+    A quadratic in `a_eff`, the wiki's weighted combination of the three banks,
     and THE ROW IS NOT IN IT.  Until the 2026-10-16 spec this term was one line
     per row (`active[row]`), so "which row" changed the slope of the heating as
     well as the offset; now it changes only the offset (`passive` below).
 
     The zero gate is in here, under the spec's own first branch
-    (`a_avg <= 0: 0`).  It is this file's rule rather than a fit: his line is
+    (`a_eff <= 0: 0`).  It is this file's rule rather than a fit: his line is
     fitted over levels 1..5 and off is a position the original does not have, so
     rather than extrapolate down to a = 0 a dark console adds nothing at all.
     Being inside the curve rather than beside it is visible on the panel -- the
     tile reads 0, not 426 -- and it is the only reason the passive term can sit
     outside it and still leave a dark console cooling rather than heating.
 
-    `power ** 2`, not `power * power`: the two differ in the last bit for about
+    `a_eff ** 2`, not `a_eff * a_eff`: the two differ in the last bit for about
     0.2% of inputs (measured, and it is the same family as Python's `sum()` being
-    a compensated sum, CLAUDE.md 0.33 (1)).  His literal is `a_avg^2`, which is
+    a compensated sum, CLAUDE.md 0.33 (1)).  His literal is `a_eff^2`, which is
     `pow(a, 2)` in any language, so `**` is the spelling that matches it -- and
     the checker spells his formula with the same operator for the same reason.
     """
-    if power <= 0.0:
+    if a_eff <= 0.0:
         return 0.0
     square, linear, constant = CBL_CURVE
-    return square * power ** 2 + linear * power + constant
+    return square * a_eff ** 2 + linear * a_eff + constant
 
 
 def passive(row):
@@ -587,23 +647,59 @@ def press_multiplier(pressure):
     return 4.0
 
 
-def noise(x, power):
+PRESS_COLOURS = {"normal": "#202020", "high": "#8a5a00", "extreme": "#a00000"}
+
+
+def press_band(pressure):
+    """Which of the wiki's three bands the chamber is in: "normal", "high" or
+    "extreme".
+
+    Derived from PRESS_AMP rather than from a second copy of 11500 and 27000 --
+    one source, so the colour on the panel cannot disagree with the multiplier
+    the model used.  The wiki's table overlaps at exactly 27000 ("11500-27000"
+    and ">= 27000"); this follows `press_multiplier`'s `<=`, which is the same
+    reading the spec's `{P <= 27000: 2, 4}` takes, so 27000 is still HIGH.
+    """
+    for limit, factor in PRESS_AMP:
+        if pressure <= limit:
+            return "normal" if factor == 1.0 else "high"
+    return "extreme"
+
+
+def press_band_text(pressure):
+    """The band, with the boundary it is under, for a readout value.
+
+    The boundary is in the VALUE and not in the label: readouts are addressed by
+    prefix, and a number in the address is a number a mutation can move out from
+    under a checker (DECISIONS_2 583).
+    """
+    for limit, _factor in PRESS_AMP:
+        if pressure <= limit:
+            return "%s  (<= %g)" % (press_band(pressure), limit)
+    return "%s  (> %g)" % (press_band(pressure), PRESS_AMP[-1][0])
+
+
+def noise(x, a_eff):
     """His `noise(t)`: three sines instead of a random number, amplitude scaled
-    by `a_avg / 25` -- the mean of the three banks, his own spelling
-    (`15 * (a_avg / 25) * sin(t / 1.5)`).
+    by `a_eff / 25` -- the wiki's own spelling
+    (`15 * (a_eff / 25) * sin(t / 1.5)`).
+
+    `a_eff / 25` is no longer a "level": with the positional weights a_eff is a
+    weighted sum, so all three banks at PW5 put this factor at 7.37 rather than
+    at 5.  That is what the formula says and it is carried as written.
 
     Deliberately reproducible -- the same t has to give the same temperature, or
     there is nothing to compare a rerun against.  Unlike the 2026-10-13 version
     this is added to the READING, not multiplied into a rate, so its amplitude
-    is what it says it is: +-15 degrees a term at level 2, not +-15 degrees per
-    second.
+    is what it says it is: +-15 degrees a term at one laser's worth, not +-15
+    degrees per second.
     """
-    level = power / CBL_UNIT
+    level = a_eff / CBL_UNIT
     return sum(amplitude * level * math.sin(x / period)
                for amplitude, period in NOISE_TERMS)
 
 
-def step_terms(row, power, pressure, t, coolant=0.0):
+def step_terms(row, a_eff, pressure, t, coolant=0.0):
     """What one tick adds, before it is added: (pure_cbl, passive, press, heat,
     noise, stall, cooling).
 
@@ -654,12 +750,14 @@ def step_terms(row, power, pressure, t, coolant=0.0):
         # tick there was no heat term, so the panel must not show one.
         return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, 0.0
     # The "off is ours" gate is inside `pure_cbl` now (it used to be the ternary
-    # that built `actual` here), and `a_avg` is zero when and only when all three
-    # banks are, since every bank is a level and no level is negative.  The
-    # PUMPS are not under that gate, nor under the row's: a dark laser bank is no
-    # reason for a pump to stop pumping (the constants block above has the
-    # placement argument, and what the log can and cannot say about it).
-    heat = pure_cbl(power)
+    # that built `actual` here), and `a_eff` is zero when and only when all three
+    # banks are, since every bank is a level and no level is negative -- the
+    # weights are all positive, so a weighted sum of non-negative terms is zero
+    # only at all-zero.  The PUMPS are not under that gate, nor under the row's:
+    # a dark laser bank is no reason for a pump to stop pumping (the constants
+    # block above has the placement argument, and what the log can and cannot say
+    # about it).
+    heat = pure_cbl(a_eff)
     # `p_mult` multiplies the ACTIVE heating only.  His note on that line says
     # so ("only multiplies the active heating"), and the placement is visible
     # twice: a high press band does not amplify a row's passive loss, and a dark
@@ -668,8 +766,8 @@ def step_terms(row, power, pressure, t, coolant=0.0):
     active = heat * amp
     # The tremor is the operator's own term and it rides on the READING (that
     # was the point of the 2026-10-14 revision).  It goes quiet by itself when
-    # every bank is dark, because its amplitude is scaled by `a_avg / 25`.
-    return heat, passive(row), amp, active, noise(t, power), False, coolant
+    # every bank is dark, because its amplitude is scaled by `a_eff / 25`.
+    return heat, passive(row), amp, active, noise(t, a_eff), False, coolant
 
 
 class Sim:
@@ -693,6 +791,13 @@ class Sim:
         self.vent_ticks = 0        # ticks of cooldown still to run
         self.vent_count = 0        # how many presses have landed
         self.last_vent_drop = 0.0  # what the last one actually took off
+        # The three E-VENTS, separately from the AVB above.  One-shot each,
+        # refilled by reset() -- which is this console's shift boundary, the
+        # only thing the wiki says refills them.  `e_vent_count` is kept beside
+        # the flags so a panel can say "1 of 3 used" without counting a list.
+        self.e_vent_used = [False] * E_VENT_COUNT
+        self.e_vent_count = 0
+        self.last_e_vent_drop = 0.0
 
     @property
     def elapsed(self):
@@ -741,6 +846,32 @@ class Sim:
         self.last_vent_drop = before - self.Pressure
         return self.last_vent_drop
 
+    def can_e_vent(self, index):
+        return 0 <= index < E_VENT_COUNT and not self.e_vent_used[index]
+
+    def e_vent(self, index):
+        """Fire E-Vent `index`.  Returns the degrees Fahrenheit actually removed
+        -- floored at TEMP_MIN -- or None when that vent is already spent.
+
+        The clamp is the same discipline as `vent()`'s pressure floor: from
+        3,000 F a "7000 degree" activation cannot remove 7000, and a log line
+        must not claim a drop the core never felt.  The wiki says
+        "approximately 7000", so the exact number is this constant and the
+        approximation is the wiki's word for it.
+
+        Applied HERE rather than in Core.step because it is a button, not a
+        term: it happens between ticks, it happens once, and a per-tick term
+        would turn 7000 into 7000 a tick.
+        """
+        if not self.can_e_vent(index):
+            return None
+        before = self.Temperature
+        self.Temperature = max(TEMP_MIN, before - E_VENT_DROP)
+        self.e_vent_used[index] = True
+        self.e_vent_count += 1
+        self.last_e_vent_drop = before - self.Temperature
+        return self.last_e_vent_drop
+
     def tick(self):
         # Latched, not derived: the original's if/elseif chain has no `else`,
         # so a Temperature below 5600 leaves the previous State standing.
@@ -766,10 +897,11 @@ class Sim:
 class Core:
     """The operator's temperature model, driving Sim.Temperature.
 
-    His equation, literally (2026-10-16, second revision that day):
+    His equation, literally (2026-10-16, second revision that day), with the
+    input line replaced on 2026-10-24 by the wiki's own (Phase 148):
 
-        a_avg       = ((c1 + c2 + c3) / 3) * 25
-        pure_cbl    = {a_avg <= 0: 0, 0.0516*a_avg^2 + 1.1*a_avg + 426}
+        a_eff       = 0.756*c1 + 0.522*c2 + 0.196*c3   (was ((c1+c2+c3)/3)*25)
+        pure_cbl    = {a_eff <= 0: 0, 0.0516*a_eff^2 + 1.1*a_eff + 426}
         passive     = [-455.7, -400, -422, -22]         indexed by `s`
         coolant     = ((p1 + p2 + p3) / 3) * 120
         dT = {P <= 2200: -586,
@@ -840,6 +972,11 @@ class Core:
         the top of the fit went with it: `a = 375` is unreachable by construction
         now, its ceiling is 125 = all three at PW5.  That dissolves the
         extrapolation R9 (2) was carrying rather than answering it.
+        PHASE 148 REPLACED THE MEAN with the wiki's positional weights, and that
+        ceiling goes back up: `a_eff` reaches 184.25 with all three at PW5, past
+        the 25..125 band the fit covers.  The extrapolation R9 (2) retired is
+        therefore open again at the top, and it is carried rather than clamped
+        (constants block above).
       * the pumps were averaged in the same message -- then not, then averaged
         again, so `120 x (p1 + p2 + p3) / 3` is where they ended: 360 for three
         maxed pumps.  The three moves are in the constants block above with
@@ -872,12 +1009,13 @@ class Core:
         self.auto = True
         # Three banks, each 0..125 in steps of 25.  The control POSITION is where
         # it always was -- PW2 on the first bank, the other two dark -- and since
-        # the 2026-10-16 correction that position is a_avg = 50/3, not 50: the
-        # mean of the level triple (2, 0, 0) is two thirds of a level.  So the
-        # panel's opening READING did move, and it moved because the spec did.
-        # The default is deliberately not moved to defend the old number --
-        # a control position chosen to make a readout come out right is the same
-        # mistake as a ruler chosen to make a measurement come out right.
+        # Phase 148 that position reads a_eff = 0.756 * 50 = 37.8, because the
+        # first bank is the heavy one.  (Under the mean it read 50/3 = 16.67.)
+        # The panel's opening READING has moved with every reading of the input
+        # line and it keeps moving; the default is deliberately not moved to
+        # defend the old number -- a control position chosen to make a readout
+        # come out right is the same mistake as a ruler chosen to make a
+        # measurement come out right.
         self.banks = [CBL_START] + [0.0] * (CBL_BANKS - 1)
         # Three coolant pumps, each 0..3, all off at start -- which is where the
         # game starts them and where this console started before they existed,
@@ -885,28 +1023,40 @@ class Core:
         self.pumps = [0] * COOLANT_PUMPS
         self.state = 0            # the row held by hand, when auto is off
         self.t = 0.0              # his t: seconds elapsed since armed
+        # The wiki's >= 39,000 latch.  A LATCH and not a row: see
+        # CORE_MELTDOWN_AT -- the row table stops at 3 and the wiki says the
+        # temperature stops mattering past this point.  Cleared by rearm().
+        self.melted = False
         self.reset_trace()
 
     @property
-    def power(self):
-        """His `a_avg`: the MEAN of the three banks, in his currency.
+    def a_eff(self):
+        """The wiki's `a_eff`: the three banks under their positional weights.
 
-        Was the sum until 2026-10-16, when the same message that reworked the
-        pumps wrote `a_avg = ((c_1 + c_2 + c_3) / 3) * 25`.  The mean is taken
-        in LEVELS (`c_i` is a level 0..5, `x 25` is what makes it degrees), so
-        this divides the bank VALUES by `CBL_UNIT` first -- every level is a
-        whole number and 25 is exactly representable, so that is exact and the
-        result is bit-for-bit his arithmetic rather than merely close to it.
-        Adding the three values and dividing by 75 would reach the same number
-        for most inputs and differ in the last bit for some; a checker that
-        spells his formula out independently cannot afford to be the judge of
-        its own rounding (DECISIONS_2 528's neighbour).
+            a_eff = 0.756 * L1 + 0.522 * L2 + 0.196 * L3
 
-        A property rather than a stored number, because a stored mean is a
+        `L1..L3` are the bank VALUES (0, 25, 50, 75, 100, 125) -- the wiki says
+        "the power values of CBL 1, 2, and 3: 25, 50, 75, 100, or 125", so the
+        coefficients multiply the values directly and no /25 rescaled "level" is
+        introduced.  Summed LITERALLY, left to right, in the wiki's own order:
+
+        `sum()` is a compensated (Neumaier) sum in CPython 3.12+ and gives a
+        last-bit different answer from `w1*c1 + w2*c2 + w3*c3` (CLAUDE.md 0.33
+        (1), measured at 7.1e-15 on the retired mean).  The checker spells the
+        same expression independently with the same operators, so both sides
+        round the same way and the comparison stays exact.
+
+        A property rather than a stored number, because a stored a_eff is a
         second copy of something the banks already say and the two could drift.
         Every reader -- `pure_cbl`, `noise`, the readouts -- asks for it.
+
+        FOURTH READING of this one line: sum (Phase 136), mean (operator,
+        2026-10-16), sum (operator, 2026-10-16), mean (operator, 2026-10-16),
+        and now the wiki's weights from its own Temperature page.  The earlier
+        spellings are mutants in core_model_mutants.py rather than history.
         """
-        return (sum(bank / CBL_UNIT for bank in self.banks) / CBL_BANKS) * CBL_UNIT
+        w1, w2, w3 = CBL_WEIGHTS
+        return w1 * self.banks[0] + w2 * self.banks[1] + w3 * self.banks[2]
 
     def set_bank(self, index, value):
         self.banks[index] = float(value)
@@ -974,6 +1124,7 @@ class Core:
         anything below reads it.
         """
         self.t = 0.0
+        self.melted = False
         self.reset_trace()
 
     def row(self, sim):
@@ -993,6 +1144,15 @@ class Core:
         """
         if not self.armed:
             return None
+        # The meltdown latch, BEFORE the step: once the core is past 39,000 the
+        # wiki says "temperature ... considered unimportant", so the console
+        # stops moving the number rather than modelling a state whose passive
+        # rate nobody has published.  The CROSSING tick still reports its
+        # temperature -- the reading that melted it is the last honest one --
+        # and every tick after returns None, which is the same "no step" the
+        # console already uses for an unarmed model.
+        if self.melted:
+            return None
         self.t += sim.period
         row = self.row(sim)
         # `sim.Pressure` here is the tick's own STARTING pressure, because this
@@ -1003,7 +1163,7 @@ class Core:
         # re-checks its own tile with it; mixing the two instants is how a
         # screen stops adding up (CLAUDE.md 0.27, second face).
         heat, passiv, amp, actual, tremor, stall, cooling = step_terms(
-            row, self.power, sim.Pressure, self.t, self.cooling)
+            row, self.a_eff, sim.Pressure, self.t, self.cooling)
         # Four terms by name rather than one sum: `passive` is a row constant and
         # `actual` is the lasers' heat after the band, and a reader has to be
         # able to see which of them moved (the panel shows all four).
@@ -1019,6 +1179,8 @@ class Core:
         self.last_temperature = temperature
         self.last_pressure = sim.Pressure
         self.last_stall = stall
+        if melted(temperature):
+            self.melted = True
         return temperature
 
 
@@ -1041,6 +1203,18 @@ class Console:
         self.sim = Sim()
         self.core = Core()
         self.readouts = []          # [(StringVar, callable)]
+        self.readout_widgets = {}   # label -> ttk.Label, for look-as-reading
+
+        # The wiki's three pressure bands, as colour.  A LIGHT theme, so
+        # "normal" is the theme's own ink rather than white (the wiki's "white
+        # pressure" describes the GAME's dark screen, and copying that word here
+        # would paint an invisible number on a white panel -- CLAUDE.md 0.32's
+        # lesson about copying the sentence instead of the thing).  High and
+        # extreme are dark amber and dark red: legible on white, and ordered by
+        # weight the way the bands are.
+        self._style = ttk.Style(root)
+        for band, colour in PRESS_COLOURS.items():
+            self._style.configure("Press_%s.TLabel" % band, foreground=colour)
         self.running = True
         self._after = None
 
@@ -1069,6 +1243,8 @@ class Console:
         # taken out of service while it runs.
         self.vent_button = None
         self.vent_text = tk.StringVar()
+        self.e_vent_buttons = []
+        self.e_vent_text = tk.StringVar()
 
         # The two temperature widgets are held so the model can take them out of
         # service while it is armed -- see _sync_core_widgets.
@@ -1152,6 +1328,24 @@ class Console:
                   % (AVB_STALLOUT_PSI, AVB_NO_COOL_ABOVE),
                   font=self.MONO).pack(side="left", padx=(10, 0))
 
+        # THE E-VENTS.  A different device from the AVB above: they take 7,000 F
+        # off the core directly and touch no pressure, there are three of them,
+        # and each is spent once per shift -- so a "used" state has to be
+        # VISIBLE, not just a disabled widget (CLAUDE.md 0.19's family again:
+        # "spent" and "broken" would otherwise look the same).
+        ev = ttk.LabelFrame(parent, text="E-Vents (emergency coolant)",
+                            padding=6)
+        ev.pack(fill="x", pady=4)
+        self.e_vent_buttons = []
+        for index in range(E_VENT_COUNT):
+            button = ttk.Button(
+                ev, text="E-VENT %d  -%g F" % (index + 1, E_VENT_DROP),
+                command=lambda i=index: self.on_e_vent(i))
+            button.pack(side="left", padx=(0, 4))
+            self.e_vent_buttons.append(button)
+        ttk.Label(ev, textvariable=self.e_vent_text, font=self.MONO,
+                  ).pack(side="left", padx=(8, 0))
+
         temp = ttk.LabelFrame(parent, text="Temperature", padding=6)
         temp.pack(fill="x", pady=4)
         # A slider cannot step by 1: ttk::scale has no -resolution (that is the
@@ -1217,9 +1411,12 @@ class Console:
         #
         # ONE ROW PER LASER.  The game has three and each carries its own
         # PW1..PW5, so a single "CBL" row would be a control the reactor does not
-        # have.  The model consumes their MEAN -- see CBL_BANKS -- but the mean
-        # is something the panel computes rather than something it assumes.
-        power = ttk.LabelFrame(core, text="CBL banks (a = the mean)", padding=6)
+        # have.  The model consumes their WEIGHTED sum -- see CBL_WEIGHTS -- and
+        # since Phase 148 the panel computes that rather than assuming the banks
+        # are interchangeable.
+        power = ttk.LabelFrame(
+            core, text="CBL banks (a = 0.756 L1 + 0.522 L2 + 0.196 L3)",
+            padding=6)
         power.pack(fill="x", pady=(4, 0))
         for index, var in enumerate(self.cbl_vars):
             line = ttk.Frame(power)
@@ -1285,10 +1482,15 @@ class Console:
     def add_readout(self, parent, row, label, getter, big=False):
         ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w", pady=1)
         var = tk.StringVar()
-        ttk.Label(parent, textvariable=var, anchor="e",
-                  font=self.MONO_BIG if big else self.MONO,
-                  ).grid(row=row, column=1, sticky="e", padx=(12, 0))
+        widget = ttk.Label(parent, textvariable=var, anchor="e",
+                           font=self.MONO_BIG if big else self.MONO)
+        widget.grid(row=row, column=1, sticky="e", padx=(12, 0))
         self.readouts.append((var, getter))
+        # Kept by label so a readout whose LOOK is part of its reading can be
+        # restyled in _refresh -- the pressure band is the first one (its colour
+        # is the wiki's own three-band table, and a number alone would make the
+        # operator read the bands off a table instead of off the panel).
+        self.readout_widgets[label] = widget
         return row + 1
 
     def _build_readouts(self, parent):
@@ -1330,6 +1532,20 @@ class Console:
         row = self.add_readout(parent, row, "vent  last drop (PSI)",
                                lambda: "-" if not self.sim.vent_count
                                else shown(self.sim.last_vent_drop))
+        # The E-VENTS, on the same discipline as the AVB: a count that says how
+        # many are left, and a dash until one has fired so a 0 cannot be read as
+        # "it did nothing".  The label carries no constant -- a number in the
+        # label is a number in the ADDRESS, which is how a mutant once crashed a
+        # checker instead of reddening it (DECISIONS_2 583).
+        row = self.add_readout(parent, row, "e-vents  left of 3 this shift",
+                               lambda: "%d of %d" % (
+                                   E_VENT_COUNT - self.sim.e_vent_count,
+                                   E_VENT_COUNT))
+        row = self.add_readout(parent, row, "e-vent  last drop (F)",
+                               lambda: "-" if not self.sim.e_vent_count
+                               else shown(self.sim.last_e_vent_drop))
+        row = self.add_readout(parent, row, "press band",
+                               lambda: press_band_text(self.sim.Pressure))
 
         ttk.Separator(parent, orient="horizontal",
                       ).grid(row=row, column=0, columnspan=2, sticky="ew",
@@ -1364,15 +1580,15 @@ class Console:
         # is off, so nothing here can show a step that did not happen.
         row = self.add_readout(parent, row, "T   this step starts from",
                                lambda: shown(self.sim.Temperature))
-        # The three banks, and the mean the fit actually consumes.  `a_avg` is
-        # read live rather than off the trace because it is a control position,
-        # not a term of the step -- and because a control that has been moved
-        # clears the trace anyway (see _line_changed).
+        # The three banks, and the weighted a_eff the fit actually consumes.
+        # `a_eff` is read live rather than off the trace because it is a control
+        # position, not a term of the step -- and because a control that has been
+        # moved clears the trace anyway (see _line_changed).
         row = self.add_readout(parent, row, "a1 / a2 / a3  banks",
                                lambda: " / ".join(shown(bank)
                                                   for bank in self.core.banks))
-        row = self.add_readout(parent, row, "a_avg  his a, mean of the 3",
-                               lambda: shown(self.core.power))
+        row = self.add_readout(parent, row, "a_eff  weighted sum of the 3",
+                               lambda: shown(self.core.a_eff))
         # The pumps, read live like the banks: a control position, not a term of
         # the step -- and the step's own cooling is below, where a stale value
         # has somewhere to hide (it is cleared by _line_changed like the rest).
@@ -1390,8 +1606,14 @@ class Console:
         row = self.add_readout(parent, row, "t   elapsed since armed (s)",
                                lambda: luau_number(self.core.t))
         row = self.add_readout(parent, row, "row  (passive index)",
-                               lambda: "-" if self.core.last_row is None
-                               else str(self.core.last_row))
+                               lambda: "4 MELTDOWN" if self.core.melted
+                               else ("-" if self.core.last_row is None
+                                     else str(self.core.last_row)))
+        # The wiki's >= 39,000.  A latch with its own tile rather than a fifth
+        # row, because a row would need a passive constant nobody has published
+        # (CORE_MELTDOWN_AT).  Once set, the model stops stepping.
+        row = self.add_readout(parent, row, "meltdown  core reached the wall",
+                               lambda: "YES" if self.core.melted else "no")
         # The two halves of the heat, as separate tiles on purpose: `pure_cbl` is
         # a curve in `a` that does not know the row, `passive` is a constant that
         # does nothing else, and a single summed "baseFluc" row would have hidden
@@ -1480,16 +1702,15 @@ class Console:
 
         All three are read back, not just the one that fired: the command is
         bound once per button and a single callback cannot tell which one called
-        it, and reading all three is what makes the mean the panel's own number
+        it, and reading all three is what makes `a_eff` the panel's own number
         instead of a guess at it.
         """
         for index, var in enumerate(self.cbl_vars):
             self.core.set_bank(index, var.get())
         self._line_changed()
-        self.on_input("CBL banks = %s  (a_avg = %g; mean level %s)"
+        self.on_input("CBL banks = %s  (a_eff = %g)"
                       % (" / ".join(shown(bank) for bank in self.core.banks),
-                         self.core.power,
-                         luau_number(self.core.power / CBL_UNIT)))
+                         self.core.a_eff))
 
     def on_coolant(self):
         """One of the pump radios moved.
@@ -1534,6 +1755,36 @@ class Console:
         self._refresh()
         self._schedule()
 
+    def on_e_vent(self, index):
+        """Fire one E-Vent.
+
+        The button is disabled once spent, and the guard in `Sim.e_vent` is not
+        a copy of that -- one is a state of the widget, the other the rule of
+        the device (the same split as `on_vent`).
+
+        The temperature is written to the model AND to both widgets here: the
+        E-Vent acts between ticks, so there is no `advance()` to do it, and a
+        slider still showing the pre-vent number would be the panel disagreeing
+        with the number the next tick starts from.
+        """
+        before = self.sim.Temperature
+        drop = self.sim.e_vent(index)
+        if drop is None:
+            self.log("# E-VENT %d refused: already used this shift" % (index + 1))
+        else:
+            self.temp_var.set(self.sim.Temperature)
+            self.temp_box.set(shown(self.sim.Temperature))
+            self.log("# E-VENT %d: T %s -> %s F (-%s), %d of %d used this shift"
+                     % (index + 1, shown(before), shown(self.sim.Temperature),
+                        shown(drop), self.sim.e_vent_count, E_VENT_COUNT))
+            if drop < E_VENT_DROP:
+                # The floor, said out loud: the wiki's "approximately 7000" could
+                # not all be removed because there was less than that to remove.
+                self.log("# E-VENT %d: floored at %s F -- only %s was left"
+                         % (index + 1, shown(TEMP_MIN), shown(before)))
+        self._refresh()
+        self._schedule()
+
     def on_core_state(self):
         self.core.state = int(self.core_var.get())
         self._line_changed()
@@ -1566,19 +1817,29 @@ class Console:
         core = self.core
         banks = " / ".join(shown(bank) for bank in core.banks)
         pumps = " / ".join(str(pump) for pump in core.pumps)
+        if core.melted:
+            # The model has latched (CORE_MELTDOWN_AT).  Said here rather than
+            # only in the log because a preview that keeps promising "would add"
+            # numbers after the model has stopped would be the panel inventing a
+            # step (CLAUDE.md 0.19's family: absent and invisible).
+            return ("MELTDOWN - the core passed %g F and the model has stopped\n"
+                    "a_eff %s = %g   T %s\n"
+                    "Reset (a new shift) clears the latch"
+                    % (CORE_MELTDOWN_AT, banks, core.a_eff,
+                       shown(self.sim.Temperature)))
         if not core.armed:
             row = core.row(self.sim)
             # The preview calls the SAME function the step does, so "would add"
             # cannot come out as a second opinion -- and that includes the stall
             # branch, which the old preview would have had no way to know about.
             heat, passiv, amp, actual, tremor, stall, cooling = step_terms(
-                row, core.power, self.sim.Pressure, core.t + self.sim.period,
+                row, core.a_eff, self.sim.Pressure, core.t + self.sim.period,
                 core.cooling)
             return ("off - the slider owns Temperature\n"
-                    "a_avg %s = %g   row %d at T = %s\n"
+                    "a_eff %s = %g   row %d at T = %s\n"
                     "pumps %s   cooling -%g\n"
                     "would add %s/tick (pure_cbl %s x %s + passive %s)%s"
-                    % (banks, core.power, row, shown(self.sim.Temperature),
+                    % (banks, core.a_eff, row, shown(self.sim.Temperature),
                        pumps, cooling, shown(actual + passiv + tremor - cooling),
                        shown(heat), luau_number(amp), shown(passiv),
                        "  STALL" if stall else ""))
@@ -1593,7 +1854,7 @@ class Console:
         stall = core.last_stall and not fresh
         return ("t      %s s      T %s\n"
                 "row    %s%s   pure_cbl %s   passive %s%s\n"
-                "a_avg  %s = %g (mean lv %s)   press x %s\n"
+                "a_eff  %s = %g   press x %s\n"
                 "active %s      noise %s      cooling -%s\n"
                 "p      %s      %s\n"
                 "T'     %s"
@@ -1601,8 +1862,7 @@ class Console:
                    row, " (auto)" if core.auto else " (held)",
                    num(core.last_heat), num(core.last_passive),
                    "   STALL %g" % STALL_FLUC if stall else "",
-                   banks, core.power, luau_number(core.power / CBL_UNIT),
-                   luau_number(core.last_amp),
+                   banks, core.a_eff, luau_number(core.last_amp),
                    num(core.last_actual),
                    num(core.last_noise),
                    num(core.last_cooling),
@@ -1705,6 +1965,7 @@ class Console:
         # Temperature is not routed through _set_temperature, which refuses while
         # armed; this is the model's write, and it is the only one.
         was_row = self.core.last_row
+        was_melted = self.core.melted
         temperature = self.core.step(self.sim)
         if temperature is not None:
             # Floored at 0 only.  A negative temperature is not a thing and the
@@ -1726,6 +1987,14 @@ class Console:
                 self.log("# core row %s -> %d at t = %s s: T = %s"
                          % (was_row, self.core.last_row,
                             luau_number(self.core.t), shown(temperature)))
+        if self.core.melted and not was_melted:
+            # The wiki's >= 39,000 and the end of the model.  Logged as a
+            # LATCH, not as a fourth row: the model stops moving the number
+            # from here (CORE_MELTDOWN_AT), so "nothing is happening" and "the
+            # model has stopped" have to be told apart on the screen.
+            self.log("# MELTDOWN: T reached %s F (>= %g).  The temperature model "
+                     "stops here -- Reset (a new shift) rearms it"
+                     % (shown(self.sim.Temperature), CORE_MELTDOWN_AT))
         self.sim.tick()
         self.log("Pressure: " + shown(self.sim.Pressure))
         self._refresh()
@@ -1764,6 +2033,22 @@ class Console:
         for var, getter in self.readouts:
             var.set(getter())
         self.core_text.set(self._core_text())
+        # The pressure tile's COLOUR is part of its reading (the wiki's three
+        # bands), so it is set from the same function the model gates on.
+        big_pressure = self.readout_widgets.get("Pressure")
+        if big_pressure is not None:
+            big_pressure.configure(
+                style="Press_%s.TLabel" % press_band(self.sim.Pressure))
+        for index, button in enumerate(self.e_vent_buttons):
+            if self.sim.can_e_vent(index):
+                button.configure(state="normal")
+            else:
+                button.configure(state="disabled")
+        used = self.sim.e_vent_count
+        self.e_vent_text.set(
+            "all %d ready" % E_VENT_COUNT if not used
+            else ("%d of %d used -- refilled only by Reset (a new shift)"
+                  % (used, E_VENT_COUNT)))
         if self.vent_button is not None:
             # A greyed-out button with nothing beside it reads as "this thing is
             # broken"; the word is what separates "out of service for N ticks"

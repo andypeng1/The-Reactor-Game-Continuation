@@ -2417,6 +2417,44 @@ a real import), no side-by-side with the Mk3, no Roblox render of the Neon parts
 upload, no cursor movement. See PROGRESS.md Phase 147, DECISIONS_2 631-638, CLAUDE.md 0.41,
 docs/SNIPPETS.md 5.50.
 
+### Phase 148 - the Temperature page: a weighted `a_eff`, a meltdown wall, and three E-Vents
+
+The operator handed over `https://reactor.fandom.com/wiki/Temperature` with "基于这个继续完善GUI".
+Nine tenths of that page agreed with the desktop console already; the one real disagreement was
+how three laser banks combine into one `a`. The page is explicit:
+
+> "The engine does NOT use a simple average; instead, it applies a hidden positional weight to
+> each laser." `a_eff = 0.756 * L1 + 0.522 * L2 + 0.196 * L3`
+
+so `Core.a_eff` replaces the mean that Phases 137-139 kept flipping between. **What identifies it
+is the page's own pair of worked examples, not either one alone**: `(100,25,25)` gives `a_eff` 93.55
+and **580.49 F/tick** against the page's ~580, and `(25,25,100)` gives 51.55 and **219.83** against
+~220. The mean returns 50 for both, and it lands within about ten degrees of the *second* example -
+so checking only that one would "confirm" the wrong reading. Three falsifications are now live
+assertions, including the page's own prose percentages (51.3/35.4/13.3, summing to 1.0) which
+reproduce neither example (they give ~304 on the first) because the coefficients sum to 1.474 and
+are multipliers, not shares.
+
+`a_eff` now tops out at **184.25** (all three banks at PW5), past the 25..125 band the operator's
+fit was taken over. It is carried, not clamped: clamping to 125 would make "three full banks" and
+"two and a half" the same heat, an equation no source contains (DECISIONS 641).
+
+Two more pieces come from the same reading session. **The meltdown wall** (`CORE_MELTDOWN_AT =
+39000.0`) is a latch, `Core.melted`, rather than a fourth `core_state` row - that return value
+indexes `PASSIVE_ROW` and the pressure table. The crossing tick still reports its temperature and
+every tick after returns `None`; the panel row reads `4 MELTDOWN`. The wall sits **below** the
+slider's top (40,000), which is why the old "the temperature runs past the slider" section was
+re-aimed at *which* limit stopped the model. **Three E-Vents** (`can_e_vent` / `e_vent`) are one-shot
+switches at ~7000 F each, refilled by `reset()` (this console's shift boundary), floored at
+`TEMP_MIN`, and they do **not** touch pressure - that is what separates them from the AVB.
+
+**282 checks, 0 failed; 34 mutants, 0 survived or reddened the wrong check** (up from 232 and 28);
+`pressure_parity.py` 24 / 0. The mutant run earned its keep this round by catching the checker
+itself: `check("one press takes the wiki's ~7000", dropped, gui.E_VENT_DROP)` compared the result
+to the constant that produced it, so moving the constant to 6500 left it green and only the
+neighbouring temperature check went red (CLAUDE.md 0.31 (6), DECISIONS 642).
+No game code changed, Studio was not connected, and the desktop window was not screenshotted.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real

@@ -72,13 +72,13 @@ MUTANTS = (
     # on purpose: there is one stall branch, and it is the thing under test.
     ("a stalled tick is allowed to be zeroed by the dark lasers",
      "        return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, 0.0",
-     "        return 0.0, 0.0, amp, (STALL_FLUC if power > 0.0 else 0.0), "
+     "        return 0.0, 0.0, amp, (STALL_FLUC if a_eff > 0.0 else 0.0), "
      "0.0, True, 0.0",
      "his -586, exactly, with every bank dark"),
 
     ("the tremor rides on a stalled tick, as it did before the correction",
      "        return 0.0, 0.0, amp, STALL_FLUC, 0.0, True, 0.0",
-     "        return 0.0, 0.0, amp, STALL_FLUC, noise(t, power), True, 0.0",
+     "        return 0.0, 0.0, amp, STALL_FLUC, noise(t, a_eff), True, 0.0",
      "a stalled tick with every bank LIT moves by exactly -586"),
 
     ("the stall stops swallowing the pump term",
@@ -120,20 +120,52 @@ MUTANTS = (
     # worked example's 125/75/25, because the mean of an arithmetic triple IS
     # the middle bank and a check written there could not separate the mean from
     # a glance at bank 2.
-    ("his `a_avg` goes back to being the sum of the banks",
-     "        return (sum(bank / CBL_UNIT for bank in self.banks) / CBL_BANKS) * CBL_UNIT",
-     "        return sum(bank / CBL_UNIT for bank in self.banks) * CBL_UNIT",
-     "his `a` is their mean, not their sum"),
+    # FIFTH reading of the same line (Phase 148): the wiki's positional
+    # weights.  The retired spellings -- sum, mean, sum, mean -- are still
+    # represented below, because CLAUDE.md 0.34 says a reading reversed out of
+    # the file must not become unfalsifiable in the meantime.  Two of them
+    # (mean and sum) were the two readings the operator himself gave; the third
+    # is the reading the wiki's PROSE would give if the percentages were taken
+    # at face value, which is the one most likely to be written by accident,
+    # since 51.3/35.4/13.3 look like the same numbers normalised.
+    #
+    # Every one is sent to "a_eff is the weighted sum, not the mean", which is
+    # driven at 125/50/0 -- an ASYMMETRIC bank set.  At 125/75/25 the mean of
+    # an arithmetic triple IS the middle bank, so a set chosen there could not
+    # separate the mean from the weights (CLAUDE.md 0.33 (3): a symmetric
+    # worked example erases the difference between the candidates).
+    ("the weights go back to being the mean of the banks",
+     "        w1, w2, w3 = CBL_WEIGHTS\n"
+     "        return w1 * self.banks[0] + w2 * self.banks[1] + w3 * self.banks[2]",
+     "        return (self.banks[0] + self.banks[1] + self.banks[2]) / 3.0",
+     "a_eff is the weighted sum, not the mean"),
 
-    ("his `a_avg` reads one bank instead of their mean",
-     "        return (sum(bank / CBL_UNIT for bank in self.banks) / CBL_BANKS) * CBL_UNIT",
-     "        return self.banks[0]",
-     "...nor any one bank"),
+    ("the weights go back to being the plain sum",
+     "        w1, w2, w3 = CBL_WEIGHTS\n"
+     "        return w1 * self.banks[0] + w2 * self.banks[1] + w3 * self.banks[2]",
+     "        return self.banks[0] + self.banks[1] + self.banks[2]",
+     "a_eff is the weighted sum, not the mean"),
 
-    ("the mean is divided by one bank instead of by three",
-     "/ CBL_BANKS) * CBL_UNIT",
-     "/ 1) * CBL_UNIT",
-     "his `a` is their mean, not their sum"),
+    # The order is structural, not cosmetic: the wiki's two worked examples
+    # differ ONLY in which bank holds the 100, so swapping two coefficients
+    # turns "(100,25,25) is the hot one" into its opposite while every number
+    # on its own still reads as a plausible heat.
+    ("the weights are applied to the banks in reverse",
+     "        w1, w2, w3 = CBL_WEIGHTS\n"
+     "        return w1 * self.banks[0] + w2 * self.banks[1] + w3 * self.banks[2]",
+     "        w1, w2, w3 = CBL_WEIGHTS\n"
+     "        return w3 * self.banks[0] + w2 * self.banks[1] + w1 * self.banks[2]",
+     "a_eff is the weighted sum, not the mean"),
+
+    # The prose's percentages.  They sum to 1.0 and the coefficients to 1.474,
+    # so taking the prose literally shrinks a_eff by a third -- and it FALSIFIES
+    # the wiki's own first example (it lands near 300 F/s where the page says
+    # ~580).  This is the mutant for "I normalised the numbers because weights
+    # usually sum to one".
+    ("the coefficients are the prose's normalised percentages",
+     "CBL_WEIGHTS = (0.756, 0.522, 0.196)",
+     "CBL_WEIGHTS = (0.513, 0.354, 0.133)",
+     "a_eff is the weighted sum, not the mean"),
 
     ("the spec's `T < 5600` moves down to 5000",
      "CORE_ROW_1_AT = 5600",
@@ -152,8 +184,8 @@ MUTANTS = (
     # right, because the panel draws the same tiles either way.  So each gets a
     # tooth, and each is sent to the check that reads the number it moves.
     ("the curve loses its own zero gate",
-     "    if power <= 0.0:",
-     "    if power <= 0.0 and False:",
+     "    if a_eff <= 0.0:",
+     "    if a_eff <= 0.0 and False:",
      "a dark console adds no curve"),
 
     ("the row constant is dropped from the tick",
@@ -174,9 +206,9 @@ MUTANTS = (
     # CLAUDE.md 0.34 (4): a reading reversed out of the file must not become
     # unfalsifiable in the meantime, so it comes back as a mutant.
     ("the row constant goes back under the lasers' off rule",
-     "    return heat, passive(row), amp, active, noise(t, power), False, coolant",
-     "    return heat, passive(row) if power > 0.0 else 0.0, amp, active, "
-     "noise(t, power), False, coolant",
+     "    return heat, passive(row), amp, active, noise(t, a_eff), False, coolant",
+     "    return heat, passive(row) if a_eff > 0.0 else 0.0, amp, active, "
+     "noise(t, a_eff), False, coolant",
      "so a dark console falls -- the change this spec makes"),
 
     # The two middle rows are the pair that can be swapped without any of the
@@ -215,9 +247,9 @@ MUTANTS = (
      "a dark laser bank does not silence the pumps"),
 
     ("the cooling is tucked under the lasers' off-rule",
-     "            row, self.power, sim.Pressure, self.t, self.cooling)",
-     "            row, self.power, sim.Pressure, self.t,\n"
-     "            self.cooling if self.power > 0.0 else 0.0)",
+     "            row, self.a_eff, sim.Pressure, self.t, self.cooling)",
+     "            row, self.a_eff, sim.Pressure, self.t,\n"
+     "            self.cooling if self.a_eff > 0.0 else 0.0)",
      "a dark laser bank does not silence the pumps"),
 
     ("the cooling is scaled by pMultiplier like the heat is",
@@ -239,9 +271,48 @@ MUTANTS = (
     # The tremor's own scaling: `a_avg / 25`, which is why a dark laser bank is
     # silent.  Dropping the division makes every level read as if it were maxed.
     ("the tremor stops scaling by a_avg over 25",
-     "    level = power / CBL_UNIT",
-     "    level = power",
+     "    level = a_eff / CBL_UNIT",
+     "    level = a_eff",
      "noise(1)"),
+
+    # --- the meltdown wall (Phase 148) ---------------------------------------
+    # 39,000 F is the wiki's own line, and it is BELOW the slider's 40,000 --
+    # which is why the terminal stops on this wall rather than on the widget.
+    # Both mutants keep the model running happily: the only difference is that
+    # a core which has already melted down keeps being stepped, and "the core
+    # is still alive" is exactly what a burning reactor looks like on a panel.
+    ("the meltdown wall moves up to the slider's top",
+     "CORE_MELTDOWN_AT = 39000.0",
+     "CORE_MELTDOWN_AT = 40000.0",
+     "39000 F is"),
+
+    ("the wall becomes exclusive, so 39,000 itself is survivable",
+     "    return temperature >= CORE_MELTDOWN_AT",
+     "    return temperature > CORE_MELTDOWN_AT",
+     "39000 F is"),
+
+    # --- the E-Vents (Phase 148) ---------------------------------------------
+    # Three one-shot switches, each its own.  The failure modes are the ones a
+    # panel cannot show: the drop is a number, the refill is a counter, and a
+    # switch that did not latch looks exactly like one that did until you press
+    # it twice.
+    ("an E-Vent takes 6,500 instead of the wiki's 7,000",
+     "E_VENT_DROP = 7000.0",
+     "E_VENT_DROP = 6500.0",
+     "one press takes the wiki's ~7000"),
+
+    ("firing an E-Vent does not spend it",
+     "        self.e_vent_used[index] = True",
+     "        self.e_vent_used[index] = False",
+     "...so a second press of the SAME vent is refused"),
+
+    # The floor clamp.  Without it a 7,000-degree vent from a 3,000-degree core
+    # reports -4,000: the temperature is clamped by TEMP_MIN either way, but the
+    # NUMBER the log and the panel report would be a drop the core never felt.
+    ("the E-Vent reports more than it removed",
+     "        self.Temperature = max(TEMP_MIN, before - E_VENT_DROP)",
+     "        self.Temperature = before - E_VENT_DROP",
+     "from 3000 only 3000 is reported"),
 )
 
 
