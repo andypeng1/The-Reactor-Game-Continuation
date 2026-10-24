@@ -1,0 +1,51 @@
+SUMMARY part=CblLaserMk4Mount size=21.600 x 23.040 x 18.720  verts=2352  tris=4532  open_edges=0
+SUMMARY part=CblLaserMk4Body size=56.832 x 16.800 x 36.240  verts=12874  tris=25304  open_edges=0
+SUMMARY part=CblLaserMk4Prongs size=8.480 x 13.600 x 11.788  verts=672  tris=1332  open_edges=0
+SUMMARY part=CblLaserMk4Core size=42.807 x 12.678 x 13.224  verts=19428  tris=38812  open_edges=0
+SUMMARY assembly size=64.592 x 23.040 x 36.240  min=(-29.392, -11.520, -16.240)  max=(35.200, 11.520, 20.000)
+SUMMARY expected_studio_size=64.592 x 36.240 x 23.040
+SUMMARY tris_total=69980
+MATERIAL_TABLE_BEGIN
+  CblLaserMk4Mount = {
+    { mat = "Hull", size = { 21.6000, 18.7200, 23.0400 } },
+    { mat = "Dark", size = { 15.0962, 15.5756, 19.6800 } },
+    { mat = "Brass", size = { 5.2800, 5.2800, 19.2640 } },
+    { mat = "Hazard", size = { 15.0962, 0.9280, 15.0962 } },
+  },
+  CblLaserMk4Body = {
+    { mat = "Hull", size = { 56.8320, 36.2400, 16.8000 } },
+    { mat = "Dark", size = { 56.8320, 16.0850, 15.8400 } },
+    { mat = "Brass", size = { 35.1040, 34.0000, 16.1280 } },
+    { mat = "Hazard", size = { 1.2800, 14.0106, 14.1412 } },
+    { mat = "Cyan", size = { 36.2160, 13.8154, 14.9495 } },
+    { mat = "Amber", size = { 0.6720, 0.3200, 3.5520 } },
+  },
+  CblLaserMk4Prongs = {
+    { mat = "Hull", size = { 8.4800, 11.7882, 13.5996 } },
+    { mat = "Brass", size = { 8.4800, 11.7882, 13.5996 } },
+  },
+  CblLaserMk4Core = {
+    { mat = "Hull", size = { 42.3345, 13.2238, 12.6781 } },
+    { mat = "Cyan", size = { 42.8074, 12.1600, 12.6781 } },
+    { mat = "White", size = { 41.2837, 11.8877, 11.8900 } },
+  },
+MATERIAL_TABLE_END
+
+FBX export starting... 'D:\\BlenderRobloxTestProjects\\CblLaserMk4\\CblLaserMk4.fbx'
+export finished in 0.0826 sec.
+INFO Draco mesh compression is available, use library at D:\Blender 5.1\5.1\scripts\addons_core\io_scene_gltf2\extern_draco.dll
+22:16:32 | INFO: Starting glTF 2.0 export
+22:16:32 | INFO: Extracting primitive: CblLaserMk4Mount
+22:16:32 | INFO: Primitives created: 4
+22:16:32 | INFO: Extracting primitive: CblLaserMk4Body
+22:16:32 | INFO: Primitives created: 6
+22:16:32 | INFO: Extracting primitive: CblLaserMk4Prongs
+22:16:32 | INFO: Primitives created: 2
+22:16:32 | INFO: Extracting primitive: CblLaserMk4Core
+22:16:32 | INFO: Primitives created: 3
+22:16:32 | INFO: Finished glTF 2.0 export in 0.19643759727478027 s
+D:\rblxTRGproject\_tools\blender\cbl_laser_mk4.py:560: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+00:46.437  render           | Saved: 'D:\BlenderRobloxTestProjects\CblLaserMk4\CblLaserMk4_hero.png'
+01:21.859  render           | Saved: 'D:\BlenderRobloxTestProjects\CblLaserMk4\CblLaserMk4_side.png'
+02:16.172  render           | Saved: 'D:\BlenderRobloxTestProjects\CblLaserMk4\CblLaserMk4_muzzle.png'

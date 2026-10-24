@@ -3791,3 +3791,80 @@ Tk 说 `x=501`，图里 `x=623`，比值 **1.25** —— 那是这台机器的�
 **没有这个已知值，那张图只是"右边少了一列"，看起来像版面问题**（取舍 628）。
 一条顺带的：`gui.py` 没有 `geometry`、只有 `minsize(820,600)`，所以**客户区会随最长那行变宽**
 （1276×1189 未 arm → 1379×1201 armed，**物理** px）—— 这是观察，不是缺陷。
+
+## 5.50 一个新 Blender 资产要过**四道**判据，而每一道都得见过自己红（Phase 147）
+
+CBL Mk4 那一套按顺序是：**构建 → 重新导入 → 表格抄写 → 替身**，最后用突变体给每一族断言
+各开一枪。四道缺任何一道，都有一类缺陷能穿过去。
+
+### ① 重新导入：读**文件**，不读构建内存
+
+```python
+def load_fbx(path):
+    trg.new_scene()
+    bpy.ops.import_scene.fbx(filepath=path, global_scale=1.0)   # 文件已经是 1/5.902
+    return {o.name: o for o in bpy.context.scene.objects if o.type == "MESH"}
+```
+
+判据要点：**节点名集合**、**装配盒六个面**、**每件原点**、**每件每材质的盒边**、
+**三角数**、**水密性**，外加 **`fbx vs glb`** 那一行 —— 它是唯一不引用任何手打常数的检查
+（两个导出器互为证人）。常量从**构建脚本的源码**里抄，不从导出文件里读回来
+（拿文件比自己 = 同义反复，取舍 95）。
+
+### ② 水密性：问**奇偶**，`>2` 是另一个诊断
+
+```python
+use = {}
+for poly in mesh.polygons:
+    ids = [ident[i] for i in poly.vertices]
+    for i in range(len(ids)):
+        a, b = ids[i], ids[(i + 1) % len(ids)]
+        e = (a, b) if a < b else (b, a)
+        use[e] = use.get(e, 0) + 1
+return (sum(1 for c in use.values() if c % 2 == 1),   # 开边 = 洞
+        sum(1 for c in use.values() if c > 2))        # 重合面 = 另一回事
+```
+
+`ident[]` 是**按位置焊接**的顶点号（glTF 导入器会按 (normal, material) 拆点，
+按索引数会把每条硬边报成洞）。焊接容差 `1e-4` 文件单位 = 0.0006 studs。
+
+### ③ 抄写检查：三份必须一致的文本互比，并**拒绝旧日志**
+
+构建日志里的尺寸表、构建脚本里的线性颜色（过 sRGB 传递函数）、Luau 里的整数三元组 ——
+三样对上才算数。**日志必须与交付字节同一趟**：
+
+```python
+if os.path.getmtime(DELIVERED) > os.path.getmtime(args.log):
+    check(False, "build log is from the delivered run", ...)
+```
+
+解析这条表的坑：表是**列对齐**的，所以 `{  5.2800` / `{ 191, 155,  91 }` 里有双空格，
+正则必须写 `\s*`。第一版写单空格，"缺"了 13 行里的 10 行 —— **看起来像表错了，其实是解析器错了**。
+
+### ④ 替身测试：交付的那份 Luau 原样跑在假引擎里
+
+```lua
+local chunk = assert(loadfile("_tools/apply_cbl_laser_mk4_materials.luau"))
+setfenv(chunk, env)          -- env 里只有 Enum/Color3/workspace/table/string/math
+local report = chunk()
+```
+
+六个场景：精确 / 1.6943 倍（必须 0 涂 + 自己报出比例）/ 0.05% 抖动（必须全涂）/
+一块拆成两壳（必须报 `matched 2 parts`）/ 缺件（必须 `MISSING`）/ 名字与形状打架。
+**第一次跑就抓到了真缺陷**（Core/Cyan 与 Core/White 在拟合比例下分不开），不是装饰。
+
+### ⑤ 突变体：从交付的 `.blend` 出发，控制组先绿
+
+```python
+bpy.ops.wm.open_mainfile(filepath=SRC)
+fn = {"none": None, "shift": mut_shift, "scale1": mut_scale1, ...}[which]
+trg.export(meshes(), NAME, out, blend=False)   # 走同一套导出器
+```
+
+`none` 必须复现基线；每条突变必须红在**不同的**断言族上。**每一族都见过自己红**之后，
+那一族才算数（CBL Mk4 的七条突变读数见 `PROGRESS.md` Phase 147 第五节）。
+
+### ⑥ 交付说明里最容易漏的一句
+
+`.fbx` 拖进 Studio，对话框填 **5.902**；`.glb` 那条路是 **1.6943 倍**。
+**一个已知常数，只有在交付的那句话里没被用上，它就等于不存在**（Phase 141 同款）。

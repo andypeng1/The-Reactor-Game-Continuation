@@ -1,0 +1,97 @@
+FBX version: 7400
+FILE CblLaserMk4.fbx  nodes=4  (CblLaserMk4Body, CblLaserMk4Core, CblLaserMk4Mount, CblLaserMk4Prongs)
+  node names == the four parts       OK  missing=[] extra=[]
+  assembly x min                     OK  want  -29.3920 got  -29.3920 diff 0.0000
+  assembly x max                     OK  want   35.2000 got   35.2000 diff 0.0000
+  assembly y min                     OK  want  -11.5200 got  -11.5200 diff 0.0000
+  assembly y max                     OK  want   11.5200 got   11.5200 diff 0.0000
+  assembly z min                     OK  want  -15.0400 got  -15.0400 diff 0.0000
+  assembly z max                     OK  want   12.3200 got   12.3200 diff 0.0000
+  CblLaserMk4Body origin at (0,0,0)  OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Body materials          OK  missing=[] extra=[]
+  CblLaserMk4Body Mk4Hull x min      OK  want  -29.2800 got  -29.2800 diff 0.0000
+  CblLaserMk4Body Mk4Hull x max      OK  want   23.3600 got   23.3600 diff 0.0000
+  CblLaserMk4Body Mk4Hull y min      OK  want   -8.4000 got   -8.4000 diff 0.0000
+  CblLaserMk4Body Mk4Hull y max      OK  want    8.4000 got    8.4000 diff 0.0000
+  CblLaserMk4Body Mk4Hull z min      OK  want   -8.4000 got   -8.4000 diff 0.0000
+  CblLaserMk4Body Mk4Hull z max      OK  want    8.4000 got    8.4000 diff 0.0000
+  CblLaserMk4Body triangles          OK  want 29328 got 29328
+  CblLaserMk4Body watertight (indices) OK  open_edges=0
+  CblLaserMk4Body watertight (welded) OK  welded open=0 doubled=48  (index count: 0)
+  CblLaserMk4Core origin at (0,0,0)  OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Core materials          OK  missing=[] extra=[]
+  CblLaserMk4Core Mk4Cyan x min      OK  want  -15.5200 got  -15.5200 diff 0.0000
+  CblLaserMk4Core Mk4Cyan x max      OK  want   27.2960 got   27.2874 diff 0.0086
+  CblLaserMk4Core triangles          OK  want 38812 got 38812
+  CblLaserMk4Core watertight (indices) OK  open_edges=0
+  CblLaserMk4Core watertight (welded) OK  welded open=0 doubled=0  (index count: 0)
+  CblLaserMk4Mount origin at (0,0,0) OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Mount materials         OK  missing=[] extra=[]
+  CblLaserMk4Mount Mk4Hull x min     OK  want  -12.8000 got  -12.8000 diff 0.0000
+  CblLaserMk4Mount Mk4Hull x max     OK  want    8.8000 got    8.8000 diff 0.0000
+  CblLaserMk4Mount Mk4Hull y min     OK  want  -11.5200 got  -11.5200 diff 0.0000
+  CblLaserMk4Mount Mk4Hull y max     OK  want   11.5200 got   11.5200 diff 0.0000
+  CblLaserMk4Mount Mk4Hull z min     OK  want  -15.0400 got  -15.0400 diff 0.0000
+  CblLaserMk4Mount Mk4Hull z max     OK  want    3.6800 got    3.6800 diff 0.0000
+  CblLaserMk4Mount triangles         OK  want 4532 got 4532
+  CblLaserMk4Mount watertight (indices) OK  open_edges=0
+  CblLaserMk4Mount watertight (welded) OK  welded open=0 doubled=0  (index count: 0)
+  CblLaserMk4Prongs origin at (0,0,0) OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Prongs materials        OK  missing=[] extra=[]
+  CblLaserMk4Prongs Mk4Brass x min   OK  want   26.7200 got   26.7200 diff 0.0000
+  CblLaserMk4Prongs Mk4Brass x max   OK  want   35.2000 got   35.2000 diff 0.0000
+  CblLaserMk4Prongs triangles        OK  want 1332 got 1332
+  CblLaserMk4Prongs watertight (indices) OK  open_edges=0
+  CblLaserMk4Prongs watertight (welded) OK  welded open=0 doubled=0  (index count: 0)
+22:50:17 | INFO: Data are loaded, start creating Blender stuff
+22:50:17 | INFO: Blender create Mesh node CblLaserMk4Mount
+22:50:17 | INFO: Blender create Mesh node CblLaserMk4Body
+22:50:17 | INFO: Blender create Mesh node CblLaserMk4Prongs
+22:50:17 | INFO: Blender create Mesh node CblLaserMk4Core
+22:50:17 | INFO: glTF import finished in 0.37s
+Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:37:34)
+FILE CblLaserMk4.glb  nodes=4  (CblLaserMk4Body, CblLaserMk4Core, CblLaserMk4Mount, CblLaserMk4Prongs)
+  node names == the four parts       OK  missing=[] extra=[]
+  assembly x min                     OK  want  -29.3920 got  -29.3920 diff 0.0000
+  assembly x max                     OK  want   35.2000 got   35.2000 diff 0.0000
+  assembly y min                     OK  want  -11.5200 got  -11.5200 diff 0.0000
+  assembly y max                     OK  want   11.5200 got   11.5200 diff 0.0000
+  assembly z min                     OK  want  -15.0400 got  -15.0400 diff 0.0000
+  assembly z max                     OK  want   12.3200 got   12.3200 diff 0.0000
+  CblLaserMk4Body origin at (0,0,0)  OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Body materials          OK  missing=[] extra=[]
+  CblLaserMk4Body Mk4Hull x min      OK  want  -29.2800 got  -29.2800 diff 0.0000
+  CblLaserMk4Body Mk4Hull x max      OK  want   23.3600 got   23.3600 diff 0.0000
+  CblLaserMk4Body Mk4Hull y min      OK  want   -8.4000 got   -8.4000 diff 0.0000
+  CblLaserMk4Body Mk4Hull y max      OK  want    8.4000 got    8.4000 diff 0.0000
+  CblLaserMk4Body Mk4Hull z min      OK  want   -8.4000 got   -8.4000 diff 0.0000
+  CblLaserMk4Body Mk4Hull z max      OK  want    8.4000 got    8.4000 diff 0.0000
+  CblLaserMk4Body triangles          OK  want 29328 got 29328
+  CblLaserMk4Body watertight (welded) OK  welded open=0 doubled=48  (index count: 54472)
+  CblLaserMk4Core origin at (0,0,0)  OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Core materials          OK  missing=[] extra=[]
+  CblLaserMk4Core Mk4Cyan x min      OK  want  -15.5200 got  -15.5200 diff 0.0000
+  CblLaserMk4Core Mk4Cyan x max      OK  want   27.2960 got   27.2874 diff 0.0086
+  CblLaserMk4Core triangles          OK  want 38812 got 38812
+  CblLaserMk4Core watertight (welded) OK  welded open=0 doubled=0  (index count: 72592)
+  CblLaserMk4Mount origin at (0,0,0) OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Mount materials         OK  missing=[] extra=[]
+  CblLaserMk4Mount Mk4Hull x min     OK  want  -12.8000 got  -12.8000 diff 0.0000
+  CblLaserMk4Mount Mk4Hull x max     OK  want    8.8000 got    8.8000 diff 0.0000
+  CblLaserMk4Mount Mk4Hull y min     OK  want  -11.5200 got  -11.5200 diff 0.0000
+  CblLaserMk4Mount Mk4Hull y max     OK  want   11.5200 got   11.5200 diff 0.0000
+  CblLaserMk4Mount Mk4Hull z min     OK  want  -15.0400 got  -15.0400 diff 0.0000
+  CblLaserMk4Mount Mk4Hull z max     OK  want    3.6800 got    3.6800 diff 0.0000
+  CblLaserMk4Mount triangles         OK  want 4532 got 4532
+  CblLaserMk4Mount watertight (welded) OK  welded open=0 doubled=0  (index count: 9120)
+  CblLaserMk4Prongs origin at (0,0,0) OK  at (0.0000,0.0000,0.0000)
+  CblLaserMk4Prongs materials        OK  missing=[] extra=[]
+  CblLaserMk4Prongs Mk4Brass x min   OK  want   26.7200 got   26.7200 diff 0.0000
+  CblLaserMk4Prongs Mk4Brass x max   OK  want   35.2000 got   35.2000 diff 0.0000
+  CblLaserMk4Prongs triangles        OK  want 1332 got 1332
+  CblLaserMk4Prongs watertight (welded) OK  welded open=0 doubled=0  (index count: 2388)
+  fbx vs glb CblLaserMk4Body         OK  dmax size 0.0000  box 0.0000 studs  tris 29328 vs 29328
+  fbx vs glb CblLaserMk4Core         OK  dmax size 0.0000  box 0.0000 studs  tris 38812 vs 38812
+  fbx vs glb CblLaserMk4Mount        OK  dmax size 0.0000  box 0.0000 studs  tris 4532 vs 4532
+  fbx vs glb CblLaserMk4Prongs       OK  dmax size 0.0000  box 0.0000 studs  tris 1332 vs 1332
+CHECK 86 ok, 0 failed

@@ -2359,6 +2359,64 @@ now calls `os.path.abspath` where it decides where the bytes go.
 
 See PROGRESS.md Phase 141, DECISIONS_2 606-609, CLAUDE.md 0.37.
 
+### Phase 147 - "a cooler laser modelled on the CBL": Mk4, and a checker that had to be red three times
+
+The brief, verbatim: "那个仿照CBL做个更帅的激光（blender". An art task, not a gameplay one:
+zero lines of game code, zero bytes pushed to Studio. The reference is the Mk3 CBL at
+`Workspace.ReactorCBLs.Reactor_Laser_Mk3_*` as **measured in Phase 23** (98.0 x 36.7 x 36.7
+studs, grey hull, brass collars, cyan accents, hazard plates, a lit cyan aperture at +X).
+**Studio was not connected this session**, so no side-by-side measurement of the original was
+taken; the proportions are authored from that historical reading.
+
+Three changes, all about what a laser looks like rather than what it measures: the closed tube
+becomes an **open one** (two cowlings with windows on +/-Z crossed by six ribs, through which a
+ribbed plasma tube wrapped in three white helices is visible - and that core is its own object
+whose origin sits on the barrel axis, so it can spin in Studio); the flat muzzle becomes a
+**three-prong claw** around a recessed lens and two floating emissive rings; and the breech gets
+a **power stack** of three capacitor drums with cyan charge bands, so the machine has a silhouette
+at both ends. Four objects - `Mount`, `Body`, `Prongs`, `Core` - every origin at (0,0,0), which
+is the trunnion / barrel axis and therefore the pivot. Delivered assembly box **64.592 x 23.040 x
+27.360 studs**, **74004 triangles**.
+
+Deliverables in `D:\BlenderRobloxTestProjects\CblLaserMk4\`: `.fbx` (913180 B), `.glb` (3781416 B),
+`.blend`, four previews from the same run. **Drag the `.fbx` in and type 5.902**; the `.glb` route
+is 1.6943x too big. Materials do not survive Roblox's importer - it splits the mesh per material
+(which is what we want) and then discards them, leaving Plastic + grey - so
+`_tools/apply_cbl_laser_mk4_materials.luau` repaints by **absolute size** afterwards, touching only
+`Color` and `Material`.
+
+Four checks, all green: the re-import checker (`cbl_laser_mk4_check.py`) **86 ok / 0 failed**,
+which loads both formats back, measures node names, the six assembly faces, every origin, every
+per-material box edge, triangle counts and watertightness, and then makes **the two exporters
+witness each other** - the only row that quotes no hand-typed constant; the table transcription
+check (`check_mk4_mat_table.py`) **30 ok / 0 failed**, tying the build log's size table, the build
+script's linear colours (through sRGB) and the Luau's integer triplets together, and refusing to
+read a log older than the delivered `.fbx`; a Lua 5.1 stub harness that runs the shipped `.luau`
+against a fake `workspace` **18 ok / 0 failed**; and seven mutations, each red on a different
+assertion family, with a `none` control at 86/0.
+
+Three of those reds were real defects. `bmesh.ops.bevel`'s `material=-1` means **slot 0**, not
+"inherit", so the whole muzzle came out hull-coloured while triangles, sizes and the bounding box
+were perfect. A duplicated revolve profile endpoint produced **8468 zero-area triangles** -
+invisible to every measurement except the one that looks at faces. And the watertightness
+criterion itself was wrong: the first version counted any edge not used exactly twice, reporting
+**48 holes** on the Body that were all at x = 23.36 (design `X_SHROUD1`), each used **four**
+times, because a 48-gon Hull cap and a 48-gon Dark cap sit face-to-face at the same station and
+radius. A closed surface has every edge used an **even** number of times; "twice more than it
+should be" and "once" are different failures. The `split` mutation also slipped through the
+cross-format row until that row compared **world boxes** as well as local sizes - a pure
+translation changes neither size nor triangle count.
+
+One measurement worth keeping: the `.glb` is byte-identical across rebuilds
+(`e1980dcedff7cb43a2f442e8797d1d62`), while the `.fbx` differs by **339 bytes of 913180** in
+sparse 4-byte creation-time/UID fields. So an FBX delivery can only be verified geometrically,
+never by hash - and the two formats' fates must not be extrapolated from each other.
+
+**Not verified:** no Studio (so the `.fbx` was never imported and the material script never ran on
+a real import), no side-by-side with the Mk3, no Roblox render of the Neon parts, no Play, no
+upload, no cursor movement. See PROGRESS.md Phase 147, DECISIONS_2 631-638, CLAUDE.md 0.41,
+docs/SNIPPETS.md 5.50.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real

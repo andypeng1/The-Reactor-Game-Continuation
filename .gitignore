@@ -371,3 +371,11 @@ Data/startup_shots/11_live_shift_report.jpg
 #     readings in PROGRESS.md Phase 128.  Kept on disk anyway because the pair is
 #     the only record of what the two endings LOOK like beside each other. ---
 Data/startup_shots/12_live_quota_report.jpg
+
+# Phase 147, 2026-10-24: the Mk4 mutation harness re-exports one FBX+GLB per
+# mutant (~4 MB each). They are regenerable from the delivered .blend, and the
+# evidence is the log beside them, so the binaries stay out of the repo.
+_tools/_attic/scratch/mk4_mutants/**/*.fbx
+_tools/_attic/scratch/mk4_mutants/**/*.glb
+_tools/_attic/scratch/mk4_det_*.fbx
+_tools/_attic/scratch/mk4_det_*.glb

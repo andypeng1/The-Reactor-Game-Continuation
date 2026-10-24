@@ -1331,3 +1331,23 @@ Thermal 三条储液条与六台风扇 + Quota 时钟/目标/进度条/Equinox �
 
 **一条不是账的账**：这张图和封面一样是**我们自己的产物**，取材只引用版控里已有的文件；
 **下一张新图仍要重走一遍取舍 562 那张出处表**。
+
+### 3.21 CBL Mk4 的账（Phase 147，2026-10-24）
+
+`D:\BlenderRobloxTestProjects\CblLaserMk4\` 的 `.fbx` / `.glb` / `.blend` / 四张预览都已交付，
+四道判据全绿（86/0、30/0、18/0、突变 7 条各自见红）。剩下四条：
+
+1. **从没被真的导入过 Studio。** 这一场 `list_roblox_studios` 回空，
+   `apply_cbl_laser_mk4_materials.luau` 只在 Lua 5.1 替身里跑过。
+   真导入之后要看的：导入器给四件起什么名、一件材质会不会被拆成两个 MeshPart、
+   以及涂完颜色在 Roblox 光照下像不像预览。**他拖进去之后，跑一遍那个脚本，把打印贴回来即可**
+   （它会自己报 `painted / skipped / MISSING / matched 2 parts`）。
+2. **和原版 Mk3 没并排比过。** 参照是 Phase 23 的历史读数（98.0 × 36.7 × 36.7），
+   这一轮没有重新量。要比的话需要 Studio 在场：把 Mk3 和 Mk4 摆在一起，量装配盒与壳径
+   （设计上壳径 16.8 vs 16.2）。
+3. **Neon 在 Roblox 里什么样子没有读数。** 预览是 Blender 的渲染器 ——
+   三个发光材质（Cyan 5 / Amber 4 / White 9）在 Roblox 里只剩 `Material.Neon` + 颜色，
+   强度那部分表达不了。要不要加 `PointLight` / `SurfaceLight` 是下一轮的判断题。
+4. **`.glb` 那条路仍然会大 1.6943 倍。** 存档副本用它是安全的（导入后按 1/1.6943 缩），
+   但**不要把 `.glb` 直接拖进 Studio 当成品**；材质脚本会把它报成一组 `NO MATCH`
+   并写出隐含比例 —— 那是设计好的诊断，不是故障。

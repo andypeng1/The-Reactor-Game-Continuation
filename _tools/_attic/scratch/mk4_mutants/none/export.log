@@ -1,0 +1,23 @@
+00:00.609  blend            | Read blend: "D:\BlenderRobloxTestProjects\CblLaserMk4\CblLaserMk4.blend"
+MUT none  loaded 4 meshes from D:\BlenderRobloxTestProjects\CblLaserMk4\CblLaserMk4.blend
+   CblLaserMk4Body        verts=14922 polys=13488 scale=(1.0, 1.0, 1.0)
+   CblLaserMk4Core        verts=19428 polys=19530 scale=(1.0, 1.0, 1.0)
+   CblLaserMk4Mount       verts=2352 polys=2334 scale=(1.0, 1.0, 1.0)
+   CblLaserMk4Prongs      verts=672 polys=678 scale=(1.0, 1.0, 1.0)
+
+FBX export starting... 'D:\\rblxTRGproject\\_tools\\_attic\\scratch\\mk4_mutants\\none\\CblLaserMk4.fbx'
+export finished in 0.0507 sec.
+INFO Draco mesh compression is available, use library at D:\Blender 5.1\5.1\scripts\addons_core\io_scene_gltf2\extern_draco.dll
+22:49:01 | INFO: Starting glTF 2.0 export
+22:49:01 | INFO: Extracting primitive: CblLaserMk4Mount
+22:49:01 | INFO: Primitives created: 4
+22:49:01 | INFO: Extracting primitive: CblLaserMk4Body
+22:49:01 | INFO: Primitives created: 6
+22:49:01 | INFO: Extracting primitive: CblLaserMk4Prongs
+22:49:01 | INFO: Primitives created: 1
+22:49:01 | INFO: Extracting primitive: CblLaserMk4Core
+22:49:01 | INFO: Primitives created: 2
+22:49:01 | INFO: Finished glTF 2.0 export in 0.11629343032836914 s
+Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:37:34)
+
+MUT none wrote D:\rblxTRGproject\_tools\_attic\scratch\mk4_mutants\none

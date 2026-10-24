@@ -1,0 +1,65 @@
+trg.revolve: dropped a repeated profile point (4.4, 10.52)
+SUMMARY part=CblLaserMk4Mount size=21.600 x 23.040 x 18.720  verts=2352  tris=4532  open_edges=0
+SUMMARY part=CblLaserMk4Body size=56.832 x 16.896 x 20.720  verts=14922  tris=29328  open_edges=0
+SUMMARY part=CblLaserMk4Prongs size=8.480 x 13.600 x 11.788  verts=672  tris=1332  open_edges=0
+SUMMARY part=CblLaserMk4Core size=42.807 x 12.678 x 13.224  verts=19428  tris=38812  open_edges=0
+SUMMARY assembly size=64.592 x 23.040 x 27.360  min=(-29.392, -11.520, -15.040)  max=(35.200, 11.520, 12.320)
+SUMMARY expected_studio_size=64.592 x 27.360 x 23.040
+SUMMARY tris_total=74004
+MATERIAL_TABLE_BEGIN
+  CblLaserMk4Mount = {
+    { mat = "Hull", size = { 21.6000, 18.7200, 23.0400 } },
+    --  Hull n=466  x[-12.800 8.800] y[-11.520 11.520] z[-15.040 3.680]
+    { mat = "Dark", size = { 15.0962, 15.5756, 19.6800 } },
+    --  Dark n=1332  x[-7.548 7.548] y[-9.840 9.840] z[-13.696 1.880]
+    { mat = "Brass", size = { 5.2800, 5.2800, 19.2640 } },
+    --  Brass n=196  x[-2.640 2.640] y[-9.632 9.632] z[-2.640 2.640]
+    { mat = "Hazard", size = { 15.0962, 0.9280, 15.0962 } },
+    --  Hazard n=340  x[-7.548 7.548] y[-7.548 7.548] z[-13.696 -12.768]
+  },
+  CblLaserMk4Body = {
+    { mat = "Hull", size = { 52.6400, 16.8000, 16.8000 } },
+    --  Hull n=5525  x[-29.280 23.360] y[-8.400 8.400] z[-8.400 8.400]
+    { mat = "Dark", size = { 56.8320, 16.4850, 15.8400 } },
+    --  Dark n=4261  x[-29.392 27.440] y[-7.920 7.920] z[-7.605 8.880]
+    { mat = "Brass", size = { 44.8000, 20.3840, 16.8960 } },
+    --  Brass n=2888  x[-27.040 17.760] y[-8.448 8.448] z[-8.064 12.320]
+    { mat = "Hazard", size = { 1.2800, 14.0012, 14.1343 } },
+    --  Hazard n=306  x[18.480 19.760] y[-7.067 7.067] z[-6.929 7.072]
+    { mat = "Cyan", size = { 36.2160, 13.8171, 15.0018 } },
+    --  Cyan n=358  x[-26.936 9.280] y[-7.501 7.501] z[-2.857 10.960]
+    { mat = "Amber", size = { 0.6720, 0.3200, 3.5520 } },
+    --  Amber n=150  x[-17.776 -17.104] y[-1.776 1.776] z[8.448 8.768]
+  },
+  CblLaserMk4Prongs = {
+    { mat = "Brass", size = { 8.4800, 11.7882, 13.5996 } },
+    --  Brass n=678  x[26.720 35.200] y[-6.800 6.800] z[-4.335 7.454]
+  },
+  CblLaserMk4Core = {
+    { mat = "Cyan", size = { 42.8074, 12.1600, 12.6781 } },
+    --  Cyan n=11868  x[-15.520 27.287] y[-6.339 6.339] z[-7.280 4.880]
+    { mat = "White", size = { 41.2837, 11.8877, 11.8900 } },
+    --  White n=7662  x[-14.964 26.320] y[-5.945 5.945] z[-5.944 5.944]
+  },
+MATERIAL_TABLE_END
+trg.revolve: dropped a repeated profile point (4.4, 10.52)
+CONTROL_MATERIALS 78 ok, 0 failed
+
+FBX export starting... 'D:\\BlenderRobloxTestProjects\\CblLaserMk4\\CblLaserMk4.fbx'
+export finished in 0.0532 sec.
+INFO Draco mesh compression is available, use library at D:\Blender 5.1\5.1\scripts\addons_core\io_scene_gltf2\extern_draco.dll
+22:53:30 | INFO: Starting glTF 2.0 export
+22:53:30 | INFO: Extracting primitive: CblLaserMk4Mount
+22:53:30 | INFO: Primitives created: 4
+22:53:30 | INFO: Extracting primitive: CblLaserMk4Body
+22:53:30 | INFO: Primitives created: 6
+22:53:30 | INFO: Extracting primitive: CblLaserMk4Prongs
+22:53:30 | INFO: Primitives created: 1
+22:53:30 | INFO: Extracting primitive: CblLaserMk4Core
+22:53:30 | INFO: Primitives created: 2
+22:53:30 | INFO: Finished glTF 2.0 export in 0.13541936874389648 s
+Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:37:34)
+
+Info: Saved as "CblLaserMk4.blend"
+SUMMARY wrote D:\BlenderRobloxTestProjects\CblLaserMk4
+SUMMARY skipped the preview renders (--norender)

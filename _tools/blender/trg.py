@@ -59,8 +59,25 @@ def revolve(bm, profile, n=48, centre=(0.0, 0.0), cap_bottom=True, cap_top=True,
     """
     u, v, w = (Vector(a) for a in _AXES[axis])
     c = Vector(centre) if len(centre) == 3 else Vector((centre[0], centre[1], 0.0))
-    rings = []
+    # Consecutive identical profile points make a ring of ZERO-AREA quads (all
+    # four corners at the same radius and station). Those are not harmless:
+    # trg.finish bevels every edge whose face angle exceeds a threshold, the
+    # angle of a degenerate face is garbage, and the bevel then multiplies them.
+    # MEASURED 2026-10-24 on CblLaserMk4's Body: ONE repeated endpoint in the fin
+    # stack (the loop's last station, printed again after the loop) put 48
+    # zero-area quads into the lathe; after the bevel the same part held 8468 of
+    # them and 6680 coincident vertex positions -- 62% of its faces. Dropping the
+    # repeat is a no-op for a profile without one, and it PRINTS when it fires,
+    # so a silent change to any other asset is not possible.
+    clean = []
     for r, t in profile:
+        if clean and abs(clean[-1][0] - r) <= 1e-9 and abs(clean[-1][1] - t) <= 1e-9:
+            print("trg.revolve: dropped a repeated profile point (%.6g, %.6g)"
+                  % (r, t))
+            continue
+        clean.append((r, t))
+    rings = []
+    for r, t in clean:
         if r <= 1e-9:
             rings.append([bm.verts.new(c + w * t)])
         else:
@@ -186,9 +203,26 @@ def finish(bm, name, materials, bevel=0.07, bevel_angle_deg=25.0):
                 if len(e.link_faces) == 2
                 and e.calc_face_angle(0.0) > math.radians(bevel_angle_deg)]
         if hard:
+            # MEASURED 2026-10-24, probe_bevel_faces.py: bevel takes a `material`
+            # argument documented as "-1 means use adjacent faces", and OMITTING
+            # it does not get you -1. On a cube whose six faces are index 3,
+            # beveling every edge gives
+            #     material omitted -> material indices {0, 3}
+            #     material=-1      -> {3}
+            #     material=3       -> {3}
+            # so the declared default is not the applied default, and every
+            # bevel-created face silently lands on material 0. Two earlier
+            # repairs (copy from an adjacent face; nearest-centroid KD-tree)
+            # both failed because they tried to reconstruct a fact the operator
+            # already knows. Pass material=-1 instead.
+            #
+            # Why it matters off-Blender: Roblox splits a mesh into one MeshPart
+            # per material. A part whose bevels are index 0 comes back as the
+            # right colour PLUS a grey duplicate shell with the same bounding
+            # box, and on a one-material object nothing in Blender looks wrong.
             bmesh.ops.bevel(bm, geom=hard, offset=bevel, offset_type="OFFSET",
                             segments=1, profile=0.5, affect="EDGES",
-                            clamp_overlap=True)
+                            clamp_overlap=True, material=-1)
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
