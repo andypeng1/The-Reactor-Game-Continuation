@@ -176,6 +176,13 @@ _tools/_attic/scratch/report_err.txt
 _tools/_attic/scratch/layers_*/
 _tools/_attic/scratch/page_report.txt
 
+# --- Phase 149: the continuation icon's layout dump, same kind of artefact as
+#     page_report.txt above -- a redirection from the command in
+#     docs/COVER.md 8.3, regenerable from the tracked page + judge.  Its
+#     layer-off frames land in layers_continuation/, already covered by the
+#     layers_*/ glob above, so no third line here. ---
+_tools/_attic/scratch/continuation_report.txt
+
 # --- the user's own auxiliary reference dumps (Data/auxcollection/).  Handed to
 #     me to read, not produced by the project: 180 MB in ONE file, which is over
 #     GitHub's 100 MB hard file limit, so an accidental `git add -A` would be

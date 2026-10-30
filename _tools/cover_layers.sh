@@ -66,7 +66,16 @@ W="${W:-1080}"
 H="${H:-1080}"
 TAG="${TAG:-cover}"
 SHOT="${SHOT:-cover/THE_REACTOR_GAME_cover.png}"
-LAYERS="coreMark smMark scan vig"
+# PHASE 149: the continuation icon (cover/continuation.html) has its own element
+# list -- the loop, the arrowhead and the core are elements too, and "is this
+# part actually on the picture" is the same question as for a decorative layer.
+# The four names below stay the default so every command written before Phase 149
+# still means what it meant.
+#
+#   PAGE=cover/continuation.html W=1024 H=1024 TAG=continuation \
+#   SHOT=cover/THE_REACTOR_GAME_continuation_icon.png \
+#   LAYERS="loop head coreDot glow scan vig" bash _tools/cover_layers.sh
+LAYERS="${LAYERS:-coreMark smMark scan vig}"
 
 cd "$ROOT"
 mkdir -p "$SCRATCH/layers_$TAG"

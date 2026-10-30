@@ -2455,6 +2455,42 @@ to the constant that produced it, so moving the constant to 6500 left it green a
 neighbouring temperature check went red (CLAUDE.md 0.31 (6), DECISIONS 642).
 No game code changed, Studio was not connected, and the desktop window was not screenshotted.
 
+### Phase 149 - the Continuation icon: a hexagon that does not close
+
+The operator asked for a 1:1 icon for *The Reactor Game - Continuation* - "别太复杂" (not too complex),
+"要体现Continuation" (it has to read as continuation). The mark is the facility's own hexagon drawn with
+one edge left open, and the open end carries an amber arrowhead running clockwise: a closed hexagon says
+"a built facility", the gap plus the arrow say "it is still going". A small plasma-cyan hexagon at the
+centre is the core - without it the mark reads as a washing machine's "rinse again". No badge, no footer,
+no manufacturer mark: three things, not the cover's four.
+
+**The concept is a pair of rules that can go red**, not an eyeball. C7 asserts the gap is 12%..55% of R
+(42.0%), that the arrow tip is 8..gap px from where the stroke starts (48.9), and that the tip sits on
+the edge's own line (0 px); C8 asserts that the head's direction dotted with the stroke's run direction
+is 1.0. Both failures still look like a perfectly good icon at 64 px, which is why they are measured.
+`continuation_judge.js` reads 12 ok / 0 failed and 24/24 mutants light a rule. The layer runway went
+past decoration for the first time: all six parts (loop / head / core / glow / scan / vignette) change
+pixels when switched off.
+
+The 1024 master is 606769 B / md5 `a0baba54…`, byte-identical over nine renders **within one machine
+state** - an earlier batch (535110 B / `2a3a83db…`, 2/2 identical) is a second, equally stable rendering
+of the same page: mean 0.705/255 apart, max 57, 2191 pixels > 8 (0.21%), and indistinguishable at 64 px
+(max 3, no pixel > 8). Forcing software and forcing GPU rasterisation both reproduce the shipped one, so
+the mechanism is unestablished; identify the file by md5 and the picture by pixels, with the magnitudes
+written down (DECISIONS_2 651). The 512 upload file (153156 B, `optimize=True`) is a LANCZOS downscale
+of the judged frame, not a second render that was never judged; a native 512 differs by mean 1.40/255
+(3.1% of pixels > 8, all on glyph edges) - the same picture twice.
+
+The font probe corrected an old reading: `var(--cond)` measures bit-for-bit equal to Arial Narrow
+(982.38 at 100 px), and Phase 144's 1088.55 is exactly Arial Narrow's own width at 116 px - so that
+build did use Arial Narrow and the "not installed" explanation was wrong. The two-line decision stands
+(the narrowest candidate, Impact, still needs 976 > 864). New lesson in CLAUDE.md 0.42.
+
+**Not verified:** no upload (no `asset:write`), no Studio and no Play, no game code touched, Roblox's
+crop of the icon was never measured, the 512 was not judged on its own (it inherits by construction),
+and "does it look good" is a judgement, not a reading. See docs/COVER.md section 8, PROGRESS.md
+Phase 149, DECISIONS_2 645-651, docs/SNIPPETS.md 5.52, docs/TODO.md 3.23.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real

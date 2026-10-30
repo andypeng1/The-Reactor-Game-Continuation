@@ -318,6 +318,13 @@ function judge(m){
     '--hide-scrollbars', '--mute-audio',
     // Text rendering is the one thing that is not deterministic across
     // machines; pinning these makes two runs on THIS machine identical.
+    // PHASE 149 correction: "two runs" yes, "two machine states" no.  The
+    // continuation icon was rendered 2/2 byte-identical before 00:26 and 9/9
+    // byte-identical after 00:29 -- same page (mtime unchanged), same command,
+    // same flags, two stable pictures 0.705/255 apart (max 57, 0.21% of pixels
+    // > delta 8).  Forcing --disable-gpu reproduces only the later one, so the
+    // cause is unestablished.  Compare deliverable PIXELS, and say the
+    // magnitude; docs/COVER.md 8.5, DECISIONS_2 651.
     '--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text',
     '--window-size=' + W + ',' + H,
     'about:blank',

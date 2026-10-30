@@ -62,13 +62,25 @@ DELTA = 2
 
 def polarity():
     print("--- source assets: is the line art white or black? ---")
+    # PHASE 149: a page with NO raster assets (the continuation icon is pure
+    # SVG + CSS) has nothing to measure here, and printing the cover's two rows
+    # would be a table about a different picture.  ASSETS="" says so out loud
+    # instead of quietly reporting two assets that are not on this page.
+    #   ASSETS="" PAGE=cover/continuation.html ... bash _tools/cover_layers.sh
+    if "ASSETS" in os.environ:
+        assets = tuple(a for a in os.environ["ASSETS"].split(",") if a.strip())
+        if not assets:
+            print("  (this page draws no raster assets -- ASSETS=\"\" -- nothing to measure)")
+            return []
+    else:
+        assets = ("intro/assets/sm-core.png", "intro/assets/sm-logo.png")
     rows = []
     # Phase 134: this list follows the LAYERS this page actually has.  stripes /
     # nested-hex / hex / px / sm-core's siblings went with the layers that used
     # them (see cover_layers.sh); what is left is the two marks.  Re-adding a
     # layer means re-adding its asset here -- the point of the list is that the
     # `data-art` declaration in cover/index.html has a command behind it.
-    for rel in ("intro/assets/sm-core.png", "intro/assets/sm-logo.png"):
+    for rel in assets:
         p = os.path.join(ROOT, rel.replace("/", os.sep))
         im = Image.open(p).convert("RGBA")
         px = [c for c in im.get_flattened_data() if c[3] > 8]

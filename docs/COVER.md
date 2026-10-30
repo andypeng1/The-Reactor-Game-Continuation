@@ -1,8 +1,11 @@
 # COVER —— 那块 1:1 的封面怎么做的（Phase 132 建；主体 133 换掉；要素 134 砍到四样）
 
-> **Phase 144 起这份文件里有两张图**：1:1 的封面（§1–§6）和 **16:9 的游戏页面宣传图**
-> （**§7**，`cover/page.html` → `cover/THE_REACTOR_GAME_page.png`）。两张共用一份语言、
-> 一份渲染器和大部分仪器，**版面判据是两份**（`cover_judge.js` / `page_judge.js`）。
+> **Phase 149 起这份文件里有三张图**：1:1 的封面（§1–§6）、**16:9 的游戏页面宣传图**
+> （**§7**，`cover/page.html` → `cover/THE_REACTOR_GAME_page.png`）和
+> **The Reactor Game - Continuation 的图标**（**§8**，`cover/continuation.html` →
+> `cover/THE_REACTOR_GAME_continuation_icon.png`）。三张共用一份语言、
+> 一份渲染器和大部分仪器，**版面判据是三份**（`cover_judge.js` / `page_judge.js` /
+> `continuation_judge.js`）—— 规则的对象换了，问题不能换。
 
 > 一句话：`cover/index.html` 是一张 **1080×1080 的静止画**，
 > 由 `_tools/intro_render.js`（和 `intro` / `promo` **共用**的那台渲染器）拍成一个 PNG，
@@ -275,6 +278,14 @@ python -X utf8 _tools/cover_mark_check.py        # 默认 t=120，也可以给 t
 装得下，但在 1/5 的缩略图上只剩一行细字。**两行 116 px** 每行都撑满，缩略图上还读得出。
 代价是锁印和封面不同形 —— 这是**排版决定**，不是测量结论（取舍 **624**）。
 
+> **【2026-10-31 更正】** 上面那句「`Arial Narrow` 不在」**归因错了**（读数是对的）。
+> Phase 149 把字体栈**量**了一遍：同字号同字距的 `THE REACTOR GAME` 在 116 px 下，
+> **Arial Narrow 1088.7** / Impact 976.4 / Franklin Gothic Medium 1127.9 / sans-serif 1196.6
+> —— 那天量到的右边缘 **1088.55** 正是 Arial Narrow 的宽度，所以那一版画的就是 Arial Narrow。
+> **两行这个决定不受影响**：四个候选里最窄的 Impact 也要 976 > 864。
+> 量法：同一串字在每个候选家族里各量一次宽度，没装的家族会和 fallback 给出**同一个数**。
+> 见 §8 的 `font.probe`、`PROGRESS.md` Phase 149、取舍 **648**、CLAUDE.md §0.42。
+
 判定因此量的是**行距**（`titleLines[1].top - titleLines[0].top` = **110.19 px**），
 因为缩略图上读者拿到的是这个数（1/5 → **22.04 px**），不是 CSS 里的字号。
 读数行把这个折算数直接打出来。
@@ -352,3 +363,122 @@ python -X utf8 _tools/cover_mark_check.py
 - **"两行比一行好看"是判断，不是测量。** 能验的是四样都在、位置都对、每层都画上去了。
 - 缩略图只看了 384×216 一档；640×360 拍了但没读。
 
+
+
+## 8. The Reactor Game - Continuation 的图标（Phase 149，2026-10-31）
+
+> 操作员原话：「帮我设计个The Reactor Game - Continuation的图标（1：1的）
+> 然后还是别太复杂，要体现Continuation」
+
+**这张图说的是：同一个六边，但它不闭合 —— 缺口那一端走出一枚箭头。**
+闭合的六边说「一座建好的设施」，缺口 + 顺着圈走出来的箭头说「它还在走」。
+中心的实心青六边是**芯**（没有它，缺口圆环 + 箭头读作洗衣机的「再洗一次」）。
+
+| 文件 | 是什么 |
+|---|---|
+| `cover/continuation.html` | **画本身**。1024×1024，同一个 `render(t)` 契约（`t` 被忽略） |
+| `cover/THE_REACTOR_GAME_continuation_icon.png` | **母版**。1024×1024，**606769 B / md5 `a0baba54…`**，同一次机器状态内 **9/9** 逐字节相同（跨状态见 8.5） |
+| `cover/THE_REACTOR_GAME_continuation_icon_512.png` | **上传件**。512×512，**153156 B / md5 `72a5987e…`**，母版的 LANCZOS 降采样（`optimize=True`） |
+| `_tools/continuation_judge.js` | **判定**（C0..C11）。只读一份 JSON，不碰浏览器；`--selftest` 24 条突变 |
+
+### 8.1 图上只有三样东西
+
+外框 / 六边 + 缺口箭头 + 芯 / 一行大字 `CONTINUATION` + 一行小字 `THE REACTOR GAME`。
+**没有徽章、没有页脚、没有厂标** —— 封面的四样去掉两样，主体换成这个项目自己的记号。
+四个几何常数是唯一的来源（`HEX_R 245`、`GAP_A .74`、`GAP_B .32`、`HEAD_LEN 54`），
+HTML 里一条 path 都没手写；`layoutReport()` 把写进 DOM 的 `points` 读回来
+再和解析值比一次（C6：最差 0.004 px）。
+
+### 8.2 规则
+
+| | 断言 | 读数 |
+|---|---|---|
+| C0 | 设计空间 1024×1024 且填满视口 | stage 1024 / viewport 1024 |
+| C1 | **非真空**：两行字 + 三个部件**按名字**在场 | 缺口 102.9 px / 头 54 px / 芯 r 44 |
+| C2 | 每个文字块都在外框以内 | 2 blocks inside [24..1000] |
+| C3 | 没有两块撞上，**且**最近的一对不到 40 px | 0 colliding；最近 31.00 px |
+| C4 | 大字放得下内宽、在 1/5 上还读得出 | 814.2 / 968；字高 134 px → 26.80 px at 1/5 |
+| C5 | 主体在框内**且**给大字留出 24 px | 离大字 42.0 px |
+| C6 | 画出来的圈 == 解析六边 | 逐角最差 0.004 px |
+| C7 | **圈是开着的**：缺口有界、箭头在缺口里、箭头在那条边线上 | 缺 42.0% R；tip-to-start 48.9 px；离线 0 px |
+| C8 | **箭头顺着圈走**、尺寸读得出 | 点积 1.0；54 × 76 |
+| C9 | 主体 / 大字 / 小字一条竖轴 | 512 / 512.00 / 511.99 |
+| C10 | 每层装饰声明极性、filter 与声明一致、没有关掉的层 | 3 层（gradient） |
+| C11 | 芯在圈里、而且是"芯"的比例 | 18.0%（带 10%..30%） |
+
+**C7/C8 是这张图的意义**，也是两条只有突变器才证明得了的规则：
+闭合的六边、翻转的箭头，在 64 px 上都还像一个好好的图标。
+**C7 量的是 tip-to-start，不是缺口本身** —— 箭头可以长到把缺口填满，而缺口读数一动不动（取舍 646）。
+
+**12 ok / 0 failed；突变 24/24**（`--selftest`）。每条至少点亮一条规则；
+C4 的宽度与高度**各有一条**（第一版宽度那条没有牙：它的突变先把字推出了框，红的是 C2/C9）。
+
+### 8.3 命令
+
+```bash
+# 1) 拍母版 + 倒出版面读数（--w/--h 必须钉成 1024x1024）
+D:/nodejs/node _tools/intro_render.js --page cover/continuation.html --at 0     --w 1024 --h 1024 --shot cover/THE_REACTOR_GAME_continuation_icon.png     --eval 'layoutReport()' > _tools/_attic/scratch/continuation_report.txt
+
+# 2) 判（exit 1 = 有红）+ 突变
+D:/nodejs/node _tools/continuation_judge.js _tools/_attic/scratch/continuation_report.txt
+D:/nodejs/node _tools/continuation_judge.js --selftest _tools/_attic/scratch/continuation_report.txt
+
+# 3) 六个部件逐个关掉再比像素（圈 / 箭头 / 芯 / 光晕 / 扫线 / 暗角）
+PAGE=cover/continuation.html W=1024 H=1024 TAG=continuation SHOT=cover/THE_REACTOR_GAME_continuation_icon.png LAYERS="loop head coreDot glow scan vig" ASSETS="" bash _tools/cover_layers.sh
+
+# 4) 512 上传件 = 判定过的母版的 LANCZOS 降采样
+python -X utf8 -c "from PIL import Image; Image.open('cover/THE_REACTOR_GAME_continuation_icon.png').convert('RGB').resize((512,512), Image.LANCZOS).save('cover/THE_REACTOR_GAME_continuation_icon_512.png', optimize=True)"
+```
+
+**为什么 512 是降采样、不是直接渲一张 512**：判据跑在 1024 上；降采样是那一帧的确定性
+变换，所以 512 继承那 12 条绿。原生 512 渲染字更锐（平均差 **1.40/255**，3.1% 的像素差 > 8，
+都在字的边缘），但**它没有过判据**（取舍 647）。
+
+**六个部件 6/6 都改变像素**（72883 / 8981 / 15223 / 445592 / 157587 / 647354 px，
+最大差 205 / 232 / 156 / 33 / 36 / 122；连跑两次读数相同）——
+这条跑道第一次伸到**主体**上，不只是装饰层。这一页没有位图素材，所以 `ASSETS=""`
+打印「这一页没有位图素材，没有可量的」，而不是把封面的两张素材表再打一遍（取舍 649）。
+
+### 8.4 字体：`--cond` 解析到哪一个字，是量出来的
+
+`layoutReport()` 的 `font.probe` 把同一串字在六个候选家族里各量一次宽度：
+
+| 家族 | 100 px 宽（`MMMMM CONTINUATION`） |
+|---|---|
+| Arial Narrow | **982.38** |
+| Haettenschweiler | 1156.94 |
+| Impact | 952.89 |
+| Franklin Gothic Medium | 1069.64 |
+| Arial | 1197.95 |
+| sans-serif | 1156.94 |
+
+`var(--cond)` = **982.38**，逐位等于 Arial Narrow ⇒ 这一页的大字就是 Arial Narrow。
+这条读数顺带更正了 §7 那句「Arial Narrow 不在」（见那里的带日期更正，取舍 648）。
+
+### 8.5 渲染的确定性：一次机器状态内逐字节，跨状态只到像素
+
+同一份 `cover/continuation.html`（mtime 00:24:37，之后没动过）、同一条命令、同一排 flag，**两次测量**：
+
+| | 文件 | 批内 |
+|---|---|---|
+| 00:24–00:26 | 535110 B / md5 `2a3a83db…` | 2/2 相同 |
+| 00:29 以后（交付的是这一版） | 606769 B / md5 `a0baba54…` | **9/9 相同** |
+
+跨状态差：mean **0.705/255**、max **57**、**2191 个像素 Δ>8**（0.21%，Δ>16 658 个）；
+这一对图缩到 64 px：mean 0.268、max **3**、**0 个像素 Δ>8**。
+
+**机制没定，所以写没定**：强制软件（`--disable-gpu`）与强制 GPU
+（`--enable-gpu-rasterization --ignore-gpu-blocklist --use-angle=d3d11`）**都给现在这一版**，
+旧那一版要不到。能说的是形状 —— 差异铺在渐变与 `drop-shadow` 的大面积低振幅处，
+加上描边/字形的抗锯齿边缘（max 57 落在小字的一个边上），也就是**渲染管线那一侧**；
+几何没动（C6 的 0.004 px 两次都成立，判据读的是 DOM）。
+
+所以：**md5 认这一次落盘的文件，像素认这张画**，而且像素复核要带量级（取舍 651）。
+
+### 8.6 没验的那一半
+
+- **没上传**（`asset:write` / `ROBLOX_OPEN_CLOUD_API_KEY` 都没设），图标要他自己传。
+- **Roblox 怎么裁没有读数**：外框与两行字到边缘的余量没有对着真实裁切量过（圆裁 / 方角都可能）。
+- **512 没有单独过判据**（继承母版，见 8.3）。
+- **"好看不好看"是判断不是读数**；能验的是圈开着、箭头顺着走、大字在 1/5 上 26.80 px。
+- **没进 Studio、没进 Play、游戏本体 0 行改动。**
