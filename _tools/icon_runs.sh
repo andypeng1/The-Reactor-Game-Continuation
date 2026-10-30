@@ -31,8 +31,14 @@ case "$NAME" in
     PIXEL=_tools/continuation_ring_check.py
     SHOT=cover/THE_REACTOR_GAME_continuation_icon.png
     ;;
+  reimagine)
+    PAGE=cover/reimagine.html
+    JUDGE=_tools/reimagine_judge.js
+    PIXEL=_tools/reimagine_pieces_check.py
+    SHOT=cover/THE_REACTOR_GAME_reimagine_icon.png
+    ;;
   *)
-    echo "usage: bash _tools/icon_runs.sh {rebuild|continuation}" >&2
+    echo "usage: bash _tools/icon_runs.sh {rebuild|continuation|reimagine}" >&2
     exit 2
     ;;
 esac
@@ -65,9 +71,16 @@ PY
 # The 512 gets its own reading, not a copy of the master's: every band in the
 # pixel check has to survive the file being measured at a different scale.  Only
 # rebuild_pieces_check.py takes a box, and only because it needs the centre.
-if [ "$NAME" = rebuild ]; then
-  SHOT="$UP512" BOX_X=131 BOX_Y=82 BOX=250 python -B "$PIXEL" || fail=1
-fi
+case "$NAME" in
+  rebuild)   SHOT="$UP512" BOX_X=131 BOX_Y=82 BOX=250 python -B "$PIXEL" || fail=1 ;;
+  reimagine) SHOT="$UP512" python -B "$PIXEL" || fail=1 ;;
+  # continuation_ring_check.py measures inside a fixed 500px box taken from the
+  # master's own coordinates, so it cannot read a 512 without a box argument it
+  # does not take.  Its 512 is produced and hashed here, not judged -- the same
+  # as before this case was made explicit (2026-10-31: a catch-all `*)` branch
+  # here silently gave continuation a red chain).
+  *) : ;;
+esac
 
 echo "=== md5"
 md5sum "$SHOT" "$UP512"

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>THE REACTOR GAME - reimagine icon</title>
+<!--
+  ============================================================================
+  TRG:REIMAGINE 的游戏图标 —— 1024x1024（1:1）
+
+  Phase 152（2026-10-31）。操作员原话：「设计个TRG-reimagine的」，
+  中途补两句：「可以参考所有素材」「别跟之前设计的一样」。
+
+  前两枚（Continuation / Rebuild）都是**居中的厂标 + 下面一行字**，换的只是
+  环在说什么。这一枚换的是**整张画的说话方式**：
+
+      一条竖轴（厂标自己的竖轴）把整张画劈成两半。
+      左边：厂标是**画的** —— 白线，内里是空的。
+      右边：厂标是**铸的** —— 内里被琥珀填满，白线一个字没动。
+
+  所以"reimagine"不是换颜色，是**同一个东西在两半有两个状态**；
+  而"同一个东西"是**字面**的：整张厂标只有**一份** —— 一个 <img>，跨着那条轴，
+  一字不改地穿过它。琥珀只是它**底下**半个圆盘。判据量的就是这件事：
+  环的内缘在两侧同一个半径上，琥珀恰好停在环的内壁上，白线在两侧同一个半径上。
+
+  顺手也把下面那行字劈在同一条 x 上（REIMA 白 / GINE 琥珀）——
+  字是**画两遍**的（两份同盒子的文本，一份白一份琥珀），所以两半是注册出来的，
+  不是摆出来的；像素仪器量这个切点是不是同一条竖线。
+
+  **契约与封面、两部片子、前两枚图标完全一样**：固定的设计空间 #stage（1024x1024）、
+  一个全局的 render(t)、一个按视口缩放的 fit()。图标是静止画，render(t) 收下 t 就丢。
+
+  颜色逐字抄自 cover/index.html（出处 src/ReactorBackend/Config.luau 的 Config.Visual）。
+  **这里一个新颜色都不许发明。**
+
+  【2026-10-31 记一笔】第一版用 CSS mask 把厂标的 alpha 当模板去涂琥珀，结果
+  **两个 mask 层在渲染器里整片透明**（DOM 读数全对：mask-image 解析到绝对路径、
+  元素 620x620、背景白 —— 画出来左边空、右边一块干净的琥珀）。隔离测试：
+  内联 data-URI 的 SVG mask 正常，**sm-core.png 当 mask 是 0 像素**（它是 LA 格式）。
+  这条路整个放弃 —— 于是有了现在这个更简单、也更诚实的做法：
+  **不做 mask，厂标只画一次**。取舍见 DECISIONS_2 667。
+  ============================================================================
+-->
+<style>
+:root{
+  --void:   #07080a;
+  --ready:  rgb(235,235,235);   /* Config.Visual.Ready */
+  --amber:  rgb(255,128,1);     /* Config.Visual.Amber */
+  --plasma: #52dae2;            /* ART_DIRECTION §2 的冷却/等离子青 */
+  --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+  --cond: "Arial Narrow", "Haettenschweiler", Impact, "Franklin Gothic Medium", sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
+     -webkit-font-smoothing:antialiased;}
+
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+#stage{
+  position:relative;width:1024px;height:1024px;flex:none;overflow:hidden;
+  background:radial-gradient(ellipse 122% 96% at 58% 40%, #0a0e12 0%, var(--void) 62%, #000 100%);
+  transform-origin:center center;
+}
+.layer{position:absolute;inset:0;pointer-events:none}
+
+/* ============================ 外框 ============================
+   和前两枚同一套（family 的东西不动）。 */
+#frame{position:absolute;left:20px;top:20px;right:20px;bottom:20px;
+       border:1px solid rgba(82,218,226,.28);}
+.brk{position:absolute;width:18px;height:18px;border:2px solid rgba(235,235,235,.5)}
+.brk.tl{left:-2px;top:-2px;border-right:0;border-bottom:0}
+.brk.tr{right:-2px;top:-2px;border-left:0;border-bottom:0}
+.brk.bl{left:-2px;bottom:-2px;border-right:0;border-top:0}
+.brk.br{right:-2px;bottom:-2px;border-left:0;border-top:0}
+
+/* ============================ 厂标 ============================
+   **只有一份**。sm-core.png 原样引用（Phase 133：引用不复制），
+   它本来就是白的（LA 素材，L 通道是白、alpha 是墨）。 */
+
+/* 右半那个**底下的**琥珀半圆：半径 = 环的内缘。
+   不是挑的数 —— 它让"实体正好填到环的内壁"成为一个能说出来的关系，
+   而这个关系是**比例**（内/外），换个尺寸照样成立，所以仪器能量。
+   画在厂标**下面**，所以白线一根都没被盖住：两侧的墨是同一份。 */
+#disc{position:absolute;border-radius:50%;background:var(--amber);
+      filter:drop-shadow(0 0 34px rgba(255,128,1,.45));}
+#mkR{position:absolute;inset:0}
+
+#mark{position:absolute}
+#mark img{position:absolute;inset:0;width:100%;height:100%;
+  filter:drop-shadow(0 0 12px rgba(82,218,226,.35));}
+
+/* ============================ 字 ============================
+   **一份字，画两遍**：两份的盒子逐像素相同，只有颜色和裁剪不一样 ——
+   于是"同一个词换性质"是注册出来的，不是摆出来的。 */
+#titleWrap{position:absolute;inset:0}
+.tcopy{position:absolute;
+  font-family:var(--cond);font-size:176px;line-height:1;letter-spacing:.055em;
+  text-transform:uppercase;white-space:nowrap;}
+#titleW{color:var(--ready);
+  text-shadow:0 0 30px rgba(82,218,226,.42), 2px 0 0 rgba(255,40,40,.16), -2px 0 0 rgba(40,120,255,.16)}
+#titleA{color:var(--amber);text-shadow:0 0 30px rgba(255,128,1,.50)}
+#sub{position:absolute;
+  font-size:24px;letter-spacing:.46em;color:rgba(235,235,235,.60);
+  text-transform:uppercase;white-space:nowrap;}
+
+/* ============================ CRT 罩 ============================ */
+#scan{position:absolute;inset:0;
+  background:repeating-linear-gradient(to bottom,
+    rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.32) 3px, rgba(0,0,0,.32) 4px);
+  opacity:.40}
+#vig{position:absolute;inset:0;
+  background:radial-gradient(ellipse 76% 66% at 54% 44%, rgba(0,0,0,0) 42%, rgba(0,0,0,.82) 100%)}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <div id="frame">
+    <span class="brk tl"></span><span class="brk tr"></span>
+    <span class="brk bl"></span><span class="brk br"></span>
+  </div>
+
+  <div id="mark">
+    <div id="mkR"><div id="disc"></div></div>
+    <img id="asset" src="../intro/assets/sm-core.png" alt="">
+  </div>
+
+  <div id="titleWrap">
+    <div id="titleW" class="tcopy">REIMAGINE</div>
+    <div id="titleA" class="tcopy">REIMAGINE</div>
+  </div>
+  <div id="sub">THE REACTOR GAME</div>
+
+  <div class="layer"><div id="scan" data-art="gradient"></div></div>
+  <div class="layer"><div id="vig"  data-art="gradient"></div></div>
+
+</div><!-- /stage -->
+</div><!-- /viewport -->
+
+<script>
+'use strict';
+const ICON_W = 1024, ICON_H = 1024;
+
+/* ---- 厂标 -----------------------------------------------------------------
+   素材 515x515，**LA**（墨在 alpha 里，L 通道是白）。**实测**（alpha>=128，
+   1440 条射线逐半径扫，Phase 151 量的）：外环从 r=243 到 r=256 是 100% 覆盖，
+   242 / 257 是半覆盖（抗锯齿），所以环中线 r=249.5、粗 15.2；三条臂到 r=236 为止。
+   S = 边长/515 是"素材像素 -> 设计像素"。 */
+const ASSET_PX  = 515;
+const EMBLEM_S  = 620;                       // 厂标在画上的边长
+const S         = EMBLEM_S / ASSET_PX;       // 1.20388
+const R_RING    = 249.5 * S;                 // 300.37：环中线
+const RING_W    = 15.2  * S;                 // 18.30
+const R_IN      = (249.5 - 15.2 / 2) * S;    // 291.34：环内缘 = 琥珀半圆的半径
+const MARK_CX   = 566, MARK_CY = 400;
+
+/* ---- 那条轴 ----------------------------------------------------------------
+   它就是厂标的竖轴（方框中心），同一条 x 也劈开下面那行字。 */
+const SEAM = MARK_CX;
+
+/* ---- 字 ------------------------------------------------------------------
+   TITLE_LEFT 是**量出来**的：先把字按默认位置排好、读出每个字母的盒子，
+   再选一个**字母之间的缝**正好落在 SEAM 上（"REIMA | GINE"）。
+   切口落在笔画上，字母就会被削掉一条腿 —— 那不是"两半"，那是"坏了"。 */
+const TITLE_TEXT = 'REIMAGINE';
+const TITLE_SIZE = 176, TITLE_TOP = 800;
+const TITLE_CUT_AFTER = 5;                   // 切在 REIMA 后面（第 5 个字母后面）
+let   TITLE_LEFT = 48;                       // buildMark 会把它调准
+
+const SUB_TEXT = 'THE REACTOR GAME';
+const SUB_SIZE = 24, SUB_LETTER = .46;
+const SUB_LEFT = 56, SUB_TOP = 752;
+
+/* 切点落在第 n 个字母的右边界上：把整个词横移，让那条缝对齐 SEAM。
+   letterBoxes 用的是**已经排好的** DOM，不是估算的字宽。 */
+function letterBoxes(el){
+  const out = [];
+  const node = el.firstChild;
+  if (!node) return out;
+  const rg = document.createRange();
+  for (let i = 0; i < node.length; i++){
+    rg.setStart(node, i); rg.setEnd(node, i + 1);
+    const b = rg.getBoundingClientRect();
+    out.push({ch:node.data[i], left:+b.left.toFixed(2), right:+b.right.toFixed(2)});
+  }
+  return out;
+}
+
+function buildMark(){
+  const mk = document.getElementById('mark');
+  mk.style.left = (MARK_CX - EMBLEM_S / 2) + 'px';
+  mk.style.top  = (MARK_CY - EMBLEM_S / 2) + 'px';
+  mk.style.width = mk.style.height = EMBLEM_S + 'px';
+
+  // 琥珀半圆：半径 = 环内缘；裁在厂标方框的右半边，也就是那条轴。
+  const d = document.getElementById('disc');
+  d.style.left = ((EMBLEM_S - 2 * R_IN) / 2).toFixed(2) + 'px';
+  d.style.top  = ((EMBLEM_S - 2 * R_IN) / 2).toFixed(2) + 'px';
+  d.style.width = d.style.height = (2 * R_IN).toFixed(2) + 'px';
+  document.getElementById('mkR').style.clipPath =
+    'inset(0 0 0 ' + (EMBLEM_S / 2).toFixed(2) + 'px)';
+
+  // 字：两份同盒子，只有颜色和裁剪不同。
+  for (const id of ['titleW', 'titleA']){
+    const el = document.getElementById(id);
+    el.style.top = TITLE_TOP + 'px';
+    el.style.fontSize = TITLE_SIZE + 'px';
+    el.textContent = TITLE_TEXT;
+  }
+  // 先按 left=0 排一遍，量出字母界限，再决定整体的 left。
+  const probe = document.getElementById('titleW');
+  probe.style.left = '0px';
+  const lb = letterBoxes(probe);
+  const cutX = lb[TITLE_CUT_AFTER - 1].right;          // REIMA 的最后一个字母的右边
+  TITLE_LEFT = Math.round((SEAM - cutX) * 100) / 100;
+  for (const id of ['titleW', 'titleA']) document.getElementById(id).style.left = TITLE_LEFT + 'px';
+
+  /* clip-path 的 inset 是**相对元素自己的盒子**，不是相对 stage。
+     第一版写成 `inset(0 (ICON_W-SEAM) 0 0)`，于是那 458px 是从**词的右边缘**
+     往左量的：白字停在 499（不是 566），琥珀字从 626 才开始（不是 566）——
+     两半中间空了 127px，而 DOM 读回来的 clip 字符串长得完全正确。
+     这正是"判据不能拿常数比常数"那条（CLAUDE.md 0.31 ⑥）：是像素仪器先红在这里。 */
+  const cut = SEAM - TITLE_LEFT;                       // 相对词的左边缘
+  const elW = document.getElementById('titleW').offsetWidth;
+  document.getElementById('titleW').style.clipPath =
+    'inset(0 ' + (elW - cut).toFixed(2) + 'px 0 0)';
+  document.getElementById('titleA').style.clipPath =
+    'inset(0 0 0 ' + cut.toFixed(2) + 'px)';
+
+  const sub = document.getElementById('sub');
+  sub.style.left = SUB_LEFT + 'px';
+  sub.style.top = SUB_TOP + 'px';
+  sub.style.fontSize = SUB_SIZE + 'px';
+  sub.style.letterSpacing = SUB_LETTER + 'em';
+  sub.textContent = SUB_TEXT;
+}
+
+function render(t){
+  void t;                            // 契约，不是输入（同前两枚）
+  buildMark();
+}
+
+/* ==========================================================================
+   layoutReport() —— 给检查器读的那一份测量
+   量的都是 DOM 上**读回来**的东西（DECISIONS_2 309）。
+   注意 CLAUDE.md 0.31 ⑥：判据**不能**拿一个读数去比产生它的那个常数。
+   所以"两边是不是同一张图""琥珀停在哪"这些真正的主张由像素仪器独立判，
+   这里只留能真的抓住编辑错误的关系（两份字的盒子、两个盒子不相撞、在框里）。
+   ========================================================================== */
+function boxOf(el){
+  const r = el.getBoundingClientRect();
+  return {left:+r.left.toFixed(2), top:+r.top.toFixed(2),
+          right:+r.right.toFixed(2), bottom:+r.bottom.toFixed(2),
+          w:+r.width.toFixed(2), h:+r.height.toFixed(2)};
+}
+function glyphBox(el){
+  const rg = document.createRange();
+  rg.selectNodeContents(el);
+  const b = rg.getBoundingClientRect();
+  const st = document.getElementById('stage').getBoundingClientRect();
+  return {id: el.id, text: (el.textContent || '').trim().slice(0, 40),
+          left:+(b.left - st.left).toFixed(2), top:+(b.top - st.top).toFixed(2),
+          right:+(b.right - st.left).toFixed(2), bottom:+(b.bottom - st.top).toFixed(2),
+          w:+b.width.toFixed(2), h:+b.height.toFixed(2)};
+}
+function css(id, prop){ return getComputedStyle(document.getElementById(id))[prop]; }
+
+function layoutReport(){
+  render(0);
+  const st = document.getElementById('stage').getBoundingClientRect();
+  function rel(b){
+    return {left:+(b.left - st.left).toFixed(2), top:+(b.top - st.top).toFixed(2),
+            right:+(b.right - st.left).toFixed(2), bottom:+(b.bottom - st.top).toFixed(2),
+            w:+b.w.toFixed(2), h:+b.h.toFixed(2)};
+  }
+
+  const mk = rel(boxOf(document.getElementById('mark')));
+  const disc = rel(boxOf(document.getElementById('disc')));
+
+  const tW = glyphBox(document.getElementById('titleW'));
+  const tA = glyphBox(document.getElementById('titleA'));
+  const sub = glyphBox(document.getElementById('sub'));
+
+  // 每个字母的盒子（绝对 x）—— 判据用它确认切口落在缝里
+  const lb = letterBoxes(document.getElementById('titleW')).map(function(b){
+    return {ch:b.ch, left:+(b.left - st.left).toFixed(2), right:+(b.right - st.left).toFixed(2)};
+  });
+
+  const colours = {
+    disc:   String(css('disc', 'backgroundColor')),
+    titleW: String(css('titleW', 'color')),
+    titleA: String(css('titleA', 'color'))
+  };
+  const clips = {
+    mkR: String(css('mkR', 'clipPath')),
+    titleW: String(css('titleW', 'clipPath')),
+    titleA: String(css('titleA', 'clipPath'))
+  };
+  const decor = ['scan', 'vig'].map(function(id){
+    const el = document.getElementById(id), cs = getComputedStyle(el);
+    return {id:id, opacity:+(+cs.opacity).toFixed(3), blend:cs.mixBlendMode,
+            filter:cs.filter === 'none' ? '' : cs.filter, art:el.dataset.art || null};
+  });
+
+  function widthIn(family){
+    const s = document.createElement('span');
+    s.style.cssText = 'position:absolute;left:-9999px;font-size:100px;font-weight:normal;' +
+                      'white-space:nowrap;font-family:' + family;
+    s.textContent = 'MMMMM REIMAGINE';
+    document.body.appendChild(s);
+    const w = s.getBoundingClientRect().width;
+    s.remove();
+    return +w.toFixed(2);
+  }
+  const fontProbe = {};
+  ['"Arial Narrow"','"Haettenschweiler"','Impact','"Franklin Gothic Medium"','Arial','sans-serif']
+    .forEach(function(f){ fontProbe[f] = widthIn(f); });
+
+  const asset = document.getElementById('asset');
+  return JSON.stringify({
+    stage:{w:st.width, h:st.height}, innerW:innerWidth, innerH:innerHeight, dpr:devicePixelRatio,
+    seam: SEAM, cutAfter: TITLE_CUT_AFTER,
+    mark:{box:mk, cx:+(mk.left + mk.w/2).toFixed(2), cy:+(mk.top + mk.h/2).toFixed(2), d:mk.w,
+          ringR:+R_RING.toFixed(2), ringW:+RING_W.toFixed(2), rIn:+R_IN.toFixed(2),
+          discR:+(disc.w/2).toFixed(2), discBox:disc,
+          src:asset.getAttribute('src'), natural:{w:asset.naturalWidth, h:asset.naturalHeight},
+          complete:!!asset.complete},
+    text:{titleW:tW, titleA:tA, sub:sub, letters:lb, titleLeft:TITLE_LEFT},
+    colours:colours, clips:clips, decor:decor,
+    font:{condW100: widthIn('var(--cond)'), probe:fontProbe}
+  });
+}
+</script>
+<script>
+function fit(){
+  const k = Math.min(innerWidth / ICON_W, innerHeight / ICON_H);
+  document.getElementById('stage').style.transform = 'scale(' + k + ')';
+}
+render(0);
+fit();
+addEventListener('resize', fit);
+</script>
+</body>
+</html>

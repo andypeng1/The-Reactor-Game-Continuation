@@ -2584,6 +2584,65 @@ the gap, and the word REBUILD, and at 256 px the verb it reads as is **"Arriving
 See docs/COVER.md section 9, PROGRESS.md Phase 151, DECISIONS_2 658-666, docs/SNIPPETS.md 5.54,
 docs/TODO.md 3.24.
 
+### Phase 152 - a Reimagine icon: one axis splits the same mark into two states
+
+Three sentences from the operator: 「设计个TRG-reimagine的」, 「可以参考所有素材」, and the binding
+one, **「别跟之前设计的一样」** - do not make it the same as the previous designs. Both earlier
+icons are a centred emblem with a line of type underneath, differing only in what the ring says. So
+this one changes the **topology**: one vertical axis (the emblem's own, x = 566) splits the picture,
+and the same x cuts the word REIMA|GINE inside a letter gap that was measured with a `Range`, not
+guessed.
+
+**"Two states" had to be literal.** The mark is drawn **once** - a single `<img>` spanning both
+halves - and the amber is a disc *underneath* it, radius = the ring's inner wall,
+(249.5 - 15.2/2) x S = 291.22. So "both halves are the same bytes" holds by construction rather
+than by resemblance, and the instruments only have to show it was not broken: the two copies of the
+word share one box to 0.00 px (R3), and the ink coverage per radius matches between the halves to
+L1/total = 0.0146.
+
+`reimagine_judge.js` reads 17 ok / 0 failed with 32/32 mutants. R14 is the one this phase needed:
+`clip-path: inset()` is measured from **the element's own box**, not the canvas, so the first
+version's `inset(0 458 0 0)` left the white copy ending at 499 and the amber copy starting at 626 -
+a 127 px hole - **while `getComputedStyle().clipPath` read back exactly right**. R14 rebuilds each
+clip from its own element's box (`box.left + cR.left`, and the mirror for the other copy) and
+requires all three to land on the axis.
+
+`reimagine_pieces_check.py` holds none of the page's constants: it fits a circle to the white
+ring's **outer** edge (577 rows, centre 565.29/399.63, r 310.00, worst residual 0.65 px), takes the
+axis from that fitted centre, and measures the amber against it. The first version fitted the
+circle to the amber's boundary instead and got r 274 with a 90 px residual, because the mark's own
+arms and hexagons sit on top of the amber and a near-tangential hexagon chord hides a 113 px stretch
+of the arc. 12 readings / 0 failed on the master **and 12 / 0 on the 512**, judged separately.
+
+**The expensive lesson is about the ruler** (CLAUDE.md 0.45). The first version defined the seam as
+"the leftmost amber pixel" and then checked "nothing amber is left of the seam" - a tautology: paint
+amber 40 px further left and the seam follows it. The mutation lit **four other readings** and the
+one it was aimed at never moved, so "four reds" hid "the right one stayed green". The seam now comes
+from the white ink (the fitted ring centre) and the amber's left edge is what gets measured - two
+independent sources, 0.71 px apart. Three more instrument bugs came out of the same selftest run: the
+mutation loop shared a module-level `GEO` dict and a ring-breaking mutant poisoned the two after it
+(3 false failures); a one-pixel antialiasing gap let the "longest run" band split and report the
+picture clean; and the 512 was judged by a per-radius maximum that went red on the correct file
+(0.283 vs 0.219 - raster noise), replaced by a normalised L1 that reads 0.01459 and 0.01479 at the
+two scales.
+
+The chain's teeth were shown end to end, not only inside the instruments: removing the emblem's clip
+in a temporary page (one `sed`) sends the amber across the axis and turns **3 readings red**.
+`bash _tools/icon_runs.sh reimagine` runs render -> judge -> pixels -> 512 -> pixels again -> md5; the
+two older icons re-run byte-identical (`ea0107d6…`, `bf2545d5…`).
+
+Master `cover/THE_REACTOR_GAME_reimagine_icon.png` 1024x1024, 577756 B, md5 `41b49a55…`, identical
+across 5 renders. Upload file 512x512, 164879 B, md5 `8b08e786…`.
+
+**Not verified:** no upload (no `asset:write`), no Studio, no Play, no game code touched; Roblox's
+crop of a 1:1 is still unmeasured; 256 px and 64 px were neither measured nor looked at this time;
+the pixel instrument has only run at 1024 and 512. "Does it look good" is a judgement - at 512 the
+read is a white line-art mark on black on the left, solid amber on the right with the white lines
+still on top, and the amber stopping cleanly at the ring.
+
+See docs/COVER.md section 10, PROGRESS.md Phase 152, DECISIONS_2 667-674, docs/SNIPPETS.md 5.55,
+docs/TODO.md 3.25.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real

@@ -169,6 +169,16 @@ _tools/_attic/scratch/rbmut/
 _tools/_attic/scratch/icon_report_*.json
 _tools/_attic/scratch/rbthumbs/
 
+# --- Phase 152's one piece of scratch.  `maskprobe/` is the CSS-mask isolation
+#     test that settled DECISIONS_2 667: p.html is four boxes (three with
+#     `-webkit-mask-image` pointing at intro/assets/sm-core.png, one unmasked
+#     control) and q.html is four candidates (an inline data-URI SVG mask, the
+#     same LA asset as a mask, an feFlood/feComposite tint, a blend-mode tint).
+#     Each page is three lines of CSS and the renders come from the same
+#     `intro_render.js` as everything else, so this is a dump, not data --
+#     and the `.png` rule above does not reach a subdirectory. ---
+_tools/_attic/scratch/maskprobe/
+
 # --- Phase 133's additions to the same pile, and why they are three lines and
 #     not one blanket.  `renders133/` is ten comparison frames (9.7 MB) from the
 #     re-render sweep; the `*.png` rule above does NOT reach into it, because a
