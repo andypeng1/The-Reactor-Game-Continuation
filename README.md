@@ -2491,6 +2491,51 @@ crop of the icon was never measured, the 512 was not judged on its own (it inher
 and "does it look good" is a judgement, not a reading. See docs/COVER.md section 8, PROGRESS.md
 Phase 149, DECISIONS_2 645-651, docs/SNIPPETS.md 5.52, docs/TODO.md 3.23.
 
+### Phase 150 - the Continuation icon, reworked: the TRG mark, and an arrow that is the stroke itself
+
+The operator looked at Phase 149's icon and said 「有点奇怪啊改一下，而且是trg的continuation，
+你TRG也要有一定体现」 - it reads oddly, and it is *TRG's* continuation, so TRG itself has to show
+up in it. Both halves of that sentence are now measurements.
+
+**Why it read oddly, in one number.** The v2 arrow was a second object laid on top of the gap: its
+base was 68 px across against a 13 px stroke. Every rule was green, because no rule asked whether
+the head and the ring were *one thing*. v3 is a single open circle whose stroke ends in its own
+triangular tip. C8 now asserts `baseOffRing` (the base centre sits on the ring: measured 0) and
+`tipOffRing` against the tangential solution `sqrt(r*r + len*len) - r`, so "it is part of the stroke"
+is a reading, not a hope.
+
+**"TRG has to show up" became the game's own file.** The centre is `intro/assets/sm-core.png` - the
+same asset the cover uses, referenced not copied (Phase 133) - clipped to r = 240 asset px to cut
+away the mark's own ring. That radius is measured, not chosen: 1440 rays through the asset's alpha
+give arms out to 236, an **empty band 237..241**, and the asset's ring starting at 242. Clipping at
+240 keeps 4 px of margin above and 2 below; 3 px either way either shaves the arms' tips or leaves a
+double ring, and both would be invisible at 64 px. C11 pins the asset by `src`, a square box centred
+on the ring, and a clip strictly inside that empty band.
+
+**One rule's two halves had to come from two sources.** C6 compared the page's `249.5 * S` against
+the judge's own literal `249.5` - the §0.31 (6) shape: change one and it goes red, change both and it
+stays green. The replacement is `_tools/continuation_ring_check.py`, which holds no radius constant
+at all: it measures the ring in `sm-core.png` and the ring in the delivered PNG and compares them
+(249.8 : 250.0 asset px, -0.22 within a +-3.0 band; stroke width -0.58). On its first run it went
+red on a **correct** picture: coverage of the drawn ring is capped at `1 - 56/360 = 84.4%` by the
+gap, while the threshold it was using is 0.90 - a check only a *failed* design could pass. The fix
+is two thresholds (asset 0.90 / drawn 0.70), not a looser one.
+
+**The gap has two numbers and both are kept.** The path opens it 56 degrees; the pixels say 39.38,
+because the arrowhead is itself ink (66 px at r 242.2 = 15.6 degrees, so 56 - 15.6 is about 40.4).
+The remaining 1.0 degree was not separated and is written down rather than smoothed away.
+
+`continuation_judge.js` reads 12 ok / 0 failed with 31/31 mutants lighting a rule (C6/C7/C8 get two
+mutants each). `cover_mark_check.py` gained `CLIPR` (default 0, so every earlier command is unchanged):
+41011 ink px inside the clip, 22370 set aside outside it, recall 1.0000 at t <= 100. All six layers
+still change pixels when switched off. The 1024 master is 620594 B / md5 `ea0107d6…` (3/3 identical)
+and the 512 upload file is 169140 B / `7adad5da…`, a LANCZOS downscale of the judged frame.
+
+**Not verified:** no upload (no `asset:write`), no Studio and no Play, no game code touched, Roblox's
+crop of the icon was never measured, the 1.0 degree between the path's gap and the measured clear
+opening is unexplained, and "does it look good" is a judgement, not a reading. See docs/COVER.md
+section 8.7, PROGRESS.md Phase 150, DECISIONS_2 652-657, docs/SNIPPETS.md 5.53, docs/TODO.md 3.23.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real

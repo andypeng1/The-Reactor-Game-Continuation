@@ -3900,6 +3900,11 @@ trg.export(meshes(), NAME, out, blend=False)   # 走同一套导出器
 
 ## 5.52 把「体现某个概念」做成一枚图标：先问**哪些失败会看起来完全正常**（Phase 149）
 
+> **【2026-10-31 更正，Phase 150】** 这一节的**几何**已经被换掉了（六边 → 厂标 + 开口的环，
+> 箭头不再浮在缺口里，而是环这一笔自己的尖）。**下面第 1、3 条仍然有效**（缺口用
+> `tip-to-start` 量、几何从 DOM 读回来），第 2 条也有效（方向是点积）——
+> 换掉的只是被测对象。新配方见 **5.53**，全文 `PROGRESS.md` Phase 150。
+
 操作员要一枚「体现 Continuation」的图标。这个概念在图形上的最小写法是
 **一个不闭合的六边 + 缺口里的箭头** —— 而它有两个失败，**在 64 px 上都还像一个好好的图标**：
 
@@ -3946,3 +3951,94 @@ PAGE=cover/continuation.html W=1024 H=1024 TAG=continuation SHOT=cover/THE_REACT
 64 px 上 **max 3、0 像素 Δ>8**。强制软件（`--disable-gpu`）与强制 GPU 都给**后**那一版，
 前那版要不到 ⇒ **机制没定，就写没定**。所以：**md5 认文件，像素认画，像素复核要带量级**
 （「看起来一样」不是读数；取舍 651，`docs/COVER.md` 8.5）。
+
+
+## 5.53 一句「有点奇怪」要落成**一个几何量**，而环和它是**一个来源**（Phase 150）
+
+Phase 149 的图标里，箭头是**贴上去的第二件物体**：三角底边 68 px，而环粗 13 px。
+判据全绿（方向、长度、位置都对），**因为没有任何一条在量"它和环是不是一件东西"**。
+这一轮把它换成一件事：**环是一个开着口的圆，箭头是这一笔自己的尖**。
+
+**几何（页面里唯一的真相源，`cover/continuation.html`）**
+
+```js
+const ASSET_PX = 515;                    // intro/assets/sm-core.png 的边长
+const EMBLEM_S = 500;                    // 厂标在画上的边长
+const S        = EMBLEM_S / ASSET_PX;    // 0.9709：素材像素 -> 画布像素
+const MARK_CX  = 512, MARK_CY = 415;
+const R_RING   = 249.5 * S;              // 242.24：和素材自己那圈同一个半径
+const RING_W   = 15.2  * S;              // 14.76
+const CLIP_R   = 240   * S;              // 233.0：裁掉素材自带的环，只留臂和内六边
+const GAP_FROM = 348;                    // 弧的起点（缺口的右下角）
+const GAP_TO   = 292;                    // 弧的终点，箭头从这里长出去
+const HEAD_LEN = 66, HEAD_HALF = 15;     // 底边 30 = 环粗的 2.0 倍，还是一个尖
+```
+
+**素材裁剪半径是量出来的，不是挑的。** alpha≥128、1440 条射线：
+
+| 半径（素材 px） | 是什么 |
+|---|---|
+| 0 .. 236 | 三根臂与内六边 |
+| **237 .. 241** | **空的** ← `CLIP_R = 240` 落在这里 |
+| 242 .. 257 | 素材**自己的**环（要裁掉，否则画出来的环旁边会挂一条） |
+
+**判据里有一半不能来自页面。** C6 原来把页面写的 `249.5 * S` 和判据里同一个字面量
+`249.5` 相比 —— **改一边红、两边一起改绿**（这正是 CLAUDE.md **§0.31 ⑥**）。
+补上来的是一台**不持有任何半径常数**的仪器：
+
+```bash
+# 素材的环、画出来的环，各量各的，两边都不抄常数
+python -X utf8 _tools/continuation_ring_check.py
+#   radius     249.8 : 250.0 asset px   delta -0.22  (band +-3.0)   ok
+#   width      15.2  : 14.6             delta -0.58                 ok
+#   clear_opening 39.38 deg             (band 25..80)               ok
+```
+
+**两个阈值，不是一个**（这条是这一轮最贵的一课）：
+
+- 素材的环是**闭的**，覆盖率 ~100% ⇒ `ASSET_COVER = 0.90`；
+- 画出来的环按设计**是开的**，56° 缺口把覆盖率上限压到 84.4% ⇒ `DRAW_COVER = 0.70`。
+
+用同一个 0.90 判两边，结果是「**只有失败的设计才过得了**」：第一版工具就是这样红的
+（`RuntimeError: no ring band found`），而画上清清楚楚是一条环。
+**新建一台仪器，先用"正确的成品"跑一遍；它要是红的，第一个假设应该是仪器错了。**
+
+**缺口有两个数，两个都要留。** 路径说 56°，像素说 **39.38°** —— 因为**箭头自己也吃墨**：
+66 px ÷ r 242.2 = 15.6°，56 − 15.6 ≈ 40.4。剩下 **1.0° 没拆开量**，写下来。
+**把差值抹平成一条容差，两个意思就都没了**（"设计开了多大口" vs "看的人看到多大的口"）。
+
+**「箭头是环的一部分」怎么变成读数**（C8）：
+
+```js
+baseOffRing = |B| - R_RING;                       // 底边中心必须**坐在**环上（实测 0）
+tipOffRing  = hypot(B) - R_RING  对比  sqrt(r*r + len*len) - r;   // 切线方向长出去该有的量
+```
+
+**「TRG 要有体现」= 用游戏自己的那个文件**（C11 钉 `src` 以 `sm-core.png` 结尾、方框是方的、
+裁剪半径落在素材本来空的那一圈里）。重画的线稿能骗过所有版面判据 —— 只有"这是哪个文件"分得开。
+
+**「素材确实画在画上」的读法**（`cover_mark_check.py` 的 `CLIPR`）：
+
+```bash
+SHOT=cover/THE_REACTOR_GAME_continuation_icon.png BOX=500 BOX_X=262 BOX_Y=165 CLIPR=233 \
+  python -X utf8 _tools/cover_mark_check.py
+#   CLIPR 233.0 px: setting aside 22370 ink px outside the clip
+#   ink 41011 px，t=100 时 recall 1.0000
+```
+
+`CLIPR` 默认 0 = 关，所以 Phase 144 那条 16:9 的命令逐字不变。
+
+**逐层关掉再比像素**（这一页第一次把跑道伸到**主体**上）：
+
+```bash
+PAGE=cover/continuation.html W=1024 H=1024 TAG=continuation \
+SHOT=cover/THE_REACTOR_GAME_continuation_icon.png \
+LAYERS="emblem ring head glow scan vig" ASSETS="" bash _tools/cover_layers.sh
+#   emblem 43550 px / d234   ring 93513 / d205   head 7795 / d201
+#   glow 401997 / d32        scan 164078 / d36   vig 660548 / d122     6/6
+```
+
+判定 `node _tools/continuation_judge.js` **12 ok / 0 failed**，`--selftest`
+**31/31 条突变各自点红了至少一条规则**（C6/C7/C8 各两条 —— 一条走过两次的规格，两个读数都要有牙）。
+交付 **1024 = 620594 B / `ea0107d6…`**（3/3 逐字节相同）、
+**512 = 169140 B / `7adad5da…`**（LANCZOS + `optimize=True`，与重新推一遍逐像素相同）。

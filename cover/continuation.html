@@ -10,17 +10,25 @@
   Phase 149（2026-10-31）。操作员原话：
     「帮我设计个The Reactor Game - Continuation的图标（1：1的）然后还是别太复杂，
       要体现Continuation」
+  Phase 150 返工，原话：
+    「有点奇怪啊改一下，而且是trg的continuation，你TRG也要有一定体现」
 
-  一句话：**同一个六边，但它不闭合 —— 缺口那一端走出一枚箭头。**
-  这张图里的六边是这个世界自己的形状（厂标的内外两圈、舱体铺装），
-  闭合的六边说"一座建好的设施"，缺口 + 箭头说"它还在走"。
-  这是"continue"这个动作在图形上的最小写法，而且它在 64px 上仍然读得出
-  —— 图标和封面的区别就在这里：图标要在缩略图上立住，封面不用。
+  一句话：**TRG 的厂标本体，只改它外面那一圈 —— 那圈不闭合，末端就是笔画的尖。**
+  厂标不是重画的：它就是 intro/assets/sm-core.png，封面用的同一个文件
+  （Phase 133 的规矩：引用不复制）。变的是**环**：页面把素材自带的外环裁掉
+  （clip 在 r=240 素材像素，落在"臂到 236 为止、环从 242 起"这条**空带**里），
+  再按**素材自己的半径**画一圈 —— 和印出来的那圈同一个圆，唯一的不同是它开着口。
+  于是"TRG"是游戏自己的记号、逐像素一条不差，
+  "continuation"是这张记号上唯一被改动的那一处。
 
-  **不是封面的缩小版。** 封面（cover/index.html）是 1080 方、厂标 + 大字 +
-  徽章 + 页脚四样；这张只有**三样**：六边 + 缺口箭头 / 大词 CONTINUATION /
-  一行小字 THE REACTOR GAME。操作员说「别太复杂」，所以页脚、徽章、
-  "AIREMAKE" 那一格都没有搬过来。
+  v1 是一个单独的六边 + 缺口 + 浮在缺口中间的三角 + 一枚青色小六边：
+  那不是 TRG，读起来是一枚"刷新/循环"徽章，而悬空的三角像"下一页"按钮。
+  v2 把核心换成厂标，但箭头还是一枚**贴上去的琥珀三角**：底边 68px，而环才 13px，
+  五倍宽 —— 读起来是一顶帽子，不是笔画（操作员：「有点奇怪」）。
+  **v3（这一版）把箭头做成环自己的尖**：同色、底边 30px（环粗 14.8 的两倍）、
+  底边正落在弧的端点上，所以它和环是一件东西，不是两件。
+  三条判据钉住这件事：底边离环 0px（C8）、尖落在切线的解上（C8）、
+  环的半径等于素材环的半径（C6 + 像素那一份 continuation_ring_check.py）。
 
   **契约与封面、两部片子完全一样**（见下面 render 那一段）：固定的设计空间
   #stage（1024x1024）、一个全局的 render(t)、一个按视口缩放的 fit()。
@@ -67,25 +75,28 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 .brk.br{right:-2px;bottom:-2px;border-left:0;border-top:0}
 
 /* ============================ 光晕 ============================
-   堆芯后面那团青色。它是**装饰层**：不进任何几何断言，所以只能靠
+   厂标后面那团青色。它是**装饰层**：不进任何几何断言，所以只能靠
    "关掉再比像素"（_tools/cover_layers.sh）证明它真的在画上（CLAUDE.md 0.32）。 */
 #glow{position:absolute;inset:0;
-  background:radial-gradient(circle at 512px 420px,
+  background:radial-gradient(circle at 512px 415px,
     rgba(82,218,226,.20) 0%, rgba(82,218,226,.07) 26%, rgba(82,218,226,0) 54%);}
 
-/* ============================ 主体：不闭合的六边 + 箭头 ============================
-   六边是**点顶**的（顶点朝上），和封面、厂标同一族。半径、缺口、箭头全部由
-   JS 里的四个数算出来（HEX_R / GAP_A / GAP_B / HEAD_*），HTML 里一个字都不写 ——
-   所以"画的"和"报的"只可能来自同一处，而 layoutReport() 仍然把**属性读回来**
-   再和解析值比一次（封面 A6/A7 那条纪律：量 DOM，不量我以为我写了什么）。 */
+/* ============================ 主体：厂标 + 开口的环 ============================
+   厂标是**素材**（intro/assets/sm-core.png），不是重画的线稿：品牌这种东西
+   手抄一遍就是抄错一遍。页面只裁掉它自带的外环，再按同一半径画一圈开口的环。
+   半径、缺口、箭头全部由 JS 里的常数算出来，HTML 里一个字都不写 ——
+   而 layoutReport() 仍然把**属性读回来**再和解析值比一次
+   （封面 A6/A7 那条纪律：量 DOM，不量我以为我写了什么）。 */
+#emblem{position:absolute;opacity:.97}
 #markSvg{position:absolute;left:0;top:0}
-#loopPath{fill:none;stroke:var(--ready);stroke-width:7;
-  stroke-linejoin:miter;stroke-linecap:butt;opacity:.92;
-  filter:drop-shadow(0 0 14px rgba(82,218,226,.55));}
-#headTri{fill:var(--amber);opacity:.96;
-  filter:drop-shadow(0 0 16px rgba(255,128,1,.55));}
-#coreHex{fill:var(--plasma);opacity:.9;
-  filter:drop-shadow(0 0 18px rgba(82,218,226,.65));}
+/* 圆头两端的环：尾端是"从无到有"，头端被箭头盖住。 */
+#ringPath{fill:none;stroke:var(--ready);stroke-linejoin:miter;stroke-linecap:round;
+  opacity:.92;filter:drop-shadow(0 0 16px rgba(82,218,226,.55));}
+/* 箭头和环**同一个颜色**：它是那根笔画自己的尖，不是贴上去的第二个物体
+   （v2 的琥珀三角底边 68px、环才 13px —— 读起来是一顶帽子，这就是"有点奇怪"）。
+   底边 2 倍粗、沿着切线伸出去 60px，尖端带一点琥珀的余温。 */
+#headTri{fill:var(--ready);opacity:.92;
+  filter:drop-shadow(0 0 16px rgba(255,128,1,.50)) drop-shadow(0 0 22px rgba(82,218,226,.35));}
 
 /* ============================ 字 ============================
    大词一行、小字一行。大词是这张图唯一的"说出来的东西"：
@@ -123,11 +134,12 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 
   <div id="glow" data-art="gradient"></div>
 
+  <img id="emblem" src="../intro/assets/sm-core.png" alt="">
+
   <svg id="markSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"
        width="1024" height="1024">
-    <g id="loop"><polyline id="loopPath" points=""></polyline></g>
+    <g id="ring"><path id="ringPath" d=""></path></g>
     <g id="head"><polygon id="headTri" points=""></polygon></g>
-    <g id="coreDot"><polygon id="coreHex" points=""></polygon></g>
   </svg>
 
   <div id="title">CONTINUATION</div>
@@ -151,58 +163,64 @@ body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
 const ICON_W = 1024, ICON_H = 1024;
 const FRAME_IN = 20;
 
-/* 主体那四个数 —— **唯一的来源**。HTML 里一条 path 都没有手写。
-   点顶六边形：宽 = 2R*cos30，高 = 2R。 */
-const HEX_R    = 245;
-const MARK_CX  = 512, MARK_CY = 420;
-const COS30    = Math.cos(Math.PI / 6);
+/* ---- 厂标 -----------------------------------------------------------------
+   素材 515x515，**实测**（alpha>=128，1440 条射线逐半径扫，_tools 里那份
+   径向剖面就是它）：外环从 r=243 到 r=256 是 100% 覆盖，242 / 257 是半覆盖
+   （抗锯齿），所以环的中线 r=249.5、粗 15.2；三条臂到 r=236 为止（235 还有
+   9.5%，237 就 0 了）。于是 237..241 是**空的**，像素**裁**在 240 正落在这条
+   空带里：臂留得住（余 4），环裁得掉（余 2）。
+   S = 500/515 就是"素材像素 → 设计像素"。 */
+const ASSET_PX = 515;
+const EMBLEM_S = 500;                       // 厂标在画上的边长
+const S        = EMBLEM_S / ASSET_PX;       // 0.9709
+const MARK_CX  = 512, MARK_CY = 415;
+const R_RING   = 249.5 * S;                 // 242.24：和印出来的那圈**同一个半径**
+const RING_W   = 15.2  * S;                 // 14.76
+const CLIP_R   = 240   * S;                 // 233.0：臂末端 229.1 / 环内缘 235.0
 
-/* 缺口和箭头。GAP_A / GAP_B 是**右边那条竖边**（v1 -> v2）上的两个比例：
-   GAP_B 是笔画结束的位置（箭头所在，靠上），GAP_A 是笔画开始的位置（靠下）。
-   两者之间就是缺口 —— 六边在这里**不闭合**。 */
-const GAP_A    = 0.74;              // 0=上端(v1)，1=下端(v2)
-const GAP_B    = 0.32;
-const HEAD_LEN = 54;                // 箭头从笔画末端往前伸出的长度
-const HEAD_HALF= 38;                // 箭头底边的一半宽
+/* ---- 开口与箭头 -----------------------------------------------------------
+   角度是屏幕坐标（x 右、y 下，顺时针 = 度数增大）。弧从 GAP_FROM 顺时针
+   走 304° 到 GAP_TO；箭头长在 GAP_TO 的末端，方向 = 那一点的顺时针切线。
+   缺口放在右上（292°..348°，56°）：**实测**素材三条臂在 24..36 / 144..156 /
+   264..276（`r=230` 上量，每条 ~11.5° 宽），所以这条缺口一格都不碰它们，
+   也避开下面的大字。 */
+const GAP_FROM = 348;                       // 弧的起点（缺口的右下角）
+const GAP_TO   = 292;                       // 弧的终点，箭头在这里
+const HEAD_LEN = 66;
+const HEAD_HALF= 15;                        // 底边 30 = 环粗 14.76 的 2.0 倍
 
-/* 芯：正中一枚实心小六边。有它，这个图形读作"反应堆"；没有它，
-   一个缺口圆环 + 箭头就是洗衣机的"再洗一次"。 */
-const CORE_R   = 44;
-
-function hexPoints(cx, cy, r){
-  const pts = [];
-  for (let i = 0; i < 6; i++){
-    const a = (-90 + 60 * i) * Math.PI / 180;
-    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
-  }
-  return pts;
-}
+const RAD = Math.PI / 180;
+const onRing = deg => [MARK_CX + R_RING * Math.cos(deg * RAD),
+                       MARK_CY + R_RING * Math.sin(deg * RAD)];
 const fmt = p => p[0].toFixed(2) + ',' + p[1].toFixed(2);
 
 function buildMark(){
-  const V = hexPoints(MARK_CX, MARK_CY, HEX_R);
+  // 厂标：位置 + 尺寸 + 把这个素材自带的外环裁掉的半径
+  const em = document.getElementById('emblem');
+  em.style.left = (MARK_CX - EMBLEM_S / 2) + 'px';
+  em.style.top  = (MARK_CY - EMBLEM_S / 2) + 'px';
+  em.style.width = em.style.height = EMBLEM_S + 'px';
+  em.style.clipPath = 'circle(' + CLIP_R.toFixed(2) + 'px at 50% 50%)';
 
-  // 右边那条边 v1 -> v2 上的两个点：A 是笔画起点（下），B 是笔画终点（上）。
-  const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-  const A = lerp(V[1], V[2], GAP_A);
-  const B = lerp(V[1], V[2], GAP_B);
+  // 环：一段圆弧，缺口从 GAP_TO 到 GAP_FROM。sweep-flag 1 = 屏幕上的顺时针。
+  const A = onRing(GAP_FROM), B = onRing(GAP_TO);
+  const sweep = ((GAP_TO - GAP_FROM) % 360 + 360) % 360;    // 324（顺时针：角度增大）
+  const large = sweep > 180 ? 1 : 0;
+  document.getElementById('ringPath').setAttribute('d',
+    'M ' + fmt(A) + ' A ' + R_RING.toFixed(3) + ' ' + R_RING.toFixed(3) +
+    ' 0 ' + large + ' 1 ' + fmt(B));
+  const ring = document.getElementById('ringPath');
+  ring.style.strokeWidth = RING_W.toFixed(2) + 'px';
 
-  // 顺时针走：A -> v2 -> v3 -> v4 -> v5 -> v0 -> v1 -> B。
-  // 缺口就是 B..A 这一段，箭头在 B 上，顺着行进方向（向下）指。
-  const pts = [A, V[2], V[3], V[4], V[5], V[0], V[1], B];
-  document.getElementById('loopPath').setAttribute('points', pts.map(fmt).join(' '));
-
-  // 箭头：方向 = 行进方向（B 处的切线 = v1->v2 = (0,1)）。
-  const dir = [0, 1];
-  const perp = [-dir[1], dir[0]];
-  const tip = [B[0] + dir[0] * HEAD_LEN, B[1] + dir[1] * HEAD_LEN];
+  // 箭头：顺时针切线 t = (-sin, cos)，底边**落在弧的末端 B 上**。环用 round
+  // 线帽，所以弧的笔画本身会越过 B 半个粗，箭头的底边就埋在它下面 —— 两个形状
+  // 接成一条，读起来是"这根笔画的尖"，而不是"贴在旁边的一枚三角"。
+  const t = [-Math.sin(GAP_TO * RAD), Math.cos(GAP_TO * RAD)];
+  const perp = [-t[1], t[0]];
+  const tip = [B[0] + t[0] * HEAD_LEN, B[1] + t[1] * HEAD_LEN];
   const c1  = [B[0] + perp[0] * HEAD_HALF, B[1] + perp[1] * HEAD_HALF];
   const c2  = [B[0] - perp[0] * HEAD_HALF, B[1] - perp[1] * HEAD_HALF];
   document.getElementById('headTri').setAttribute('points', [tip, c1, c2].map(fmt).join(' '));
-
-  // 芯：一枚点顶小六边，实心。
-  document.getElementById('coreHex').setAttribute(
-    'points', hexPoints(MARK_CX, MARK_CY, CORE_R).map(fmt).join(' '));
 }
 
 function render(t){
@@ -235,43 +253,58 @@ function layoutReport(){
     left: +(b.left - st.left).toFixed(2), right: +(b.right - st.left).toFixed(2)});
   const text = ['title', 'sub'].map(id => rel(glyphBox(document.getElementById(id))));
 
-  // ---- 六边：从 DOM 的 points 属性读回来，再和"按 CENTER/R 算出来的解析值"比。
-  // 读回来的点有 8 个：A / v2 v3 v4 v5 v0 v1 / B。中间六个才是顶点。
-  const drawn = parsePts(document.getElementById('loopPath').getAttribute('points'));
-  const V = hexPoints(MARK_CX, MARK_CY, HEX_R);
-  const order = [2, 3, 4, 5, 0, 1];            // drawn[1..6] 对应 V[2],V[3],V[4],V[5],V[0],V[1]
-  let worst = 0, worstAt = -1;
-  for (let i = 0; i < 6; i++){
-    const p = drawn[1 + i], q = V[order[i]];
-    const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
-    if (d > worst){ worst = d; worstAt = i; }
-  }
+  // ---- 环：**从画出来的 path 上取点**（getPointAtLength），再量每一点到圆心
+  // 的距离。这是"画的是一条以 (cx,cy) 为心、R 为半径的圆弧"这件事的读数，
+  // 不是把那几个常数再抄一遍。
+  const C = [MARK_CX, MARK_CY];
+  const ring = document.getElementById('ringPath');
+  const L = ring.getTotalLength();
+  const pt = p => [p.x, p.y];                 // getPointAtLength 回的是 DOMPoint
+  const samples = [];
+  for (let i = 0; i <= 8; i++) samples.push(pt(ring.getPointAtLength(L * i / 8)));
+  const radii = samples.map(p => Math.hypot(p[0] - C[0], p[1] - C[1]));
+  const rMin = Math.min(...radii), rMax = Math.max(...radii);
+  const A = samples[0], B = samples[samples.length - 1];
+  const angOf = p => (Math.atan2(p[1] - C[1], p[0] - C[0]) / RAD + 360) % 360;
+  const angA = angOf(A), angB = angOf(B);
+  const sweepDeg = ((angB - angA) % 360 + 360) % 360;   // 沿走的方向量
+  const gapDeg   = 360 - sweepDeg;
 
   // ---- 缺口与箭头
-  const A = drawn[0], B = drawn[drawn.length - 1];
   const gap = Math.hypot(A[0] - B[0], A[1] - B[1]);
   const head = parsePts(document.getElementById('headTri').getAttribute('points'));
   const tip = head[0], base = [(head[1][0] + head[2][0]) / 2, (head[1][1] + head[2][1]) / 2];
   const hd  = [tip[0] - base[0], tip[1] - base[1]];
   const hlen = Math.hypot(hd[0], hd[1]);
   const hdir = [hd[0] / hlen, hd[1] / hlen];
-  // 箭尖到笔画起点的距离：**这才是"缺口有没有被头填掉"的读数**。
-  // 只看 gap 说不了这件事 —— 头可以正好长到把 gap 补完，那时候 gap 还是那么大。
+  // 箭尖到**起点**的距离：这才是"缺口有没有被头填掉"的读数（取舍 646）。
   const tipToStart = Math.hypot(tip[0] - A[0], tip[1] - A[1]);
-  // 箭尖到右边那条直线的横向偏差：头是不是**长在这条边上**，而不是飘在边内/边外。
-  const tipOffEdge = Math.abs(tip[0] - B[0]);
-  // 笔画末端那一小段的方向 = v1 -> B（drawn[6] -> drawn[7]）
-  const seg = [B[0] - drawn[6][0], B[1] - drawn[6][1]];
-  const slen = Math.hypot(seg[0], seg[1]);
-  const sdir = [seg[0] / slen, seg[1] / slen];
-  const dot  = hdir[0] * sdir[0] + hdir[1] * sdir[1];
+  // 箭头的底边是不是落在环上（头不是飘在里/外）。箭尖本身沿切线前伸，
+  // 它离圆心必然比 R 远 sqrt(R^2+len^2)-R ≈ 5.5 px —— 那是几何，不是缺陷，
+  // 所以"在环上"这条断言量的是 **base**，不是 tip。
+  const baseOffRing = Math.abs(Math.hypot(base[0] - C[0], base[1] - C[1]) - R_RING);
+  const tipOffRing = Math.abs(Math.hypot(tip[0] - C[0], tip[1] - C[1]) - R_RING);
+  // 环在 B 点的顺时针切线：t = (-sin, cos)。
+  const t = [-Math.sin(angB * RAD), Math.cos(angB * RAD)];
+  const dot = hdir[0] * t[0] + hdir[1] * t[1];
 
-  // ---- 芯
-  const core = parsePts(document.getElementById('coreHex').getAttribute('points'));
-  const coreR = Math.hypot(core[0][0] - MARK_CX, core[0][1] - MARK_CY);
+  // ---- 厂标：位置、尺寸、裁切半径
+  const em = document.getElementById('emblem');
+  const eb = em.getBoundingClientRect();
+  const cs = getComputedStyle(em);
+  const clipPx = (String(cs.clipPath).match(/circle\(([-\d.]+)px/) || [])[1];
+  const emblem = {
+    src: em.getAttribute('src'),
+    left: +(eb.left - st.left).toFixed(2), top: +(eb.top - st.top).toFixed(2),
+    w: +eb.width.toFixed(2), h: +eb.height.toFixed(2),
+    clip: clipPx === undefined ? null : +(+clipPx).toFixed(2),
+    opacity: +(+cs.opacity).toFixed(3)
+  };
 
-  // ---- 整体包围盒（笔画 + 箭头尖 + 芯），给"在外框以内"那条规则
-  const all = drawn.concat([tip], core);
+  // ---- 整体包围盒（环 + 箭头尖 + 厂标的方框），给"在外框以内"那条规则
+  const curve = Array.from({length: 97}, (_, i) => pt(ring.getPointAtLength(L * i / 96)));
+  const all = curve.concat([tip, [emblem.left, emblem.top],
+                            [emblem.left + emblem.w, emblem.top + emblem.h]]);
   const bounds = {
     left:  +Math.min(...all.map(p => p[0])).toFixed(2),
     right: +Math.max(...all.map(p => p[0])).toFixed(2),
@@ -281,16 +314,14 @@ function layoutReport(){
   // ---- 装饰层：声明的素材极性 vs 实际 filter（同封面 A9 的样式那一半）
   const decor = ['glow', 'scan', 'vig'].map(id => {
     const el = document.getElementById(id);
-    const cs = getComputedStyle(el);
-    return {id, opacity: +(+cs.opacity).toFixed(3), blend: cs.mixBlendMode,
-            filter: cs.filter === 'none' ? '' : cs.filter,
+    const cs2 = getComputedStyle(el);
+    return {id, opacity: +(+cs2.opacity).toFixed(3), blend: cs2.mixBlendMode,
+            filter: cs2.filter === 'none' ? '' : cs2.filter,
             art: el.dataset.art || null};
   });
 
-  // ---- 字体可用性（Phase 144 的教训：Arial Narrow 在这台机器上没有，标题
-  // 实际用的是下一个 fallback；把"用的是哪一个"写进报告，不让它成为猜测）。
-  // 同一串字在**每个候选家族**里各量一次：没装的家族会和 fallback 给出**相同的
-  // 宽度**，装的给出不同的宽度。所以这张表是"这台机器上有哪些字体"的读数。
+  // ---- 字体可用性（Phase 144 的教训）。同一串字在**每个候选家族**里各量一次：
+  // 没装的家族会和 fallback 给出**相同的宽度**，装的给出不同的宽度。
   function widthIn(family){
     const s = document.createElement('span');
     s.style.cssText = 'position:absolute;left:-9999px;font-size:100px;' +
@@ -313,14 +344,15 @@ function layoutReport(){
     dpr: devicePixelRatio,
     text, decor,
     mark:{
-      cx: MARK_CX, cy: MARK_CY, r: HEX_R,
-      gap: +gap.toFixed(2), gapFrac: +(gap / HEX_R).toFixed(4),
+      cx: MARK_CX, cy: MARK_CY, r: +R_RING.toFixed(3), ringW: +RING_W.toFixed(2),
+      gap: +gap.toFixed(2), gapDeg: +gapDeg.toFixed(2), sweepDeg: +sweepDeg.toFixed(2),
       start: A.map(v => +v.toFixed(2)), end: B.map(v => +v.toFixed(2)),
-      tipToStart: +tipToStart.toFixed(2), tipOffEdge: +tipOffEdge.toFixed(2),
-      worstVertexPx: +worst.toFixed(3), worstAt,
+      rMin: +rMin.toFixed(3), rMax: +rMax.toFixed(3),
+      tipToStart: +tipToStart.toFixed(2), tipOffRing: +tipOffRing.toFixed(2),
+      baseOffRing: +baseOffRing.toFixed(2),
       head:{tip, base, len: +hlen.toFixed(2), half: HEAD_HALF, dir: hdir,
-            segDir: sdir, dot: +dot.toFixed(4)},
-      coreR: +coreR.toFixed(2),
+            tan: [+t[0].toFixed(4), +t[1].toFixed(4)], dot: +dot.toFixed(4)},
+      emblem,
       bounds
     },
     font:{condW100: condW, probe: fontProbe}

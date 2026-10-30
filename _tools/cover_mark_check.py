@@ -67,6 +67,19 @@ if not os.path.isabs(SHOT):
 BOX   = int(os.environ.get("BOX")   or 420)    # MARK_D in cover/index.html
 BOX_X = int(os.environ.get("BOX_X") or 330)    # HEX_CX(540) - BOX/2
 BOX_Y = int(os.environ.get("BOX_Y") or 194)    # HEX_CY(404) - BOX/2
+
+# PHASE 150: the continuation icon deliberately CROPS the asset's outer ring away
+# (cover/continuation.html clips at r=240 asset px and draws its own open ring
+# there), so on that page the ring's ink is supposed to be missing.  Counting it
+# as "ink that did not come out" would report recall < 1 for a design that is
+# exactly right.  CLIPR (in BOX pixels, i.e. the same units as the clip the page
+# applies after scaling) excludes that annulus from the denominator and prints
+# how many pixels it set aside.  Default 0 = off, so every command written
+# before Phase 150 still measures the whole asset.
+#
+#   SHOT=cover/THE_REACTOR_GAME_continuation_icon.png BOX=500 BOX_X=262 BOX_Y=165 \
+#   CLIPR=233 python -X utf8 _tools/cover_mark_check.py
+CLIPR = float(os.environ.get("CLIPR") or 0)
 ALPHA = 128                    # "this pixel is ink" in the asset
 SWEEP = (60, 80, 100, 120, 150, 180, 200, 220, 240)
 DEFAULT_T = 120
@@ -88,7 +101,15 @@ def asset_ink():
     reading is not wrong about the file, it answers a different question.
     """
     a = Image.open(ART).convert("LA").getchannel("A")
-    return np.array(a.resize((BOX, BOX), Image.BILINEAR)).astype(np.float64) > ALPHA
+    ink = np.array(a.resize((BOX, BOX), Image.BILINEAR)).astype(np.float64) > ALPHA
+    if CLIPR > 0:
+        yy, xx = np.mgrid[0:BOX, 0:BOX]
+        r = np.hypot(xx - (BOX - 1) / 2.0, yy - (BOX - 1) / 2.0)
+        outside = ink & (r > CLIPR)
+        print("  CLIPR %.1f px (box units): setting aside %d ink px outside the clip"
+              % (CLIPR, int(outside.sum())))
+        ink = ink & ~outside
+    return ink
 
 
 def radial(hit, ink):
@@ -110,8 +131,8 @@ def radial(hit, ink):
 
 def main(t=DEFAULT_T):
     mx = load()
-    ink = asset_ink()
     print("%s  box %dx%d at (%d,%d)  ink alpha>%d" % (SHOT, BOX, BOX, BOX_X, BOX_Y, ALPHA))
+    ink = asset_ink()
     print("ink %d px (%.2f%% of the box)\n" % (ink.sum(), 100.0 * ink.sum() / ink.size))
 
     print("  t     bright      tp      fp      fn   precision   recall")

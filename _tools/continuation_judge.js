@@ -7,28 +7,32 @@
  * what lets --selftest feed this file a deliberately broken report with no
  * browser involved.
  *
- * WHY A THIRD JUDGE.  The cover's rules are about a 1080-square poster with a
- * hero mark, a headline and a footer.  The continuation icon is a 1024-square
- * mark + one word: the objects that can be wrong are different objects, so
- * reusing A1/A5/A10 with renamed fields would be a rule that looks the same and
- * measures something else (CLAUDE.md 0.18).
+ * WHAT THE PICTURE IS NOW (Phase 150 rework).  The operator said of the first
+ * icon 「有点奇怪啊改一下，而且是trg的continuation，你TRG也要有一定体现」.  So
+ * the hero is no longer a hexagon I drew: it is the game's own SMC mark
+ * (intro/assets/sm-core.png, the same file the cover uses -- 引用不复制), and
+ * the *only* thing the page changes about it is that the mark's outer ring is
+ * cut open and the cut end carries an arrowhead.  The page clips the asset's
+ * own ring away at r=240 asset px and draws a replacement ring at the asset's
+ * own radius (249.5 asset px), so "the ring" and "the brand's ring" are the
+ * same circle -- C6 is the rule that says so, and it is the rule that would go
+ * red if someone moved the drawn ring a few pixels in or out.
  *
- * WHAT IS SHARED VERBATIM: the empty-set guard (C1 NAMES the things instead of
- * counting), the near-miss half of the collision rule (C3 reports the closest
- * miss, so "nothing collided" cannot pass because nothing was close), the
- * two-spellings-of-one-shape rule (C6), the asset-polarity rule (C10).
+ * THE RULES THAT ARE THE POINT (C7/C8): the ring does not close, and the head
+ * runs along it.  If the gap closes the mark is just a logo; if the head is
+ * flipped the ring runs backwards; if the head is a big fat triangle whose base
+ * is 5x the stroke it stops being the stroke's own tip and becomes a hat stuck
+ * on the ring -- which is exactly what made the first version look odd.  All
+ * three still look like a plausible icon at 64px, so all three are measured.
  *
- * WHAT THIS PAGE CANNOT HAVE, AND SAYS SO: it draws no raster asset.  So C10
- * keeps the "declaration matches filter" half and does NOT keep the cover's
- * "at least one layer must declare a real ASSET polarity" guard -- that guard's
- * object is absent here and a guard with no object can only ever be red or
- * vacuous (CLAUDE.md 0.31).  C10 instead requires at least one layer at all.
- *
- * THE RULE THAT IS NEW, AND IT IS THE POINT OF THE PICTURE (C7/C8): the icon is
- * supposed to say "continuation" -- a hexagon that does NOT close, whose open
- * end carries an arrowhead.  If the gap closes it is just a hexagon; if the
- * head is flipped the loop runs backwards.  Both look entirely plausible on a
- * 64px thumbnail, so both are measured, not eyeballed.
+ * THE ASSET NUMBERS USED BELOW ARE MEASURED, NOT ASSUMED.  Radial profile of
+ * sm-core.png at 1440 angles, alpha >= 128:
+ *     r 235 -> 9.5%   (the three arms' last real coverage)
+ *     r 236 -> 3.3%   r 237..241 -> 0%      <- the empty band the clip lives in
+ *     r 242 -> 12.4%  r 243..256 -> 100%    (the ring itself)
+ *     r 257 -> 97.6%  r 258 -> 2.7%         (the ring's outer antialiased edge)
+ * so: arms end at 236, ring inner edge at 242, ring centre 249.5, ring width
+ * 15.2 -- all in ASSET pixels, scaled by S = EMBLEM_S / 515.
  *
  * Usage:
  *   node _tools/intro_render.js --page cover/continuation.html --at 0 --w 1024 --h 1024 \
@@ -42,14 +46,26 @@ const fs = require('fs');
 
 const W = 1024, H = 1024;
 const FRAME_IN = 20;                    // #frame's inset, from cover/continuation.html
-const INNER = W - 2 * FRAME_IN;         // 984
 const SAFE = 6;
 const AXIS = W / 2;                     // every centred thing lives on x=512
 const MARK_CLEAR = 24;                  // the mark must breathe above the word
 
+/* Asset geometry, in the asset's own pixels (see the header).  These are the
+   independent evidence the drawn geometry is compared AGAINST -- they are not
+   copied from the page's constants. */
+const ASSET_PX      = 515;
+const ASSET_RING_R  = 249.5;
+const ASSET_ARM_END = 236;
+const ASSET_RING_IN = 242;
+
 function judge(m){
   const out = [];
   const add = (label, ok, detail) => out.push({label, ok, detail});
+
+  const mk = m.mark || {};
+  const head = (mk.head || {});
+  const em = (mk.emblem || {});
+  const S = (em.w || 0) / ASSET_PX;       // asset px -> design px, read from the img box
 
   /* C0 -- the frame of reference.  Forgetting --w/--h letterboxes the stage and
      every coordinate below is in the wrong space; that is the realistic failure,
@@ -59,20 +75,20 @@ function judge(m){
       `stage ${m.stage.w}x${m.stage.h}, viewport ${m.innerW}x${m.innerH}`);
 
   /* C1 -- non-vacuity, said before anything is judged.  Every rule below is
-     "fits" / "does not collide", and both are free on a page that drew nothing. */
+     of the form "this sits in the right place"; all of them are free on a page
+     that drew nothing.  So name the four things the picture is made of. */
   const want = ['title', 'sub'];
   const missing = want.filter(id => {
     const t = m.text.find(x => x.id === id);
     return !t || !t.text;
   });
-  const mk = m.mark || {};
-  const head = (mk.head || {});
-  add('C1 the two words and the three parts of the mark are present',
+  add('C1 both words, the brand asset, the ring and the head are all present',
       missing.length === 0 &&
-      (mk.worstAt !== undefined && mk.worstAt >= 0) &&
-      (mk.gap > 20) && (head.len > 20) && (mk.coreR > 10),
+      typeof em.src === 'string' && em.src.length > 0 && em.w > 0 &&
+      Number.isFinite(mk.r) && mk.gapDeg > 0 && mk.sweepDeg > 0 &&
+      head.len > 0 && Array.isArray(head.tip),
       (missing.length ? `MISSING: ${missing.join(',')}` : 'CONTINUATION + THE REACTOR GAME present') +
-      `; loop gap ${mk.gap}px, head ${head.len}px, core r ${mk.coreR}px`);
+      `; asset ${em.w}px, ring r ${mk.r}, gap ${mk.gapDeg}deg, head ${head.len}px`);
 
   /* C2 -- every text block is inside the frame.  Roblox re-crops this image into
      a circle and into several card slots; type under the frame edge is type that
@@ -85,9 +101,7 @@ function judge(m){
       outside.length ? outside.map(t => `${t.id} [${t.left}..${t.right}]x[${t.top}..${t.bottom}]`).join('; ')
                      : `${m.text.length} blocks inside [${FRAME_IN + 4}..${W - FRAME_IN - 4}]`);
 
-  /* C3 -- no two text blocks overlap, AND some pair was close enough to matter.
-     The two lines are 31px apart by their glyph boxes, so this rule is
-     load-bearing rather than decorative. */
+  /* C3 -- no two text blocks overlap, AND some pair was close enough to matter. */
   let pairs = 0, worst = null, minGap = Infinity;
   for (let i = 0; i < m.text.length; i++) for (let j = i + 1; j < m.text.length; j++){
     const a = m.text[i], b = m.text[j];
@@ -110,7 +124,7 @@ function judge(m){
 
   /* C4 -- the word.  Three claims: it fits the inner width, its glyph height
      survives the 1/5 thumbnail (Roblox's card size), and the number printed is
-     the one a reader actually gets.  Centring is C9's job, not this one. */
+     the one a reader actually gets. */
   const title = m.text.find(t => t.id === 'title');
   const tW = title ? title.right - title.left : NaN;
   const tH = title ? title.bottom - title.top : NaN;
@@ -120,9 +134,7 @@ function judge(m){
               `(${(tH / 5).toFixed(2)}px at 1/5)`
             : 'no title measured');
 
-  /* C5 -- the mark is inside the frame AND clears the word under it.  A mark
-     that drifts down does not collide until it is already 40px into the type;
-     the clearance is what keeps the lockup from turning into one blob. */
+  /* C5 -- the mark is inside the frame AND clears the word under it. */
   const b = mk.bounds || {};
   const clear = (b.bottom !== undefined && title) ? title.top - b.bottom : NaN;
   add('C5 the mark is inside the frame and clear of the word',
@@ -132,52 +144,71 @@ function judge(m){
       `mark x[${b.left}..${b.right}] y[${b.top}..${b.bottom}], ` +
       `${Number.isFinite(clear) ? clear.toFixed(1) : 'n/a'}px above the word (needs ${MARK_CLEAR})`);
 
-  /* C6 -- the drawn loop is the analytic hexagon.  The page writes the points
-     attribute from HEX_R/centre and the report parses it BACK; a hand-edited
-     string, a swapped vertex order or a drifting radius all show up here.  The
-     cover's A6/A7 argument: two hexagons that are not the same hexagon still
-     both look like hexagons. */
-  add('C6 the drawn loop is the analytic hexagon',
-      mk.worstVertexPx < 0.5,
-      `worst corner ${mk.worstVertexPx}px off (corner #${mk.worstAt})`);
+  /* C6 -- THE DRAWN RING IS THE BRAND'S RING.  Two clauses, two readings:
+       (a) circle-ness: the path is sampled at nine points and every radius
+           agrees.  A path built from the wrong control points bulges or kinks
+           and still looks like an arc at 64px;
+       (b) the radius is the asset's ring radius, computed from the img box that
+           the browser reported.  This is the claim the page makes in its own
+           comment -- "和印出来的那圈同一个半径" -- and (a) cannot see it,
+           because a ring drawn at the wrong radius is a perfectly good circle.
+     A rule with two clauses gets two mutants (DECISIONS_2 592). */
+  const R_want = ASSET_RING_R * S;
+  add('C6 the drawn ring is a circle at the brand ring\'s own radius',
+      (mk.rMax - mk.rMin) <= 0.5 &&
+      Math.abs(mk.r - R_want) <= 2.0,
+      `radius spread ${(mk.rMax - mk.rMin).toFixed(3)}px over 9 samples; ` +
+      `drawn r ${mk.r} vs the asset's ${R_want.toFixed(2)} (off ${Math.abs(mk.r - R_want).toFixed(2)}, allowed 2.0)`);
 
-  /* C7 -- THE LOOP IS OPEN.  Bounded on both sides: a gap that closes reads as
-     a finished hexagon, and a gap that swallows half the edge reads as a broken
-     shape.  The arrowhead may not fill the gap either -- that is why the
-     reading is tip-to-start, not the gap itself.  And the tip must sit on the
-     edge's own line, not float inside or outside it. */
-  add('C7 the loop is open: a bounded gap with the arrowhead inside it, on the edge',
-      mk.gapFrac >= 0.12 && mk.gapFrac <= 0.55 &&
-      mk.tipToStart >= 8 && mk.tipToStart < mk.gap &&
-      mk.tipOffEdge < 1.0 &&
-      mk.start[1] > mk.end[1],
-      `gap ${mk.gap}px (${(mk.gapFrac * 100).toFixed(1)}% of R), tip-to-start ${mk.tipToStart}px, ` +
-      `tip off the edge line ${mk.tipOffEdge}px, start below end: ${mk.start[1] > mk.end[1]}`);
+  /* C7 -- THE RING IS OPEN.  Bounded on both sides: a gap that closes reads as a
+     finished logo, and a gap that swallows half the ring reads as a broken
+     shape.  The arrowhead may not fill the gap either -- that is why the reading
+     is tip-to-start, and why it is also expressed as a FRACTION of the gap: an
+     absolute number would pass a tiny gap and a huge head at the same time. */
+  const openFrac = mk.tipToStart / mk.gap;
+  add('C7 the ring is open: a bounded gap the head does not fill',
+      mk.gapDeg >= 30 && mk.gapDeg <= 90 &&
+      mk.sweepDeg >= 270 && mk.sweepDeg <= 330 &&
+      mk.tipToStart >= 40 && openFrac <= 0.85,
+      `gap ${mk.gapDeg}deg (sweep ${mk.sweepDeg}deg, chord ${mk.gap}px), ` +
+      `tip-to-start ${mk.tipToStart}px = ${(openFrac * 100).toFixed(1)}% of the gap (max 85%)`);
 
-  /* C8 -- the arrowhead runs WITH the loop, at a size that reads.  A reversed
-     head is the quiet failure here: the picture still looks like an arrow, it
-     just says "go back". */
-  add('C8 the arrowhead runs with the loop and is the right size',
-      head.dot > 0.99 && head.len >= 24 && head.len <= 90 &&
-      head.half >= 16 && head.half <= 60,
-      `head ${head.len}x${head.half * 2}px, dot with the run direction ${head.dot}`);
+  /* C8 -- THE HEAD IS THE RING'S OWN TIP.  Four claims:
+       - it runs with the ring (dot), not against it;
+       - its BASE sits on the ring, so it is not a floating triangle (this is the
+         reading that would have caught the version the operator called 有点奇怪:
+         its base was 68px wide -- five times the stroke -- and it read as a hat);
+       - its size is a stroke-tip, not a blob and not a speck;
+       - its TIP is exactly where a tangential head of that length puts it:
+         R' = sqrt(r^2 + len^2).  That last one is a third spelling of the same
+         triangle, computed from two independent readings (the sampled radius and
+         the polygon's own points), which is what makes it able to disagree. */
+  const tipWant = Math.sqrt(mk.r * mk.r + head.len * head.len) - mk.r;
+  add('C8 the head is the ring\'s own tip: on the ring, along it, right size',
+      head.dot > 0.99 &&
+      mk.baseOffRing <= 0.5 &&
+      head.len >= 40 && head.len <= 100 &&
+      head.half >= 9  && head.half <= 30 &&
+      Math.abs(mk.tipOffRing - tipWant) <= 0.5,
+      `head ${head.len} x ${head.half * 2}px (stroke ${mk.ringW}), dot ${head.dot}; ` +
+      `base off the ring ${mk.baseOffRing}px; tip off the ring ${mk.tipOffRing} ` +
+      `(a tangential ${head.len}px head must be ${tipWant.toFixed(2)}, allowed 0.5)`);
 
-  /* C9 -- one vertical axis.  The mark's centre, the word and the subtitle are
-     all centred on x=512; a lockup can satisfy every "fits" rule above and
-     still be visibly off-centre. */
+  /* C9 -- one vertical axis. */
   const mid = t => (t.left + t.right) / 2;
   const sub = m.text.find(t => t.id === 'sub');
   add('C9 the mark, the word and the subtitle share one vertical axis',
       Math.abs(mk.cx - AXIS) <= 0.5 &&
+      Math.abs((em.left + em.w / 2) - AXIS) <= 0.5 &&
       !!title && Math.abs(mid(title) - AXIS) <= 2 &&
       !!sub && Math.abs(mid(sub) - AXIS) <= 2,
-      `mark ${mk.cx}, word ${title ? mid(title).toFixed(2) : 'n/a'}, ` +
+      `mark ${mk.cx}, asset ${Number.isFinite(em.left) ? (em.left + em.w / 2).toFixed(2) : 'n/a'}, ` +
+      `word ${title ? mid(title).toFixed(2) : 'n/a'}, ` +
       `subtitle ${sub ? mid(sub).toFixed(2) : 'n/a'} (axis ${AXIS})`);
 
   /* C10 -- decorative layers: every layer declares its polarity and its filter
      agrees, and no layer is switched off.  The pixel half of this lesson lives
      in _tools/cover_layers.sh. */
-  const art = d => d.art === 'white' || d.art === 'black' || d.art === 'gradient';
   const wrong = m.decor.filter(d =>
     d.art === 'white'    ?  /invert/.test(d.filter)
   : d.art === 'black'    ? !/invert/.test(d.filter)
@@ -193,13 +224,23 @@ function judge(m){
                   : `${m.decor.length} layers (${[...new Set(m.decor.map(d => d.art))].join('+')}), ` +
                     `every filter matches its art, no layer at opacity 0`);
 
-  /* C11 -- the core is INSIDE the loop, at a size where it reads as a core.
-     "Inside" alone is free on a mark with R=245; the band says the core is a
-     sixth to a third of the loop's radius, which is what makes it a core
-     rather than a speck or a second ring. */
-  add('C11 the core sits inside the loop at a core-sized proportion',
-      mk.coreR / mk.r >= 0.10 && mk.coreR / mk.r <= 0.30,
-      `core r ${mk.coreR} is ${(mk.coreR / mk.r * 100).toFixed(1)}% of the loop radius ${mk.r}`);
+  /* C11 -- THE HERO IS THE BRAND'S OWN FILE, AND THE CLIP ONLY TAKES THE RING.
+     This is the operator's half of the request ("你TRG也要有一定体现"): the mark
+     is intro/assets/sm-core.png, the same file the cover uses -- not redrawn,
+     not traced, not "close enough".  The clip is the one pixel operation done to
+     it, and it has to land in the empty annulus between the arms' ends (236) and
+     the ring's inner edge (242): smaller and it chops the arms' tips off flat,
+     larger and a sliver of the asset's own ring survives beside the drawn one.
+     Both failures are one or two pixels and neither one looks wrong at 64px. */
+  const clipLo = ASSET_ARM_END * S, clipHi = ASSET_RING_IN * S;
+  add('C11 the hero is the brand asset, cropped only where the asset is empty',
+      /sm-core\.png$/.test(String(em.src)) &&
+      Math.abs(em.w - em.h) <= 0.5 &&
+      Math.abs((em.top + em.h / 2) - mk.cy) <= 0.5 &&
+      em.opacity > 0 && em.opacity <= 1 &&
+      em.clip > clipLo && em.clip < clipHi,
+      `${em.src} ${em.w}x${em.h} at opacity ${em.opacity}, ` +
+      `clip r ${em.clip} inside the empty band ${clipLo.toFixed(1)}..${clipHi.toFixed(1)}`);
 
   return out;
 }
@@ -208,66 +249,87 @@ function judge(m){
  * A check that cannot go red is noise (CLAUDE.md 0.31), so the judge is run
  * against deliberately wrong reports.  Every mutation edits the REPORT, not the
  * page -- that is what makes it runnable without a browser.  Each one is a
- * failure this page can actually have; the two that matter most are C7/C8's
- * subject (an icon whose whole job is "it keeps going"), because a closed loop
- * and a reversed arrow both still look like a fine icon at 64px. */
+ * failure this page can actually have.
+ *
+ * Three rules carry two readings each and so get two mutants apiece
+ * (DECISIONS_2 592): C6 (circle-ness vs radius), C7 (the gap's size vs the head
+ * filling it), C8 (tangential vs on-the-ring).  A mutant is only allowed in if
+ * the picture it produces would still look like a fine icon at 64px. */
 function mutate(name, fn){ return {name, fn}; }
 const MUTANTS = [
+  /* C0/C1 -- the frame of reference, and "something was drawn at all" */
   mutate('the stage is letterboxed in a 1024 viewport',
          m => { m.stage.w = 512; m.stage.h = 512; return m; }),
   mutate('the word is empty',
          m => { m.text.find(t => t.id === 'title').text = ''; return m; }),
-  mutate('the arrowhead is missing',
-         m => { m.mark.head.len = 0; return m; }),
+  mutate('the brand asset never loaded',
+         m => { m.mark.emblem.src = ''; m.mark.emblem.w = 0; return m; }),
+  /* C2/C3 -- type inside the frame, type not on type */
   mutate('the subtitle runs past the frame',
          m => { m.text.find(t => t.id === 'sub').right = W - 4; return m; }),
   mutate('the subtitle is dropped onto the word',
          m => { const s = m.text.find(t => t.id === 'sub'); s.top = 820; s.bottom = 846; return m; }),
+  /* C4 -- the word's width and its height, each on its own (DECISIONS_2 592) */
   mutate('the word runs past the right frame edge',
          m => { m.text.find(t => t.id === 'title').right = W - 2; return m; }),
-  /* This one is C4's WIDTH clause with nothing else wrong: still inside the
-     frame (27..997 is inside 24..1000) and still centred (mid 512), so only the
-     "fits with clearance" reading can catch it.  The height clause has its own
-     mutant below -- a rule with two clauses gets two readings (DECISIONS_2 592). */
   mutate('the word outgrows the safe width while staying inside the frame',
          m => { const t = m.text.find(t => t.id === 'title'); t.left = 27; t.right = 997; return m; }),
   mutate('the word is too small to read at 1/5',
          m => { const t = m.text.find(t => t.id === 'title'); t.bottom = t.top + 70; return m; }),
+  /* C5 -- the mark vs the frame and vs the word */
   mutate('the mark is pushed out through the frame',
          m => { m.mark.bounds.right = W - 4; return m; }),
   mutate('the mark drifts down into the word',
          m => { m.mark.bounds.bottom += 60; return m; }),
-  mutate('one corner of the loop is drawn off its own vertex',
-         m => { m.mark.worstVertexPx = 3.2; return m; }),
-  mutate('the gap closes, so the loop reads as a finished hexagon',
-         m => { m.mark.gap = 4; m.mark.gapFrac = 0.016; return m; }),
-  mutate('the arrowhead grows until it fills the gap',
-         m => { m.mark.tipToStart = 2; return m; }),
-  mutate('the arrowhead floats off the edge it belongs to',
-         m => { m.mark.tipOffEdge = 18; return m; }),
-  /* The loop's direction is read twice: once from which end is which (C7) and
-     once from the head-vs-run dot (C8).  Each gets its own mutant so neither
-     reading is riding on the other's teeth (DECISIONS_2 592). */
-  mutate('the loop is drawn the other way round',
-         m => { const s = m.mark.start, e = m.mark.end; m.mark.start = e; m.mark.end = s; return m; }),
-  mutate('the arrowhead is flipped, so the loop runs backwards',
+  /* C6 -- two clauses: is it a circle, and is it the brand ring's circle */
+  mutate('the drawn ring is no longer a circle',
+         m => { m.mark.rMax = m.mark.r + 6; return m; }),
+  mutate('the drawn ring sits at the wrong radius',
+         m => { m.mark.r += 40; m.mark.rMin += 40; m.mark.rMax += 40; return m; }),
+  /* C7 -- two clauses: the gap's size, and the head not filling it */
+  mutate('the gap closes, so the mark is just a logo again',
+         m => { m.mark.gapDeg = 4; m.mark.sweepDeg = 356; return m; }),
+  mutate('the gap swallows half the ring',
+         m => { m.mark.gapDeg = 200; m.mark.sweepDeg = 160; return m; }),
+  mutate('the head grows until it fills the gap',
+         m => { m.mark.tipToStart = 6; return m; }),
+  /* C8 -- four clauses, the two quiet ones get their own mutants */
+  mutate('the head floats off the ring it is supposed to end',
+         m => { m.mark.baseOffRing = 14; return m; }),
+  mutate('the head is flipped, so the ring runs backwards',
          m => { m.mark.head.dot = -1; return m; }),
-  mutate('the arrowhead is too small to read',
-         m => { m.mark.head.len = 12; m.mark.head.half = 8; return m; }),
+  mutate('the head is a speck',
+         m => { m.mark.head.len = 12; m.mark.head.half = 5; return m; }),
+  mutate('the head is a fat blob five times the stroke',
+         m => { m.mark.head.half = 60; return m; }),
+  mutate('the head is not where a tangential head of that length goes',
+         m => { m.mark.tipOffRing = m.mark.tipOffRing + 12; return m; }),
+  /* C9 -- one axis */
   mutate('the word is off the axis',
          m => { const t = m.text.find(t => t.id === 'title'); t.left += 20; t.right += 20; return m; }),
   mutate('the mark is off the axis',
          m => { m.mark.cx = 520; return m; }),
+  mutate('the asset is off the mark\'s centre',
+         m => { m.mark.emblem.left += 20; return m; }),
+  /* C10 -- decorative layers */
   mutate('a decorative layer is switched off',
          m => { m.decor.find(d => d.id === 'vig').opacity = 0; return m; }),
   mutate('the gradient glow is inverted',
          m => { m.decor.find(d => d.id === 'glow').filter = 'invert(1)'; return m; }),
   mutate('a new decorative layer declares no polarity',
          m => { m.decor.push({id: 'grid2', opacity: 0.4, blend: 'screen', filter: '', art: null}); return m; }),
-  mutate('the core grows out past the loop',
-         m => { m.mark.coreR = 300; return m; }),
-  mutate('the core shrinks to a speck',
-         m => { m.mark.coreR = 10; return m; }),
+  /* C11 -- the hero.  Three clauses, three mutants: it is the brand file, the
+     clip only takes empty pixels, and it is actually on. */
+  mutate('the hero is some other file',
+         m => { m.mark.emblem.src = '../intro/assets/other.png'; return m; }),
+  mutate('the clip is too small, so it chops the arms\' tips off flat',
+         m => { m.mark.emblem.clip = 200; return m; }),
+  mutate('the clip is too large, so a sliver of the asset\'s own ring survives',
+         m => { m.mark.emblem.clip = 248; return m; }),
+  mutate('the hero is squeezed instead of square',
+         m => { m.mark.emblem.h = 460; return m; }),
+  mutate('the hero is faded out',
+         m => { m.mark.emblem.opacity = 0; return m; }),
 ];
 
 /* ---------- main ---------- */

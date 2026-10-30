@@ -381,6 +381,14 @@ python -X utf8 _tools/cover_mark_check.py
 | `cover/THE_REACTOR_GAME_continuation_icon_512.png` | **上传件**。512×512，**153156 B / md5 `72a5987e…`**，母版的 LANCZOS 降采样（`optimize=True`） |
 | `_tools/continuation_judge.js` | **判定**（C0..C11）。只读一份 JSON，不碰浏览器；`--selftest` 24 条突变 |
 
+> **【2026-10-31 更正，Phase 150】** 上面那一节记的是 Phase 149 那一版的**六边**图标，
+> 数字是那一版的（母版 **606769 B / `a0baba54…`**、上传件 **153156 B / `72a5987e…`**、
+> 6 个部件 72883 / 8981 / …）。同一天下午操作员说「有点奇怪啊改一下，而且是trg的
+> continuation，你TRG也要有一定体现」，于是**主体整个换掉**：现在画的是游戏自己的厂标
+> `intro/assets/sm-core.png`，六边、芯、`loop`/`coreDot` 两个部件都不在了。
+> **现行数字见 §8.7**；本节原文保留（当时确实那么写）。§8.4（字体）、§8.5（渲染确定性）
+> 两条**不受影响**，Phase 150 复量过同一个结论。
+
 ### 8.1 图上只有三样东西
 
 外框 / 六边 + 缺口箭头 + 芯 / 一行大字 `CONTINUATION` + 一行小字 `THE REACTOR GAME`。
@@ -482,3 +490,118 @@ python -X utf8 -c "from PIL import Image; Image.open('cover/THE_REACTOR_GAME_con
 - **512 没有单独过判据**（继承母版，见 8.3）。
 - **"好看不好看"是判断不是读数**；能验的是圈开着、箭头顺着走、大字在 1/5 上 26.80 px。
 - **没进 Studio、没进 Play、游戏本体 0 行改动。**
+
+### 8.7 Phase 150 返工：主体换成厂标，环开口，箭头是**笔画自己的尖**
+
+> 操作员原话：「有点奇怪啊改一下，而且是trg的continuation，你TRG也要有一定体现」
+
+**三版的区别，一句话一版：**
+
+| | 主体 | 缺口里的东西 | 操作员的读数 |
+|---|---|---|---|
+| v1（Phase 149） | 我画的六边 + 芯 | 一枚浮在中间的三角 | 「有点奇怪」（而且「TRG 没有体现」） |
+| v2（同日，未交付） | 厂标 + 重画的环 | **贴上去的琥珀三角**，底边 68 px 而环才 13 px | 还是一顶帽子，还是"有点奇怪" |
+| **v3（交付）** | 厂标 + 重画的环 | **环自己的尖**：同色、底边 30 px（环粗的两倍）、底边埋在弧端上 | —— |
+
+v2 的问题不是颜色，是**件数**：那个三角形和环是两个物体，只是挨着。
+v3 让它成为一件 —— 环用 round 线帽，笔画越过弧端半个粗，箭头的底边就压在那半个里面。
+C8 里 `baseOffRing`（底边离环多远）就是为这件事写的读数：**v2 的底边中心虽然在环上，
+但它的两条脚各伸出 27.5 px**，而那一版**没有任何一条规则在量"它是不是环的一部分"**。
+
+**素材的数是量出来的**（`sm-core.png`，515×515，alpha≥128，1440 条射线逐半径扫）：
+
+| r（素材像素） | 覆盖 |
+|---|---|
+| 235 / 236 / 237 | 9.5% / 3.3% / **0%** ← 三条臂到此为止 |
+| **237..241** | **0%** ← clip 唯一能落的地方 |
+| 242 / 243..256 / 257 | 12.4% / **100%** / 97.6% ← 环 |
+
+所以环的中线 r=249.5、粗 15.2，臂到 236 为止，clip 取 **240**（上余 4 / 下余 2）。
+这三行数是 C11 的依据，不是抄来的。
+
+**几何常数**（`cover/continuation.html`，HTML 里一个坐标都不手写）：
+
+| 常数 | 值 | 读数（`layoutReport()`） |
+|---|---|---|
+| `R_RING` | 249.5 × S | 画出来 **242.233**，素材环应是 **242.23**（差 0.00，band 2.0） |
+| `RING_W` | 15.2 × S | 14.76 |
+| `GAP_FROM / GAP_TO` | 348° → 292° | 缺口 **56°**（弧走 304°），弦长 227.44 px |
+| `HEAD_LEN / HEAD_HALF` | 66 / 15 | **66.01 × 30**；tip-to-start **171.98**（缺口的 75.6%） |
+| `CLIP_R` | 240 × S | 233.01，落在空带 **229.1..235.0** 里 |
+
+**规则**（`_tools/continuation_judge.js`，**12 ok / 0 failed**，**突变 31/31**）：
+
+| | 断言 | 读数 |
+|---|---|---|
+| C6 | 画出来的环**是一个圆**，**而且**在素材环的半径上 | 九点半径极差 **0.012 px**；242.233 对 242.23 |
+| C7 | **环是开着的**：缺口 30°..90°、弧 270°..330°、箭尖到起点 ≥40 px 且不超过缺口的 85% | 56° / 304° / 171.98 px = 75.6% |
+| C8 | **箭头是环自己的尖**：顺走、底边在环上、尺寸是"笔尖"不是"团块"、尖落在切线解上 | dot 1；base 离线 **0 px**；66×30；尖离线 8.83（切线解 8.83，band 0.5） |
+| C11 | **主体是游戏自己的素材**，而且裁的只是素材本来就空的那一圈 | `sm-core.png` 500×500 / clip 233.01 ∈ [229.1, 235.0] |
+
+C6/C7/C8 各有两个读数（圆 vs 半径、缺口大小 vs 箭头填满、顺走 vs 在环上），
+所以各配两条突变（取舍 592）。**C8 的"底边在环上"那条是本轮新加的，它就是 v2 会红的那条。**
+
+**新仪器 `_tools/continuation_ring_check.py` —— 因为 C6 的半径那一半原来是一句同义反复。**
+判据手里的 `ASSET_RING_R = 249.5` 和页面里的 `249.5 * S` 是**同一个字面量**：改一边会红，
+两边一起改就绿（§0.31 ⑥）。新仪器**一个半径常数都不持有**：
+
+```
+asset 515x515: ring band r 243..257  -> centre 250.0, width 15   (asset px)
+drawing:     ring band r 236..249 in the box -> 242.50 canvas / 249.8 asset px
+radius   drawn 249.8 - asset 250.0 = -0.22 asset px   (band +-3.0)   ok
+width    drawn 14.4 - asset 15.0 = -0.58 asset px     (band +-3.0)   ok
+opening  39.38 deg of the drawn ring has no ink       (band 25..80)  ok
+```
+
+**"opening 39.38" 和判据的 "gap 56°" 是两个量，不是两个读数打架**：像素这边**箭头也是墨**，
+它吃掉自己那 15.6°（66 px / r 242.2），56 − 15.6 ≈ 40.4，实测 39.38（差的是带边抗锯齿）。
+两个数都写在屏上，差值也写出来 —— 抹平它才是错（取舍 656）。
+
+**仪器自己验过牙齿**（把页面复制一份、只改一个常数、重渲）：
+把环挪到 r=262 → `radius +5.95 → FAIL`；把缺口收到 4° → `opening 0.00 → FAIL`（而半径那一行
+仍然 ok，两条读数互不顶替）。
+
+**"主体是素材"这一半靠像素**（`cover_mark_check.py` 新增 `CLIPR`，因为这份素材的环是**故意**被裁掉的）：
+
+```
+SHOT=cover/THE_REACTOR_GAME_continuation_icon.png BOX=500 BOX_X=262 BOX_Y=165 CLIPR=233
+  CLIPR 233.0 px (box units): setting aside 22370 ink px outside the clip
+  ink 41011 px (16.40% of the box)
+  t=100 -> tp 41011, recall 1.0000    (t=120 -> 41007, 0.9999；每一条半径带都是 100%)
+```
+
+precision 0.667 是**关于这个 box** 的读数（画上去的环和箭头也在 box 里、也是亮的），不是关于素材的。
+
+**逐层（6/6 都改变像素）**：`emblem 43550 / ring 93513 / head 7795 / glow 401997 / scan 164078 / vig 660548`
+（最大差 234 / 205 / 201 / 32 / 36 / 122）。
+
+**交付**：母版 **620594 B / md5 `ea0107d6…`**（同一次机器状态内 **3/3** 逐字节相同），
+上传件 **169140 B / md5 `7adad5da…`**（母版 LANCZOS + `optimize=True`，与一次重算逐像素相同）。
+
+```bash
+# 1) 母版 + 版面读数
+D:/nodejs/node _tools/intro_render.js --page cover/continuation.html --at 0 --w 1024 --h 1024 \
+  --shot cover/THE_REACTOR_GAME_continuation_icon.png --eval 'layoutReport()' \
+  > _tools/_attic/scratch/continuation_report.txt
+# 2) 判 + 突变（12 项 / 31 条）
+D:/nodejs/node _tools/continuation_judge.js _tools/_attic/scratch/continuation_report.txt
+D:/nodejs/node _tools/continuation_judge.js --selftest _tools/_attic/scratch/continuation_report.txt
+# 3) 像素：环的半径 / 粗细 / 开口，对素材自己的环
+python -B _tools/continuation_ring_check.py
+# 4) 像素：clip 以内那 41011 个墨点是不是这张素材
+SHOT=cover/THE_REACTOR_GAME_continuation_icon.png BOX=500 BOX_X=262 BOX_Y=165 CLIPR=233 \
+  python -B _tools/cover_mark_check.py
+# 5) 六个部件逐个关掉再比像素
+PAGE=cover/continuation.html W=1024 H=1024 TAG=continuation \
+  SHOT=cover/THE_REACTOR_GAME_continuation_icon.png \
+  LAYERS="emblem ring head glow scan vig" bash _tools/cover_layers.sh
+# 6) 512 上传件
+python -B -c "from PIL import Image; Image.open('cover/THE_REACTOR_GAME_continuation_icon.png').convert('RGB').resize((512,512), Image.LANCZOS).save('cover/THE_REACTOR_GAME_continuation_icon_512.png', optimize=True)"
+```
+
+**没验的那一半（Phase 150 新增的）**：
+- **"不奇怪了"是操作员的一句话，不是我的读数。** 我能给的是"箭头和环是一件事"的三条断言
+  （底边离线 0 px、尖落在切线解上、半径等于素材环），**好不好看仍然是判断**。
+- **素材环的半径是用 100%/半覆盖的边界定的**（243..256 满、242/257 各半），
+  所以"250.0"本身有 ±0.5 px 的不确定度；band 给的是 ±3。
+- **两个仪器的 39.38 与 56 差 16.6°**，其中 15.6° 是算出来的箭头弧长、**1.0° 没有拆开量**。**
