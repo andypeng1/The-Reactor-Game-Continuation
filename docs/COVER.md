@@ -605,3 +605,97 @@ python -B -c "from PIL import Image; Image.open('cover/THE_REACTOR_GAME_continua
 - **素材环的半径是用 100%/半覆盖的边界定的**（243..256 满、242/257 各半），
   所以"250.0"本身有 ±0.5 px 的不确定度；band 给的是 ±3。
 - **两个仪器的 39.38 与 56 差 16.6°**，其中 15.6° 是算出来的箭头弧长、**1.0° 没有拆开量**。**
+
+---
+
+## 9. The Reactor Game - Rebuild 的图标（Phase 151，2026-10-31）
+
+操作员原话：**「做个Rebuild的图标」**。交付：
+
+| 文件 | 尺寸 | 字节 | md5 |
+|---|---|---|---|
+| `cover/THE_REACTOR_GAME_rebuild_icon.png` | 1024×1024 | **599240** | `bf2545d593a6be832908ab9d0d496463` |
+| `cover/THE_REACTOR_GAME_rebuild_icon_512.png` | 512×512 | **161713** | `ac08d920dafe1d47307c81d65b556158` |
+
+母版同一次机器状态内 **4/4 逐字节相同**；512 是母版 LANCZOS + `optimize=True`。
+判据**15 ok / 0 failed**，突变 **35/35**；像素仪器 **9/9**，母版与 512 **各判一次**。
+
+### 9.1 和 Continuation 的差别，一句话
+
+同一套语言（外框 / 厂标 + 环 / 一个词），**让环说不同的话**：
+
+- Continuation：环**开着**，断口**自己长出箭头** —— 它还在走。
+- Rebuild：环**缺了一整段**，那一段**被端在外面**、琥珀色，一条虚线沿缺口的中半径连着它。
+
+**"环缺了一块"本身不构成 Rebuild** —— 那和 Continuation 是一个形状。
+是"**那一块真的被端出来了（54 px）且正对着槽（188° 对 188°）**"把它变成"正在装回去"。
+
+### 9.2 几何与出处
+
+| 量 | 值 | 出处 |
+|---|---|---|
+| `ASSET_PX` / `EMBLEM_S` | 515 / 500 | 素材自己的像素尺寸；素材画 500 |
+| `S` | 0.9709 | `EMBLEM_S / ASSET_PX` |
+| `R_RING` | **242.24** = 249.5 × S | 素材的环，1440 条射线量的（§8.7） |
+| `RING_W` | **14.76** = 15.2 × S | 同上 |
+| `CLIP_R` | **233.0** = 240 × S | 落在素材空的那一圈 236·S..242·S = 229.1..235.0 |
+| `MARK_CX / MARK_CY` | 512 / 415 | 与 Continuation 同一处 |
+| `SLOT_FROM / SLOT_TO` | 160° / 216° | 宽 56°、中线 188°：避开三根臂（24–36 / 144–156 / 264–276）与标题（49–131°） |
+| `LIFT` | **54** | 那一块沿 188° 推出多远；净空 39.24 px = 2.66 个环宽 |
+| `GUIDE_W` | 2.2 | 虚线宽，两端各留 6 px |
+
+### 9.3 规则（R0..R14）
+
+见 `docs/SNIPPETS.md` §5.54 的表和 `PROGRESS.md` Phase 151 §二。
+三条是这一轮的重点，而且**三条失败的样子在 64 px 上都是一枚好图标**：
+
+- **R8 那一块就是缺的那一段**（同宽 56°、同曲率）—— 否则它是**装饰**；
+- **R9 那一块真被端出来了**（54 px、净空 2.66 环宽）—— 否则它坐进槽、环闭合、**rebuild 消失**；
+- **R10 那一块正对着槽、虚线在同一条半径上** —— 否则它是**碎片**。
+
+### 9.4 两台仪器，各量各的
+
+| | `_tools/rebuild_judge.js` | `_tools/rebuild_pieces_check.py` |
+|---|---|---|
+| 读什么 | 页面上**路径**的量（`layoutReport()`） | 交付 PNG 的**墨** |
+| 持有页面的常数吗 | 不持有 `R_RING`/`LIFT` 等；半径用素材的 249.5 × 从 img 框读回的 S | **一个都不持有** |
+| 环 | 242.233（9 点极差 0.008） | 249.8 asset px（素材 250.0，差 −0.22） |
+| 缺口 | 56°，中线 188° | 55.88°，中线 188.06° |
+| 那一块 | 56°，r 296.24，端出 54.00 | 56.12°，188.06°，净空 40.00 px = 2.86 环宽 |
+| 颜色 | 比 `Config.Visual` 两个 token | 量均值：块 `rgb(220,111,2)`、环 `rgb(203,204,204)` |
+
+**两个数不必逐位相同**，而且不相同本身是有信息的（取舍 656 的同一个立场）：
+判据量"设计要它多宽"，像素量"看的人看到多宽"。
+
+### 9.5 命令
+
+```bash
+# 一条命令跑完整条链（推荐）：
+bash _tools/icon_runs.sh rebuild
+
+# 或者拆开：
+D:/nodejs/node _tools/intro_render.js --page cover/rebuild.html --at 0 --w 1024 --h 1024 \
+    --eval "layoutReport()" --shot cover/THE_REACTOR_GAME_rebuild_icon.png > /tmp/rb_report.json
+node _tools/rebuild_judge.js /tmp/rb_report.json            # 15 ok / 0 failed
+node _tools/rebuild_judge.js --selftest /tmp/rb_report.json # 35/35
+python -B _tools/rebuild_pieces_check.py                    # 9/9
+SHOT=cover/THE_REACTOR_GAME_rebuild_icon_512.png BOX_X=131 BOX_Y=82 BOX=250 \
+    python -B _tools/rebuild_pieces_check.py                # 9/9
+
+# 逐层关掉再比像素：
+PAGE=cover/rebuild.html W=1024 H=1024 TAG=rebuild \
+  SHOT=cover/THE_REACTOR_GAME_rebuild_icon.png \
+  LAYERS="emblem ring piece guide glow scan vig" ASSETS="" bash _tools/cover_layers.sh
+
+# 像素仪器的"能红"：三张真坏的图（结果在 PROGRESS.md Phase 151 §五）
+sed 's/^const LIFT      = 54;/const LIFT      = 0;/' cover/rebuild.html > cover/_mut_seated.html
+# 其余两条：把 #piecePath 的 stroke 改成 var(--ready)；把 SLOT_FROM 160 改成 130
+```
+
+### 9.6 没验的那一半
+
+- **"好不好看"是判断。** 我能给的是几何，和 64 / 256 px 上的**描述**。
+- **256 px 上副标题读不出**（`THE REACTOR GAME` 被读成 `THE READING GAME`），没有改字号。
+- **没上传**（没有 `asset:write`）；**Roblox 怎么裁这张图仍然没有读数。**
+- **256 及以下的尺度没跑像素仪器**；`thickness` 用的是**绝对像素差**，
+  在小尺寸上会重新变成比值问题（取舍 660 的尾巴）。

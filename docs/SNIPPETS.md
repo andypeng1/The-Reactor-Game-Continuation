@@ -4042,3 +4042,73 @@ LAYERS="emblem ring head glow scan vig" ASSETS="" bash _tools/cover_layers.sh
 **31/31 条突变各自点红了至少一条规则**（C6/C7/C8 各两条 —— 一条走过两次的规格，两个读数都要有牙）。
 交付 **1024 = 620594 B / `ea0107d6…`**（3/3 逐字节相同）、
 **512 = 169140 B / `7adad5da…`**（LANCZOS + `optimize=True`，与重新推一遍逐像素相同）。
+
+## 5.54 一枚图标"表达一个概念"：把概念落成**三个几何量**，每个量两个读数（Phase 151）
+
+「做个 Rebuild 的图标」。上一枚（5.53）的教训是"一句主观的抱怨要落成一个几何量"；
+这一枚的问题是**反面**：概念本身**没有任何一处失败会看起来不对**。
+
+**① Rebuild 的形状有十几种，选的那个必须能被断言。**
+锤子、齿轮、两个追逐的箭头都能"表示 rebuild"，但**没有一条规则能说它们画错了**。
+选的是"环缺了一段、那一段**被端在外面**、正对着槽"：于是概念落在三个量上，
+
+| 量 | 规则 | 失败在 64 px 上是什么样 |
+|---|---|---|
+| 那一块**就是**缺的那段（同宽 56°、同曲率） | R8 | **装饰** —— 看起来还是一枚整齐的图标 |
+| 那一块**真被端出来了**（54 px、净空 2.66 环宽） | R9 | **徽章** —— 坐进槽，环闭合，rebuild 消失 |
+| 那一块**正对着槽**（0.00°），虚线在同一条半径 | R10 | **碎片** —— 漂在旁边，像掉下来的东西 |
+
+**先问"这条规则的失败长什么样"，再问"它看起来对不对"。**
+上表右列三行**都**是一枚好图标，这就是为什么"我觉得挺好看"不能替代这三条。
+
+**② 一条能同时量两种东西的 helper，极性必须是参数。**
+```python
+def angular_runs(hit, want=True):      # 不是 angular_runs(hit)
+    ...
+```
+第一版没有 `want`，数的是"相邻 False 的一段"：量环上的缺口**对**，量那一块**反** ——
+它回报"160° 在 80° 处"，那是那一块**不在**的最大空档。
+**同一个函数、同一张图，一个正确的数和一个方向相反的数是同一次调用出来的。**
+它当时是响的（160 ≠ 56）才被抓到；若那个空档恰好也是 56°，它会静默。
+
+**③ 按射线采角度，不要给像素的角度做直方图。**
+```python
+def ray_ink(shape, is_ink, cx, cy, r_in, r_out):   # 每个角度一条射线，自己在半径上走
+def angular_runs(hit, want=True):                  # 再把 bool 序列切成段
+```
+直方图版本把一条 56° 的弧拆成 19.6° + 35.6°：弧最左那点栅格化后像素落在
+**179.90° / 180.10°**，而 `[179.9375, 180.0625)` 那一格里一个像素都没有。
+（`0.20 ②` 的同族：分区边界落在数据上。修法不是调格子，是**换问法**。）
+
+**④ 比"两个量相等"，用小尺寸上稳定的那个统计量。**
+```python
+d_w = part_w - ring_w           # ✅ 母版 +2.0 / 512 +2.0
+# ratio = part_w / ring_w       # ❌ 1.143 / 1.286 —— 分母跟着文件缩小了
+```
+两种边缘判据（覆盖率阈值 vs 颜色掩膜）的差是**绝对**的几个像素；
+用比值就是在**除以尺度**。**这条比的是"两个量相等"，不是"两个量成一个比例"。**
+
+**⑤ 像素仪器的"能红"要拿真图，不是改报告。**
+判据的 35 个突变全在改 JSON，它们证明不了像素仪器。三条 `sed` + 三次渲染：
+
+```bash
+sed 's/^const LIFT      = 54;/const LIFT      = 0;/'                    cover/rebuild.html > cover/_m1.html
+sed 's/#piecePath{fill:none;stroke:var(--amber)/#piecePath{fill:none;stroke:var(--ready)/' cover/rebuild.html > cover/_m2.html
+sed 's/^const SLOT_FROM = 160,/const SLOT_FROM = 130,/'                 cover/rebuild.html > cover/_m3.html
+for n in 1 2 3; do
+  D:/nodejs/node _tools/intro_render.js --page cover/_m$n.html --at 0 --w 1024 --h 1024 \
+      --shot _tools/_attic/scratch/rbmut/m$n.png
+  SHOT=_tools/_attic/scratch/rbmut/m$n.png python -B _tools/rebuild_pieces_check.py | tail -1
+  rm -f cover/_m$n.html
+done
+# m1 -> 8/9 红（含 bays）；m2 -> 5/9 红（part_colour 领衔）；m3 -> 1/9 红（只有 bay_width）
+```
+第三行是尺子好的证据：**只红一条，而且是对的那条。**
+
+**⑥ 一条命令，而且 512 从刚验过的母版导出再判一次。**
+```bash
+bash _tools/icon_runs.sh rebuild          # 渲染 → 判 → 像 → 512 → 再判 → md5
+bash _tools/icon_runs.sh continuation     # 对 delivered 文件幂等（md5 未变）
+```
+这条链之前手打四条命令，**已经漂过一次**（512 是从旧母版降采样的）。
+**512 必须单独判**：它可能因为尺度而红 —— 就是 ④ 和 "`lo_floor=200` 在 512 上让整个搜索窗空掉"这两条。

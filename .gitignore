@@ -152,6 +152,23 @@ _tools/_drive_route_mut_states.luau
 _tools/_attic/scratch/*.png
 _tools/_attic/scratch/cover_report.txt
 
+# --- Phase 151's mutation renders for the Rebuild icon.  Three broken copies of
+#     cover/rebuild.html (part seated in its slot, part recoloured Ready, bay
+#     widened), rendered to prove _tools/rebuild_pieces_check.py can go red on a
+#     real picture rather than only on a doctored report.  Each is one sed line
+#     plus one render away (the three lines are in docs/SNIPPETS.md 5.54), so
+#     this is evidence, not data -- and, like the Phase 133 note above, the
+#     `scratch/*.png` rule does not reach a subdirectory. ---
+_tools/_attic/scratch/rbmut/
+
+#     Same three-line reasoning for the rest of Phase 151's scratch: `icon_runs.sh`
+#     writes one layoutReport dump per icon per run (a JSON of the frame it just
+#     measured -- it changes every time the page changes, which is exactly what a
+#     dump is for and exactly why it is not data), and `rbthumbs/` is the 256 and
+#     64 px downscales handed to the vision bridge.  One command regenerates both.
+_tools/_attic/scratch/icon_report_*.json
+_tools/_attic/scratch/rbthumbs/
+
 # --- Phase 133's additions to the same pile, and why they are three lines and
 #     not one blanket.  `renders133/` is ten comparison frames (9.7 MB) from the
 #     re-render sweep; the `*.png` rule above does NOT reach into it, because a

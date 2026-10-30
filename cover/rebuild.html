@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>THE REACTOR GAME - rebuild icon</title>
+<!--
+  ============================================================================
+  TRG:REBUILD 的游戏图标 —— 1024x1024（1:1）
+
+  Phase 151（2026-10-31）。操作员原话：「做个Rebuild的图标」。
+  它和 Continuation 那枚是**同一套语言**（Phase 149/150 定的）：外框、厂标、
+  一圈环、一行大字。换的只有**环在说什么**：
+    continuation = 环开着口，端口自己长出箭头 —— 还在往前走；
+    rebuild      = 环上缺一格，**缺的那一格正被吊回来** —— 正在重建。
+
+  三样东西，一样都不重画：
+    1. 主体仍是 intro/assets/sm-core.png（Phase 133 的规矩：引用不复制），
+       clip 在 r=240 素材像素，落在那条**测出来的空带**（臂到 236 / 环从 242 起）里。
+    2. 环画在**素材自己的半径**上（249.5 素材像素），所以"我们画的环"和
+       "厂标印出来的环"是同一个圆 —— 这一条有像素仪器独立量（rebuild_pieces_check.py）。
+    3. 缺的那一格是**同一段弧**，只是被吊到外面 54px 去：琥珀色、同样的粗细、
+       同样的半径，所以它一眼就是**这个洞的那一块**，不是另一件东西。
+
+  **两次"看着还行、其实没量到"的教训都写进判据了**（Phase 150）：
+  一条主观的抱怨里通常坐着一个没被量到的几何量 —— 所以这里 R8 量"那一块和那个洞
+  一样宽吗"，R9 量"它真的被吊出来了吗"（没吊出来就是一枚完整的环，rebuild 消失），
+  R10 量"它对着自己的洞吗"。三个失败在 64px 上都是**一枚正常的图标**。
+
+  **契约与封面、两部片子、Continuation 完全一样**：固定的设计空间 #stage（1024x1024）、
+  一个全局的 render(t)、一个按视口缩放的 fit()。图标是静止画，render(t) 收下 t 就丢。
+
+  **颜色逐字抄自 cover/index.html**，它的出处是 src/ReactorBackend/Config.luau
+  的 Config.Visual。**这里一个新颜色都不许发明。**
+  ============================================================================
+-->
+<style>
+:root{
+  --void:   #07080a;
+  --ready:  rgb(235,235,235);   /* Config.Visual.Ready */
+  --amber:  rgb(255,128,1);     /* Config.Visual.Amber */
+  --plasma: #52dae2;            /* ART_DIRECTION §2 的冷却/等离子青 */
+  --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+  --cond: "Arial Narrow", "Haettenschweiler", Impact, "Franklin Gothic Medium", sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#000;color:var(--ready);font-family:var(--mono);overflow:hidden;
+     -webkit-font-smoothing:antialiased;}
+
+/* 固定的设计空间 —— 和片头/封面同一个理由：版面上写的数字和屏幕上发生的事
+   是同一件事。1024 不是随手挑的：Roblox 的图标格吃 512，1024 是它的两倍，
+   缩一半之后每个坐标仍然落在整数像素上。 */
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+#stage{
+  position:relative;width:1024px;height:1024px;flex:none;overflow:hidden;
+  background:radial-gradient(ellipse 118% 92% at 50% 42%, #0a0e12 0%, var(--void) 64%, #000 100%);
+  transform-origin:center center;
+}
+.layer{position:absolute;inset:0;pointer-events:none}
+
+/* ============================ 外框 ============================ */
+#frame{position:absolute;left:20px;top:20px;right:20px;bottom:20px;
+       border:1px solid rgba(82,218,226,.28);}
+.brk{position:absolute;width:18px;height:18px;border:2px solid rgba(235,235,235,.5)}
+.brk.tl{left:-2px;top:-2px;border-right:0;border-bottom:0}
+.brk.tr{right:-2px;top:-2px;border-left:0;border-bottom:0}
+.brk.bl{left:-2px;bottom:-2px;border-right:0;border-top:0}
+.brk.br{right:-2px;bottom:-2px;border-left:0;border-top:0}
+
+/* ============================ 光晕 ============================
+   厂标后面那团青色。装饰层：不进任何几何断言，只能靠"关掉再比像素"
+   （_tools/cover_layers.sh）证明它真的在画上（CLAUDE.md 0.32）。 */
+#glow{position:absolute;inset:0;
+  background:radial-gradient(circle at 512px 415px,
+    rgba(82,218,226,.20) 0%, rgba(82,218,226,.07) 26%, rgba(82,218,226,0) 54%);}
+
+/* ============================ 主体 ============================ */
+#emblem{position:absolute;opacity:.97}
+#markSvg{position:absolute;left:0;top:0}
+
+/* 环：**方头**（butt）。Continuation 那枚用圆头是因为它的端口要接箭头；
+   这一枚的两个端口是"被切开的断面"，必须是平的 —— 平的才读得出"这里缺一块"，
+   圆头读起来像一根笔画自己拐了个弯。 */
+#ringPath{fill:none;stroke:var(--ready);stroke-linejoin:miter;stroke-linecap:butt;
+  opacity:.92;filter:drop-shadow(0 0 16px rgba(82,218,226,.55));}
+
+/* 吊在半空的那一块：**琥珀**。它是这套图标里唯一的有色实体，
+   而琥珀在游戏里本来就是"琥珀 = 待处理/进行中"（Config.Visual.Amber）。
+   同样的粗细、同样的半径，所以它读起来是"这个洞的那一块"，不是另一个物体。 */
+#piecePath{fill:none;stroke:var(--amber);stroke-linecap:butt;
+  opacity:.95;filter:drop-shadow(0 0 14px rgba(255,128,1,.55));}
+
+/* 导引线：从环的外缘沿半径伸到那一块的内缘，说明"它在往这个洞里落"。
+   没有它，一块悬空的弧看起来像是渲染坏了。 */
+#guide{stroke:var(--amber);stroke-width:2.2;opacity:.5;stroke-dasharray:7 6;}
+
+/* ============================ 字 ============================ */
+#title{
+  position:absolute;left:0;right:0;top:715px;text-align:center;
+  font-family:var(--cond);font-size:118px;line-height:1.0;letter-spacing:.10em;
+  color:#fff;text-transform:uppercase;white-space:nowrap;
+  text-shadow:0 0 34px rgba(82,218,226,.45), 2px 0 0 rgba(255,40,40,.20), -2px 0 0 rgba(40,120,255,.20);
+}
+#sub{
+  position:absolute;left:0;right:0;top:872px;text-align:center;
+  font-size:22px;letter-spacing:.44em;color:rgba(235,235,235,.62);
+  text-transform:uppercase;white-space:nowrap;
+}
+
+/* ============================ CRT 罩 ============================ */
+#scan{position:absolute;inset:0;
+  background:repeating-linear-gradient(to bottom,
+    rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.34) 3px, rgba(0,0,0,.34) 4px);
+  opacity:.42}
+#vig{position:absolute;inset:0;
+  background:radial-gradient(ellipse 74% 64% at 50% 45%, rgba(0,0,0,0) 40%, rgba(0,0,0,.80) 100%)}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <div id="frame">
+    <span class="brk tl"></span><span class="brk tr"></span>
+    <span class="brk bl"></span><span class="brk br"></span>
+  </div>
+
+  <div id="glow" data-art="gradient"></div>
+
+  <img id="emblem" src="../intro/assets/sm-core.png" alt="">
+
+  <svg id="markSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"
+       width="1024" height="1024">
+    <g id="ring"><path id="ringPath" d=""></path></g>
+    <line id="guide" x1="0" y1="0" x2="0" y2="0"></line>
+    <g id="piece"><path id="piecePath" d=""></path></g>
+  </svg>
+
+  <div id="title">REBUILD</div>
+  <div id="sub">THE REACTOR GAME</div>
+
+  <div class="layer"><div id="scan" data-art="gradient"></div></div>
+  <div class="layer"><div id="vig"  data-art="gradient"></div></div>
+
+</div><!-- /stage -->
+</div><!-- /viewport -->
+
+<script>
+/* ==========================================================================
+   render(t) —— 同一个契约，但不是时钟
+   _tools/intro_render.js 靠调用页面上的 render(t) 来成帧。图标是一瞬间，
+   所以 t 收下就丢：每一次调用画出同一幅画，没有状态可以残留。
+   ========================================================================== */
+'use strict';
+
+const ICON_W = 1024, ICON_H = 1024;
+const FRAME_IN = 20;
+
+/* ---- 厂标 -----------------------------------------------------------------
+   素材 515x515，**实测**（alpha>=128，1440 条射线逐半径扫）：外环从 r=243 到
+   r=256 是 100% 覆盖，242 / 257 是半覆盖（抗锯齿），所以环的中线 r=249.5、
+   粗 15.2；三条臂到 r=236 为止（235 还有 9.5%，237 就 0 了）。于是 237..241
+   是**空的**，clip 在 240 正落在这条空带里：臂留得住（余 4），环裁得掉（余 2）。
+   S = 500/515 就是"素材像素 -> 设计像素"。 */
+const ASSET_PX = 515;
+const EMBLEM_S = 500;                       // 厂标在画上的边长
+const S        = EMBLEM_S / ASSET_PX;       // 0.9709
+const MARK_CX  = 512, MARK_CY = 415;
+const R_RING   = 249.5 * S;                 // 242.24：和印出来的那圈**同一个半径**
+const RING_W   = 15.2  * S;                 // 14.76
+const CLIP_R   = 240   * S;                 // 233.0：臂末端 229.1 / 环内缘 235.0
+
+/* ---- 缺的那一格，和吊回来的那一块 ------------------------------------------
+   角度是屏幕坐标（x 右、y 下，顺时针 = 度数增大）。
+   洞开在**左下**（160°..216°，56°）：素材三条臂在 24..36 / 144..156 / 264..276，
+   所以这个洞一格都不碰它们，也不碰下面的大字。
+   那一块**就是同一个洞**：同样的起止角、同样的粗细、同样的半径 R，
+   只是整段被沿 188°（洞的中线）推到外面 LIFT 去。R8 量它俩一样宽，R9 量它真被吊出来了。 */
+const SLOT_FROM = 160, SLOT_TO = 216;       // 洞：顺时针 216 -> 160 走 304°
+const LIFT      = 54;                       // 那一块离环多远（沿半径）
+const PIECE_R   = R_RING + LIFT;            // 296.24
+const GUIDE_W   = 2.2;
+
+const RAD = Math.PI / 180;
+const at = (r, deg) => [MARK_CX + r * Math.cos(deg * RAD),
+                        MARK_CY + r * Math.sin(deg * RAD)];
+const onRing = deg => at(R_RING, deg);
+const fmt = p => p[0].toFixed(2) + ',' + p[1].toFixed(2);
+/* 一段顺时针弧的 path：从 a 走到 b（度数增大方向），扫过的角 = (b-a) mod 360。 */
+function arcPath(r, a, b){
+  const A = at(r, a), B = at(r, b);
+  const sweep = ((b - a) % 360 + 360) % 360;
+  return 'M ' + fmt(A) + ' A ' + r.toFixed(3) + ' ' + r.toFixed(3) +
+         ' 0 ' + (sweep > 180 ? 1 : 0) + ' 1 ' + fmt(B);
+}
+
+function buildMark(){
+  // 厂标：位置 + 尺寸 + 把这个素材自带的外环裁掉的半径
+  const em = document.getElementById('emblem');
+  em.style.left = (MARK_CX - EMBLEM_S / 2) + 'px';
+  em.style.top  = (MARK_CY - EMBLEM_S / 2) + 'px';
+  em.style.width = em.style.height = EMBLEM_S + 'px';
+  em.style.clipPath = 'circle(' + CLIP_R.toFixed(2) + 'px at 50% 50%)';
+
+  // 环：从洞的一侧顺时针绕到另一侧
+  const ring = document.getElementById('ringPath');
+  ring.setAttribute('d', arcPath(R_RING, SLOT_TO, SLOT_FROM));
+  ring.style.strokeWidth = RING_W.toFixed(2) + 'px';
+
+  // 洞的中线：188°。那一块吊在外面，两端刚好是洞的两端 —— 它就是这个洞的补件。
+  const midDeg = (SLOT_FROM + SLOT_TO) / 2;
+  const piece = document.getElementById('piecePath');
+  piece.setAttribute('d', arcPath(PIECE_R, SLOT_FROM, SLOT_TO));
+  piece.style.strokeWidth = RING_W.toFixed(2) + 'px';
+
+  // 导引线：环**外缘** -> 那一块**内缘**，沿同一条半径。
+  // 两端各留 6px 的空，否则它会把环和那一块在像素上粘成一块，缺口就量不出来了。
+  const g1 = at(R_RING + RING_W / 2 + 6, midDeg);
+  const g2 = at(PIECE_R - RING_W / 2 - 6, midDeg);
+  const g = document.getElementById('guide');
+  g.setAttribute('x1', g1[0].toFixed(2)); g.setAttribute('y1', g1[1].toFixed(2));
+  g.setAttribute('x2', g2[0].toFixed(2)); g.setAttribute('y2', g2[1].toFixed(2));
+}
+
+function render(t){
+  void t;                            // 契约，不是输入（见上）
+  buildMark();
+}
+
+/* ==========================================================================
+   layoutReport() —— 给检查器读的那一份测量
+   浏览器是尺子，判定写在 Node 里（DECISIONS_2 309）。量的都是 DOM 上
+   **读回来**的东西，不是上面那几个 const 的副本。
+   ========================================================================== */
+function glyphBox(el){
+  const rg = document.createRange();
+  rg.selectNodeContents(el);
+  const b = rg.getBoundingClientRect();
+  return {id: el.id, top: +b.top.toFixed(2), bottom: +b.bottom.toFixed(2),
+          left: +b.left.toFixed(2), right: +b.right.toFixed(2),
+          text: (el.textContent || '').trim().slice(0, 40)};
+}
+/* 一条路径的读数：采样 9 点，量每一点到圆心的距离（是不是真圆），
+   以及首末两点的角度（扫了多少度）。**从画出来的 path 上取点**，不是重算常数。 */
+function pathReport(id, C){
+  const el = document.getElementById(id);
+  const L = el.getTotalLength();
+  const pts = [];
+  for (let i = 0; i <= 8; i++){
+    const p = el.getPointAtLength(L * i / 8);
+    pts.push([p.x, p.y]);
+  }
+  const radii = pts.map(p => Math.hypot(p[0] - C[0], p[1] - C[1]));
+  const angOf = p => (Math.atan2(p[1] - C[1], p[0] - C[0]) / RAD + 360) % 360;
+  const a0 = angOf(pts[0]), a1 = angOf(pts[pts.length - 1]);
+  const rMin = Math.min(...radii), rMax = Math.max(...radii);
+  return {
+    len: +L.toFixed(2),
+    r: +((rMin + rMax) / 2).toFixed(3), rMin: +rMin.toFixed(3), rMax: +rMax.toFixed(3),
+    a0: +a0.toFixed(2), a1: +a1.toFixed(2),
+    sweepDeg: +(((a1 - a0) % 360 + 360) % 360).toFixed(2),
+    pts: pts.map(p => [+p[0].toFixed(2), +p[1].toFixed(2)])
+  };
+}
+function layoutReport(){
+  render(0);
+  const st = document.getElementById('stage').getBoundingClientRect();
+  const rel = b => ({id: b.id, text: b.text,
+    top: +(b.top - st.top).toFixed(2), bottom: +(b.bottom - st.top).toFixed(2),
+    left: +(b.left - st.left).toFixed(2), right: +(b.right - st.left).toFixed(2)});
+  const text = ['title', 'sub'].map(id => rel(glyphBox(document.getElementById(id))));
+
+  const C = [MARK_CX, MARK_CY];
+  const ring = pathReport('ringPath', C);
+  const piece = pathReport('piecePath', C);
+  // 颜色也是读数：环是 Ready 灰、那一块是 Amber（Config.Visual 的两个 token）。
+  // 判据把它当设计 token 比一次；像素仪器另外量一次色相 —— 两个来源（取舍 655）。
+  const stroke = id => String(getComputedStyle(document.getElementById(id)).stroke);
+  ring.stroke  = stroke('ringPath');
+  piece.stroke = stroke('piecePath');
+
+  // ---- 洞：环扫过的角之外的那一段
+  const gapDeg = +(360 - ring.sweepDeg).toFixed(2);
+  const slotMid = +(((ring.a1 + gapDeg / 2) % 360)).toFixed(2);   // a1 顺时针再走半个洞
+  const pieceMid = +(((piece.a0 + piece.sweepDeg / 2) % 360)).toFixed(2);
+
+  // ---- 导引线：两端各自离圆心多远、在哪个角上
+  const g = document.getElementById('guide');
+  const g1 = [+g.getAttribute('x1'), +g.getAttribute('y1')];
+  const g2 = [+g.getAttribute('x2'), +g.getAttribute('y2')];
+  const gr = p => Math.hypot(p[0] - C[0], p[1] - C[1]);
+  const ga = p => (Math.atan2(p[1] - C[1], p[0] - C[0]) / RAD + 360) % 360;
+  const guide = {
+    p1: g1.map(v => +v.toFixed(2)), p2: g2.map(v => +v.toFixed(2)),
+    r1: +gr(g1).toFixed(2), r2: +gr(g2).toFixed(2),
+    a1: +ga(g1).toFixed(2), a2: +ga(g2).toFixed(2),
+    len: +Math.hypot(g2[0] - g1[0], g2[1] - g1[1]).toFixed(2)
+  };
+
+  // ---- 厂标
+  const em = document.getElementById('emblem');
+  const eb = em.getBoundingClientRect();
+  const cs = getComputedStyle(em);
+  const clipPx = (String(cs.clipPath).match(/circle\(([-\d.]+)px/) || [])[1];
+  const emblem = {
+    src: em.getAttribute('src'),
+    left: +(eb.left - st.left).toFixed(2), top: +(eb.top - st.top).toFixed(2),
+    w: +eb.width.toFixed(2), h: +eb.height.toFixed(2),
+    clip: clipPx === undefined ? null : +(+clipPx).toFixed(2),
+    opacity: +(+cs.opacity).toFixed(3)
+  };
+
+  // ---- 整体包围盒（环 + 那一块 + 导引线 + 厂标方框）
+  const all = ring.pts.concat(piece.pts, [g1, g2],
+                              [[emblem.left, emblem.top],
+                               [emblem.left + emblem.w, emblem.top + emblem.h]]);
+  const bounds = {
+    left:  +Math.min(...all.map(p => p[0])).toFixed(2),
+    right: +Math.max(...all.map(p => p[0])).toFixed(2),
+    top:   +Math.min(...all.map(p => p[1])).toFixed(2),
+    bottom:+Math.max(...all.map(p => p[1])).toFixed(2)};
+
+  // ---- 装饰层：声明的素材极性 vs 实际 filter
+  const decor = ['glow', 'scan', 'vig'].map(id => {
+    const el = document.getElementById(id);
+    const cs2 = getComputedStyle(el);
+    return {id, opacity: +(+cs2.opacity).toFixed(3), blend: cs2.mixBlendMode,
+            filter: cs2.filter === 'none' ? '' : cs2.filter,
+            art: el.dataset.art || null};
+  });
+
+  // ---- 字体可用性（Phase 144 的教训）
+  function widthIn(family){
+    const s = document.createElement('span');
+    s.style.cssText = 'position:absolute;left:-9999px;font-size:100px;' +
+                      'font-weight:normal;white-space:nowrap;font-family:' + family;
+    s.textContent = 'MMMMM REBUILD';
+    document.body.appendChild(s);
+    const w = s.getBoundingClientRect().width;
+    s.remove();
+    return +w.toFixed(2);
+  }
+  const fontProbe = {};
+  for (const f of ['"Arial Narrow"', '"Haettenschweiler"', 'Impact',
+                   '"Franklin Gothic Medium"', 'Arial', 'sans-serif']){
+    fontProbe[f] = widthIn(f);
+  }
+  const condW = widthIn('var(--cond)');
+
+  return JSON.stringify({
+    stage:{w: st.width, h: st.height}, innerW: innerWidth, innerH: innerHeight,
+    dpr: devicePixelRatio,
+    text, decor,
+    mark:{
+      cx: MARK_CX, cy: MARK_CY, ringW: +RING_W.toFixed(2),
+      ring, piece, gapDeg, slotMid, pieceMid, guide,
+      emblem, bounds
+    },
+    font:{condW100: condW, probe: fontProbe}
+  });
+}
+</script>
+<script>
+/* 整体缩放贴合视口：设计空间固定 1024x1024。 */
+function fit(){
+  const k = Math.min(innerWidth / ICON_W, innerHeight / ICON_H);
+  document.getElementById('stage').style.transform = 'scale(' + k + ')';
+}
+render(0);
+fit();
+addEventListener('resize', fit);
+</script>
+</body>
+</html>

@@ -2536,6 +2536,54 @@ crop of the icon was never measured, the 1.0 degree between the path's gap and t
 opening is unexplained, and "does it look good" is a judgement, not a reading. See docs/COVER.md
 section 8.7, PROGRESS.md Phase 150, DECISIONS_2 652-657, docs/SNIPPETS.md 5.53, docs/TODO.md 3.23.
 
+### Phase 151 - a Rebuild icon: the ring is missing one bay, and that bay is being carried back
+
+The operator's whole request was 「做个Rebuild的图标」 - make a Rebuild icon. Same contract as the
+other two 1:1 images: a `cover/` page, a 1024 master, a 512 upload file, judged by instruments
+rather than by eye, documented on disk in the same pass. Game code: zero lines.
+
+**Same visual language, and the ring says something else.** Continuation's ring is cut open and the
+cut end grows an arrowhead - it is still going. Rebuild's ring is **missing an entire bay**, and that
+bay is **carried outside it**, in amber, with a dashed guide along the bay's mid-radius. So the idea
+lands on three geometric readings, and each one fails in a way that still looks like a fine icon at
+64 px: **R8** the part is the bay's twin (same 56 deg, same curvature) - otherwise it is decoration;
+**R9** the part really is carried out (54 px, 39.24 px of clear air = 2.66 ring widths) - seat it and
+the ring closes and *rebuild* disappears; **R10** the part is aimed at its slot (0.00 deg) with the
+guide on that same radius - otherwise it is debris. "The ring has a gap" alone is not Rebuild; it is
+Continuation's shape.
+
+`rebuild_judge.js` reads 15 ok / 0 failed with 35/35 mutants lighting a rule (R6/R7/R8/R9/R10 each get
+two, from two readings that can separate). `rebuild_pieces_check.py` is the second instrument and holds
+none of the page's constants: it measures the ring in the asset and the ring in the delivered PNG
+(249.8 : 250.0 asset px), counts bays in the band (one, 55.88 deg at 188.06), finds the part **by
+colour** so a part at the wrong radius is still found, and reads the air in ring widths. 9/9 on the
+master **and 9/9 on the 512**, which is judged separately rather than inherited.
+
+**Four measurement errors, none of which reported an error** (CLAUDE.md 0.44). The scan was cropped to
+the emblem's own square, which cut off the part that is deliberately outside it - "the part is not on
+the picture" on a picture that plainly has it. Angular extent was binned per pixel, which left an empty
+0.125 deg bin at exactly 180 deg and split one 56 deg arc into 19.6 + 35.6. The helper `angular_runs`
+counted *gaps*, which is right for the bay and exactly inverted for the part (it reported the largest
+EMPTY stretch, 160 deg at 80 deg). And thickness was compared as a ratio, which passed at 1.143 on the
+master and failed at 1.286 on the 512 while the pixel *difference* was +2.0 at both - the denominator
+carried the scale.
+
+The pixel instrument's teeth were proven on three real broken renders, not on doctored JSON: part
+seated (8/9 red, `bays` included), part recoloured Ready (5/9, `part_colour` leading), bay widened
+(1/9 - only `bay_width`, which is what a good ruler does). All seven layers change pixels when
+switched off. `bash _tools/icon_runs.sh {rebuild|continuation}` runs the whole chain and is idempotent
+on the delivered files (both continuation md5s unchanged).
+
+**Not verified:** no upload (no `asset:write`), no Studio, no Play, no game code touched; Roblox's crop
+is still unmeasured; the subtitle is unreadable at 256 px (read as "THE READING GAME") and the font
+size was not changed, because changing it would break the 1:1 layout; and the pixel instrument has only
+been run at 1024 and 512 - below that its absolute-pixel thickness reading turns back into a ratio
+problem. "Does it look good" is a judgement; at 64 px the read is a broken white ring, an amber arc in
+the gap, and the word REBUILD, and at 256 px the verb it reads as is **"Arriving"**.
+
+See docs/COVER.md section 9, PROGRESS.md Phase 151, DECISIONS_2 658-666, docs/SNIPPETS.md 5.54,
+docs/TODO.md 3.24.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real
@@ -2797,7 +2845,7 @@ See PROGRESS.md Phase 106 and DECISIONS 426 to 430.
 
 `CLAUDE.md` is the file auto-loaded into an assistant's context every session, so as of
 2026-10-10 it carries only what must be seen **every round**: the doc-sync rules (0.0), the
-numbered "blood-and-tears" lessons (0 through 0.28), the project overview (1), the
+numbered "blood-and-tears" lessons (0 through 0.44), the project overview (1), the
 operator's preferences (4), the do-not-touch list (6), the references (7), a one-sentence
 summary (8), and the operational "before you act" rules. The per-Phase digest of Phases
 47-107 - **1155 lines, 67% of the old 1725-line file** - was moved out to `docs/PHASES.md`.
