@@ -2643,6 +2643,50 @@ still on top, and the amber stopping cleanly at the ring.
 See docs/COVER.md section 10, PROGRESS.md Phase 152, DECISIONS_2 667-674, docs/SNIPPETS.md 5.55,
 docs/TODO.md 3.25.
 
+### Phase 153 - the startup sequence gets a voice-over script, with timecodes derived from Config
+
+「我要开始配音了，先来个反应堆开机的（先来个开机序列启动」 - the operator is about to record
+voice-over and wants the reactor startup first. `docs/VO_STARTUP.md` holds two scripts: **A**, the
+system announcement - the game's own 16 log lines, verbatim, at their real timecodes; and **B**, an
+eight-line narration in English and in Chinese, each line backed by a source (no control rods per the
+wiki, three Isotope E loops and five CBL power levels per `Config`/`Engine:Command`, coolant sensors
+that drift per the wiki, and a closing beat measured in Phase 127: an unattended startup reaches
+`Failed` **143.3 s** after `Running`).
+
+The 16 timecodes are **derived, not copied**. The chain is `Config.Shift.StartupSteps` and
+`Engine:AdvanceStartup` logs step N when the accumulated dwell reaches `sum(hold[1..N])`, so
+`_tools/startup_vo_timing.py` folds that sum and emits the table; the doc's block is fenced by
+`<!-- VO-TIMELINE:BEGIN/END -->` and `--check docs/VO_STARTUP.md` compares it line by line, exit 1
+on any difference (verified red by editing one timestamp to 46.9, and verified that a missing path
+crashes loudly rather than passing). It is a **drift** check: it catches "Config changed, doc did
+not", not "Config is wrong" - the evidence for Config is the five captures behind Phase 65.
+
+What the arithmetic surfaced is the useful part: **three places write two or three lines in a single
+tick** - 1+2+3 at 0.0 s, 5+6+7 at 33.4 s, 13+14 at 82.2 s. The `SYSTEM LOGS` panel is a ticker, not
+a narrator, so a voice artist reading those as three separate beats is inventing something the
+machine never did. Each burst does have a long tail (29.4 / 11.7 / 27.2 s), so the script reads each
+burst in one breath and then leaves the picture alone. The order **inside** a burst is not in the
+bytes at all (Phase 65.2: the recorder sorts before dumping), so picking a comfortable order is not
+an edit - but the finished cut cannot claim it was the original's.
+
+The chain is a median, not a rule: four complete runs measured 91.4 / 112.6 / 114.3 / 151.7 s. Hence
+the recording brief asks for one second of clean air either side of every line instead of locking
+anything to a second.
+
+**No original announcer exists to copy.** Filename search across the 429 audio files in
+`TRG Sounds & Images pack/` finds no announcement; the only "startup" audio on disk is
+`asstes/music/ReactorStartup.mp3`, the operator's own Portal 2 piano reference track. So the doc says
+"there is nothing to reference", not "the original had no voice" - a sound could hide under another
+name - and the tone choices are judgements that must not be written downstream as a restoration.
+
+**Not verified:** not one line has been recorded; `est. read` is an assumption of 2.5 words/second
+(when the first take exists, the number to revisit is that constant, not the timecodes); no Studio,
+no Play, no upload, **game code 0 lines**; the teleprompter, the Chinese gloss and script B are
+hand-written, so `--check` does not cover them.
+
+See docs/VO_STARTUP.md, PROGRESS.md Phase 153, DECISIONS_2 675-679, docs/TODO.md 3.26,
+QUESTIONS.md R15.
+
 ### Phase 127 - the two new monitor panels, in a running game
 
 Phase 125 wired the alerts grid and the subspace forecast and verified them by requiring the real
