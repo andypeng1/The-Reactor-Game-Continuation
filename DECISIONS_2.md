@@ -10646,7 +10646,7 @@ Reimagine 的第一版想用 `mask-image: url(../intro/assets/sm-core.png)` 把�
 
 `TRG Sounds & Images pack/` 里 **429 个音频**按文件名找，没有一条像播报；
 唯一叫 "startup" 的 `asstes/music/ReactorStartup.mp3` 是操作员放的**参考曲**
-（Portal 2 的钢琴改编，`docs/SYSTEMS.md` §2.24 附近那份分析），不是原版的开机音。
+（Portal 2 的钢琴改编，`docs/SYSTEMS.md` §2.16 那份分析），不是原版的开机音。
 
 所以台本 §8 写的是"**没有可参照的对象**"，不是"原版没有播报"——
 声音可以藏在别的名字下（同 §0.38 ②：一条挂了很久的欠账可能根本没有宾语）。

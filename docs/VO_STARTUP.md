@@ -140,7 +140,7 @@ Same-tick bursts (the order inside a burst is not in the captures -- see PROGRES
 ## 3. 台本 B —— 旁白
 
 这一版**不是翻译 A**，是画外音：A 是机器在说话，B 是有人在讲这台机器。
-每一句都踩在一个真实的时间码上（括号里那句写的是它踩在什么事件上）。
+每一句都踩在一个真实的时间码上，**§3.3 那张表写着它踩在什么事件上、依据是什么**。
 **30 秒左右的话，铺在 113 秒的画面上** —— 留白比 A 还多。
 
 ### 3.1 英文
@@ -190,16 +190,20 @@ Same-tick bursts (the order inside a burst is not in the captures -- see PROGRES
 @1:56  从现在开始，它能跑多久，完全取决于你。
 ```
 
-**每一句的依据**（怕下一轮有人当成我编的）：
+### 3.3 每一句的依据（怕下一轮有人当成我编的）
 
-| 句 | 依据 |
-|---|---|
-| "no control rods" | `CLAUDE.md` §1.2：Wiki 反复确认过，这个游戏里**不存在控制棒**，玩家只有三个间接手段 |
-| "three Isotope E loops" | `Config` 的 `pumps` 三台、`Core.pumps` 0..3 档（`docs/SYSTEMS.md` §2.28） |
-| "they will drift, and they will not tell you" | Wiki：冷却传感器设备「有不可靠的倾向」、需要「手动干预校准」（`CLAUDE.md` §7） |
-| "five power levels each" | `off/PW1..PW5`；`Engine:Command` 的 `cbl` 收 `value 1..5` |
-| "the fastest way to lose it" | CBL 是**唯一**的热源，也是过热的来源（`docs/SYSTEMS.md` §2.27 那三条控制手段） |
-| 最后一句 | 没人管的开机在 `Running` 之后 **143.3 秒**走到 `Failed`（Phase 127 实测） |
+| @ | 句 | 依据 |
+|---|---|---|
+| 0:00 | no control rods | `CLAUDE.md` §1.2：Wiki 反复确认过，这个游戏里**不存在控制棒**，玩家只有三个间接手段 |
+| 0:29 | three Isotope E loops | `Config` 的 `pumps` 三台、`Core.pumps` 0..3 档（`docs/SYSTEMS.md` §2.28） |
+| 0:29 | they will drift, and they will not tell you | Wiki：冷却传感器设备「有不可靠的倾向」、需要「手动干预校准」（`CLAUDE.md` §7） |
+| 0:45 | the chamber is being emptied | 游戏自己的第 2 行 `ALL PERSONNEL ARE TO VACATE THE CHAMBER IMMEDIATELY` |
+| 0:55 | Deep scan running | 第 9 / 10 行 `INITIATING DEEP SCAN PROCEDURE` / `DEEP SCAN PROCEDURE COMPLETED` |
+| 1:09 | three combustion lasers, five power levels | `off/PW1..PW5`；`Engine:Command` 的 `cbl` 收 `value 1..5` |
+| 1:09 | the fastest way to lose it | CBL 是**唯一**的热源，也是过热的来源（`docs/SYSTEMS.md` §2.27 那三条控制手段） |
+| 1:22 | All systems ready. Ignition imminent. | 第 13 行逐字（只去掉了 `[ALERT]` 标记） |
+| 1:49 | Start-up complete. | 第 15 行逐字 |
+| 1:56 | how long it runs is entirely up to you | 没人管的开机在 `Running` 之后 **143.3 秒**走到 `Failed`（Phase 127 实测） |
 
 ---
 
@@ -307,7 +311,7 @@ python -X utf8 _tools/startup_vo_timing.py --check docs/VO_STARTUP.md   # 文档
 - **一句都没录过。** `est. read` 是 2.5 词/秒的**假设**，不是测量；真实语速只有你念出来才知道。
 - **没有原版播报人声可参照。** 仓库里 429 个音效（`TRG Sounds & Images pack/`）按文件名找，
   没有一条像播报；唯一叫 "startup" 的 `asstes/music/ReactorStartup.mp3` 是**参考曲**
-  （一份 Portal 2 的钢琴改编，`docs/SYSTEMS.md` §2.24 附近那份分析），**不是原版的开机音**。
+  （一份 Portal 2 的钢琴改编，`docs/SYSTEMS.md` §2.16 那份分析），**不是原版的开机音**。
   所以"这台机器听起来该是什么样"是判断，不是读数 —— 这一条不许在下游被写成"还原了原版播报"。
 - **时间码是五趟的中位数**，不是机器规则（见 §4.2）。
 - **台本 B 的每一句都有出处**（§3 底下那张表），但**哪些句子该留、哪些该删**是判断 ——
