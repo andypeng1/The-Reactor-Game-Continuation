@@ -2643,6 +2643,37 @@ still on top, and the amber stopping cleanly at the ring.
 See docs/COVER.md section 10, PROGRESS.md Phase 152, DECISIONS_2 667-674, docs/SNIPPETS.md 5.55,
 docs/TODO.md 3.25.
 
+### Phase 155 - the lens's side is one smooth curve now
+
+Operator: 「那个把他侧边搞得更圆一些」. Phase 154 reproduced the source as four
+straight bands, which met at 14 / 42.5 / 25.6 degree corners -- faithful, and
+visibly faceted on the shoulder.
+
+v2 replaces the flank with **one cubic Bezier**: it leaves the bottom rim along
+the measured taper (82.2 degrees) so the widest point and the bottom radius are
+unchanged, and it arrives at the flat top with a **horizontal tangent**, so the
+side-to-top corner is gone too. Bottom radius 0.4500, top plane 0.4125, top
+radius 0.2841, height 0.825, bbox 0.9 x 0.9 x 0.825, origin at the centre -- all
+unchanged. Worst perpendicular departure from the source wall: **0.01305 studs**.
+
+The other half is shading. A 48-segment lathe is round to 0.001 studs
+geometrically and still reads as 48 stripes if it is exported flat, so the build
+now runs `shade_smooth_by_angle(40 deg)`: wall facets (7.5 deg apart) merge, the
+bottom rim (98 deg) stays a crease. Measured on both re-imported files: median
+corner-normal spread **7.45 deg** inside a wall facet (flat would be 0), worst
+spread at a position **97.3 deg** at the rim.
+
+Two rulers had to change, and neither was loosened to turn red green:
+"height at the same radius" is amplified by the wall's slope (a 0.025-stud radial
+difference read as 0.164), so deviation is now **perpendicular distance**; and
+"corner-normal spread at the same vertex" returns 0.0 for glTF, which splits
+vertices at normal discontinuities -- welding by position puts both formats at
+97.3, the third time that mechanism has bitten this project.
+
+`alarm_cone_check.py` **48 ok / 0 failed**, both formats, exit 0.
+
+See PROGRESS.md Phase 155, DECISIONS_2 683-684, docs/TODO.md 3.28.
+
 ### Phase 154 - the alarm beacon's glass lens is ours now
 
 `Workspace.OtherStuff.ReactorALARM["Meshes/Cone (2)"]` was a marketplace mesh

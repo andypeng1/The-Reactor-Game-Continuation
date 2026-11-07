@@ -9,12 +9,25 @@
 #     FBX has global_scale, glTF does not, so the glTF branch is a separate claim)
 #   - the axes did not get swapped on the way out (a body of revolution hides a
 #     Z/Y swap in its SIZE; only the silhouette tells them apart)
-#   - the shape is the one that was measured, at 45 radii, not just "about right"
+#   - the wall is a CURVE, not the three straight bands of v1
 #
 # THE REFERENCE IS THE STUDIO RAYCAST TABLE BELOW, typed from the 2026-11-07
 # sweep, NOT recomputed from alarm_cone.py's constants. A check that reads its
 # expectations out of the thing it is checking is a tautology (DECISIONS 95).
 # The two tables are two spellings of the same measurement, and they can disagree.
+#
+# WHAT CHANGED IN v2, AND WHY THE TABLE IS NO LONGER COMPARED FOR EQUALITY.
+# v1 asserted "the rebuild EQUALS the source" at 44 radii, tol 0.002. The operator
+# then asked for a rounder side ("那个把他侧边搞得更圆一些"), so the flank is now one
+# Bezier instead of four straight bands and it deliberately departs from the
+# measurement -- up to a few hundredths of a stud, in the middle.
+#
+# Loosening the tolerance until it went green would have been noise (CLAUDE.md
+# 0.31). Instead the table keeps a job and changes tense: it becomes a BOUND --
+# the new wall must stay within DEV_MAX of the source everywhere, so "rounder"
+# cannot quietly become "a different object". The thing that actually has to be
+# true of the new wall -- it is smooth -- gets its own measurement, and that one
+# goes RED on v1's 42-degree crease. Both numbers are printed, not just asserted.
 #
 # Also checked here: the two radii just OUTSIDE the rim must MISS. Without those,
 # a cone built 5% too wide passes every row of the table it is compared against.
@@ -25,6 +38,7 @@
 #
 # Exit 0 only if every check passes.
 
+import math
 import os
 import sys
 import traceback
@@ -61,11 +75,38 @@ SILHOUETTE = [
     (0.245, 0.41250), (0.240, 0.41250), (0.235, 0.41250), (0.230, 0.41250),
 ]
 
-# The source hull rounds the P1 corner by 0.00101 studs, which is the largest
-# residual the four straight bands leave on the whole table. 0.002 is ~2x that and
-# ~1/10 of the smallest band (0.02 studs), so a moved band joint cannot hide:
-# nudging P1 by 0.005 moves the r=0.350 row by 0.037.
-TOL_SHAPE = 0.002
+# v1 compared for EQUALITY here at 0.002 (the source hull rounds its own P1 corner
+# by 0.00101, so 0.002 was ~2x the noise floor). v2 changes the shape on purpose,
+# so this is now the half-width of the band the new wall is allowed to wander in.
+#
+# MEASURED AS PERPENDICULAR DISTANCE, not as "height at the same radius". The wall
+# is nearly vertical over most of its height, so a 0.02-stud radial error shows up
+# as 0.16 studs of height difference down there -- the first version of this check
+# reported 0.164 of "deviation" for a wall that had moved 0.025. That is CLAUDE.md
+# 0.18's family again: the number was loud and meant something else. Distance from
+# the source point to the rebuilt POLYLINE is scale-free and is what "the wall
+# moved this far" actually means.
+#
+# 0.09 studs is a design bound, not a fitted one: 10% of the part's diameter. The
+# measured value is printed every run; it is ~0.02-0.03, so the bound has 3-4x of
+# room and only fires if the shape wandered somewhere else entirely.
+DEV_MAX = 0.090
+
+# Smoothness. Walk the silhouette in 0.005-stud radial steps and ask how far the
+# surface turns between one step and the next.
+#
+#   v1 (four straight bands)  ->  42.5 deg at the P2 joint
+#   v2 (the Bezier, shipped)  ->  12.8 deg at r=0.300
+#
+# 12.8 is not noise: the Bezier eases into the flat top, so its curvature is
+# highest there. It is still a curve -- the turn is spread over neighbouring steps
+# and the surface has no straight run -- which is why the threshold sits above it.
+# 20 deg keeps 1.6x of headroom over the shipped curve and rejects v1's 42.5 deg
+# by 2.1x. Those two numbers are printed on every run so the threshold can be
+# re-argued from measurements instead of from taste.
+STEP_TURN_DEG = 20.0
+STEP_R = 0.005
+SCAN = (0.440, 0.290)   # from just inside the rim down to the flat top
 
 # Just outside the rim. Both must miss, in both formats.
 OUTSIDE = (0.4550, 0.4600)
@@ -158,6 +199,97 @@ def ray_down(ob, r, k, z0=0.6):
     return (ob.matrix_world @ loc).z * k
 
 
+def wall_polyline(ob, k, r0=0.4495, r1=0.0500, step=0.002):
+    """The rebuilt cross-section from the rim to the middle of the flat top."""
+    pts = []
+    n = int(round((r0 - r1) / step))
+    for i in range(n + 1):
+        r = r0 - i * step
+        y = ray_down(ob, r, k)
+        if y is not None:
+            pts.append((r, y))
+    return pts
+
+
+def point_to_poly(px, py, poly):
+    """Distance from a point to a polyline, in the (r, height) plane."""
+    best = 1e18
+    for (ax, ay), (bx, by) in zip(poly, poly[1:]):
+        dx, dy = bx - ax, by - ay
+        L = dx * dx + dy * dy
+        t = 0.0 if L == 0.0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / L))
+        best = min(best, math.hypot(px - (ax + t * dx), py - (ay + t * dy)))
+    return best
+
+
+def _angle(a, b):
+    try:
+        return math.degrees(a.angle(b))
+    except ValueError:
+        return 0.0
+
+
+def shading_stats(ob, k):
+    """(median spread of corner normals within a face, max spread at a POSITION).
+
+    THIS IS THE MEASUREMENT THAT DECIDES WHETHER "ROUNDER" SHIPS. A 48-segment
+    lathe is geometrically round to 0.001 studs; what the eye reads as round or
+    faceted is the SHADING. Smooth-shaded, the corner normals of one wall facet
+    differ by one facet's worth of turn (~7.5 deg). Flat-shaded, they are all the
+    face normal and the spread is 0 -- and the part looks like a 48-gon in Studio
+    even though every size and silhouette check above is green.
+
+    It is exported that matters: FBX has a `mesh_smooth_type` switch whose default
+    is "off", so the guard has to be here, on the re-imported file, or the change
+    is invisible to the operator while every other row passes (CLAUDE.md 0.31).
+
+    The second number is the bottom rim. It must NOT be smoothed -- a lens with a
+    melted lower edge is a different object -- so the sharpest place in the mesh
+    should still be near the 98 deg dihedral of that rim.
+
+    MEASURED AT A POSITION, NOT AT A VERTEX INDEX. glTF duplicates a vertex
+    wherever the normal is discontinuous, so on that side every vertex carries one
+    normal and the per-index spread is 0.0 for EVERY mesh -- it answers "which
+    file format is this", not "is the edge sharp" (CLAUDE.md 0.20, and DECISIONS
+    681 from the watertightness check, which needed the identical fix). Welding by
+    position puts a normal-split edge back together and both formats then report
+    the same 97.3 deg.
+    """
+    me = ob.data
+    try:
+        ns = [tuple(c.vector) for c in me.corner_normals]
+    except AttributeError:                      # pre-4.1
+        me.calc_normals_split()
+        ns = [tuple(lp.normal) for lp in me.loops]
+    inv = ob.matrix_world.inverted().to_3x3().transposed()
+
+    def pos_key(vi):
+        co = (ob.matrix_world @ me.vertices[vi].co) * k
+        return (round(co.x / 1e-5), round(co.y / 1e-5), round(co.z / 1e-5))
+
+    per_face, per_pos = [], {}
+    for p in me.polygons:
+        idxs = list(range(p.loop_start, p.loop_start + p.loop_total))
+        vs = [Vector(ns[i]) for i in idxs]
+        s = 0.0
+        for i in range(len(vs)):
+            for j in range(i + 1, len(vs)):
+                s = max(s, _angle(vs[i], vs[j]))
+        per_face.append(s)
+        for li in idxs:
+            key = pos_key(me.loops[li].vertex_index)
+            per_pos.setdefault(key, []).append((inv @ Vector(ns[li])).normalized())
+
+    per_face.sort()
+    median = per_face[len(per_face) // 2] if per_face else 0.0
+    worst = 0.0
+    for normals in per_pos.values():
+        for i in range(len(normals)):
+            for j in range(i + 1, len(normals)):
+                worst = max(worst, _angle(normals[i], normals[j]))
+    return median, worst
+
+
 def read(tag, objs, k, tol_size):
     check("%s delivers exactly one mesh part (got %d)" % (tag, len(objs)), len(objs) == 1)
     if not objs:
@@ -173,30 +305,77 @@ def read(tag, objs, k, tol_size):
               abs(lo[i] - WANT_MIN[i]) < tol_size)
 
     ob = objs[0]
-    worst_r, worst_d = None, -1.0
-    missing = []
-    for r, want in SILHOUETTE:
-        got_y = ray_down(ob, r, k)
-        if got_y is None:
-            missing.append(r)
-            continue
-        d = abs(got_y - want)
-        if d > worst_d:
-            worst_r, worst_d = r, d
+    missing = [r for r, _y in SILHOUETTE if ray_down(ob, r, k) is None]
     check("%s silhouette hits at all %d radii (missed %d)"
           % (tag, len(SILHOUETTE), len(missing)), not missing)
     if missing:
         print("  missed radii: %s" % " ".join("%.3f" % r for r in missing))
-    if worst_r is not None:
-        check("%s silhouette worst residual %.5f studs at r=%.3f (tol %.3f)"
-              % (tag, worst_d, worst_r, TOL_SHAPE), worst_d < TOL_SHAPE)
 
+    poly = wall_polyline(ob, k)
+    check("%s the wall is continuous from the rim to the flat top (%d rays)"
+          % (tag, len(poly)), len(poly) >= 195)
+    if len(poly) >= 2:
+        worst_r, worst_d = None, -1.0
+        for r, want in SILHOUETTE:
+            d = point_to_poly(r, want, poly)
+            if d > worst_d:
+                worst_r, worst_d = r, d
+        check("%s stays within %.3f of the source wall -- worst %.5f studs at r=%.3f"
+              % (tag, DEV_MAX, worst_d, worst_r), worst_d < DEV_MAX)
+
+    # --- the thing v2 is actually for: no crease anywhere on the wall ----------
+    # Walk the silhouette and measure the turn between consecutive chords. A
+    # piecewise-linear flank turns 42 deg at a joint; a curve spreads the same
+    # total turn over every step. Sampling at the mesh's own facet spacing would
+    # hide the difference, so the step is fixed in studs (= the Studio sweep's
+    # grid) and the numbers are printed.
+    rs = []
+    r0, r1 = SCAN
+    n = int(round((r0 - r1) / STEP_R))
+    for i in range(n + 1):
+        r = r0 - i * STEP_R
+        y = ray_down(ob, r, k)
+        if y is None:
+            rs.append((r, None))
+        else:
+            rs.append((r, y))
+    hits = [(r, y) for r, y in rs if y is not None]
+    check("%s the whole wall is present along r %.3f..%.3f (%d of %d rays hit)"
+          % (tag, r1, r0, len(hits), len(rs)), len(hits) == len(rs))
+    if len(hits) == len(rs) and len(rs) > 3:
+        angs = []
+        for (ra, ya), (rb, yb) in zip(rs, rs[1:]):
+            angs.append(math.degrees(math.atan2(abs(yb - ya), abs(rb - ra))))
+        turns = [abs(b - a) for a, b in zip(angs, angs[1:])]
+        worst_turn = max(turns)
+        at = rs[turns.index(worst_turn) + 1][0]
+        check("%s the wall is smooth -- worst turn %.2f deg between %.3f-stud steps "
+              "(max %.1f, v1 was 42.5)"
+              % (tag, worst_turn, STEP_R, STEP_TURN_DEG), worst_turn < STEP_TURN_DEG)
+        # A guard, not the discriminator: "smooth" must not be reachable by
+        # flattening the wall into the top plane and turning nowhere at all.
+        # 50 rather than 60 because the shipped curve leaves the rim at the
+        # measured 82 deg and has already eased to ~24 deg by r=0.44; v1 scored
+        # ~70 here and passed too, so this row has never separated anything. It
+        # is here to stop a degenerate shape, and it says so.
+        total = angs[0] - angs[-1]
+        check("%s the wall still turns %.1f deg from rim to shoulder (guard, want > 50)"
+              % (tag, total), total > 50.0)
+        print("  %-3s wall: worst turn %.2f deg at r=%.3f, total %.1f deg"
+              % (tag, worst_turn, at, total))
+
+    # --- the two dimensions that must NOT move, where the eye can see them -----
     rim = ray_down(ob, 0.4499, k)
     check("%s is solid just inside the rim (r=0.4499 -> %s)"
           % (tag, "miss" if rim is None else "%.5f" % rim), rim is not None)
     stray = [r for r in OUTSIDE if ray_down(ob, r, k) is not None]
     check("%s stops at the rim -- nothing at r in %s (hit: %s)"
           % (tag, OUTSIDE, stray), not stray)
+    for r in (0.280, 0.200, 0.100):
+        y = ray_down(ob, r, k)
+        check("%s the top is still flat at r=%.3f (%s -> want 0.41250)"
+              % (tag, r, "miss" if y is None else "%.5f" % y),
+              y is not None and abs(y - 0.412500) < 5e-4)
 
     check("%s gives the part a material" % tag,
           all(len(o.data.materials) > 0 for o in objs))
@@ -205,14 +384,24 @@ def read(tag, objs, k, tol_size):
     check("%s uses exactly one material slot" % tag,
           all(len(o.data.materials) == 1 for o in objs))
 
+    median_spread, rim_spread = shading_stats(ob, k)
+    check("%s ships SMOOTH shading -- median corner-normal spread %.2f deg in a face "
+          "(flat would be 0, one 48-gon facet is 7.5)"
+          % (tag, median_spread), median_spread > 3.0)
+    check("%s keeps the bottom rim a crease -- worst vertex spread %.1f deg (want > 60)"
+          % (tag, rim_spread), rim_spread > 60.0)
+    print("  %-3s shading: median face spread %.2f deg, worst vertex spread %.1f deg"
+          % (tag, median_spread, rim_spread))
+
     st = trg.measure(ob)
     open_e, welded = welded_open_edges(ob, k)
     check("%s is watertight (open_edges=%d, %d corner positions)"
           % (tag, open_e, welded), open_e == 0)
-    # 194 = 1 bottom pole + 4 rings of 48 + 1 top pole. Typed from the build's own
-    # report, which is a count of what the lathe emits -- not read back from here.
-    check("%s welds down to the 194 vertices the lathe emitted (got %d)"
-          % (tag, welded), welded == 194)
+    # 1586 = 1 bottom pole + 33 rings of 48 + 1 top pole (v1 was 194: 2 poles and
+    # 4 rings). Typed from the build's own report, which is a count of what the
+    # lathe emits -- not read back from here.
+    check("%s welds down to the 1586 vertices the lathe emitted (got %d)"
+          % (tag, welded), welded == 1586)
     print("  %-3s size %.4f %.4f %.4f  min %.4f %.4f %.4f  verts %d tris %d"
           % ((tag,) + tuple(got) + tuple(lo) + (st["verts"], st["tris"])))
 
