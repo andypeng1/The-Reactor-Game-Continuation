@@ -2643,6 +2643,38 @@ still on top, and the amber stopping cleanly at the ring.
 See docs/COVER.md section 10, PROGRESS.md Phase 152, DECISIONS_2 667-674, docs/SNIPPETS.md 5.55,
 docs/TODO.md 3.25.
 
+### Phase 154 - the alarm beacon's glass lens is ours now
+
+`Workspace.OtherStuff.ReactorALARM["Meshes/Cone (2)"]` was a marketplace mesh
+(`rbxassetid://5192208808`). The operator asked for our own copy built in Blender.
+
+The shape was **measured, not invented**. `CreateEditableMeshAsync` refuses the
+asset in Studio's sandbox ("no permission to load asset"), so the geometry was read
+with raycasts against the part in the Edit data model. That works because
+`CollisionFidelity = Hull`: the rays return the convex hull, and for a convex lens
+the hull *is* the outer surface. 0.005-stud radial down-rays gave the silhouette,
+horizontal rays at 23 heights confirmed a body of revolution, and a 48-ray
+azimuthal sweep showed the cross-section is round to 0.4%.
+
+The silhouette is **four straight bands** (fitted slopes 7.327 / 2.489 / 0.480 studs
+of rise per stud of radius) meeting at (0.3475, 0.3385), (0.3258, 0.3925) and
+(0.2841, 0.4125), with a 0.4500 base radius and a 0.825 height. It is reproduced
+as measured -- no bevel, no smoothing, because a prettier curve is a different shape.
+
+`_tools/blender/alarm_cone_check.py` re-imports **both** exports and compares them
+to the same table that was read in Studio: **30 ok / 0 failed**, worst residual
+0.00101 studs at r=0.350 (where the source hull rounds the corner), plus the two
+radii just outside the rim, which must miss. The first run was **27 ok / 1 failed**
+and the failure was in the checker, not the mesh: glTF splits vertices per face, so
+a closed 194-vertex solid came back as 674 vertices and `open_edges = 672`. The
+test now welds by position first, and both formats agree at 0 and at 194 corners.
+
+**Not verified:** the mesh was never put into Studio (no `asset:write`), so the
+operator imports the `.fbx` himself with dialog scale 5.902; the original and the
+rebuild were never seen side by side; the original's inner wall was never measured,
+so solid-vs-shell is a judgement (a solid and a single-sided surface both present
+two layers at Transparency 0.75, a thick shell presents four). Zero game code changed.
+
 ### Phase 153 - the startup sequence gets a voice-over script, with timecodes derived from Config
 
 「我要开始配音了，先来个反应堆开机的（先来个开机序列启动」 - the operator is about to record
