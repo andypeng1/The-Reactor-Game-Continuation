@@ -1,14 +1,14 @@
 FBX version: 7400
-  fbx wall: worst turn 12.81 deg at r=0.300, total 57.6 deg
-  fbx shading: median face spread 7.45 deg, worst vertex spread 97.3 deg
-  fbx size 0.9000 0.9000 0.8250  min -0.4500 -0.4500 -0.4125  verts 1586 tris 3168
-23:30:56 | INFO: Data are loaded, start creating Blender stuff
-23:30:56 | INFO: Blender create Mesh node ReactorAlarmCone
-23:30:56 | INFO: glTF import finished in 0.02s
+  fbx wall: worst turn 13.99 deg at r=0.340, total 74.6 deg
+  fbx shading: median face spread 5.86 deg, worst vertex spread 97.8 deg
+  fbx size 0.9000 0.9000 0.8250  min -0.4500 -0.4500 -0.4125  verts 1250 tris 2496
+23:38:22 | INFO: Data are loaded, start creating Blender stuff
+23:38:22 | INFO: Blender create Mesh node ReactorAlarmCone
+23:38:22 | INFO: glTF import finished in 0.01s
 Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:37:34)
-  glb wall: worst turn 12.81 deg at r=0.300, total 57.6 deg
-  glb shading: median face spread 7.45 deg, worst vertex spread 97.3 deg
-  glb size 0.9000 0.9000 0.8250  min -0.4500 -0.4500 -0.4125  verts 1634 tris 3168
+  glb wall: worst turn 13.99 deg at r=0.340, total 74.6 deg
+  glb shading: median face spread 6.14 deg, worst vertex spread 97.8 deg
+  glb size 0.9000 0.9000 0.8250  min -0.4500 -0.4500 -0.4125  verts 1298 tris 2496
 PASS fbx delivers exactly one mesh part (got 1)
 PASS fbx size X = 0.9000 (want 0.9000)
 PASS fbx min  X = -0.4500 (want -0.4500)
@@ -18,21 +18,22 @@ PASS fbx size Z = 0.8250 (want 0.8250)
 PASS fbx min  Z = -0.4125 (want -0.4125)
 PASS fbx silhouette hits at all 44 radii (missed 0)
 PASS fbx the wall is continuous from the rim to the flat top (201 rays)
-PASS fbx stays within 0.090 of the source wall -- worst 0.01305 studs at r=0.325
+PASS fbx stays within 0.090 of the source wall -- worst 0.00695 studs at r=0.335
+PASS fbx keeps the lower wall straight -- worst 0.00000 studs off the taper line at r=0.429 (max 0.0050)
 PASS fbx the whole wall is present along r 0.290..0.440 (31 of 31 rays hit)
-PASS fbx the wall is smooth -- worst turn 12.81 deg between 0.005-stud steps (max 20.0, v1 was 42.5)
-PASS fbx the wall still turns 57.6 deg from rim to shoulder (guard, want > 50)
-PASS fbx is solid just inside the rim (r=0.4499 -> -0.41172)
+PASS fbx the wall is smooth -- worst turn 13.99 deg between 0.005-stud steps (max 25.0, v1 was 42.5)
+PASS fbx the wall still turns 74.6 deg from rim to shoulder (guard, want > 50)
+PASS fbx is solid just inside the rim (r=0.4499 -> -0.41177)
 PASS fbx stops at the rim -- nothing at r in (0.455, 0.46) (hit: [])
 PASS fbx the top is still flat at r=0.280 (0.41250 -> want 0.41250)
 PASS fbx the top is still flat at r=0.200 (0.41250 -> want 0.41250)
 PASS fbx the top is still flat at r=0.100 (0.41250 -> want 0.41250)
 PASS fbx gives the part a material
 PASS fbx uses exactly one material slot
-PASS fbx ships SMOOTH shading -- median corner-normal spread 7.45 deg in a face (flat would be 0, one 48-gon facet is 7.5)
-PASS fbx keeps the bottom rim a crease -- worst vertex spread 97.3 deg (want > 60)
-PASS fbx is watertight (open_edges=0, 1586 corner positions)
-PASS fbx welds down to the 1586 vertices the lathe emitted (got 1586)
+PASS fbx ships SMOOTH shading -- median corner-normal spread 5.86 deg in a face (flat would be 0, one 48-gon facet is 7.5)
+PASS fbx keeps the bottom rim a crease -- worst vertex spread 97.8 deg (want > 60)
+PASS fbx is watertight (open_edges=0, 1250 corner positions)
+PASS fbx welds down to the 1250 vertices the lathe emitted (got 1250)
 PASS glb delivers exactly one mesh part (got 1)
 PASS glb size X = 0.9000 (want 0.9000)
 PASS glb min  X = -0.4500 (want -0.4500)
@@ -42,19 +43,20 @@ PASS glb size Z = 0.8250 (want 0.8250)
 PASS glb min  Z = -0.4125 (want -0.4125)
 PASS glb silhouette hits at all 44 radii (missed 0)
 PASS glb the wall is continuous from the rim to the flat top (201 rays)
-PASS glb stays within 0.090 of the source wall -- worst 0.01305 studs at r=0.325
+PASS glb stays within 0.090 of the source wall -- worst 0.00695 studs at r=0.335
+PASS glb keeps the lower wall straight -- worst 0.00000 studs off the taper line at r=0.427 (max 0.0050)
 PASS glb the whole wall is present along r 0.290..0.440 (31 of 31 rays hit)
-PASS glb the wall is smooth -- worst turn 12.81 deg between 0.005-stud steps (max 20.0, v1 was 42.5)
-PASS glb the wall still turns 57.6 deg from rim to shoulder (guard, want > 50)
-PASS glb is solid just inside the rim (r=0.4499 -> -0.41172)
+PASS glb the wall is smooth -- worst turn 13.99 deg between 0.005-stud steps (max 25.0, v1 was 42.5)
+PASS glb the wall still turns 74.6 deg from rim to shoulder (guard, want > 50)
+PASS glb is solid just inside the rim (r=0.4499 -> -0.41177)
 PASS glb stops at the rim -- nothing at r in (0.455, 0.46) (hit: [])
 PASS glb the top is still flat at r=0.280 (0.41250 -> want 0.41250)
 PASS glb the top is still flat at r=0.200 (0.41250 -> want 0.41250)
 PASS glb the top is still flat at r=0.100 (0.41250 -> want 0.41250)
 PASS glb gives the part a material
 PASS glb uses exactly one material slot
-PASS glb ships SMOOTH shading -- median corner-normal spread 7.45 deg in a face (flat would be 0, one 48-gon facet is 7.5)
-PASS glb keeps the bottom rim a crease -- worst vertex spread 97.3 deg (want > 60)
-PASS glb is watertight (open_edges=0, 1586 corner positions)
-PASS glb welds down to the 1586 vertices the lathe emitted (got 1586)
-CHECK 48 ok, 0 failed
+PASS glb ships SMOOTH shading -- median corner-normal spread 6.14 deg in a face (flat would be 0, one 48-gon facet is 7.5)
+PASS glb keeps the bottom rim a crease -- worst vertex spread 97.8 deg (want > 60)
+PASS glb is watertight (open_edges=0, 1250 corner positions)
+PASS glb welds down to the 1250 vertices the lathe emitted (got 1250)
+CHECK 50 ok, 0 failed

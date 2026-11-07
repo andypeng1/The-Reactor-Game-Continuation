@@ -19,24 +19,30 @@
 #   azimuthal sweep, 48 rays at y=0    -> round to 0.4%; the 16-fold ripple is
 #                                         0.0036 studs on a 0.9-stud part, i.e. gone
 #
-# WHAT THE RAYS FOUND, AND WHAT v2 DOES WITH IT.
+# WHAT THE RAYS FOUND, AND WHAT v3 DOES WITH IT.
 # The source silhouette is four straight bands with three hard creases in the flank
 # (fitted slopes 7.327 / 2.489 / 0.480, turning 14 deg, then 42 deg, then 26 deg
-# between neighbours). v1 reproduced that exactly. The operator then said
-# "那个把他侧边搞得更圆一些" -- make the side rounder -- so v2 replaces the whole
-# flank with ONE smooth curve.
+# between neighbours). The operator's read of it, verbatim:
+#   "原来那个侧边是一条直线到上面才开始收敛" -- the side runs STRAIGHT and only
+#   closes in near the top.
+# That is correct and it is the constraint: the 82.2 deg taper is nearly vertical,
+# so the wall really is a straight, barely-tapering line, and everything that
+# happens happens in the last 10% of the height.
 #
-# The curve is a single cubic Bezier that leaves the bottom rim along the measured
-# taper (so the widest point is still the rim, at the same radius) and arrives at
-# the flat top with a HORIZONTAL tangent (so there is no crease where the side
-# meets the top either). Both end dimensions are unchanged; only the flank between
-# them bows. Two things follow that are not cosmetic:
-#   - the silhouette now departs from the measurement, by up to ~0.05 studs. That
-#     is the requested change, not a regression, and the check turns the old
-#     equality into a BOUND so it still has a floor.
-#   - the departures are spread over 32 profile samples instead of 3 creases, which
-#     is what makes it read as round. The check measures that: the worst turn
-#     between adjacent 0.005-stud steps used to be 42 deg.
+# So the straight wall stays straight. Only the shoulder changes: where the source
+# put THREE STRAIGHT BANDS (two creases), this puts ONE CIRCULAR ARC tangent to
+# both the taper and the flat top. A circle is the roundest a shoulder can be, and
+# constant curvature is exactly what "no crease" means -- a Bezier or a spline
+# would still bunch curvature at its ends.
+#
+# v2 (an earlier pass this same day, in git) bowed the WHOLE flank instead. That
+# was the wrong read of "把他侧边搞得更圆一些": it turned the straight side into a
+# curve, which is not the part he was pointing at.
+#
+# The arc is also the only radius that can touch both tangents, so there is no
+# free parameter left to tune: R comes out at 0.0611 studs. Its tangent point sits
+# at (0.3446, 0.3597), i.e. the top 6% of the height for the straight run to end --
+# "到上面才开始收敛", kept literally.
 #
 # Run:
 #   "D:\Blender 5.1\blender.exe" --background --factory-startup \
@@ -75,36 +81,44 @@ R_TOP = 0.2841          # where the flat top ends and the flank begins
 # studs of rise per stud of radius. 82.2 deg from horizontal.
 TAPER = 7.326
 
-# Bezier control arms, in studs.
-#   ARM0 runs along the taper; it is what keeps the bottom of the flank at the
-#   measured angle and the rim at the measured radius.
-#   ARM1 is horizontal, which is what makes the top tangent horizontal.
-# Their lengths are the one judgement in this file: they set how the bow is
-# distributed between "holds the taper" and "flattens early". Longer ARM1 pushes
-# the bulge outward at mid-height; shorter pulls it in at the shoulder. 0.115 /
-# 0.090 keeps the departure from the measured silhouette inside ~0.06 studs in
-# both directions, and the build prints the two extremes so this stays a number
-# and not a taste.
-ARM0 = 0.115
-ARM1 = 0.090
-
-SAMPLES = 32            # profile samples along the flank
+ARC_SAMPLES = 24        # profile samples along the shoulder arc
 SEGMENTS = 48           # around the axis
 
 
 def flank():
-    """The Bezier, bottom -> top, as (radius, height) pairs. t=0 is the rim."""
-    u0 = Vector((-1.0, TAPER)).normalized()          # into the surface, upwards
-    p0 = Vector((R_BOT, Y_BOT))
-    p1 = p0 + u0 * ARM0
-    p3 = Vector((R_TOP, Y_TOP))
-    p2 = p3 + Vector((1.0, 0.0)) * ARM1              # horizontal, arrived from +r
-    out = []
-    for i in range(SAMPLES + 1):
-        t = i / SAMPLES
-        s = 1.0 - t
-        b = s * s * s * p0 + 3.0 * s * s * t * p1 + 3.0 * s * t * t * p2 + t * t * t * p3
-        out.append((b.x, b.y))
+    """Straight taper from the rim to the tangent point, then one circular arc.
+
+    The taper is the line y = -TAPER*r + c, where c is fixed by the rim. The arc
+    is the circle of radius R whose centre sits directly under the top tangent
+    point (R_TOP, Y_TOP - R) -- that placement is what makes the arc meet the flat
+    top horizontally. Requiring the same circle to be tangent to the taper gives
+    one equation in R and one solution:
+
+        (R + k) / sqrt(TAPER^2 + 1) = R,   k = c - TAPER*R_TOP - Y_TOP
+        R = k / (sqrt(TAPER^2 + 1) - 1)                       = 0.0611 studs
+
+    Nothing here is chosen. R is determined, the tangent point is the foot of the
+    perpendicular from the centre, and the arc runs the last 82.2 deg up to the
+    top -- the same angle the taper leaves the rim at, which is why this is the
+    largest roundover the two tangents allow.
+    """
+    c = Y_BOT + TAPER * R_BOT                       # the taper line's intercept
+    nrm = math.hypot(TAPER, 1.0)
+    k = c - TAPER * R_TOP - Y_TOP
+    rad = k / (nrm - 1.0)
+    cx, cy = R_TOP, Y_TOP - rad
+
+    # Foot of the perpendicular from the centre onto the taper line.
+    d = k + rad
+    tx = cx + d * TAPER / (TAPER * TAPER + 1.0)
+    ty = cy + d / (TAPER * TAPER + 1.0)
+
+    a0 = math.atan2(ty - cy, tx - cx)
+    out = [(R_BOT, Y_BOT), (tx, ty)]
+    for i in range(1, ARC_SAMPLES):
+        a = a0 + (0.5 * math.pi - a0) * i / ARC_SAMPLES
+        out.append((cx + rad * math.cos(a), cy + rad * math.sin(a)))
+    out.append((R_TOP, Y_TOP))   # exact, rather than cos(90 deg)'s 6e-17
     return out
 
 

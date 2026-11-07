@@ -92,19 +92,37 @@ SILHOUETTE = [
 # room and only fires if the shape wandered somewhere else entirely.
 DEV_MAX = 0.090
 
+# The straight run: from just under the rim down to r = 0.360, which is below the
+# tangent point (0.3446) with margin, so every ray in this band lands on the part
+# of the profile that v3 draws as one straight segment. STRAIGHT_MAX is one ray
+# grid step (0.005): the reader below samples at 0.002 and a straight line should
+# come back at float noise, so anything near the bound is a real bow.
+STRAIGHT_R = (0.4495, 0.3600)
+STRAIGHT_MAX = 0.005
+# The taper, typed from the Studio ray sweep's first band rather than imported
+# from the build: if both sides shared one constant, this row could only ever
+# report that the build agrees with itself.
+TAPER = 7.326
+R_BOT = 0.4500
+Y_BOT = -0.4125
+
 # Smoothness. Walk the silhouette in 0.005-stud radial steps and ask how far the
 # surface turns between one step and the next.
 #
-#   v1 (four straight bands)  ->  42.5 deg at the P2 joint
-#   v2 (the Bezier, shipped)  ->  12.8 deg at r=0.300
+#   v1 (four straight bands)      ->  42.5 deg at the P2 joint
+#   v2 (whole flank a Bezier)     ->  12.8 deg at r=0.300
+#   v3 (shoulder arc, shipped)    ->  14.0 deg at r=0.340
 #
-# 12.8 is not noise: the Bezier eases into the flat top, so its curvature is
-# highest there. It is still a curve -- the turn is spread over neighbouring steps
-# and the surface has no straight run -- which is why the threshold sits above it.
-# 20 deg keeps 1.6x of headroom over the shipped curve and rejects v1's 42.5 deg
-# by 2.1x. Those two numbers are printed on every run so the threshold can be
-# re-argued from measurements instead of from taste.
-STEP_TURN_DEG = 20.0
+# None of those is noise. v3's is highest because the straight wall holds 82 deg
+# until r=0.3446 and the arc then turns 82 deg over only 0.06 of radius -- so a
+# 0.005-stud step covers a lot of ARC there (the wall is nearly vertical, and
+# dr = ds*cos(82 deg)). The number is a chord-angle difference at a fixed radial
+# step, not a curvature, and it is biased wherever the wall is steep AND curving.
+# That is fine for the job it has: a crease puts its WHOLE turn in one step (42.5),
+# a curve spreads it. 25 deg sits 1.8x above the shipped curve and 1.7x below the
+# crease, and all three numbers are printed every run so the threshold can be
+# re-argued from measurements rather than from taste.
+STEP_TURN_DEG = 25.0
 STEP_R = 0.005
 SCAN = (0.440, 0.290)   # from just inside the rim down to the flat top
 
@@ -209,6 +227,18 @@ def wall_polyline(ob, k, r0=0.4495, r1=0.0500, step=0.002):
         if y is not None:
             pts.append((r, y))
     return pts
+
+
+def point_to_line(px, py):
+    """Perpendicular distance from a point to the taper line y = -TAPER*r + c.
+
+    The line is the design's own: it starts at (R_BOT, Y_BOT) and never moves.
+    An arm of length 1 along it is (1, -TAPER)/hypot, so the perpendicular
+    distance is |(p - p0) x arm|.
+    """
+    c = Y_BOT + TAPER * R_BOT
+    nrm = math.hypot(1.0, TAPER)
+    return abs((px - R_BOT) * (-TAPER) / nrm - (py - Y_BOT) * 1.0 / nrm)
 
 
 def point_to_poly(px, py, poly):
@@ -323,6 +353,28 @@ def read(tag, objs, k, tol_size):
         check("%s stays within %.3f of the source wall -- worst %.5f studs at r=%.3f"
               % (tag, DEV_MAX, worst_d, worst_r), worst_d < DEV_MAX)
 
+    # --- and the part of the wall that must stay a STRAIGHT LINE ---------------
+    # The operator's read of the source is "the side runs straight and only closes
+    # in near the top", so the lower wall is not "approximately straight": it is
+    # the taper line, and v3 builds it from two points. v2 (the Bezier, in git)
+    # bowed this whole band, and every row above was green on it -- 0.013 of
+    # deviation still cleared a 0.09 bound. So this row asks the question the
+    # others cannot: is the wall, between the rim and the tangent point, ON the
+    # line? A design that is straight by construction cannot answer that about
+    # itself; the reading is of the exported file, and it goes red if an exporter
+    # moves the wall.
+    if len(poly) >= 2:
+        worst_s, worst_sr = 0.0, None
+        for r, y in poly:
+            if STRAIGHT_R[1] <= r <= STRAIGHT_R[0]:
+                d = point_to_line(r, y)
+                if d > worst_s:
+                    worst_s, worst_sr = d, r
+        check("%s keeps the lower wall straight -- worst %.5f studs off the taper "
+              "line at r=%.3f (max %.4f)"
+              % (tag, worst_s, worst_sr if worst_sr is not None else 0.0, STRAIGHT_MAX),
+              worst_s < STRAIGHT_MAX)
+
     # --- the thing v2 is actually for: no crease anywhere on the wall ----------
     # Walk the silhouette and measure the turn between consecutive chords. A
     # piecewise-linear flank turns 42 deg at a joint; a curve spreads the same
@@ -354,10 +406,9 @@ def read(tag, objs, k, tol_size):
               % (tag, worst_turn, STEP_R, STEP_TURN_DEG), worst_turn < STEP_TURN_DEG)
         # A guard, not the discriminator: "smooth" must not be reachable by
         # flattening the wall into the top plane and turning nowhere at all.
-        # 50 rather than 60 because the shipped curve leaves the rim at the
-        # measured 82 deg and has already eased to ~24 deg by r=0.44; v1 scored
-        # ~70 here and passed too, so this row has never separated anything. It
-        # is here to stop a degenerate shape, and it says so.
+        # v1 scored ~70 here, v3 scores 74.6 -- both pass, so this row has never
+        # separated anything. It is here to stop a degenerate shape (a wall
+        # flattened into the top plane turns nowhere), and it says so.
         total = angs[0] - angs[-1]
         check("%s the wall still turns %.1f deg from rim to shoulder (guard, want > 50)"
               % (tag, total), total > 50.0)
@@ -397,11 +448,11 @@ def read(tag, objs, k, tol_size):
     open_e, welded = welded_open_edges(ob, k)
     check("%s is watertight (open_edges=%d, %d corner positions)"
           % (tag, open_e, welded), open_e == 0)
-    # 1586 = 1 bottom pole + 33 rings of 48 + 1 top pole (v1 was 194: 2 poles and
-    # 4 rings). Typed from the build's own report, which is a count of what the
-    # lathe emits -- not read back from here.
-    check("%s welds down to the 1586 vertices the lathe emitted (got %d)"
-          % (tag, welded), welded == 1586)
+    # 1250 = 2 poles + 26 rings of 48 (v1 was 194, v2 was 1586). Typed from the
+    # build's own report, which is a count of what the lathe emits -- not read
+    # back from here.
+    check("%s welds down to the 1250 vertices the lathe emitted (got %d)"
+          % (tag, welded), welded == 1250)
     print("  %-3s size %.4f %.4f %.4f  min %.4f %.4f %.4f  verts %d tris %d"
           % ((tag,) + tuple(got) + tuple(lo) + (st["verts"], st["tris"])))
 

@@ -1,19 +1,19 @@
-D:\rblxTRGproject\_tools\blender\alarm_cone.py:126: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+D:\rblxTRGproject\_tools\blender\alarm_cone.py:140: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
   mat.use_nodes = True
-BUILD verts=1586 polys=1632 tris=3168 open_edges=0
+BUILD verts=1250 polys=1296 tris=2496 open_edges=0
 expected_studio_size 0.900000 0.825000 0.900000
 expected_studio_centre_offset 0.000000 0.000000 0.000000
 
 FBX export starting... 'D:\\BlenderRobloxTestProjects\\AlarmCone\\ReactorAlarmCone.fbx'
-export finished in 0.0119 sec.
+export finished in 0.0153 sec.
 INFO Draco mesh compression is available, use library at D:\Blender 5.1\5.1\scripts\addons_core\io_scene_gltf2\extern_draco.dll
-23:27:52 | INFO: Starting glTF 2.0 export
-23:27:52 | INFO: Extracting primitive: ReactorAlarmCone
-23:27:52 | INFO: Primitives created: 1
-23:27:52 | INFO: Finished glTF 2.0 export in 0.022780895233154297 s
-00:04.750  render           | Saved: 'D:\BlenderRobloxTestProjects\AlarmCone\ReactorAlarmCone_front.png'
-00:04.859  render           | Saved: 'D:\BlenderRobloxTestProjects\AlarmCone\ReactorAlarmCone_side.png'
-00:04.968  render           | Saved: 'D:\BlenderRobloxTestProjects\AlarmCone\ReactorAlarmCone_top.png'
+23:36:03 | INFO: Starting glTF 2.0 export
+23:36:03 | INFO: Extracting primitive: ReactorAlarmCone
+23:36:03 | INFO: Primitives created: 1
+23:36:03 | INFO: Finished glTF 2.0 export in 0.03129458427429199 s
+00:06.000  render           | Saved: 'D:\BlenderRobloxTestProjects\AlarmCone\ReactorAlarmCone_front.png'
+00:06.125  render           | Saved: 'D:\BlenderRobloxTestProjects\AlarmCone\ReactorAlarmCone_side.png'
+00:06.250  render           | Saved: 'D:\BlenderRobloxTestProjects\AlarmCone\ReactorAlarmCone_top.png'
 Blender 5.1.2 (hash ec6e62d40fa9 built 2026-05-19 01:37:34)
 
 Info: Saved as "ReactorAlarmCone.blend"

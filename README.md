@@ -2643,6 +2643,40 @@ still on top, and the amber stopping cleanly at the ring.
 See docs/COVER.md section 10, PROGRESS.md Phase 152, DECISIONS_2 667-674, docs/SNIPPETS.md 5.55,
 docs/TODO.md 3.25.
 
+### Phase 156 - straight side, round shoulder (v2 had read him wrong)
+
+Operator: 「原来那个侧边是一条直线到上面才开始收敛现在这个侧面是曲线」. Phase 155's
+Bezier bowed the *whole* flank; what he pointed at was only the shoulder. v2 is
+still in git and still described below -- it was an intermediate, not a bug in
+the exporter.
+
+v3 keeps the straight taper exactly as measured (slope 7.326, 82.2 degrees from
+horizontal) up to **(0.3446, 0.3597) -- the top 6% of the height**, and then puts
+**one circular arc** tangent to both that taper and the flat top. A circle is the
+roundest a shoulder can be and has constant curvature; a spline bunches it at the
+ends. Two tangency conditions, one unknown: **R = 0.0611 studs**, solved, not
+tuned. Sizes are untouched (0.9 x 0.9 x 0.825, bbox min -0.450 / -0.4125, origin
+centred).
+
+v3 is **closer to the source than v2** -- worst perpendicular departure
+**0.00695 studs** against 0.01305 -- because it no longer moves the part of the
+wall that was already straight. 1250 verts / 2496 tris. Smooth shading as before
+(median in-facet corner spread 5.86 deg fbx / 6.14 glb, rim crease 97.8).
+
+The checker gained the row v2 would have been caught by: **the lower wall's
+perpendicular distance from the taper line** (r 0.4495..0.360, threshold one ray
+grid = 0.005). Every previous row was green on v2 -- its 0.013 departure cleared a
+0.09 bound by 7x. The taper slope is typed into the checker from the Studio ray
+table rather than imported from the build, otherwise the row could only report
+that the build agrees with itself. Measured: **0.00000** on both formats.
+`alarm_cone_check.py` **50 ok / 0 failed**, exit 0.
+
+Still not in Studio: whether Roblox's FBX importer keeps those smooth normals is
+unmeasured, and the first thing to look at after import is whether the side still
+shows stripes. Import dialog scale **5.902**.
+
+See PROGRESS.md Phase 156, DECISIONS_2 685, docs/TODO.md 3.29.
+
 ### Phase 155 - the lens's side is one smooth curve now
 
 Operator: 「那个把他侧边搞得更圆一些」. Phase 154 reproduced the source as four
