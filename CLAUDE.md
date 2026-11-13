@@ -1887,6 +1887,22 @@ Roblox 的 FBX 导入器怎么处理它们没有读数，换进去第一件要�
 > **一条形容词型的需求没有坐标**：范围要从请求里别的句子去读，别自己划。
 > 细节 `DECISIONS_2` **685**，全文 `PROGRESS.md` Phase 156，欠账 `docs/TODO.md` §3.29。
 
+**电箱告示牌贴到墙上了**（Phase 157，2026-11-13，原话「帮我把现在选中的model贴合到后面的墙壁」）：
+选中的 `Workspace.ChamberElectricalComponent`（自己的坐标系里 15.0 × 0.64 × 7.5）**斜挂 4.327°**，
+一边陷进墙 0.318、一边翘起 0.261（`7.5·sin4.327° = 0.566`，楔子正是这个数）。
+做法：绕**自己的 pivot** 转 4.327° 让背面与墙面平行，再沿墙法线推 0.0339 studs 到**净空 0.010**
+（**不是 0** —— 共面会 z-fighting；0.01 studs ≈ 3 mm）。
+读数：底板背面 3×3 九个点 **0.00990..0.01024**，25 条射线极差 **0.0003**（修前 0.58）。
+包在 `ChangeHistoryService` 里，**Ctrl+Z 可退**。
+**这一轮 Studio 连的是另一份 place** —— `The Reactor [Rebuild]`，**placeId 131274481205639**
+（universe 10768985976），不是 §1.1 记的 AIRemake。
+**新坑进 §0.18 那族**（`DECISIONS_2` **686**）：**`Model:GetBoundingBox()` 的 `Size` 是跟着模型转的**，
+不是世界的（15.013×0.638×7.500 vs 世界 AABB 7.500×13.150×8.058，**两个数都对**）；
+而 **`GetFullName()` 不是身份** —— Workspace 里有两个同名 `ChamberElectricalComponent`，
+`FindFirstChild` 拿的是**地上平放那份**，选中的只能从 `Selection:Get()` 拿。
+**没进 Play**；全部 25 个部件**未锚定**（要它站着不动得锚定）。游戏本体 0 行。
+全文 `PROGRESS.md` Phase 157，取舍 `DECISIONS_2` 686。
+
 **动手前记住：** 先 `list_roblox_studios`（§0.1），验证读实例状态而不是模块状态（§0.2）。
 自动保存已开（§0.9），**不要**提醒 Ctrl+S。
 **自动 `add`+`commit` 也已开**（2026-10-01 原话 `AUTO COMMIT+ADD PERMANENTLY ON`）：

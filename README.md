@@ -2643,6 +2643,30 @@ still on top, and the amber stopping cleanly at the ring.
 See docs/COVER.md section 10, PROGRESS.md Phase 152, DECISIONS_2 667-674, docs/SNIPPETS.md 5.55,
 docs/TODO.md 3.25.
 
+### Phase 157 - the electrical sign snapped flush to its wall
+
+Operator: 「帮我把现在选中的model贴合到后面的墙壁」. The selected model is
+`Workspace.ChamberElectricalComponent` (15.0 long x 0.64 thick x 7.5 wide in its own
+frame), a tilted warning sign inside `The Reactor [Rebuild]` (placeId 131274481205639,
+a different place from the AIRemake one).
+
+It was hanging at a **4.327 degree wedge**: one edge buried 0.318 studs into the wall
+behind it, the other standing 0.261 off. `7.5 * sin(4.327 deg) = 0.566` -- the wedge is
+exactly that. The wall is a single planar part (25 rays across a 5x5 grid all hit the
+same instance; fitted-plane flatness 0.00000).
+
+Fix: rotate the model 4.327 deg about its own pivot so its back is parallel to the wall,
+then slide 0.0339 studs along the wall normal to a **0.010-stud clearance**. Not zero --
+coplanar faces z-fight, and 0.01 stud is about 3 mm.
+
+Measured after: nine points across the plate's back read 0.00990..0.01024 studs, and 25
+rays span 0.0003 studs of range (was 0.58). The panel's normal now matches the wall's to
+four decimals. Wrapped in a ChangeHistoryService recording, so Ctrl+Z reverts it.
+
+Not checked: played, or whether the unanchored parts stay put once the game runs.
+
+See PROGRESS.md Phase 157, DECISIONS_2 686.
+
 ### Phase 156 - straight side, round shoulder (v2 had read him wrong)
 
 Operator: 「原来那个侧边是一条直线到上面才开始收敛现在这个侧面是曲线」. Phase 155's
